@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hangul Type — v1 prototype</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #fafafa;
+    color: #222;
+    margin: 0;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 36px; }
+  .gloss { color: #888; font-size: 14px; margin-bottom: 8px; }
+  .target {
+    font-size: 56px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    margin-bottom: 28px;
+  }
+  .live {
+    display: inline-block;
+    min-width: 220px;
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    font-size: 28px;
+    letter-spacing: 4px;
+    margin-bottom: 24px;
+  }
+  .caret {
+    display: inline-block;
+    width: 2px; height: 24px;
+    background: #2563eb;
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0 } }
+  .stats {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  .stats strong { color: #222; font-weight: 600; }
+  .controls { margin-bottom: 28px; }
+  button {
+    background: white;
+    border: 1px solid #ccc;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    margin: 0 4px;
+  }
+  button.primary { background: #2563eb; color: white; border-color: #2563eb; }
+  .keyboard {
+    display: inline-block;
+    text-align: left;
+    margin-top: 12px;
+    background: #f0f0f0;
+    padding: 12px;
+    border-radius: 6px;
+  }
+  .kb-row { display: flex; gap: 4px; margin-bottom: 4px; }
+  .kb-row.r2 { padding-left: 12px; }
+  .kb-row.r3 { padding-left: 28px; }
+  .key {
+    width: 38px; height: 44px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 10px;
+    color: #666;
+  }
+  .key .jamo { font-size: 14px; color: #222; font-weight: 500; }
+  .key.target { background: #2563eb; border-color: #2563eb; }
+  .key.target .jamo, .key.target .label { color: white; }
+  .msg {
+    min-height: 24px;
+    color: #444;
+    font-size: 13px;
+  }
+  .msg.err { color: #c00; }
+  .msg.ok { color: #060; }
+</style>
+</head>
+<body>
+
+<h1>한글 Type</h1>
+<div class="sub">v1 prototype — type Korean words using QWERTY (Dubeolsik)</div>
+
+<div class="gloss" id="gloss">hello</div>
+<div class="target" id="target">안녕</div>
+
+<div class="live" id="live"><span class="caret"></span></div>
+
+<div class="stats">
+  Word <strong id="wordIdx">1</strong> / <strong id="wordTotal">0</strong> ·
+  Hits <strong id="hits">0</strong> ·
+  Accuracy <strong id="acc">100%</strong>
+</div>
+
+<div class="controls">
+  <button class="primary" onclick="nextWord()">Next word</button>
+  <button onclick="resetStats()">Reset</button>
+</div>
+
+<div class="msg" id="msg">Just start typing.</div>
+
+<div class="keyboard" id="kb"></div>
+
+<input id="shield" type="text" autocomplete="off" style="position:absolute; left:-9999px;">
+
+<script>
+// ── Mini word list ─────────────────────────────────────────────
+const WORDS = [
+  { ko: '안녕',     en: 'hello' },
+  { ko: '감사',     en: 'thanks' },
+  { ko: '저는',     en: 'I (topic)' },
+  { ko: '학생',     en: 'student' },
+  { ko: '이름',     en: 'name' },
+  { ko: '한국',     en: 'Korea' },
+  { ko: '사랑',     en: 'love' },
+  { ko: '친구',     en: 'friend' },
+  { ko: '음식',     en: 'food' },
+  { ko: '학교',     en: 'school' }
+];
+
+// ── Dubeolsik keymap (QWERTY → jamo) ───────────────────────────
+const KEYMAP = {
+  'q':'ㅂ','Q':'ㅃ','w':'ㅈ','W':'ㅉ','e':'ㄷ','E':'ㄸ',
+  'r':'ㄱ','R':'ㄲ','t':'ㅅ','T':'ㅆ','y':'ㅛ','u':'ㅕ',
+  'i':'ㅑ','o':'ㅐ','O':'ㅒ','p':'ㅔ','P':'ㅖ',
+  'a':'ㅁ','s':'ㄴ','d':'ㅇ','f':'ㄹ','g':'ㅎ',
+  'h':'ㅗ','j':'ㅓ','k':'ㅏ','l':'ㅣ',
+  'z':'ㅋ','x':'ㅌ','c':'ㅊ','v':'ㅍ','b':'ㅠ','n':'ㅜ','m':'ㅡ'
+};
+const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const MEDIALS  = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const FINALS   = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const CONS = new Set(INITIALS.filter(Boolean));
+const VOW  = new Set(MEDIALS);
+
+// Decompose a Korean syllable to keystrokes (initial, medial, final?)
+function syllableToKeystrokes(syl) {
+  const code = syl.charCodeAt(0) - 0xAC00;
+  const i = Math.floor(code / 588);
+  const m = Math.floor((code % 588) / 28);
+  const f = code % 28;
+  const out = [INITIALS[i], MEDIALS[m]];
+  if (f > 0) out.push(FINALS[f]);
+  return out;
+}
+function wordToKeystrokes(w) {
+  const out = [];
+  for (const ch of w) {
+    if (ch === ' ') { out.push(' '); continue; }
+    const c = ch.charCodeAt(0);
+    if (c >= 0xAC00 && c <= 0xD7A3) out.push(...syllableToKeystrokes(ch));
+  }
+  return out;
+}
+
+// ── State ──────────────────────────────────────────────────────
+let wordIdx = 0;
+let pos = 0;          // index into expectedJamos
+let expected = [];    // jamo sequence for current word
+let composed = '';    // user's committed text
+let composing = '';   // currently composing buffer (single jamo or syllable)
+let totalHits = 0;
+let totalKeys = 0;
+
+// ── Trivial IME ────────────────────────────────────────────────
+// We just append the typed jamo to a "buffer" and on each keystroke
+// try to combine into a syllable. Naive — only handles initial + medial,
+// optional final. No double-vowel or stacked-final logic.
+let buffer = []; // array of jamos waiting to be combined
+function tryCompose() {
+  // Build a syllable from buffer if pattern is [cons, vow, (cons)?]
+  const a = buffer[0], b = buffer[1], c = buffer[2];
+  if (a && b && CONS.has(a) && VOW.has(b)) {
+    const i = INITIALS.indexOf(a);
+    const m = MEDIALS.indexOf(b);
+    const f = c && CONS.has(c) ? FINALS.indexOf(c) : 0;
+    if (i >= 0 && m >= 0 && f >= 0) {
+      const code = 0xAC00 + (i * 588) + (m * 28) + f;
+      return String.fromCharCode(code);
+    }
+  }
+  return '';
+}
+
+function flush() { composed += composing; composing = ''; buffer = []; }
+
+function pushJamo(jamo) {
+  if (CONS.has(jamo) && buffer.length === 0) {
+    buffer = [jamo]; composing = jamo; return;
+  }
+  if (VOW.has(jamo) && buffer.length === 1 && CONS.has(buffer[0])) {
+    buffer.push(jamo);
+    composing = tryCompose() || (buffer[0] + buffer[1]);
+    return;
+  }
+  if (CONS.has(jamo) && buffer.length === 2) {
+    buffer.push(jamo);
+    composing = tryCompose() || (buffer[0] + buffer[1] + buffer[2]);
+    return;
+  }
+  // Otherwise: flush current and start new
+  flush();
+  if (CONS.has(jamo)) { buffer = [jamo]; composing = jamo; }
+  else { composed += jamo; }
+}
+
+// ── Render ─────────────────────────────────────────────────────
+function loadWord() {
+  const w = WORDS[wordIdx % WORDS.length];
+  expected = wordToKeystrokes(w.ko);
+  pos = 0;
+  composed = '';
+  composing = '';
+  buffer = [];
+  document.getElementById('target').textContent = w.ko;
+  document.getElementById('gloss').textContent = w.en;
+  document.getElementById('wordIdx').textContent = (wordIdx + 1);
+  document.getElementById('wordTotal').textContent = WORDS.length;
+  document.getElementById('msg').textContent = 'Just start typing.';
+  document.getElementById('msg').className = 'msg';
+  renderLive();
+  highlightNextKey();
+}
+
+function renderLive() {
+  const live = document.getElementById('live');
+  live.innerHTML = composed + (composing ? `<span style="color:#2563eb">${composing}</span>` : '') + '<span class="caret"></span>';
+}
+
+function setMsg(text, kind) {
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg' + (kind ? ' ' + kind : '');
+}
+
+function nextWord() {
+  wordIdx = (wordIdx + 1) % WORDS.length;
+  loadWord();
+}
+
+function resetStats() {
+  totalHits = 0; totalKeys = 0;
+  document.getElementById('hits').textContent = '0';
+  document.getElementById('acc').textContent = '100%';
+  loadWord();
+}
+
+// ── Keyboard guide ─────────────────────────────────────────────
+const KB = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['z','x','c','v','b','n','m']
+];
+function buildKeyboard() {
+  const kb = document.getElementById('kb');
+  kb.innerHTML = '';
+  KB.forEach((row, idx) => {
+    const r = document.createElement('div');
+    r.className = 'kb-row r' + (idx + 1);
+    for (const k of row) {
+      const j = KEYMAP[k] || '';
+      const el = document.createElement('div');
+      el.className = 'key';
+      el.dataset.key = k;
+      el.innerHTML = `<div class="jamo">${j}</div><div class="label">${k.toUpperCase()}</div>`;
+      r.appendChild(el);
+    }
+    kb.appendChild(r);
+  });
+}
+
+function highlightNextKey() {
+  document.querySelectorAll('.key').forEach(k => k.classList.remove('target'));
+  const nextJamo = expected[pos];
+  if (!nextJamo) return;
+  // Find which QWERTY key produces this jamo
+  for (const [k, j] of Object.entries(KEYMAP)) {
+    if (j === nextJamo) {
+      const el = document.querySelector(`.key[data-key="${k.toLowerCase()}"]`);
+      if (el) el.classList.add('target');
+      return;
+    }
+  }
+}
+
+// ── Input handling ─────────────────────────────────────────────
+function handleKey(rawKey, isShift) {
+  const lookup = isShift ? rawKey.toUpperCase() : rawKey.toLowerCase();
+  const jamo = KEYMAP[lookup];
+  if (!jamo) return;
+  totalKeys++;
+  if (jamo === expected[pos]) {
+    totalHits++;
+    pos++;
+    pushJamo(jamo);
+    renderLive();
+    setMsg('✓ correct', 'ok');
+    if (pos >= expected.length) {
+      flush();
+      renderLive();
+      setMsg('🎉 Word complete! Press Next word.', 'ok');
+    }
+    highlightNextKey();
+  } else {
+    setMsg('✗ expected ' + expected[pos] + ', got ' + jamo, 'err');
+  }
+  document.getElementById('hits').textContent = totalHits;
+  document.getElementById('acc').textContent = Math.round((totalHits / totalKeys) * 100) + '%';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Enter') { e.preventDefault(); nextWord(); return; }
+  if (e.key.length === 1) {
+    e.preventDefault();
+    handleKey(e.key, e.shiftKey);
+  }
+});
+
+document.getElementById('shield').focus();
+buildKeyboard();
+loadWord();
+</script>
+
+</body>
+</html>

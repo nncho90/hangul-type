@@ -1,0 +1,4312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hangul Type · Learn to type Korean</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: inherit; }
+  :root {
+    --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
+    --bd: #e2e8f0;   --bdhi: #cbd5e1;
+    --thi: #0f172a;  --tmd: #475569;   --tlo: #94a3b8;
+    --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
+    --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
+    --korean: 'Noto Sans KR', 'Inter', sans-serif;
+  }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--thi);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--bd);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+  .brand-logo { font-size: 22px; line-height: 1; }
+  .brand h1 {
+    margin: 0;
+    font-family: 'Black Han Sans', 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--thi);
+    line-height: 1;
+  }
+  .header-mid {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+  .stats {
+    display: flex; gap: 14px; align-items: baseline;
+    flex: 0 0 auto;
+  }
+  .stat { text-align: right; line-height: 1.05; }
+  .stat-label {
+    font-size: 9px; color: var(--tlo); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 700; color: var(--tmd);
+    margin-top: 2px;
+  }
+  .stat.primary .stat-value {
+    font-size: 28px; color: var(--thi);
+  }
+  .stat.secondary .stat-value { color: var(--tlo); font-size: 13px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 18px;
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* Practice front and center — wider card, sidebar de-emphasized */
+  .practice-main {
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  .practice-card { padding: 28px 36px; }
+
+  /* Hide legacy stubs unconditionally; they exist only so render calls don't throw */
+  .legacy-stub, [hidden].legacy-stub { display: none !important; }
+
+  /* Profile chip + Records button only matter during the speed-test flow */
+  #profileChip, #btnRecords { display: none !important; }
+  body.in-sprint #profileChip,
+  body.in-sprint #btnRecords { display: inline-flex !important; }
+
+  /* Per-jamo accuracy modal */
+  .jamo-modal {
+    position: fixed; inset: 0;
+    z-index: 9500;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.25s ease;
+  }
+  .jamo-modal-card {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 18px;
+    padding: 28px 32px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+    position: relative;
+  }
+  .jamo-modal-card h2 { margin: 0 0 4px; font-size: 16px; }
+  .jamo-modal-card .csub { margin-bottom: 16px; }
+  .jamo-modal-close {
+    position: absolute; top: 14px; right: 16px;
+    background: transparent; border: 0; cursor: pointer;
+    font-size: 28px; line-height: 1; color: var(--tlo);
+  }
+  .jamo-modal-close:hover { color: var(--thi); }
+  .kb-mobile-hint {
+    display: none;
+    background: var(--l2);
+    border: 1px dashed var(--bd);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    color: var(--tmd);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  @media (max-width: 700px) {
+    body { font-size: 14px; }
+    .wrap { padding: 16px 12px 32px; }
+    header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .stats { flex-wrap: wrap; gap: 12px 18px; width: 100%; }
+    .stat { text-align: left; }
+    .grid { grid-template-columns: 1fr; }
+    .target .word { font-size: 40px; gap: 12px; }
+    .target .word.lg { font-size: 32px; gap: 10px; }
+    .target .word.md { font-size: 26px; gap: 8px; }
+    .target .word.sm { font-size: 22px; gap: 6px; }
+    .keyboard { display: none; }
+    .kb-mobile-hint { display: block; }
+    .btn { min-height: 36px; padding: 9px 14px; font-size: 13px; }
+    .topic-pill { min-height: 36px; padding: 8px 14px; font-size: 12px; display: inline-flex; align-items: center; }
+    .kb-toggle button { min-height: 36px; }
+    .topics { gap: 8px; }
+    .controls { flex-wrap: wrap; }
+  }
+  @media (max-width: 400px) {
+    .target .word { font-size: 32px; gap: 10px; }
+    .target .word.lg { font-size: 26px; }
+    .target .word.md { font-size: 22px; }
+    .target .word.sm { font-size: 20px; }
+  }
+  .card {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .card h2 {
+    margin: 0 0 4px;
+    font-size: 13px; font-weight: 600;
+    color: var(--tmd); text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .card .csub { color: var(--tlo); font-size: 12px; margin-bottom: 16px; }
+
+  /* Topic picker */
+  .topics {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--bd);
+  }
+  .topic-pill {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 16px;
+    padding: 5px 12px;
+    font-size: 11px; font-weight: 600;
+    color: var(--tmd);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .topic-pill:hover { border-color: var(--bdhi); color: var(--thi); }
+  .topic-pill.on {
+    background: var(--blue); color: white; border-color: var(--blue);
+  }
+  .topic-pill .count {
+    margin-left: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    opacity: 0.7;
+  }
+  /* Bigger pills now that there are only 2-3 of them */
+  .topic-pill.big {
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+  .topic-pill.big .t-icon { font-size: 18px; margin-right: 6px; vertical-align: -3px; }
+  .topic-pill.big .count { font-size: 12px; }
+  .topic-pill.big.mistake {
+    background: linear-gradient(135deg, #fef2f2, #fff7ed);
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .topic-pill.big.mistake.on {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: white;
+    border-color: var(--red);
+  }
+  /* Sidebar topics: vertical stack — TOPIK pills then subcategory chips */
+  .topics { gap: 8px; flex-direction: column; align-items: stretch; display: flex; }
+  .topics-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .practice-side .topic-pill.big {
+    padding: 10px 12px;
+    font-size: 12px;
+    border-radius: 10px;
+    text-align: left;
+  }
+  .practice-side .topic-pill.big .t-icon { font-size: 16px; margin-right: 6px; }
+  .practice-side .topic-pill.big .count {
+    margin-left: auto;
+    font-size: 10px;
+  }
+  .practice-side .topic-pill.big {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  /* Subcategory progress tracker — single column inside sidebar */
+  .subtopic-tracker {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  @media (max-width: 900px) {
+    .subtopic-tracker { grid-template-columns: repeat(2, 1fr); }
+    .topics-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  .subtopic-chip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--tmd);
+    cursor: pointer;
+    overflow: hidden;
+    text-align: left;
+    font-family: inherit;
+    line-height: 1.3;
+    min-height: 36px;
+    transition: all 0.1s;
+  }
+  .subtopic-chip:hover { border-color: var(--bdhi); color: var(--thi); }
+  .subtopic-chip .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: rgba(37, 99, 235, 0.10);
+    z-index: 0;
+    transition: width 0.3s ease;
+  }
+  .subtopic-chip .label,
+  .subtopic-chip .count,
+  .subtopic-chip .ico { position: relative; z-index: 1; }
+  .subtopic-chip .ico { font-size: 11px; }
+  .subtopic-chip .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--tlo);
+    margin-left: 2px;
+  }
+  .subtopic-chip.on {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+  .subtopic-chip.on .fill { background: rgba(37, 99, 235, 0.16); }
+  .subtopic-chip.complete {
+    border-color: var(--green);
+    color: var(--green);
+    opacity: 0.7;
+  }
+  .subtopic-chip.complete .fill { background: rgba(16, 185, 129, 0.10); }
+  .subtopic-chip.complete .count { color: var(--green); }
+  .mistake-drill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 0;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #fef2f2, #fff7ed);
+    border: 1px solid var(--red);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--red);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mistake-drill-btn:hover {
+    background: linear-gradient(135deg, #fee2e2, #ffedd5);
+    transform: translateY(-1px);
+  }
+  .mistake-drill-btn .mistake-icon { font-size: 18px; }
+  .mistake-drill-btn strong { font-family: 'JetBrains Mono', monospace; color: var(--thi); }
+
+  .topic-pill .topic-mastery {
+    display: inline-block;
+    width: 14px; text-align: center;
+    margin-right: 4px;
+    color: var(--tlo);
+    font-size: 13px;
+    line-height: 1;
+  }
+  .topic-pill .topic-mastery { color: var(--tmd); font-weight: 600; }
+  .topic-pill.on .topic-mastery { color: white; }
+
+  /* Battle Mode launcher — neutral pill, no gradient */
+  .battle-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    color: var(--tmd);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .battle-link:hover {
+    border-color: var(--bdhi);
+    color: var(--thi);
+  }
+  .battle-link .battle-icon { font-size: 14px; line-height: 1; }
+  .battle-link .battle-text { line-height: 1; }
+
+  /* Mode toggle (Practice / League) */
+  .mode-toggle {
+    display: inline-flex;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 18px;
+    padding: 3px;
+    gap: 0;
+  }
+  .mode-toggle button {
+    border: 0; background: transparent;
+    padding: 6px 14px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    border-radius: 14px;
+    color: var(--tmd);
+    transition: all 0.15s;
+  }
+  .mode-toggle button.on {
+    background: white; color: var(--thi);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .mode-toggle button.on.league {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #78350f;
+  }
+
+  .panel-buttons { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
+
+  /* Practice grid — content visually centered, sidebar pinned right (off-balance, like an add-on) */
+  .practice-grid {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 28px;
+    align-items: start;
+  }
+  .practice-content {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  @media (max-width: 900px) {
+    .practice-grid { grid-template-columns: 1fr; gap: 16px; }
+  }
+  .practice-side {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    grid-column: 2;
+    grid-row: 1;
+    padding-left: 14px;
+    border-left: 1px dashed var(--bd);
+    /* De-emphasized: smaller, muted, hover-to-focus */
+    font-size: 11px;
+    color: var(--tlo);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .practice-side:hover { opacity: 1; }
+  @media (max-width: 900px) {
+    .practice-side { padding-left: 0; border-left: 0; padding-top: 12px; border-top: 1px solid var(--bd); }
+  }
+  .practice-side .side-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .practice-side .side-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px dashed var(--bd);
+    position: relative;
+  }
+  .icon-btn {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--tmd);
+    line-height: 1;
+    transition: all 0.12s;
+  }
+  .icon-btn:hover { border-color: var(--bdhi); color: var(--thi); }
+  .settings-wrap { position: relative; display: inline-block; }
+  .settings-menu {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 6px;
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .settings-menu[hidden] { display: none; }
+  .setting-row {
+    background: transparent;
+    border: 0;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--thi);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .setting-row:hover { background: var(--l2); }
+  .setting-row.danger { color: var(--red); }
+  .setting-row.danger:hover { background: #fef2f2; }
+
+  /* Keyboard legend — small color swatch + label */
+  .kb-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--tlo);
+    font-weight: 600;
+  }
+  .kb-legend-swatch {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    background: var(--orange);
+  }
+  .card-head-controls .records-btn {
+    margin: 0;
+    padding: 7px 10px;
+    font-size: 14px;
+    line-height: 1;
+  }
+  /* Compact mode-toggle inside the practice card */
+  .card-head-controls .mode-toggle button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  @media (max-width: 700px) {
+    .card-head { flex-direction: column; align-items: stretch; }
+    .card-head-controls { justify-content: flex-start; }
+  }
+
+  /* League panel */
+  .league-panel {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .league-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .league-panel-header .league-meta {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 14px;
+  }
+  .league-panel-header .league-meta .icon { font-size: 22px; }
+  .league-panel-header .countdown {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--tmd);
+  }
+  .bracket-list {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .bracket-row {
+    display: grid;
+    grid-template-columns: 36px 1.6fr 1fr 1fr 1fr;
+    align-items: center; gap: 8px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: var(--l2);
+    font-size: 12px;
+  }
+  .bracket-row.you { background: #dbeafe; border: 1px solid #93c5fd; }
+  .bracket-row.promo-zone { background: #fef9c3; }
+  .bracket-row.demo-zone { background: #fee2e2; }
+  .bracket-row .rank-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .bracket-row .player { display: inline-flex; align-items: center; gap: 6px; }
+  .bracket-row .row-flag { font-size: 14px; }
+
+  /* Practice card */
+  .target {
+    text-align: center;
+    padding: 36px 0 24px;
+  }
+  .target .gloss {
+    color: var(--tmd); font-size: 14px; font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .target .romanization {
+    color: var(--tlo);
+    font-size: 13px;
+    font-style: italic;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.4px;
+    margin-top: 10px;
+  }
+  .target .romanization:empty { display: none; }
+
+  /* Avatar blob — neutral identity chip; tier reads through emoji + label */
+  .card-head-left { display: flex; align-items: center; gap: 14px; }
+  .avatar-blob {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 12px;
+    transition: transform 0.18s;
+    cursor: default;
+    user-select: none;
+  }
+  .avatar-blob.bump { transform: scale(1.10); }
+  .avatar-blob .avatar-emoji {
+    font-size: 18px;
+    line-height: 1;
+  }
+  .avatar-blob .avatar-tier {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--tmd);
+    line-height: 1;
+  }
+
+  .target .word {
+    font-family: var(--korean);
+    text-align: center;
+    line-height: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .target .word .syl {
+    display: inline-block;
+    vertical-align: bottom;
+  }
+  .target .word .syl canvas {
+    display: block;
+    transition: opacity 0.2s;
+  }
+  .target .word .syl[data-pulse="1"] canvas {
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  /* Space rendered as a small bar between word groups */
+  .target .word .syl.space {
+    width: 18px; height: 5px;
+    background: var(--bd);
+    border-radius: 2px;
+    align-self: center;
+    margin: 0 8px 12px;
+    transition: background 0.2s;
+  }
+  .target .word .syl.space.done { background: var(--green); }
+  .target .word .syl.space.now {
+    background: var(--blue);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .target .word .syl.space.err { background: var(--red); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .progress {
+    height: 6px; background: var(--l3); border-radius: 3px;
+    margin: 12px 0 18px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--green);
+    width: 0%;
+    transition: width 0.2s;
+  }
+
+  /* Keyboard */
+  .keyboard {
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .kb-toggle {
+    display: flex; gap: 6px; align-items: center;
+    margin-bottom: 12px; font-size: 12px; color: var(--tmd);
+  }
+  .kb-toggle .pill {
+    display: inline-flex; gap: 4px;
+    background: var(--l1); border: 1px solid var(--bd);
+    border-radius: 20px;
+    padding: 3px 4px;
+  }
+  .kb-toggle button {
+    border: 0; background: transparent; padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer; color: var(--tmd);
+  }
+  .kb-toggle button.on {
+    background: var(--blue); color: white;
+  }
+
+  .kb-row { display: flex; gap: 5px; justify-content: center; align-items: center; margin-bottom: 5px; }
+  .kb-row.r2 { padding-left: 14px; }
+  .kb-row.r3 { padding-left: 32px; }
+
+  .key {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    background: var(--l1);
+    border: 1px solid var(--bdhi);
+    border-radius: 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--tmd);
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .key .qwerty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--tlo);
+    margin-top: 2px;
+  }
+  .key .jamo {
+    font-family: var(--korean);
+    font-size: 16px; font-weight: 500; color: var(--thi);
+  }
+  .key .shift {
+    font-family: var(--korean);
+    font-size: 10px; color: var(--orange);
+    position: absolute;
+    top: 2px; right: 4px;
+    font-weight: 600;
+  }
+  .key.target {
+    background: var(--blue);
+    border-color: var(--blue);
+  }
+  .key.target .jamo, .key.target .qwerty, .key.target .shift {
+    color: white;
+  }
+  .key.shifted {
+    background: var(--orange);
+    border-color: var(--orange);
+  }
+  .key.shifted .jamo, .key.shifted .qwerty, .key.shifted .shift {
+    color: white;
+  }
+  /* Quick color tick on hit — no scale, so the row never shifts */
+  .key.hit { animation: hit 0.15s ease; }
+  @keyframes hit {
+    0%   { background: var(--green); border-color: var(--green); }
+    100% { background: var(--l1); border-color: var(--bdhi); }
+  }
+  .finger-cue {
+    display: flex; gap: 4px; justify-content: center; margin-top: 10px;
+    font-size: 10px; color: var(--tlo);
+  }
+  .finger-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--bd);
+  }
+
+  /* Diagnostic */
+  .diag {
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    font-size: 13px;
+    min-height: 56px;
+    color: var(--tmd);
+    line-height: 1.5;
+  }
+  .diag.ok { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+  .diag.err { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+  .diag .label {
+    font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-right: 6px;
+  }
+  .diag .ko { font-family: var(--korean); font-weight: 600; }
+  .diag .key-hint {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: white;
+    padding: 1px 6px; border-radius: 4px;
+    margin: 0 2px; border: 1px solid var(--bd);
+    color: var(--thi);
+  }
+  .diag .ko-emph { font-weight: 700; }
+  .diag .ko-emph.lg { font-size: 18px; }
+
+  /* Heatmap */
+  /* Per-jamo accuracy card: collapsible. Hidden by default. */
+  .jamo-card { padding: 18px 28px; }
+  .jamo-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--thi);
+  }
+  .jamo-toggle-label { font-size: 14px; font-weight: 700; }
+  .jamo-toggle-caret { font-size: 14px; color: var(--tlo); transition: transform 0.18s; }
+  .jamo-card:not(.collapsed) .jamo-toggle-caret { transform: rotate(180deg); }
+  .jamo-card .jamo-body { margin-top: 14px; }
+  .jamo-card.collapsed .jamo-body { display: none; }
+
+  /* Grid rendered as multiple labelled groups (consonants, tense, vowels...) */
+  .jamo-group { margin-bottom: 8px; }
+  .jamo-group:last-child { margin-bottom: 0; }
+  .jamo-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tlo);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .jamo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .jamo-group .jamo-grid { margin-top: 0; }
+  .jamo-cell {
+    aspect-ratio: 1;
+    background: var(--l3);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--korean);
+    font-size: 18px; font-weight: 500;
+    color: var(--thi);
+    position: relative;
+    cursor: default;
+  }
+  .jamo-cell .acc {
+    position: absolute;
+    bottom: 2px;
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--tlo);
+    font-weight: 700;
+  }
+  .jamo-cell.weak { background: #fee2e2; color: #991b1b; }
+  .jamo-cell.weak .acc { color: #b91c1c; }
+  .jamo-cell.med  { background: #fef3c7; color: #92400e; }
+  .jamo-cell.med .acc { color: #b45309; }
+  .jamo-cell.good { background: #d1fae5; color: #065f46; }
+  .jamo-cell.good .acc { color: #047857; }
+
+  .legend {
+    display: flex; gap: 12px;
+    margin-top: 10px;
+    font-size: 11px; color: var(--tmd);
+  }
+  .legend span {
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .legend .dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+  .legend .dot.weak { background: #fee2e2; }
+  .legend .dot.med  { background: #fef3c7; }
+  .legend .dot.good { background: #d1fae5; }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .controls .btn { width: 100%; }
+  @media (max-width: 700px) {
+    .controls { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ── Gamification UI ─────────────────────────────────── */
+  .brand { gap: 14px; }
+  .level-badge {
+    display: inline-flex;
+    flex-direction: column;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 6px 12px;
+    min-width: 130px;
+    margin-left: 6px;
+  }
+  .level-badge .lv-name {
+    font-size: 11px; font-weight: 700;
+    color: var(--thi);
+    letter-spacing: 0.2px;
+  }
+  .level-badge .lv-track {
+    height: 4px; background: var(--l3); border-radius: 2px; margin: 4px 0 2px;
+    overflow: hidden;
+  }
+  .level-badge .lv-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--blue), #60a5fa);
+    transition: width 0.4s ease;
+  }
+  .level-badge .lv-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--tlo);
+  }
+
+  .profile-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    font-size: 12px; font-weight: 600;
+    color: var(--thi);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .profile-chip:hover { background: var(--l3); border-color: var(--bdhi); }
+  .profile-chip .profile-flag { font-size: 16px; line-height: 1; }
+  .profile-chip .profile-name { line-height: 1; }
+  .profile-chip .profile-rank {
+    line-height: 1; font-weight: 700;
+    color: var(--tmd);
+    padding-left: 6px; margin-left: 4px;
+    border-left: 1px solid var(--bd);
+  }
+  .profile-chip .profile-edit { font-size: 11px; opacity: 0.4; }
+  .profile-chip:hover .profile-edit { opacity: 0.9; }
+
+  .profile-modal {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.7);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10001;
+    animation: fadeIn 0.25s ease;
+  }
+  .profile-modal-card {
+    background: var(--l1);
+    border-radius: 18px;
+    padding: 28px;
+    width: 460px;
+    max-width: calc(100vw - 32px);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+  }
+  .profile-modal-card h3 {
+    margin: 0 0 4px; font-size: 18px; color: var(--thi);
+  }
+  .profile-modal-card p {
+    margin: 0 0 20px; font-size: 13px; color: var(--tmd);
+  }
+  .profile-field { margin-bottom: 16px; }
+  .profile-field label {
+    display: block; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--tlo); margin-bottom: 6px;
+  }
+  .profile-field input, .profile-field select {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--bd); border-radius: 8px;
+    font-size: 14px; color: var(--thi);
+    background: var(--l1);
+    box-sizing: border-box;
+  }
+  .profile-field input:focus, .profile-field select:focus {
+    outline: 2px solid var(--blue); outline-offset: -1px; border-color: var(--blue);
+  }
+  .profile-modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .league-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    font-size: 11px; font-weight: 700;
+    cursor: default;
+  }
+  .league-badge .league-icon { font-size: 14px; }
+  .league-badge[data-tier="bronze"]   { background: #fdf4e7; border-color: #cd7f32; color: #8a4f1c; }
+  .league-badge[data-tier="silver"]   { background: #f1f5f9; border-color: #94a3b8; color: #475569; }
+  .league-badge[data-tier="gold"]     { background: #fef9c3; border-color: #f59e0b; color: #92400e; }
+  .league-badge[data-tier="diamond"]  { background: #ecfeff; border-color: #06b6d4; color: #155e75; }
+  .league-badge[data-tier="master"]   {
+    background: linear-gradient(135deg, #fce7f3, #ede9fe, #dbeafe);
+    border-color: #8b5cf6; color: #5b21b6;
+  }
+
+  /* Streak flame tiers */
+  #streak { display: inline-flex; align-items: center; gap: 4px; }
+  #streak .streak-flame { font-size: 16px; transition: all 0.3s; filter: grayscale(0.6); }
+  #streak.t1 .streak-flame { font-size: 18px; filter: grayscale(0.3); }
+  #streak.t2 .streak-flame { font-size: 22px; filter: grayscale(0); }
+  #streak.t3 .streak-flame { font-size: 24px; filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.7)); }
+  #streak.t4 .streak-flame { font-size: 26px; filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.9)); animation: flicker 1.4s ease-in-out infinite; }
+  #streak.t5 .streak-flame {
+    font-size: 28px;
+    background: linear-gradient(45deg, #ef4444, #f59e0b, #84cc16, #06b6d4, #8b5cf6);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.5));
+    animation: flicker 1.2s ease-in-out infinite;
+  }
+  @keyframes flicker {
+    0%, 100% { transform: scale(1) rotate(-2deg); }
+    50% { transform: scale(1.08) rotate(2deg); }
+  }
+
+  /* Records panel */
+  .records-btn {
+    background: var(--l1); border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px; font-weight: 600;
+    color: var(--tmd);
+    cursor: pointer;
+    margin: 0 0 14px;
+  }
+  .records-btn:hover { border-color: var(--bdhi); color: var(--thi); }
+  .records-panel {
+    background: var(--l1); border: 1px solid var(--bd);
+    border-radius: 12px; padding: 18px;
+    margin-bottom: 16px;
+  }
+  .records-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .records-tab {
+    padding: 6px 14px; border-radius: 16px;
+    font-size: 11px; font-weight: 600;
+    background: var(--l2); border: 1px solid var(--bd);
+    color: var(--tmd); cursor: pointer;
+  }
+  .records-tab.on { background: var(--blue); color: white; border-color: var(--blue); }
+  .records-list { display: flex; flex-direction: column; gap: 6px; }
+  .record-row {
+    display: grid;
+    grid-template-columns: 32px 1.6fr 1fr 0.8fr 1.4fr 1fr;
+    align-items: center; gap: 10px;
+    padding: 8px 12px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    font-size: 12px;
+  }
+  .record-row .player { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--thi); }
+  .record-row .row-flag { font-size: 16px; line-height: 1; }
+  .record-row.best {
+    border: 2px solid var(--yellow);
+    background: #fffbeb;
+  }
+  .record-row .rank { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--tmd); }
+  .record-row .wpm  { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--blue); }
+  .record-row .acc  { font-family: 'JetBrains Mono', monospace; color: var(--tmd); }
+  .record-row .topic { color: var(--tmd); }
+  .record-row .ago  { font-size: 11px; color: var(--tlo); text-align: right; }
+  .records-empty {
+    text-align: center; padding: 24px; color: var(--tlo); font-size: 13px;
+  }
+
+  /* Daily quest */
+  .daily-quest {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #ecfeff, #f0f9ff);
+    border: 1px solid #93c5fd;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--thi);
+  }
+  .daily-quest.done {
+    background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+    border-color: #6ee7b7;
+    color: #065f46;
+  }
+  .daily-quest .quest-icon { font-size: 20px; }
+  .daily-quest .quest-text { flex: 1; font-weight: 600; }
+  .daily-quest .quest-progress {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 700;
+  }
+  .daily-quest .quest-bar {
+    width: 80px; height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px;
+    overflow: hidden;
+  }
+  .daily-quest .quest-bar-fill {
+    height: 100%; background: var(--blue);
+    transition: width 0.3s;
+  }
+  .daily-quest.done .quest-bar-fill { background: var(--green); }
+
+  /* FX layer for floaters and confetti */
+  .fx-layer {
+    position: fixed;
+    pointer-events: none;
+    inset: 0;
+    z-index: 9000;
+  }
+  .xp-floater {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; font-weight: 800;
+    color: var(--blue);
+    text-shadow: 0 1px 0 white, 0 0 8px rgba(37,99,235,0.4);
+    animation: xpFloat 700ms ease-out forwards;
+  }
+  @keyframes xpFloat {
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
+    20% { opacity: 1; transform: translate(-50%, -8px) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -52px) scale(1); }
+  }
+  .confetti-particle {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    animation: confetti 800ms ease-out forwards;
+  }
+  @keyframes confetti {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: var(--end-transform) scale(0.4); }
+  }
+
+  /* Combo chip */
+  .combo-chip {
+    position: fixed;
+    top: 80px; right: 32px;
+    z-index: 9100;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; font-weight: 800;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: none;
+    animation: pop 0.25s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.6); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  .combo-chip.t1 { font-size: 18px; }
+  .combo-chip.t2 { font-size: 22px; padding: 12px 22px; }
+  .combo-chip.t3 { font-size: 26px; padding: 14px 26px; background: linear-gradient(135deg, #ef4444, #8b5cf6); }
+  .combo-chip.t4 { font-size: 30px; padding: 16px 28px; background: linear-gradient(135deg, #8b5cf6, #ec4899); }
+  .combo-chip.t5 {
+    font-size: 34px; padding: 18px 32px;
+    background: linear-gradient(135deg, #ef4444, #f59e0b, #84cc16, #06b6d4, #8b5cf6);
+    background-size: 200% 100%;
+    animation: pop 0.25s ease, rainbowShift 2s linear infinite;
+  }
+  @keyframes rainbowShift {
+    0% { background-position: 0% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Celebration overlay */
+  .celebration-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.7);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .celebration-card {
+    background: linear-gradient(135deg, #ffffff, #f0f9ff);
+    border-radius: 24px;
+    padding: 36px 48px;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+    animation: levelUpRise 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 420px;
+    position: relative;
+  }
+  @keyframes levelUpRise {
+    0% { opacity: 0; transform: translateY(40px) scale(0.85); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .celebration-card .lvl-headline {
+    font-size: 14px; color: var(--tlo); font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .celebration-card .lvl-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 64px; font-weight: 800;
+    color: var(--blue);
+    line-height: 1;
+    margin: 8px 0 6px;
+  }
+  .celebration-card .lvl-title {
+    font-size: 22px; font-weight: 700; color: var(--thi);
+    margin-bottom: 16px;
+  }
+  .celebration-card .lvl-sub {
+    font-size: 13px; color: var(--tmd);
+    margin-bottom: 20px;
+  }
+  .celebration-card button {
+    background: var(--blue); color: white; border: 0;
+    padding: 12px 28px; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .celebration-card button:hover { background: #1d4ed8; }
+  .celebration-card.tier-promotion .lvl-num { color: var(--orange); }
+
+  /* Recap */
+  .recap-wpm {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 64px; font-weight: 800; color: var(--blue);
+    line-height: 1;
+    text-align: center;
+    margin: 8px 0 4px;
+  }
+  .recap-wpm .unit {
+    font-size: 18px; font-weight: 700;
+    color: var(--tlo);
+    margin-left: 6px;
+    letter-spacing: 1px;
+  }
+  .recap-delta-line { text-align: center; margin-bottom: 18px; min-height: 22px; }
+  .recap-delta { font-size: 13px; color: var(--tmd); font-weight: 600; }
+  .recap-best-pill {
+    display: inline-block;
+    background: linear-gradient(135deg, #fde68a, #f59e0b);
+    color: #78350f;
+    padding: 4px 14px; border-radius: 16px;
+    font-size: 13px; font-weight: 800;
+  }
+  .recap-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 18px;
+  }
+  .recap-grid .rk {
+    font-size: 11px; color: var(--tlo);
+    text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+  }
+  .recap-grid .rv {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px; font-weight: 700; color: var(--thi);
+    margin-top: 4px;
+  }
+  .recap-level { margin-bottom: 14px; }
+  .recap-level-line {
+    font-size: 12px; color: var(--tmd);
+    font-weight: 600; margin-bottom: 6px;
+  }
+  .recap-level-track {
+    height: 8px; background: var(--l3); border-radius: 4px; overflow: hidden;
+  }
+  .recap-level-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), #60a5fa);
+    transition: width 0.6s ease;
+  }
+  .recap-quest {
+    background: var(--l2);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px; color: var(--tmd); font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .recap-quest.done { background: #d1fae5; color: #065f46; }
+  @media (max-width: 600px) {
+    .recap-grid { grid-template-columns: repeat(2, 1fr); }
+    .recap-wpm { font-size: 52px; }
+  }
+
+  /* Sprint mode */
+  /* Sprint bar — fixed banner pinned to the very top of the viewport.
+     Always visible the moment Speed Test starts, regardless of scroll. */
+  .sprint-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 200;
+    display: flex; align-items: center; gap: 18px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-bottom: 1px solid #f59e0b;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.18);
+    font-size: 13px; color: #78350f;
+    font-weight: 600;
+    animation: sprintBarSlideIn 0.28s ease-out;
+  }
+  @keyframes sprintBarSlideIn {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  /* Push the page content down so the fixed banner doesn't cover the topbar */
+  body.in-sprint { padding-top: 56px; }
+  .sprint-bar .sprint-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #92400e;
+  }
+  .sprint-bar .sprint-stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #92400e;
+  }
+  .sprint-bar .sprint-stat strong {
+    font-size: 14px;
+    color: #78350f;
+  }
+  .sprint-exit {
+    margin-left: auto;
+  }
+
+  /* Sprint result — centered modal overlay so it never hides below the fold */
+  .sprint-result {
+    position: fixed;
+    inset: 0;
+    z-index: 9600;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    animation: fadeIn 0.25s ease;
+  }
+  .sprint-result > * { max-width: 580px; }
+  .sprint-result .result-card {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 16px;
+    padding: 28px 32px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+    width: 100%;
+    max-width: 580px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .sprint-result h3 {
+    margin: 0 0 18px;
+    font-size: 20px;
+    color: var(--thi);
+  }
+  .sprint-result .result-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .sprint-result .rk {
+    font-size: 11px; color: var(--tlo);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .sprint-result .rv {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px; font-weight: 700; color: var(--blue);
+    margin-top: 4px;
+  }
+  .sprint-result .result-best {
+    font-size: 13px; color: var(--tmd);
+    margin-bottom: 16px;
+    min-height: 18px;
+  }
+  .sprint-result .result-best.new-best {
+    color: var(--green); font-weight: 700;
+  }
+  .sprint-result .result-actions {
+    display: flex; gap: 8px; justify-content: center;
+  }
+
+  /* Leaderboard inside sprint result */
+  .leaderboard {
+    margin: 18px 0 8px;
+    text-align: left;
+  }
+  .leaderboard .lb-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+    font-size: 11px; font-weight: 700;
+    color: var(--tmd);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .leaderboard .lb-meta { font-weight: 500; color: var(--tlo); }
+  .leaderboard .lb-meta strong {
+    color: var(--blue);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .leaderboard .lb-list {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    background: var(--l1);
+  }
+  .leaderboard .lb-row {
+    display: grid;
+    grid-template-columns: 44px 22px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--bd);
+  }
+  .leaderboard .lb-row:last-child { border-bottom: 0; }
+  .leaderboard .lb-row.lb-ellipsis {
+    display: flex; justify-content: center;
+    color: var(--tlo);
+    padding: 4px 0;
+    letter-spacing: 6px;
+  }
+  .leaderboard .lb-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--tlo);
+  }
+  .leaderboard .lb-flag { font-size: 14px; line-height: 1; }
+  .leaderboard .lb-name {
+    color: var(--thi);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+  }
+  .leaderboard .lb-wpm {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--thi);
+  }
+  .leaderboard .lb-row.you {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.12), transparent);
+    border-left: 3px solid var(--blue);
+    cursor: pointer;
+  }
+  .leaderboard .lb-row.you:hover { background: linear-gradient(90deg, rgba(37, 99, 235, 0.20), transparent); }
+  .leaderboard .lb-row.you .lb-rank { color: var(--blue); }
+  .leaderboard .lb-row.you .lb-name { color: var(--blue); font-weight: 700; }
+  .leaderboard .lb-row.you .lb-name::after {
+    content: ' (you · click to edit)';
+    color: var(--tlo);
+    font-weight: 500;
+    font-size: 11px;
+  }
+  .leaderboard .lb-edit-hint {
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--tlo);
+    text-align: center;
+  }
+  @media (max-width: 600px) {
+    .sprint-result .result-grid { grid-template-columns: repeat(2, 1fr); }
+    .sprint-bar { flex-wrap: wrap; }
+    .sprint-exit { margin-left: 0; }
+  }
+  .btn {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px; font-weight: 600;
+    color: var(--tmd);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
+  .btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
+  .btn.primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: white; }
+
+  .help {
+    text-align: center; color: var(--tlo); font-size: 12px;
+    margin-top: 24px;
+  }
+  .help kbd {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    padding: 2px 6px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--thi);
+  }
+
+  /* Hidden input (mobile keyboard fallback) */
+  .input-shield {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <span class="brand-logo">⌨️</span>
+      <h1>Hangul Type</h1>
+    </div>
+
+    <div class="header-mid">
+      <button id="profileChip" class="profile-chip" type="button" title="Click to edit your name and country">
+        <span class="profile-flag">🏳️</span>
+        <span class="profile-name">Player</span>
+        <span class="profile-edit">✏️</span>
+      </button>
+      <button id="btnSprint" class="battle-link sprint-link" title="60-second speed test">
+        <span class="battle-icon">⚡</span>
+        <span class="battle-text">Speed Test</span>
+      </button>
+      <a id="battleLink" href="game.html" class="battle-link" title="Battle Mode — type Korean to defeat 한글 demons">
+        <span class="battle-icon" id="battleIcon">⚔️</span>
+        <span class="battle-text" id="battleText">Battle</span>
+      </a>
+    </div>
+
+    <div class="stats">
+      <div class="stat primary">
+        <div class="stat-label">WPM</div>
+        <div class="stat-value" id="wpm">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Acc</div>
+        <div class="stat-value" id="acc">100%</div>
+      </div>
+    </div>
+    <!-- Streak + Best moved into the records modal; kept as hidden stubs for legacy renderers -->
+    <span id="streak" class="legacy-stub" hidden><span class="streak-flame">🔥</span><span class="streak-num">0</span></span>
+    <span id="bestWpm" class="legacy-stub" hidden>0</span>
+  </header>
+  <!-- Stubbed elements kept in DOM as no-ops so legacy JS render calls don't error.
+       The actual league / level / daily-quest features have been removed. -->
+  <div id="leagueBadge" class="legacy-stub" hidden></div>
+  <div id="levelBadge" class="legacy-stub" hidden><div class="lv-name"></div><div class="lv-track"><div class="lv-fill"></div></div><div class="lv-sub"></div></div>
+  <span id="done" hidden>0/0</span>
+  <div id="dailyQuest" class="legacy-stub" hidden></div>
+  <div id="modeToggle" class="legacy-stub" hidden></div>
+  <div id="recordsPanel" class="records-panel" style="display:none;"></div>
+  <div id="fxLayer" class="fx-layer"></div>
+  <div id="comboChip" class="combo-chip" style="display:none;"></div>
+  <div id="celebrationOverlay" class="celebration-overlay" style="display:none;"></div>
+  <div id="profileModal" class="profile-modal" style="display:none;"></div>
+
+  <main class="practice-main">
+
+    <!-- Practice -->
+    <section class="card practice-card">
+      <div class="practice-grid">
+        <aside class="practice-side">
+          <div class="side-head">
+            <div class="avatar-blob" id="avatarBlob" title="Your typing rank">
+              <span class="avatar-emoji" id="avatarEmoji">🥚</span>
+              <span class="avatar-tier" id="avatarTier">Nameless</span>
+            </div>
+            <button class="icon-btn" id="btnRecords" title="Sprint records">📊</button>
+          </div>
+
+          <div class="topics" id="topics"></div>
+
+          <div class="side-footer">
+            <div class="settings-wrap">
+              <button class="icon-btn" id="btnSettings" title="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
+              <div class="settings-menu" id="settingsMenu" hidden>
+                <button class="setting-row" id="btnAudio">🔊 Audio: ON</button>
+                <button class="setting-row" id="btnRomanize" title="Show romanization">🅰️ Romanize: OFF</button>
+                <button class="setting-row danger" id="btnReset">Reset stats</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="practice-content">
+          <div class="target">
+            <div class="gloss" id="gloss">hello</div>
+            <div class="word" id="targetWord">안녕</div>
+            <div class="romanization" id="romanization"></div>
+          </div>
+
+          <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+          <div class="keyboard">
+            <div class="kb-toggle">
+              <span>Show:</span>
+              <span class="pill">
+                <button data-mode="hangul">한글</button>
+                <button data-mode="qwerty">QWERTY</button>
+                <button class="on" data-mode="both">Both</button>
+              </span>
+              <span class="kb-legend" title="Keys highlighted in orange require Shift">
+                <span class="kb-legend-swatch"></span> Shift
+              </span>
+            </div>
+            <div id="kb"></div>
+          </div>
+          <div class="kb-mobile-hint">⌨️ Use a desktop keyboard for the best experience. The visual keyboard guide is hidden on small screens.</div>
+        </div>
+      </div>
+
+      <!-- Hidden stubs: legacy renderers may still touch these -->
+      <div id="diag" class="legacy-stub" hidden></div>
+      <button id="btnMistakeDrill" class="legacy-stub" hidden></button>
+      <button id="btnAdaptive" class="legacy-stub" hidden></button>
+      <button id="btnSkip" class="legacy-stub" hidden></button>
+
+      <div class="sprint-bar" id="sprintBar" style="display:none;">
+        <span class="sprint-time">⏱ <span id="sprintTime">60</span>s</span>
+        <span class="sprint-stat">Words <strong id="sprintWords">0</strong></span>
+        <span class="sprint-stat">Chars <strong id="sprintChars">0</strong></span>
+        <span class="sprint-stat">WPM <strong id="sprintWpm">0</strong></span>
+        <button class="btn sprint-exit" id="btnSprintExit">Exit sprint</button>
+      </div>
+
+      <div class="sprint-result" id="sprintResult" style="display:none;">
+        <div class="result-card">
+          <h3>⚡ Sprint complete</h3>
+          <div class="result-grid">
+            <div><div class="rk">Words</div><div class="rv" id="resWords">0</div></div>
+            <div><div class="rk">Chars</div><div class="rv" id="resChars">0</div></div>
+            <div><div class="rk">Raw WPM</div><div class="rv" id="resWpm">0</div></div>
+            <div><div class="rk">Accuracy</div><div class="rv" id="resAcc">0%</div></div>
+          </div>
+          <div class="result-best" id="resBest"></div>
+          <div class="result-actions">
+            <button class="btn primary" id="btnSprintAgain">Run again</button>
+            <button class="btn" id="btnSprintBack">Back to practice</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Per-jamo accuracy heatmap — collapsed by default -->
+    <section class="card jamo-card collapsed" id="jamoCard">
+      <button class="jamo-toggle" id="btnJamoToggle" aria-expanded="false">
+        <span class="jamo-toggle-label">Per-jamo accuracy</span>
+        <span class="jamo-toggle-caret">▾</span>
+      </button>
+      <div class="jamo-body">
+        <div class="csub">Where you struggle. Drilled words automatically target your weakest jamo.</div>
+        <div id="jamoGrid"></div>
+        <div class="legend">
+          <span><span class="dot weak"></span>&lt; 70%</span>
+          <span><span class="dot med"></span>70–90%</span>
+          <span><span class="dot good"></span>90%+</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="help">
+    Press <kbd>Esc</kbd> to skip · <kbd>Tab</kbd> to peek at next word · Type with QWERTY, no IME needed.
+  </div>
+
+  <!-- Recent attempts list moved out of the main flow but kept; rendered into the
+       jamo modal so the JS render call still has a target. -->
+  <div id="recent" hidden></div>
+</div>
+
+<input type="text" class="input-shield" id="shield" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+
+<script>
+'use strict';
+
+// ============================================================
+// Hangul composition engine
+// ============================================================
+
+const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const MEDIALS  = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const FINALS   = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+const KEYMAP = {
+  'q':'ㅂ','w':'ㅈ','e':'ㄷ','r':'ㄱ','t':'ㅅ','y':'ㅛ','u':'ㅕ','i':'ㅑ','o':'ㅐ','p':'ㅔ',
+  'a':'ㅁ','s':'ㄴ','d':'ㅇ','f':'ㄹ','g':'ㅎ','h':'ㅗ','j':'ㅓ','k':'ㅏ','l':'ㅣ',
+  'z':'ㅋ','x':'ㅌ','c':'ㅊ','v':'ㅍ','b':'ㅠ','n':'ㅜ','m':'ㅡ',
+  'Q':'ㅃ','W':'ㅉ','E':'ㄸ','R':'ㄲ','T':'ㅆ','O':'ㅒ','P':'ㅖ'
+};
+
+// Reverse: jamo -> {key, shift}
+const JAMO_TO_KEY = {};
+for (const [k, v] of Object.entries(KEYMAP)) {
+  JAMO_TO_KEY[v] = { key: k.toLowerCase(), shift: k !== k.toLowerCase() };
+}
+
+const VOWEL_COMPOUND = {
+  'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ',
+  'ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ',
+  'ㅡㅣ':'ㅢ'
+};
+const VOWEL_DECOMPOSE = {
+  'ㅘ':['ㅗ','ㅏ'],'ㅙ':['ㅗ','ㅐ'],'ㅚ':['ㅗ','ㅣ'],
+  'ㅝ':['ㅜ','ㅓ'],'ㅞ':['ㅜ','ㅔ'],'ㅟ':['ㅜ','ㅣ'],
+  'ㅢ':['ㅡ','ㅣ']
+};
+
+const FINAL_COMPOUND = {
+  'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ',
+  'ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ',
+  'ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ',
+  'ㅂㅅ':'ㅄ'
+};
+const FINAL_DECOMPOSE = {
+  'ㄳ':['ㄱ','ㅅ'],'ㄵ':['ㄴ','ㅈ'],'ㄶ':['ㄴ','ㅎ'],
+  'ㄺ':['ㄹ','ㄱ'],'ㄻ':['ㄹ','ㅁ'],'ㄼ':['ㄹ','ㅂ'],'ㄽ':['ㄹ','ㅅ'],
+  'ㄾ':['ㄹ','ㅌ'],'ㄿ':['ㄹ','ㅍ'],'ㅀ':['ㄹ','ㅎ'],
+  'ㅄ':['ㅂ','ㅅ']
+};
+
+const CONSONANTS = new Set('ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split(''));
+const VOWELS_BASIC = new Set('ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅛㅜㅠㅡㅣ'.split(''));
+
+function composeSyllable(initial, medial, final) {
+  const i = INITIALS.indexOf(initial);
+  const m = MEDIALS.indexOf(medial);
+  const f = FINALS.indexOf(final || '');
+  if (i < 0 || m < 0) return (initial || '') + (medial || '') + (final || '');
+  return String.fromCharCode(0xAC00 + i * 588 + m * 28 + f);
+}
+
+// Decompose a Hangul syllable to keystrokes (sequence of basic jamo from KEYMAP)
+function syllableToKeystrokes(syl) {
+  const code = syl.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) {
+    // Not a precomposed Hangul syllable — return as is
+    return [syl];
+  }
+  const x = code - 0xAC00;
+  const i = INITIALS[Math.floor(x / 588)];
+  const m = MEDIALS[Math.floor((x % 588) / 28)];
+  const f = FINALS[x % 28];
+
+  const ks = [i];
+  // Decompose medial if compound
+  if (VOWEL_DECOMPOSE[m]) {
+    ks.push(...VOWEL_DECOMPOSE[m]);
+  } else {
+    ks.push(m);
+  }
+  // Decompose final if compound
+  if (f) {
+    if (FINAL_DECOMPOSE[f]) {
+      ks.push(...FINAL_DECOMPOSE[f]);
+    } else {
+      ks.push(f);
+    }
+  }
+  return ks;
+}
+
+// Convert a Korean word into the expected basic-jamo sequence
+function wordToKeystrokes(word) {
+  const ks = [];
+  for (const ch of word) {
+    if (ch === ' ') { ks.push(' '); continue; }
+    ks.push(...syllableToKeystrokes(ch));
+  }
+  return ks;
+}
+
+// Same, but grouped per syllable, so the UI can show syllable boundaries
+function wordToSyllableKeystrokes(word) {
+  const out = [];
+  for (const ch of word) {
+    if (ch === ' ') { out.push([' ']); continue; }
+    out.push(syllableToKeystrokes(ch));
+  }
+  return out;
+}
+
+// ============================================================
+// IME state machine
+// ============================================================
+
+class HangulIME {
+  constructor() { this.reset(); }
+  reset() {
+    this.committed = '';
+    this.buf = { initial: '', medial: '', final: '' };
+  }
+
+  get display() {
+    let out = this.committed;
+    if (this.buf.initial || this.buf.medial || this.buf.final) {
+      out += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final);
+    }
+    return out;
+  }
+
+  // Returns the in-progress part separately so the UI can color it
+  get parts() {
+    let composing = '';
+    if (this.buf.initial || this.buf.medial || this.buf.final) {
+      composing = composeSyllable(this.buf.initial, this.buf.medial, this.buf.final);
+    }
+    return { committed: this.committed, composing };
+  }
+
+  commitBuffer() {
+    if (this.buf.initial || this.buf.medial || this.buf.final) {
+      this.committed += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final);
+    }
+    this.buf = { initial: '', medial: '', final: '' };
+  }
+
+  type(jamo) {
+    const isCons = CONSONANTS.has(jamo);
+    const isVow = VOWELS_BASIC.has(jamo);
+    if (!isCons && !isVow) return;
+
+    if (isCons) this._typeConsonant(jamo);
+    else this._typeVowel(jamo);
+  }
+
+  _typeConsonant(c) {
+    const b = this.buf;
+    if (!b.initial && !b.medial && !b.final) {
+      b.initial = c;
+    } else if (b.initial && !b.medial) {
+      // Two consonants in a row, no vowel: commit first as orphan, start new
+      this.commitBuffer();
+      this.buf.initial = c;
+    } else if (b.initial && b.medial && !b.final) {
+      // Try to set as final
+      if (FINALS.includes(c)) {
+        b.final = c;
+      } else {
+        // ㄸ ㅃ ㅉ can't be finals
+        this.commitBuffer();
+        this.buf.initial = c;
+      }
+    } else if (b.initial && b.medial && b.final) {
+      // Try compound final
+      const compound = FINAL_COMPOUND[b.final + c];
+      if (compound) {
+        b.final = compound;
+      } else {
+        this.commitBuffer();
+        this.buf.initial = c;
+      }
+    }
+  }
+
+  _typeVowel(v) {
+    const b = this.buf;
+    if (!b.initial && !b.medial) {
+      // Orphan vowel
+      this.committed += v;
+      return;
+    }
+    if (b.initial && !b.medial) {
+      b.medial = v;
+      return;
+    }
+    if (b.initial && b.medial && !b.final) {
+      const compound = VOWEL_COMPOUND[b.medial + v];
+      if (compound) {
+        b.medial = compound;
+      } else {
+        // Commit current, then orphan vowel
+        this.commitBuffer();
+        this.committed += v;
+      }
+      return;
+    }
+    if (b.initial && b.medial && b.final) {
+      // Kick-out rule: last jamo of final moves to be initial of new syllable
+      const finalDecomposed = FINAL_DECOMPOSE[b.final] || [b.final];
+      const newInitial = finalDecomposed[finalDecomposed.length - 1];
+      const remainingFinal = finalDecomposed.length > 1 ? finalDecomposed.slice(0, -1).join('') : '';
+
+      // Re-compose remaining final (might still be compound after remove)
+      let rfFinal = '';
+      if (remainingFinal.length === 1) rfFinal = remainingFinal;
+      else if (remainingFinal.length > 1) rfFinal = FINAL_COMPOUND[remainingFinal] || remainingFinal[0];
+
+      // Commit syllable with reduced final
+      this.committed += composeSyllable(b.initial, b.medial, rfFinal);
+      this.buf = { initial: newInitial, medial: v, final: '' };
+    }
+  }
+
+  backspace() {
+    const b = this.buf;
+    if (b.final) {
+      // If compound final, remove last; else clear
+      const dec = FINAL_DECOMPOSE[b.final];
+      if (dec) b.final = dec[0];
+      else b.final = '';
+      return;
+    }
+    if (b.medial) {
+      const dec = VOWEL_DECOMPOSE[b.medial];
+      if (dec) b.medial = dec[0];
+      else b.medial = '';
+      return;
+    }
+    if (b.initial) {
+      b.initial = '';
+      return;
+    }
+    if (this.committed.length) {
+      this.committed = this.committed.slice(0, -1);
+    }
+  }
+}
+
+// ============================================================
+// Vocabulary — common TOPIK 1 words by topic
+// ============================================================
+
+const TOPICS = [
+  { id: 'basics', name: 'Basics', words: [
+    { ko: '안녕', en: 'hello' },
+    { ko: '안녕하세요', en: 'hello (formal)' },
+    { ko: '감사', en: 'thanks' },
+    { ko: '죄송', en: 'sorry (formal)' },
+    { ko: '미안', en: 'sorry' },
+    { ko: '네', en: 'yes' },
+    { ko: '아니요', en: 'no' },
+    { ko: '이름', en: 'name' },
+    { ko: '한국', en: 'Korea' },
+    { ko: '영어', en: 'English' },
+    { ko: '사람', en: 'person' },
+    { ko: '친구', en: 'friend' }
+  ], topikLevel: 1 },
+  { id: 'family', name: 'Family', words: [
+    { ko: '가족', en: 'family' },
+    { ko: '어머니', en: 'mother' },
+    { ko: '아버지', en: 'father' },
+    { ko: '누나', en: 'older sister (M)' },
+    { ko: '언니', en: 'older sister (F)' },
+    { ko: '형', en: 'older brother (M)' },
+    { ko: '오빠', en: 'older brother (F)' },
+    { ko: '동생', en: 'younger sibling' },
+    { ko: '할머니', en: 'grandmother' },
+    { ko: '할아버지', en: 'grandfather' },
+    { ko: '아들', en: 'son' },
+    { ko: '딸', en: 'daughter' }
+  ], topikLevel: 1 },
+  { id: 'food', name: 'Food', words: [
+    { ko: '음식', en: 'food' },
+    { ko: '밥', en: 'rice / meal' },
+    { ko: '물', en: 'water' },
+    { ko: '김치', en: 'kimchi' },
+    { ko: '빵', en: 'bread' },
+    { ko: '사과', en: 'apple' },
+    { ko: '우유', en: 'milk' },
+    { ko: '커피', en: 'coffee' },
+    { ko: '차', en: 'tea' },
+    { ko: '고기', en: 'meat' },
+    { ko: '야채', en: 'vegetables' },
+    { ko: '라면', en: 'ramen' }
+  ], topikLevel: 1 },
+  { id: 'time', name: 'Time', words: [
+    { ko: '시간', en: 'time' },
+    { ko: '오늘', en: 'today' },
+    { ko: '내일', en: 'tomorrow' },
+    { ko: '어제', en: 'yesterday' },
+    { ko: '지금', en: 'now' },
+    { ko: '아침', en: 'morning' },
+    { ko: '저녁', en: 'evening' },
+    { ko: '밤', en: 'night' },
+    { ko: '주말', en: 'weekend' },
+    { ko: '월요일', en: 'Monday' },
+    { ko: '화요일', en: 'Tuesday' },
+    { ko: '수요일', en: 'Wednesday' }
+  ], topikLevel: 1 },
+  { id: 'numbers', name: 'Numbers', words: [
+    { ko: '일', en: 'one' },
+    { ko: '이', en: 'two' },
+    { ko: '삼', en: 'three' },
+    { ko: '사', en: 'four' },
+    { ko: '오', en: 'five' },
+    { ko: '육', en: 'six' },
+    { ko: '칠', en: 'seven' },
+    { ko: '팔', en: 'eight' },
+    { ko: '구', en: 'nine' },
+    { ko: '십', en: 'ten' },
+    { ko: '백', en: 'hundred' },
+    { ko: '천', en: 'thousand' }
+  ], topikLevel: 1 },
+  { id: 'verbs', name: 'Verbs', words: [
+    { ko: '가다', en: 'to go' },
+    { ko: '오다', en: 'to come' },
+    { ko: '먹다', en: 'to eat' },
+    { ko: '보다', en: 'to see' },
+    { ko: '하다', en: 'to do' },
+    { ko: '사다', en: 'to buy' },
+    { ko: '자다', en: 'to sleep' },
+    { ko: '읽다', en: 'to read' },
+    { ko: '쓰다', en: 'to write' },
+    { ko: '좋다', en: 'to be good' },
+    { ko: '알다', en: 'to know' },
+    { ko: '듣다', en: 'to listen' }
+  ], topikLevel: 1 },
+  { id: 'places', name: 'Places', words: [
+    { ko: '학교', en: 'school' },
+    { ko: '집', en: 'home' },
+    { ko: '회사', en: 'company' },
+    { ko: '식당', en: 'restaurant' },
+    { ko: '도서관', en: 'library' },
+    { ko: '병원', en: 'hospital' },
+    { ko: '은행', en: 'bank' },
+    { ko: '공항', en: 'airport' },
+    { ko: '시장', en: 'market' },
+    { ko: '공원', en: 'park' },
+    { ko: '화장실', en: 'restroom' },
+    { ko: '가게', en: 'store' }
+  ], topikLevel: 1 },
+  { id: 'feelings', name: 'Feelings', words: [
+    { ko: '행복', en: 'happiness' },
+    { ko: '사랑', en: 'love' },
+    { ko: '좋아요', en: 'I like it' },
+    { ko: '싫어요', en: 'I dislike it' },
+    { ko: '기쁘다', en: 'to be glad' },
+    { ko: '화나다', en: 'to be angry' },
+    { ko: '놀라다', en: 'to be surprised' },
+    { ko: '무섭다', en: 'to be scared' },
+    { ko: '피곤하다', en: 'to be tired' },
+    { ko: '재미있다', en: 'to be fun' },
+    { ko: '슬픔', en: 'sadness' },
+    { ko: '미안해', en: 'sorry (casual)' }
+  ], topikLevel: 1 },
+  { id: 'sentences', name: 'Sentences', words: [
+    { ko: '안녕하세요', en: 'Hello (formal)' },
+    { ko: '만나서 반가워요', en: 'Nice to meet you' },
+    { ko: '저는 학생이에요', en: "I'm a student" },
+    { ko: '한국어를 공부해요', en: 'I study Korean' },
+    { ko: '점심을 먹어요', en: 'I eat lunch' },
+    { ko: '물을 주세요', en: 'Water please' },
+    { ko: '이름이 뭐예요', en: "What's your name" },
+    { ko: '어디에서 왔어요', en: 'Where are you from' },
+    { ko: '저는 미국 사람이에요', en: "I'm American" },
+    { ko: '오늘 날씨가 좋아요', en: 'The weather is nice today' },
+    { ko: '내일 만나요', en: 'See you tomorrow' },
+    { ko: '감사합니다', en: 'Thank you' },
+    { ko: '잘 지내세요', en: 'Take care' },
+    { ko: '커피 한 잔 주세요', en: 'One coffee please' },
+    { ko: '시간이 없어요', en: "I don't have time" },
+    { ko: '책을 읽어요', en: 'I am reading a book' },
+    { ko: '친구를 만나요', en: 'I am meeting a friend' },
+    { ko: '잘 먹겠습니다', en: "I'll eat well (pre-meal)" }
+  ], topikLevel: 1 },
+
+  // ─────────── TOPIK 2 (intermediate) ───────────
+  { id: 't2_verbs', name: 'TOPIK 2 · Verbs', topikLevel: 2, words: [
+    { ko: '결정하다', en: 'to decide' },     { ko: '확인하다', en: 'to confirm' },
+    { ko: '약속하다', en: 'to promise' },    { ko: '준비하다', en: 'to prepare' },
+    { ko: '노력하다', en: 'to try' },        { ko: '걱정하다', en: 'to worry' },
+    { ko: '후회하다', en: 'to regret' },     { ko: '느끼다', en: 'to feel' },
+    { ko: '기억하다', en: 'to remember' },   { ko: '잊어버리다', en: 'to forget' },
+    { ko: '가져오다', en: 'to bring' },      { ko: '도착하다', en: 'to arrive' },
+    { ko: '출발하다', en: 'to depart' },     { ko: '여행하다', en: 'to travel' },
+    { ko: '결혼하다', en: 'to marry' },      { ko: '사용하다', en: 'to use' },
+    { ko: '필요하다', en: 'to need' },       { ko: '소개하다', en: 'to introduce' },
+    { ko: '신청하다', en: 'to apply' },      { ko: '취소하다', en: 'to cancel' },
+    { ko: '연습하다', en: 'to practice' },   { ko: '운동하다', en: 'to exercise' },
+    { ko: '청소하다', en: 'to clean' },      { ko: '요리하다', en: 'to cook' },
+    { ko: '쇼핑하다', en: 'to shop' },       { ko: '구경하다', en: 'to look around' }
+  ], topikLevel: 1 },
+  { id: 't2_adj', name: 'TOPIK 2 · Adjectives', topikLevel: 2, words: [
+    { ko: '깨끗하다', en: 'clean' },        { ko: '더럽다', en: 'dirty' },
+    { ko: '친절하다', en: 'kind' },         { ko: '똑똑하다', en: 'smart' },
+    { ko: '게으르다', en: 'lazy' },         { ko: '부지런하다', en: 'diligent' },
+    { ko: '위험하다', en: 'dangerous' },    { ko: '안전하다', en: 'safe' },
+    { ko: '편하다', en: 'comfortable' },    { ko: '불편하다', en: 'uncomfortable' },
+    { ko: '따뜻하다', en: 'warm' },         { ko: '시원하다', en: 'cool' },
+    { ko: '맑다', en: 'clear' },            { ko: '흐리다', en: 'cloudy' },
+    { ko: '복잡하다', en: 'complex' },      { ko: '간단하다', en: 'simple' },
+    { ko: '특별하다', en: 'special' },      { ko: '비슷하다', en: 'similar' },
+    { ko: '다르다', en: 'different' },      { ko: '느리다', en: 'slow' },
+    { ko: '조용하다', en: 'quiet' },        { ko: '시끄럽다', en: 'noisy' }
+  ], topikLevel: 1 },
+  { id: 't2_nouns', name: 'TOPIK 2 · Nouns', topikLevel: 2, words: [
+    { ko: '사회', en: 'society' },          { ko: '경제', en: 'economy' },
+    { ko: '정부', en: 'government' },       { ko: '회의', en: 'meeting' },
+    { ko: '문제', en: 'problem' },          { ko: '결과', en: 'result' },
+    { ko: '원인', en: 'cause' },            { ko: '환경', en: 'environment' },
+    { ko: '건강', en: 'health' },           { ko: '운동', en: 'exercise' },
+    { ko: '휴식', en: 'rest' },             { ko: '직업', en: 'job' },
+    { ko: '교육', en: 'education' },        { ko: '문화', en: 'culture' },
+    { ko: '역사', en: 'history' },          { ko: '예술', en: 'art' },
+    { ko: '음악', en: 'music' },            { ko: '영화', en: 'movie' },
+    { ko: '미래', en: 'future' },           { ko: '과거', en: 'past' },
+    { ko: '현재', en: 'present' },          { ko: '의견', en: 'opinion' },
+    { ko: '설명', en: 'explanation' },      { ko: '계획', en: 'plan' },
+    { ko: '경험', en: 'experience' },       { ko: '관계', en: 'relationship' }
+  ], topikLevel: 1 },
+  { id: 't2_phrases', name: 'TOPIK 2 · Phrases', topikLevel: 2, words: [
+    { ko: '도와주세요', en: 'please help me' },
+    { ko: '잠깐만요', en: 'just a moment' },
+    { ko: '알겠습니다', en: 'I understand' },
+    { ko: '괜찮습니다', en: "it's okay" },
+    { ko: '잘 부탁드립니다', en: 'I look forward to working with you' },
+    { ko: '오랜만입니다', en: "long time no see" },
+    { ko: '다음에 봐요', en: 'see you next time' },
+    { ko: '천천히 말해 주세요', en: 'please speak slowly' },
+    { ko: '한 번 더 말해주세요', en: 'please say it once more' },
+    { ko: '저도 그렇게 생각해요', en: 'I think so too' },
+    { ko: '시간이 있으세요', en: 'do you have time' },
+    { ko: '약속을 지킬게요', en: "I'll keep my promise" },
+    { ko: '꿈이 무엇입니까', en: "what's your dream" },
+    { ko: '취미가 뭐예요', en: "what's your hobby" },
+    { ko: '한국에서 오래 살았어요', en: "I've lived in Korea a long time" }
+  ], topikLevel: 1 },
+  { id: 't2_sentences', name: 'TOPIK 2 · Sentences', topikLevel: 2, words: [
+    { ko: '오늘은 바빠서 시간이 없어요', en: "I'm busy today so I have no time" },
+    { ko: '한국어를 배우는 것이 어려워요', en: 'Learning Korean is difficult' },
+    { ko: '다음 주에 시험이 있어요', en: 'I have an exam next week' },
+    { ko: '친구와 같이 영화를 봤어요', en: 'I watched a movie with a friend' },
+    { ko: '주말에 등산을 갈 예정이에요', en: "I plan to go hiking this weekend" },
+    { ko: '한국에 가본 적이 있어요', en: 'I have been to Korea' },
+    { ko: '나는 매일 운동을 합니다', en: 'I exercise every day' },
+    { ko: '내일 비가 올 것 같아요', en: "It looks like it'll rain tomorrow" },
+    { ko: '한국 음식을 좋아하지만 매워요', en: 'I like Korean food but it is spicy' },
+    { ko: '회사에 가야 해서 일찍 일어나요', en: 'I have to go to work so I wake up early' }
+  ]}
+];
+
+// "All" topic = flatten + shuffle
+function buildAllWords() {
+  const all = [];
+  for (const t of TOPICS) all.push(...t.words);
+  return all;
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ============================================================
+// Per-jamo stats (localStorage persisted)
+// ============================================================
+
+const STATS_KEY = 'hangul-type-stats-v1';
+const PROGRESS_KEY = 'hangul-type-progress-v1';
+
+// ============================================================
+// Supabase backend config (leave empty until you've deployed; app
+// degrades gracefully — Practice mode works fully offline)
+// ============================================================
+// e.g. 'https://xyzcompany.supabase.co'
+// your project's anon key
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { perJamo: {}, history: [] };
+}
+function saveStats(s) {
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch (e) {}
+}
+let stats = loadStats();
+
+// Common IANA timezone → ISO 3166-1 alpha-2 country code
+const COUNTRY_BY_TZ = {
+  'Asia/Seoul':'KR','Asia/Pyongyang':'KP','Asia/Tokyo':'JP','Asia/Shanghai':'CN','Asia/Hong_Kong':'HK',
+  'Asia/Taipei':'TW','Asia/Singapore':'SG','Asia/Kuala_Lumpur':'MY','Asia/Bangkok':'TH','Asia/Jakarta':'ID',
+  'Asia/Manila':'PH','Asia/Ho_Chi_Minh':'VN','Asia/Saigon':'VN','Asia/Kolkata':'IN','Asia/Calcutta':'IN',
+  'Asia/Dubai':'AE','Asia/Riyadh':'SA','Asia/Tehran':'IR','Asia/Karachi':'PK','Asia/Dhaka':'BD',
+  'Asia/Yangon':'MM','Asia/Rangoon':'MM','Asia/Almaty':'KZ','Asia/Tashkent':'UZ','Asia/Yekaterinburg':'RU',
+  'Europe/London':'GB','Europe/Dublin':'IE','Europe/Paris':'FR','Europe/Berlin':'DE','Europe/Madrid':'ES',
+  'Europe/Rome':'IT','Europe/Amsterdam':'NL','Europe/Brussels':'BE','Europe/Lisbon':'PT','Europe/Vienna':'AT',
+  'Europe/Zurich':'CH','Europe/Stockholm':'SE','Europe/Oslo':'NO','Europe/Copenhagen':'DK','Europe/Helsinki':'FI',
+  'Europe/Warsaw':'PL','Europe/Prague':'CZ','Europe/Budapest':'HU','Europe/Athens':'GR','Europe/Bucharest':'RO',
+  'Europe/Sofia':'BG','Europe/Moscow':'RU','Europe/Istanbul':'TR','Europe/Kiev':'UA','Europe/Kyiv':'UA',
+  'America/New_York':'US','America/Chicago':'US','America/Denver':'US','America/Los_Angeles':'US',
+  'America/Phoenix':'US','America/Anchorage':'US','America/Adak':'US','America/Honolulu':'US',
+  'America/Toronto':'CA','America/Vancouver':'CA','America/Edmonton':'CA','America/Halifax':'CA',
+  'America/Mexico_City':'MX','America/Tijuana':'MX','America/Sao_Paulo':'BR','America/Rio_Branco':'BR',
+  'America/Buenos_Aires':'AR','America/Argentina/Buenos_Aires':'AR','America/Santiago':'CL','America/Lima':'PE',
+  'America/Bogota':'CO','America/Caracas':'VE','America/Havana':'CU','America/Panama':'PA',
+  'Africa/Cairo':'EG','Africa/Johannesburg':'ZA','Africa/Lagos':'NG','Africa/Nairobi':'KE','Africa/Casablanca':'MA',
+  'Africa/Algiers':'DZ','Africa/Tunis':'TN','Africa/Accra':'GH','Africa/Addis_Ababa':'ET',
+  'Australia/Sydney':'AU','Australia/Melbourne':'AU','Australia/Brisbane':'AU','Australia/Perth':'AU',
+  'Australia/Adelaide':'AU','Pacific/Auckland':'NZ','Pacific/Honolulu':'US','Pacific/Fiji':'FJ'
+};
+
+const COUNTRY_NAMES = {
+  KR:'South Korea',KP:'North Korea',JP:'Japan',CN:'China',HK:'Hong Kong',TW:'Taiwan',SG:'Singapore',
+  MY:'Malaysia',TH:'Thailand',ID:'Indonesia',PH:'Philippines',VN:'Vietnam',IN:'India',AE:'UAE',
+  SA:'Saudi Arabia',IR:'Iran',PK:'Pakistan',BD:'Bangladesh',MM:'Myanmar',KZ:'Kazakhstan',UZ:'Uzbekistan',
+  GB:'United Kingdom',IE:'Ireland',FR:'France',DE:'Germany',ES:'Spain',IT:'Italy',NL:'Netherlands',
+  BE:'Belgium',PT:'Portugal',AT:'Austria',CH:'Switzerland',SE:'Sweden',NO:'Norway',DK:'Denmark',
+  FI:'Finland',PL:'Poland',CZ:'Czechia',HU:'Hungary',GR:'Greece',RO:'Romania',BG:'Bulgaria',
+  RU:'Russia',TR:'Turkey',UA:'Ukraine',US:'United States',CA:'Canada',MX:'Mexico',BR:'Brazil',
+  AR:'Argentina',CL:'Chile',PE:'Peru',CO:'Colombia',VE:'Venezuela',CU:'Cuba',PA:'Panama',
+  EG:'Egypt',ZA:'South Africa',NG:'Nigeria',KE:'Kenya',MA:'Morocco',DZ:'Algeria',TN:'Tunisia',
+  GH:'Ghana',ET:'Ethiopia',AU:'Australia',NZ:'New Zealand',FJ:'Fiji'
+};
+
+function detectCountry() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz && COUNTRY_BY_TZ[tz]) return COUNTRY_BY_TZ[tz];
+  } catch (e) {}
+  try {
+    const lang = (navigator.language || '').toUpperCase();
+    const m = lang.match(/-([A-Z]{2})$/);
+    if (m && COUNTRY_NAMES[m[1]]) return m[1];
+    if (COUNTRY_NAMES[lang]) return lang;
+  } catch (e) {}
+  return 'US';
+}
+
+function flagEmoji(cc) {
+  if (!cc || cc.length !== 2) return '🏳️';
+  const A_BASE = 0x1F1E6 - 'A'.charCodeAt(0);
+  return String.fromCodePoint(cc.charCodeAt(0) + A_BASE) + String.fromCodePoint(cc.charCodeAt(1) + A_BASE);
+}
+
+const DEFAULT_PROGRESS = {
+  streakDays: [],
+  bestWPM: 0,
+  bestSprintWPM: 0,
+  topicCompleted: {},
+  // v2 gamification
+  xp: 0,
+  level: 1,
+  sprintHistory: [],
+  comboBest: 0,
+  dailyQuest: { date: null, type: null, target: 0, value: 0, claimed: false },
+  streakFreezes: 1,
+  lastFreezeGrantWeek: null,
+  leagueTier: 'bronze',
+  profile: { name: 'Player', countryCode: null }, // null means auto-detect on load
+  // v4: SRS, mastery, mode, online identity
+  playerId: null,                          // UUIDv4, generated on first launch
+  mode: 'practice',                        // 'practice' | 'league'
+  wordSrs: {},                             // { [koWord]: { ease, interval, dueAt, reps, lapses, lastRated } }
+  topicMastery: {},                        // { [topicId]: { level: 1..5, lastDecayCheck: isoString, lastPracticedAt: isoString } }
+  pendingXp: { weekly: 0, allTime: 0 },    // batched, drained by submit-xp
+  weekIso: null,                           // current week key (used to roll over local pendingXp)
+  league: { tier: 'bronze', bracketKey: null, position: null, lastSyncAt: null },
+  titles: []                               // earned permanent titles, never lost
+};
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      // Sanity-clamp absurdly-high WPM values that got polluted by the
+      // pre-fix first-keystroke spike (saw 12000 in the wild).
+      const safeBestWPM = Math.min(Number(p.bestWPM) || 0, 220);
+      const safeBestSprintWPM = Math.min(Number(p.bestSprintWPM) || 0, 220);
+      return {
+        streakDays: Array.isArray(p.streakDays) ? p.streakDays : [],
+        bestWPM: safeBestWPM,
+        bestSprintWPM: safeBestSprintWPM,
+        topicCompleted: p.topicCompleted && typeof p.topicCompleted === 'object' ? p.topicCompleted : {},
+        xp: Number(p.xp) || 0,
+        level: Number(p.level) || 1,
+        sprintHistory: Array.isArray(p.sprintHistory) ? p.sprintHistory : [],
+        comboBest: Number(p.comboBest) || 0,
+        dailyQuest: (p.dailyQuest && typeof p.dailyQuest === 'object') ? p.dailyQuest : { date: null, type: null, target: 0, value: 0, claimed: false },
+        streakFreezes: Number.isFinite(p.streakFreezes) ? p.streakFreezes : 1,
+        lastFreezeGrantWeek: p.lastFreezeGrantWeek || null,
+        // Backfill league tier from bestSprintWPM so v1 users don't see a phantom promotion on first post-upgrade sprint
+        leagueTier: p.leagueTier || 'bronze',
+        profile: (p.profile && typeof p.profile === 'object')
+          ? { name: p.profile.name || 'Player', countryCode: p.profile.countryCode || detectCountry() }
+          : { name: 'Player', countryCode: detectCountry() },
+        playerId: p.playerId || generatePlayerId(),
+        mode: (p.mode === 'league' || p.mode === 'practice') ? p.mode : 'practice',
+        wordSrs: (p.wordSrs && typeof p.wordSrs === 'object') ? p.wordSrs : {},
+        topicMastery: (p.topicMastery && typeof p.topicMastery === 'object') ? p.topicMastery : {},
+        pendingXp: (p.pendingXp && typeof p.pendingXp === 'object') ? p.pendingXp : { weekly: 0, allTime: 0 },
+        weekIso: p.weekIso || null,
+        league: (p.league && typeof p.league === 'object') ? p.league : { tier: 'bronze', bracketKey: null, position: null, lastSyncAt: null },
+        titles: Array.isArray(p.titles) ? p.titles : []
+      };
+    }
+  } catch (e) {}
+  const fresh = JSON.parse(JSON.stringify(DEFAULT_PROGRESS));
+  fresh.profile.countryCode = detectCountry();
+  fresh.playerId = generatePlayerId();
+  return fresh;
+}
+
+function generatePlayerId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  // Fallback for environments without crypto.randomUUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+function saveProgress(p) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
+}
+let progress = loadProgress();
+
+// ============================================================
+// XP + leveling
+// ============================================================
+
+// XP needed to graduate level n
+
+// queued celebration for next safe moment
+function dayKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function calcStreak(days) {
+  if (!days || !days.length) return 0;
+  const set = new Set(days);
+  const d = new Date();
+  if (!set.has(dayKey(d))) {
+    d.setDate(d.getDate() - 1);
+    if (!set.has(dayKey(d))) return 0;
+  }
+  let streak = 0;
+  while (set.has(dayKey(d))) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function recordDailyStreak() {
+  const today = dayKey(new Date());
+  if (!progress.streakDays.includes(today)) {
+    progress.streakDays.push(today);
+    // Cap to last 365 entries to avoid unbounded growth
+    if (progress.streakDays.length > 365) {
+      progress.streakDays = progress.streakDays.slice(-365);
+    }
+    saveProgress(progress);
+  }
+}
+
+function recordTopicCompletion(topicId, word) {
+  if (topicId === 'all') {
+    // For 'all' mode, find which topic the word belongs to and credit there
+    for (const t of TOPICS) {
+      if (t.words.some(w => w.ko === word)) {
+        if (!Array.isArray(progress.topicCompleted[t.id])) progress.topicCompleted[t.id] = [];
+        if (!progress.topicCompleted[t.id].includes(word)) {
+          progress.topicCompleted[t.id].push(word);
+        }
+        break;
+      }
+    }
+  } else {
+    if (!Array.isArray(progress.topicCompleted[topicId])) progress.topicCompleted[topicId] = [];
+    if (!progress.topicCompleted[topicId].includes(word)) {
+      progress.topicCompleted[topicId].push(word);
+    }
+  }
+  saveProgress(progress);
+}
+
+function maybeUpdateBestWPM(currentWPM) {
+  if (currentWPM > progress.bestWPM) {
+    progress.bestWPM = currentWPM;
+    saveProgress(progress);
+    return true;
+  }
+  return false;
+}
+
+function totalUniqueDone() {
+  const seen = new Set();
+  for (const k of Object.keys(progress.topicCompleted)) {
+    const arr = progress.topicCompleted[k] || [];
+    for (const w of arr) seen.add(w);
+  }
+  return seen.size;
+}
+
+// ============================================================
+// SRS (simplified SM-2) — per-word interval-based review
+// ============================================================
+
+const DAY_MS = 86400000;
+// drop one level after this many days idle
+
+function nowIso() { return new Date().toISOString(); }
+
+function rateWord(koWord, rating) {
+  if (!progress.wordSrs[koWord]) {
+    progress.wordSrs[koWord] = { ease: 2.5, interval: 0, dueAt: nowIso(), reps: 0, lapses: 0, lastRated: null };
+  }
+  const s = progress.wordSrs[koWord];
+  s.lastRated = nowIso();
+  if (rating < 3) {
+    // Lapse: re-enter the learning queue with a 10-minute relearn window
+    // (standard SM-2 "relearning" step), not a full day. Otherwise the user
+    // doesn't see the failed word again for 24h, which destroys retention.
+    s.lapses++;
+    s.reps = 0;
+    s.interval = 0;
+    s.ease = Math.max(1.3, s.ease - 0.2);
+    s.dueAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    return;
+  }
+  // Update ease FIRST so the new interval uses the new ease (canonical SM-2 order)
+  s.ease = Math.max(1.3, s.ease + (0.1 - (5 - rating) * (0.08 + (5 - rating) * 0.02)));
+  s.reps++;
+  if (s.reps === 1) s.interval = 1;
+  else if (s.reps === 2) s.interval = 6;
+  else s.interval = Math.round(s.interval * s.ease);
+  s.dueAt = new Date(Date.now() + s.interval * DAY_MS).toISOString();
+}
+
+function ratingFromAccuracy(acc) {
+  // 95% = perfect (5) — single-jamo typos on short words shouldn't punish the player.
+  if (acc >= 95) return 5;
+  if (acc >= 85) return 4;
+  if (acc >= 70) return 3;
+  return 2;
+}
+
+// ============================================================
+// Topic mastery (1..5) computed from SRS state
+// ============================================================
+
+function topicMasteryLevel(topicId) {
+  const t = TOPICS.find(x => x.id === topicId);
+  if (!t) return 1;
+  const total = t.words.length;
+  if (!total) return 1;
+  let pastOneDay = 0, pastSixDay = 0, pastFourteen = 0;
+  for (const w of t.words) {
+    const s = progress.wordSrs[w.ko];
+    if (!s) continue;
+    if (s.interval >= 1)  pastOneDay++;
+    if (s.interval >= 6)  pastSixDay++;
+    if (s.interval >= 14) pastFourteen++;
+  }
+  // Allow 1-word slack at gold so a single late word doesn't block topic mastery
+  if (pastFourteen / total >= 0.95) return 5; // gold-locked (within 1 word)
+  if (pastFourteen >= total * 0.75) return 4;
+  if (pastSixDay   >= total * 0.50) return 3;
+  if (pastOneDay   >= total * 0.25) return 2;
+  if (pastOneDay   > 0)             return 1;
+  return 1;
+}
+
+function topicMasteryStored(topicId) {
+  return progress.topicMastery[topicId] || { level: 1, lastDecayCheck: nowIso(), lastPracticedAt: null };
+}
+
+function recordTopicPractice(topicId) {
+  const m = topicMasteryStored(topicId);
+  m.lastPracticedAt = nowIso();
+  m.level = Math.max(m.level, topicMasteryLevel(topicId));
+  progress.topicMastery[topicId] = m;
+}
+
+// Non-linear decay: high tiers fade slow, low tiers fade fast.
+// Lv 5 = gold-locked (no decay). Lv 4 → 3 after 14 days idle, Lv 3 → 2 after 7 days,
+// Lv 2 → 1 after 4 days. Better matches empirical retention curves.
+// ============================================================
+// SRS-aware word selection (used by pickNextWordIdx when srsOn)
+// ============================================================
+
+// "Mistake graveyard": top N most-lapsed words across all topics, for one-tap drill.
+function getMistakeWords(limit) {
+  limit = limit || 8;
+  const all = [];
+  for (const t of TOPICS) {
+    for (const w of t.words) {
+      const s = progress.wordSrs[w.ko];
+      if (s && s.lapses > 0) {
+        all.push({ ko: w.ko, en: w.en, lapses: s.lapses, dueAt: new Date(s.dueAt).getTime() });
+      }
+    }
+  }
+  all.sort((a, b) => (b.lapses - a.lapses) || (a.dueAt - b.dueAt));
+  return all.slice(0, limit);
+}
+
+function srsSelectIndex(words, currentIdx) {
+  const now = Date.now();
+  const due = [];
+  const fresh = [];
+  for (let i = 0; i < words.length; i++) {
+    const ko = words[i].ko;
+    const s = progress.wordSrs[ko];
+    if (!s) { fresh.push(i); continue; }
+    if (new Date(s.dueAt).getTime() <= now) {
+      due.push({ i, dueAt: new Date(s.dueAt).getTime(), lapses: s.lapses || 0 });
+    }
+  }
+  if (due.length) {
+    // Sort: most lapses first (chronically failed words get priority), then oldest dueAt.
+    // Prevents starvation of words the user keeps missing.
+    due.sort((a, b) => (b.lapses - a.lapses) || (a.dueAt - b.dueAt));
+    for (const d of due) if (d.i !== currentIdx) return d.i;
+    return due[0].i;
+  }
+  if (fresh.length) {
+    for (const i of fresh) if (i !== currentIdx) return i;
+    return fresh[0];
+  }
+  return (currentIdx + 1) % words.length;
+}
+
+function recordKeystroke(expectedJamo, actualJamo) {
+  if (!stats.perJamo[expectedJamo]) stats.perJamo[expectedJamo] = { tries: 0, hits: 0 };
+  const j = stats.perJamo[expectedJamo];
+  j.tries++;
+  if (expectedJamo === actualJamo) j.hits++;
+  saveStats(stats);
+}
+
+// ============================================================
+// UI: keyboard
+// ============================================================
+
+const KB_LAYOUT = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['z','x','c','v','b','n','m']
+];
+
+function buildKeyboard() {
+  const kb = document.getElementById('kb');
+  kb.innerHTML = '';
+  let displayMode = 'both';
+  document.querySelectorAll('.kb-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.kb-toggle button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      displayMode = btn.dataset.mode;
+      buildKeyboardKeys(displayMode);
+    });
+  });
+  buildKeyboardKeys(displayMode);
+}
+
+function buildKeyboardKeys(mode) {
+  const kb = document.getElementById('kb');
+  kb.innerHTML = '';
+  KB_LAYOUT.forEach((row, idx) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row r' + (idx + 1);
+    row.forEach(k => {
+      const key = document.createElement('div');
+      key.className = 'key';
+      key.dataset.key = k;
+      const jamo = KEYMAP[k] || '';
+      const shifted = KEYMAP[k.toUpperCase()];
+      let html = '';
+      if (mode === 'hangul') {
+        html = `<div class="jamo">${jamo}</div>`;
+      } else if (mode === 'qwerty') {
+        html = `<div class="jamo">${k.toUpperCase()}</div>`;
+      } else {
+        html = `<div class="jamo">${jamo}</div><div class="qwerty">${k.toUpperCase()}</div>`;
+      }
+      if (shifted && shifted !== jamo) {
+        html += `<div class="shift">${shifted}</div>`;
+      }
+      key.innerHTML = html;
+      rowEl.appendChild(key);
+    });
+    kb.appendChild(rowEl);
+  });
+}
+
+function highlightTargetKey(jamo) {
+  document.querySelectorAll('.key').forEach(k => {
+    k.classList.remove('target', 'shifted');
+  });
+  if (!jamo) return;
+  const map = JAMO_TO_KEY[jamo];
+  if (!map) return;
+  const keyEl = document.querySelector(`.key[data-key="${map.key}"]`);
+  if (keyEl) {
+    keyEl.classList.add(map.shift ? 'shifted' : 'target');
+  }
+}
+
+function flashKey(qwertyKey) {
+  const k = qwertyKey.toLowerCase();
+  const el = document.querySelector(`.key[data-key="${k}"]`);
+  if (el) {
+    el.classList.add('hit');
+    setTimeout(() => el.classList.remove('hit'), 160);
+  }
+}
+
+// ============================================================
+// Game state
+// ============================================================
+
+const AUDIO_KEY = 'hangul-type-audio-v1';
+const ROMAN_KEY = 'hangul-type-romanize-v1';
+
+function lsBool(key, defaultOn) {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === null) return defaultOn;
+    return v === '1';
+  } catch (e) { return defaultOn; }
+}
+function lsBoolSet(key, on) {
+  try { localStorage.setItem(key, on ? '1' : '0'); } catch (e) {}
+}
+
+// ============================================================
+// Audio feedback (Web Audio API, no external assets)
+// ============================================================
+
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      if (Ctor) audioCtx = new Ctor();
+    } catch (e) {}
+  }
+  // Chrome/Safari create the context in 'suspended' state until a user gesture.
+  // We're called from inside keydown/click handlers, which qualify as gestures —
+  // resume() lets the next playTone() actually emit sound.
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function playTone({ freq, type = 'sine', duration = 0.05, gain = 0.06 }) {
+  if (!state || !state.audioOn) return;
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+  o.connect(g).connect(ctx.destination);
+  o.start(t);
+  o.stop(t + duration + 0.02);
+}
+
+// Soft mechanical-keyboard "thock": low-mid sine + tiny noise burst, very short.
+// Quieter and warmer than the old 880Hz sine tick.
+function playClick() {
+  if (!state || !state.audioOn) return;
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  // 1) Low fundamental — gives the "body" of the key
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(280, t);
+  o.frequency.exponentialRampToValueAtTime(160, t + 0.05);
+  g.gain.setValueAtTime(0.04, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+  o.connect(g).connect(ctx.destination);
+  o.start(t);
+  o.stop(t + 0.08);
+  // 2) Tiny noise burst — gives the "tap" attack
+  const bufSize = ctx.sampleRate * 0.012;
+  const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.025, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
+  noise.connect(ng).connect(ctx.destination);
+  noise.start(t);
+}
+function playMiss()  { playTone({ freq: 220, type: 'square', duration: 0.10, gain: 0.04 }); }
+function playWordDing() { playTone({ freq: 1320, type: 'sine', duration: 0.14, gain: 0.04 }); }
+function playComboTier() { playTone({ freq: 1100, type: 'triangle', duration: 0.10, gain: 0.05 }); }
+function playLevelUp() {
+  if (!state || !state.audioOn) return;
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const t0 = ctx.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.50]; // C5 E5 G5 C6
+  notes.forEach((freq, i) => {
+    const t = t0 + i * 0.09;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.06, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g).connect(ctx.destination);
+    o.start(t);
+    o.stop(t + 0.20);
+  });
+}
+
+// ============================================================
+// Gamification: combo, juice, streak/league rendering, daily quest, records
+// ============================================================
+
+const COMBO_THRESHOLDS = [5, 10, 25, 50, 100];
+
+function comboTier(c) {
+  let t = 0;
+  for (const th of COMBO_THRESHOLDS) if (c >= th) t++;
+  return t;
+}
+
+function bumpCombo() {
+  state.combo++;
+  if (state.combo > state.comboMax) state.comboMax = state.combo;
+  if (state.sprintMode && state.combo > state.sprintComboHigh) state.sprintComboHigh = state.combo;
+  const tier = comboTier(state.combo);
+  if (state.combo >= COMBO_THRESHOLDS[0]) {
+    showComboChip(state.combo, tier);
+    if (COMBO_THRESHOLDS.includes(state.combo)) playComboTier();
+  }
+  if (state.combo > progress.comboBest) {
+    progress.comboBest = state.combo;
+    saveProgress(progress);
+  }
+}
+
+function resetCombo() {
+  state.combo = 0;
+  hideComboChip();
+}
+
+function showComboChip(c, tier) {
+  const el = document.getElementById('comboChip');
+  if (!el) return;
+  el.className = `combo-chip t${Math.max(1, tier)}`;
+  el.textContent = `${c}× combo`;
+  el.style.display = 'block';
+  if (state.comboHideTimer) clearTimeout(state.comboHideTimer);
+  state.comboHideTimer = setTimeout(hideComboChip, 1500);
+}
+
+function hideComboChip() {
+  const el = document.getElementById('comboChip');
+  if (el) el.style.display = 'none';
+  if (state.comboHideTimer) { clearTimeout(state.comboHideTimer); state.comboHideTimer = null; }
+}
+
+function confettiBurst(anchorEl, count) {
+  const fx = document.getElementById('fxLayer');
+  if (!fx) return;
+  const rect = anchorEl ? anchorEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 3, width: 0, height: 0 };
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ['#2563eb','#10b981','#f59e0b','#ef4444','#8b5cf6','#f97316','#06b6d4'];
+  for (let i = 0; i < (count || 8); i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-particle';
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    p.style.background = colors[i % colors.length];
+    const angle = (Math.PI * 2 * i) / (count || 8) + Math.random() * 0.5;
+    const dist = 60 + Math.random() * 40;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+    p.style.setProperty('--end-transform', `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`);
+    fx.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
+}
+
+// ── Streak rendering ──
+function renderStreak() {
+  const el = document.getElementById('streak');
+  if (!el) return;
+  const days = calcStreak(progress.streakDays);
+  el.querySelector('.streak-num').textContent = days;
+  el.classList.remove('t1','t2','t3','t4','t5');
+  if (days >= 30) el.classList.add('t5');
+  else if (days >= 14) el.classList.add('t4');
+  else if (days >= 7) el.classList.add('t3');
+  else if (days >= 3) el.classList.add('t2');
+  else if (days >= 1) el.classList.add('t1');
+  const tip = days === 0
+    ? 'Type a word today to start your streak'
+    : `${days}-day streak — nice. Keep it going!`;
+  el.title = tip;
+}
+
+// ── League rendering ──
+// ── Profile (name + country flag) ──
+// Battle Mode sprite progression (mirrors game.html so the practice header chip
+// can show the player's current battle persona without loading the game)
+const BATTLE_SPRITES = [
+  { lv: 1,  emoji:'🥚', label:'무명' },        { lv: 2,  emoji:'👶', label:'아기' },
+  { lv: 3,  emoji:'🧒', label:'도제' },        { lv: 4,  emoji:'🧑', label:'학생' },
+  { lv: 5,  emoji:'🧑‍🎓', label:'졸업생' },     { lv: 6,  emoji:'🥷', label:'견습생' },
+  { lv: 7,  emoji:'🧝', label:'검사' },        { lv: 8,  emoji:'🧝‍♂️', label:'기사' },
+  { lv: 9,  emoji:'🧙', label:'도사' },        { lv: 10, emoji:'🧙‍♂️', label:'대마법사' },
+  { lv: 11, emoji:'🦸', label:'영웅' },        { lv: 12, emoji:'🦸‍♀️', label:'챔피언' },
+  { lv: 13, emoji:'🥷', label:'닌자' },        { lv: 14, emoji:'🧑‍🚀', label:'우주인' },
+  { lv: 15, emoji:'🧚‍♀️', label:'요정' },       { lv: 16, emoji:'🤴', label:'왕자' },
+  { lv: 17, emoji:'👸', label:'공주' },        { lv: 18, emoji:'🧜‍♂️', label:'인어왕' },
+  { lv: 19, emoji:'🧞', label:'정령' },        { lv: 20, emoji:'🐉', label:'용왕' },
+  { lv: 25, emoji:'🌟', label:'신선' },        { lv: 30, emoji:'🔱', label:'신왕' }
+];
+function battleSpriteForLevel(lv) {
+  let pick = BATTLE_SPRITES[0];
+  for (const p of BATTLE_SPRITES) if (lv >= p.lv) pick = p;
+  return pick;
+}
+function renderBattleChip() {
+  const iconEl = document.getElementById('battleIcon');
+  const textEl = document.getElementById('battleText');
+  if (!iconEl || !textEl) return;
+  iconEl.textContent = '⚔️';
+  textEl.textContent = 'Battle';
+}
+
+function renderProfileChip() {
+  const el = document.getElementById('profileChip');
+  if (!el) return;
+  const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
+  const name = (progress.profile && progress.profile.name) || 'Player';
+  el.querySelector('.profile-flag').textContent = flagEmoji(cc);
+  el.querySelector('.profile-name').textContent = name;
+  el.title = `${name} · ${COUNTRY_NAMES[cc] || cc} · click to edit`;
+}
+
+function openProfileModal() {
+  const el = document.getElementById('profileModal');
+  if (!el) return;
+  const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
+  const name = (progress.profile && progress.profile.name) || 'Player';
+  const countryEntries = Object.entries(COUNTRY_NAMES).sort((a, b) => a[1].localeCompare(b[1]));
+  const options = countryEntries.map(([code, label]) =>
+    `<option value="${code}" ${code === cc ? 'selected' : ''}>${flagEmoji(code)} ${label}</option>`
+  ).join('');
+  el.innerHTML = `
+    <div class="profile-modal-card">
+      <h3>Your profile</h3>
+      <p>Pick a display name and a country flag. We auto-detected ${flagEmoji(cc)} ${COUNTRY_NAMES[cc] || cc} from your timezone.</p>
+      <div class="profile-field">
+        <label>Display name</label>
+        <input id="profileNameInput" type="text" maxlength="24" value="${name.replace(/"/g, '&quot;')}" />
+      </div>
+      <div class="profile-field">
+        <label>Country</label>
+        <select id="profileCountrySelect">${options}</select>
+      </div>
+      <div class="profile-modal-actions">
+        <button class="btn" id="profileCancel">Cancel</button>
+        <button class="btn primary" id="profileSave">Save</button>
+      </div>
+    </div>
+  `;
+  el.style.display = 'flex';
+  const close = () => { el.style.display = 'none'; };
+  el.addEventListener('click', (e) => { if (e.target === el) close(); });
+  document.getElementById('profileCancel').addEventListener('click', close);
+  document.getElementById('profileSave').addEventListener('click', () => {
+    const newName = (document.getElementById('profileNameInput').value || 'Player').trim().slice(0, 24) || 'Player';
+    const newCC = document.getElementById('profileCountrySelect').value;
+    progress.profile = { name: newName, countryCode: newCC };
+    saveProgress(progress);
+    renderProfileChip();
+    renderRecords();
+    close();
+  });
+  document.getElementById('profileNameInput').focus();
+  document.getElementById('profileNameInput').select();
+}
+
+// ── Streak freeze logic ──
+// ── Daily quest ──
+// ── Records panel ──
+let recordsTab = 'today';
+let _onlineCache = { week: null, all: null, fetchedAt: 0 };
+
+async function renderRecords() {
+  const el = document.getElementById('recordsPanel');
+  if (!el) return;
+
+  const today = dayKey(new Date());
+  const monthPrefix = today.slice(0, 7);
+  const localHistory = progress.sprintHistory || [];
+
+  const tabsHtml = `<div class="records-tabs">
+    <button class="records-tab ${recordsTab==='today'?'on':''}" data-tab="today">Today</button>
+    <button class="records-tab ${recordsTab==='all'?'on':''}" data-tab="all">All time top 10</button>
+  </div>`;
+
+  let listHtml = '';
+
+  {
+    // Local sprint history (only Today + All-time top 10)
+    let rows = [];
+    if (recordsTab === 'today') rows = localHistory.filter(r => r.date.startsWith(today));
+    else rows = [...localHistory];
+    rows.sort((a, b) => b.wpm - a.wpm);
+    if (recordsTab === 'all') rows = rows.slice(0, 10);
+    const bestWpm = localHistory.reduce((m, r) => Math.max(m, r.wpm), 0);
+
+    if (rows.length === 0) {
+      listHtml = `<div class="records-empty">No sprints yet, try one to get on the board!</div>`;
+    } else {
+      const flag = flagEmoji((progress.profile && progress.profile.countryCode) || 'US');
+      const playerName = (progress.profile && progress.profile.name) || 'Player';
+      listHtml = '<div class="records-list">' + rows.map((r, i) => {
+        const ago = relTime(r.date);
+        const isBest = r.wpm === bestWpm && bestWpm > 0;
+        const rowFlag = r.countryCode ? flagEmoji(r.countryCode) : flag;
+        const rowName = r.playerName || playerName;
+        return `<div class="record-row ${isBest ? 'best' : ''}">
+          <span class="rank">${isBest ? '👑' : '#' + (i+1)}</span>
+          <span class="player"><span class="row-flag">${rowFlag}</span> ${escapeHtml(rowName)}</span>
+          <span class="wpm">${r.wpm} WPM</span>
+          <span class="acc">${r.accuracy}%</span>
+          <span class="topic">${escapeHtml(r.topic || '—')}</span>
+          <span class="ago">${ago}</span>
+        </div>`;
+      }).join('') + '</div>';
+    }
+  }
+
+  el.innerHTML = tabsHtml + listHtml;
+  el.querySelectorAll('.records-tab').forEach(btn => {
+    btn.addEventListener('click', () => { recordsTab = btn.dataset.tab; renderRecords(); });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
+}
+
+function relTime(iso) {
+  try {
+    const t = new Date(iso).getTime();
+    const diffMs = Date.now() - t;
+    const m = Math.floor(diffMs / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    if (d < 30) return d + 'd ago';
+    return iso.slice(0, 10);
+  } catch (e) { return ''; }
+}
+
+// ── Celebration overlay ──
+// ============================================================
+// Supabase backend: identity, XP submission queue, leaderboard fetch
+// ============================================================
+
+// Flush when the page is hidden so users don't lose XP on navigation
+document.addEventListener('visibilitychange', () => {
+  // (no remote XP queue any more — left as a no-op visibility hook)
+});
+
+const state = {
+  wordIdx: 0,
+  activeTopic: 'topik1',
+  activeWords: TOPICS.filter(t => (t.topikLevel || 1) === 1).flatMap(t => t.words),
+  expectedKs: [],          // flat expected keystroke sequence (jamo)
+  expectedSyllables: [],   // grouped per syllable, for per-jamo target rendering
+  posKs: 0,                // position in expectedKs
+  ime: new HangulIME(),
+  startedAt: null,
+  totalKeys: 0,
+  hitKeys: 0,
+  wordsDone: 0,
+  doneList: [],
+  errFlashIdx: -1,         // briefly mark a jamo as err on the target word
+  audioOn: lsBool(AUDIO_KEY, true),
+  romanizeOn: lsBool(ROMAN_KEY, false),
+  srsOn: lsBool('hangul-type-srs-v1', true),
+  // Sprint mode
+  sprintMode: false,
+  sprintEndsAt: 0,
+  sprintTimer: null,
+  sprintWords: 0,
+  sprintChars: 0,
+  sprintHits: 0,
+  sprintTotal: 0,
+  // Gamification
+  combo: 0,
+  comboMax: 0,
+  comboHideTimer: null,
+  sprintXpEarned: 0,
+  sprintComboHigh: 0
+};
+
+function saveAudio() { lsBoolSet(AUDIO_KEY, state.audioOn); }
+function saveRomanize() { lsBoolSet(ROMAN_KEY, state.romanizeOn); }
+
+// ============================================================
+// Romanization (Korean Revised Romanization, 2000) — training wheels
+// Index-aligned with INITIALS / MEDIALS / FINALS arrays.
+// ============================================================
+const ROMAN_INIT = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+const ROMAN_MED  = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'];
+const ROMAN_FIN  = ['','k','k','ks','n','nj','nh','t','l','lk','lm','lb','ls','lt','lp','lh','m','p','ps','t','t','ng','j','ch','k','t','p','h'];
+
+function romanize(koWord) {
+  if (!koWord) return '';
+  let out = '';
+  for (let i = 0; i < koWord.length; i++) {
+    const ch = koWord[i];
+    const code = ch.charCodeAt(0);
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+      const x = code - 0xAC00;
+      const iIdx = Math.floor(x / 588);
+      const mIdx = Math.floor((x % 588) / 28);
+      const fIdx = x % 28;
+      out += ROMAN_INIT[iIdx] + ROMAN_MED[mIdx] + ROMAN_FIN[fIdx];
+    } else if (ch === ' ') {
+      out += ' ';
+    }
+    // Skip non-Hangul punctuation; Korean phrases rarely have it in our deck
+  }
+  return out;
+}
+
+function renderRomanization(koWord) {
+  const el = document.getElementById('romanization');
+  if (!el) return;
+  el.textContent = state.romanizeOn ? romanize(koWord) : '';
+}
+
+// ============================================================
+// .io-style avatar blob — tier emerges from total SRS-mastered words.
+// No XP system: tier is purely a function of memorized vocabulary.
+// ============================================================
+const AVATAR_TIERS = [
+  { min: 0,   emoji: '🥚', name: 'Nameless',   tier: 1 },
+  { min: 1,   emoji: '👶', name: 'Babe',       tier: 1 },
+  { min: 10,  emoji: '🧒', name: 'Apprentice', tier: 2 },
+  { min: 30,  emoji: '🧑‍🎓', name: 'Student',    tier: 3 },
+  { min: 80,  emoji: '🥷', name: 'Adept',      tier: 4 },
+  { min: 200, emoji: '🐉', name: 'Master',     tier: 5 }
+];
+function totalMasteredAll() {
+  return masteredCountForLevel(1) + masteredCountForLevel(2);
+}
+function avatarTierFor(n) {
+  let pick = AVATAR_TIERS[0];
+  for (const t of AVATAR_TIERS) if (n >= t.min) pick = t;
+  return pick;
+}
+function renderAvatarBlob(opts) {
+  const el = document.getElementById('avatarBlob');
+  if (!el) return;
+  const n = totalMasteredAll();
+  const t = avatarTierFor(n);
+  const emojiEl = document.getElementById('avatarEmoji');
+  const tierEl = document.getElementById('avatarTier');
+  if (emojiEl) emojiEl.textContent = t.emoji;
+  if (tierEl) tierEl.textContent = `${t.name} · ${n}`;
+  el.className = 'avatar-blob tier-' + t.tier;
+  if (opts && opts.bump) {
+    el.classList.add('bump');
+    setTimeout(() => el.classList.remove('bump'), 220);
+  }
+}
+
+
+// ============================================================
+// Sprint mode (60-second speed test)
+// ============================================================
+
+function startSprint() {
+  if (state.activeWords.length === 0) return;
+  document.body.classList.add('in-sprint');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  state.sprintMode = true;
+  state.sprintEndsAt = Date.now() + 60000;
+  state.sprintWords = 0;
+  state.sprintChars = 0;
+  state.sprintHits = 0;
+  state.sprintTotal = 0;
+  state.sprintXpEarned = 0;
+  state.sprintComboHigh = 0;
+  // Reset session counters too so WPM calc starts fresh
+  state.startedAt = Date.now();
+  state.totalKeys = 0;
+  state.hitKeys = 0;
+  resetCombo();
+  document.getElementById('sprintBar').style.display = 'flex';
+  document.getElementById('sprintResult').style.display = 'none';
+  document.getElementById('btnSprint').style.display = 'none';
+  loadWord(Math.floor(Math.random() * state.activeWords.length));
+  updateSprintUI();
+  if (state.sprintTimer) clearInterval(state.sprintTimer);
+  state.sprintTimer = setInterval(() => {
+    const remaining = Math.max(0, state.sprintEndsAt - Date.now());
+    if (remaining <= 0) {
+      endSprint();
+    } else {
+      updateSprintUI();
+    }
+  }, 100);
+}
+
+function updateSprintUI() {
+  const remaining = Math.max(0, state.sprintEndsAt - Date.now());
+  document.getElementById('sprintTime').textContent = (remaining / 1000).toFixed(1);
+  document.getElementById('sprintWords').textContent = state.sprintWords;
+  document.getElementById('sprintChars').textContent = state.sprintChars;
+  const elapsedMin = (60000 - remaining) / 60000;
+  const wpm = elapsedMin > 0 ? Math.round((state.sprintChars / 5) / elapsedMin) : 0;
+  document.getElementById('sprintWpm').textContent = wpm;
+}
+
+// ============================================================
+// Fake leaderboard — seeded so the same standings appear across loads.
+// Real backend would replace this; for now it gives Speed Test a sense
+// of "where do I stand" without any infra dependency.
+// ============================================================
+const FAKE_LB_NAMES = [
+  '민수','지은','서영','다현','현우','하늘','지민','수아','동현','윤서','지호','예린','태민','채원','준호','시우','은우','하준','이안','민준',
+  'Alex','Maya','Jordan','Rin','Yui','Hugo','Sora','Mateo','Anya','Felix','Khaled','Sofia','Ana','Ling','Nikolai','Laila','Theo','Camille','Mei','Diego',
+  'Aiko','Liam','Olivia','Noah','Emma','Lucas','Mia','Eva','Tomás','Nora','Hassan','Priya','Arjun','Wei','Yuki','Mateja','Otto','Iris','Bram','Saskia',
+  'Anand','Léa','Bruno','Ines','Yusuf','Fatima','Mohammed','Aisha','Olu','Kenji','Hiro','Akira','Riku','Kira','Lena','Pavel','Olga','Stefan','Dimitri','Ivan',
+  'Pedro','Carlos','Lucia','Marco','Elena','Giulia','Antonio','Chiara','Dario','Beatrice','Henrik','Erika','Astrid','Ingrid','Magnus','Sigrid','Oskar','Linnea','Tove','Bjorn'
+];
+const FAKE_LB_FLAGS = ['🇰🇷','🇺🇸','🇯🇵','🇨🇳','🇪🇸','🇫🇷','🇩🇪','🇧🇷','🇮🇳','🇲🇽','🇮🇹','🇨🇦','🇬🇧','🇸🇪','🇳🇴','🇫🇮','🇩🇰','🇳🇱','🇧🇪','🇨🇭','🇦🇹','🇵🇱','🇨🇿','🇭🇺','🇷🇴','🇧🇬','🇬🇷','🇹🇷','🇵🇹','🇮🇪','🇿🇦','🇪🇬','🇸🇦','🇦🇪','🇮🇩','🇹🇭','🇻🇳','🇵🇭','🇲🇾','🇸🇬'];
+
+let FAKE_LB = null;
+function ensureFakeLeaderboard() {
+  if (FAKE_LB) return FAKE_LB;
+  let s = 0x9e3779b9; // deterministic seed → same standings every visit
+  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
+  const list = [];
+  for (let i = 0; i < 250; i++) {
+    const baseName = FAKE_LB_NAMES[Math.floor(rnd() * FAKE_LB_NAMES.length)];
+    const num = Math.floor(rnd() * 999);
+    const name = baseName + (rnd() < 0.55 ? '' : '_' + num);
+    const flag = FAKE_LB_FLAGS[Math.floor(rnd() * FAKE_LB_FLAGS.length)];
+    let wpm;
+    const tier = rnd();
+    if (tier < 0.04)      wpm = 130 + Math.floor(rnd() * 70); // pros
+    else if (tier < 0.18) wpm = 90  + Math.floor(rnd() * 45); // strong
+    else if (tier < 0.50) wpm = 55  + Math.floor(rnd() * 40); // mid
+    else if (tier < 0.85) wpm = 25  + Math.floor(rnd() * 35); // learning
+    else                  wpm = 6   + Math.floor(rnd() * 22); // beginners
+    list.push({ name, flag, wpm });
+  }
+  list.sort((a, b) => b.wpm - a.wpm);
+  FAKE_LB = list;
+  return list;
+}
+
+function renderLeaderboard(userWpm) {
+  const fake = ensureFakeLeaderboard();
+  const userName = (progress.profile && progress.profile.name) || 'Player';
+  const userFlag = flagEmoji((progress.profile && progress.profile.countryCode) || detectCountry());
+  const merged = fake.concat([{ name: userName, flag: userFlag, wpm: userWpm, isUser: true }]);
+  merged.sort((a, b) => b.wpm - a.wpm);
+  const userRank = merged.findIndex(x => x.isUser) + 1;
+  const total = merged.length;
+
+  const rows = [];
+  // Always show top 3
+  for (let i = 0; i < 3 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
+
+  if (userRank <= 5) {
+    // User is near the top — extend without ellipsis
+    for (let i = 3; i < 6 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
+  } else {
+    rows.push({ isEllipsis: true });
+    rows.push({ rank: userRank - 1, ...merged[userRank - 2] });
+    rows.push({ rank: userRank,     ...merged[userRank - 1] });
+    if (userRank < total) rows.push({ rank: userRank + 1, ...merged[userRank] });
+  }
+
+  return `
+    <div class="leaderboard">
+      <div class="lb-header">
+        <span>Global leaderboard</span>
+        <span class="lb-meta">You: <strong>#${userRank}</strong> of ${total.toLocaleString()}</span>
+      </div>
+      <div class="lb-list">
+        ${rows.map(r => {
+          if (r.isEllipsis) return '<div class="lb-row lb-ellipsis">⋯</div>';
+          const cls = r.isUser ? 'lb-row you' : 'lb-row';
+          return `<div class="${cls}"${r.isUser ? ' data-edit-profile="1"' : ''}>
+            <span class="lb-rank">#${r.rank}</span>
+            <span class="lb-flag">${r.flag}</span>
+            <span class="lb-name">${escapeHtml(r.name)}</span>
+            <span class="lb-wpm">${r.wpm}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="lb-edit-hint">Click your row or the profile chip to change your name and flag.</div>
+    </div>
+  `;
+}
+
+function endSprint() {
+  if (!state.sprintMode) return;
+  if (state.sprintTimer) {
+    clearInterval(state.sprintTimer);
+    state.sprintTimer = null;
+  }
+  state.sprintMode = false;
+  document.getElementById('sprintBar').style.display = 'none';
+  const wpm = Math.round((state.sprintChars / 5));
+  const acc = state.sprintTotal ? Math.round((state.sprintHits / state.sprintTotal) * 100) : 100;
+
+  // History write
+  const previousBest = progress.bestSprintWPM || 0;
+  const isNewBest = wpm > previousBest;
+  if (isNewBest) progress.bestSprintWPM = wpm;
+  progress.sprintHistory.push({
+    date: new Date().toISOString(),
+    wpm, accuracy: acc,
+    words: state.sprintWords,
+    topic: state.activeTopic,
+    playerName: (progress.profile && progress.profile.name) || 'Player',
+    countryCode: (progress.profile && progress.profile.countryCode) || detectCountry()
+  });
+  if (progress.sprintHistory.length > 500) progress.sprintHistory = progress.sprintHistory.slice(-500);
+  saveProgress(progress);
+
+  const deltaLine = isNewBest && previousBest > 0
+    ? `<span class="recap-best-pill">🎉 New personal best!</span>`
+    : (previousBest > 0
+        ? `<span class="recap-delta">${wpm > previousBest ? '+' : ''}${wpm - previousBest} vs your best (${previousBest} → ${wpm}, ${previousBest > 0 ? Math.round(((wpm - previousBest) / previousBest) * 100) : 0}%)</span>`
+        : `<span class="recap-delta">First sprint logged. Your benchmark is set.</span>`);
+
+  const sprintResultEl = document.getElementById('sprintResult');
+  sprintResultEl.innerHTML = `
+    <div class="result-card">
+      <h3>⚡ Sprint complete</h3>
+      <div class="recap-wpm">${wpm}<span class="unit">WPM</span></div>
+      <div class="recap-delta-line">${deltaLine}</div>
+      <div class="recap-grid">
+        <div><div class="rk">Words</div><div class="rv">${state.sprintWords}</div></div>
+        <div><div class="rk">Accuracy</div><div class="rv">${acc}%</div></div>
+        <div><div class="rk">Combo high</div><div class="rv">${state.sprintComboHigh}</div></div>
+      </div>
+      ${renderLeaderboard(wpm)}
+      <div class="result-actions">
+        <button class="btn primary" id="btnSprintAgain">Run again</button>
+        <button class="btn" id="btnSprintBack">Back to practice</button>
+      </div>
+    </div>
+  `;
+  // User-row click-to-edit profile
+  sprintResultEl.querySelectorAll('[data-edit-profile]').forEach(el => {
+    el.addEventListener('click', () => openProfileModal());
+  });
+  sprintResultEl.style.display = 'flex';
+  document.getElementById('btnSprintAgain').addEventListener('click', () => {
+    sprintResultEl.style.display = 'none';
+    startSprint();
+  });
+  document.getElementById('btnSprintBack').addEventListener('click', exitSprint);
+
+  renderRecords();
+  setDiag('ok', '<span class="label">Sprint over.</span> Run again or back to practice.');
+}
+
+function exitSprint() {
+  document.body.classList.remove('in-sprint');
+  if (state.sprintTimer) clearInterval(state.sprintTimer);
+  state.sprintTimer = null;
+  state.sprintMode = false;
+  document.getElementById('sprintBar').style.display = 'none';
+  document.getElementById('sprintResult').style.display = 'none';
+  document.getElementById('btnSprint').style.display = '';
+  state.startedAt = null;
+  state.totalKeys = 0;
+  state.hitKeys = 0;
+  loadWord(0);
+}
+
+function pickNextWordIdx(currentIdx) {
+  if (state.sprintMode) {
+    if (state.activeWords.length <= 1) return 0;
+    let next;
+    do {
+      next = Math.floor(Math.random() * state.activeWords.length);
+    } while (next === currentIdx);
+    return next;
+  }
+  // Auto-flow: words always come from the highest-gap incomplete category at
+  // the active TOPIK level. Once a subcategory is full, we automatically move
+  // to the next-incomplete one — no manual chip-clicking required.
+  const lv = activeLevel();
+  const currentKo = state.activeWords[currentIdx] && state.activeWords[currentIdx].ko;
+  const pinned = TOPICS.find(x => x.id === state.activeTopic);
+  if (pinned) {
+    const seen = new Set(progress.topicCompleted[pinned.id] || []);
+    const fresh = pinned.words.filter(w => !seen.has(w.ko));
+    if (fresh.length > 0) {
+      // Pinned subcategory still has fresh words — stay on it
+      state.activeWords = fresh.concat(pinned.words.filter(w => seen.has(w.ko)));
+    } else {
+      // Pinned subcategory is full — auto-promote to TOPIK level priority pool
+      state.activeTopic = lv === 2 ? 'topik2' : 'topik1';
+      state.activeWords = buildPriorityPool(lv);
+      buildTopicsPicker();
+    }
+  } else {
+    // Already on a top-level TOPIK pool — rebuild every pick so the bars
+    // always reflect the latest gap distribution.
+    state.activeWords = buildPriorityPool(lv);
+  }
+  const newCurrent = currentKo
+    ? state.activeWords.findIndex(w => w.ko === currentKo)
+    : -1;
+  return srsSelectIndex(state.activeWords, newCurrent);
+  // (legacy fallthrough below kept dead so any old reference compiles)
+  /* eslint-disable no-unreachable */
+  for (let off = 1; off <= state.activeWords.length; off++) {
+    const idx = (currentIdx + off) % state.activeWords.length;
+    const ks = wordToKeystrokes(state.activeWords[idx].ko);
+    if (ks.length) return idx;
+  }
+  return (currentIdx + 1) % state.activeWords.length;
+}
+
+function loadWord(i) {
+  if (state.activeWords.length === 0) return;
+  state.wordIdx = i % state.activeWords.length;
+  const w = state.activeWords[state.wordIdx];
+  state.expectedKs = wordToKeystrokes(w.ko);
+  state.expectedSyllables = wordToSyllableKeystrokes(w.ko);
+  state.posKs = 0;
+  state.errFlashIdx = -1;
+  state.ime = new HangulIME();
+  renderTargetWord();
+  document.getElementById('gloss').textContent = w.en;
+  renderRomanization(w.ko);
+  renderLive();
+  highlightNextKey();
+  // Diag stays empty on word load — the target word + gloss + highlighted key already say it all.
+  setDiag('', '');
+  updateProgress();
+}
+
+// ============================================================
+// Canvas-based per-jamo rendering
+// ============================================================
+
+const HORIZ_VOWELS   = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅐ','ㅒ','ㅔ','ㅖ','ㅣ']);
+const VERT_VOWELS    = new Set(['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ']);
+const COMPOUND_VOWELS = new Set(['ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ']);
+
+const STATE_COLORS = {
+  done:   '#10b981',
+  now:    '#2563eb',
+  err:    '#ef4444',
+  pending: '#cbd5e1'
+};
+
+const SYL_CACHE = new Map(); // key: `${char}|${px}`  → { canvas, groups: { initial: Uint32Array, medial: Uint32Array, final: Uint32Array }, w, h }
+const FONT_SIZE_BY_CLASS = { '': 96, lg: 72, md: 56, sm: 44 };
+
+function syllableLayoutType(mIdx) {
+  const m = MEDIALS[mIdx];
+  if (COMPOUND_VOWELS.has(m)) return 'compound';
+  if (VERT_VOWELS.has(m)) return 'vert';
+  return 'horiz';
+}
+
+function buildSyllableCanvas(syllableChar, fontSizePx) {
+  const dpr = window.devicePixelRatio || 1;
+  const code = syllableChar.charCodeAt(0);
+  const x = code - 0xAC00;
+  const mIdx = Math.floor((x % 588) / 28);
+  const fIdx = x % 28;
+  const layout = syllableLayoutType(mIdx);
+  const hasFinal = fIdx > 0;
+
+  // Canvas sized with vertical headroom for descenders + batchim
+  const wCss = Math.ceil(fontSizePx * 1.05);
+  const hCss = Math.ceil(fontSizePx * 1.20);
+  const canvas = document.createElement('canvas');
+  canvas.width = wCss * dpr;
+  canvas.height = hCss * dpr;
+  canvas.style.width = wCss + 'px';
+  canvas.style.height = hCss + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#000000';
+  ctx.font = `500 ${fontSizePx}px "Noto Sans KR", system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  // Draw at ~85% down so batchim has room
+  ctx.fillText(syllableChar, wCss / 2, fontSizePx * 0.95);
+
+  const W = canvas.width, H = canvas.height;
+  const data = ctx.getImageData(0, 0, W, H).data;
+  const isInk = (i) => data[i*4 + 3] > 32 && (data[i*4] + data[i*4+1] + data[i*4+2]) < 600;
+
+  // 8-connected BFS
+  const visited = new Uint8Array(W * H);
+  const components = [];
+  const queue = new Int32Array(W * H);
+  for (let y = 0; y < H; y++) {
+    for (let xp = 0; xp < W; xp++) {
+      const i0 = y * W + xp;
+      if (visited[i0] || !isInk(i0)) continue;
+      let qh = 0, qt = 0;
+      queue[qt++] = i0; visited[i0] = 1;
+      let minX = xp, maxX = xp, minY = y, maxY = y, area = 0;
+      const pixels = [];
+      while (qh < qt) {
+        const j = queue[qh++];
+        pixels.push(j);
+        area++;
+        const jy = (j / W) | 0, jx = j - jy * W;
+        if (jx < minX) minX = jx; if (jx > maxX) maxX = jx;
+        if (jy < minY) minY = jy; if (jy > maxY) maxY = jy;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const nx = jx + dx, ny = jy + dy;
+            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+            const ni = ny * W + nx;
+            if (visited[ni] || !isInk(ni)) continue;
+            visited[ni] = 1;
+            queue[qt++] = ni;
+          }
+        }
+      }
+      if (area >= 4) components.push({ pixels, minX, maxX, minY, maxY, area, cx: (minX+maxX)/2, cy: (minY+maxY)/2 });
+    }
+  }
+
+  // Overall ink bounds
+  if (components.length === 0) {
+    return { canvas, groups: { initial: new Uint32Array(0), medial: new Uint32Array(0), final: new Uint32Array(0) }, w: wCss, h: hCss };
+  }
+  let inkMinX = W, inkMaxX = 0, inkMinY = H, inkMaxY = 0;
+  for (const c of components) {
+    if (c.minX < inkMinX) inkMinX = c.minX;
+    if (c.maxX > inkMaxX) inkMaxX = c.maxX;
+    if (c.minY < inkMinY) inkMinY = c.minY;
+    if (c.maxY > inkMaxY) inkMaxY = c.maxY;
+  }
+  const inkW = inkMaxX - inkMinX;
+  const inkH = inkMaxY - inkMinY;
+
+  // Classify each component. We compare each component's centroid AND its bounding box
+  // to layout-specific zones. Using both prevents tall jamo (like ㅗ vertical stem in 화)
+  // from being misclassified just because their centroid lands in another jamo's zone.
+  const groups = { initial: [], medial: [], final: [] };
+  for (const c of components) {
+    const relX = (c.cx - inkMinX) / Math.max(1, inkW);
+    const relY = (c.cy - inkMinY) / Math.max(1, inkH);
+    const relMaxY = (c.maxY - inkMinY) / Math.max(1, inkH);
+    let bucket;
+    if (layout === 'horiz') {
+      // ㄱ left, ㅏ right; batchim bottom strip ~62%+
+      if (hasFinal && relY > 0.60) bucket = 'final';
+      else if (relX < 0.50) bucket = 'initial';
+      else bucket = 'medial';
+    } else if (layout === 'vert') {
+      // ㄱ top, ㅗ middle, ㄴ bottom (3-tier if final); else top/bottom split.
+      // Use BOTH centroid (relY) and bounding-box extent so the medial's vertical
+      // stem (ㅗ ㅛ ㅜ ㅠ) doesn't get misclassified as initial when its centroid
+      // happens to land near the boundary in tighter fonts.
+      const relMinY = (c.minY - inkMinY) / Math.max(1, inkH);
+      if (hasFinal) {
+        if (relY > 0.70 || relMinY > 0.62) bucket = 'final';
+        else if (relY < 0.36 && relMaxY < 0.50) bucket = 'initial';
+        else bucket = 'medial';
+      } else {
+        if (relY < 0.45 && relMaxY < 0.55) bucket = 'initial';
+        else bucket = 'medial';
+      }
+    } else {
+      // compound vowel (ㅘ ㅙ ㅚ ㅝ ㅞ ㅟ ㅢ): consonant in TOP-LEFT corner only.
+      // The vowel's vertical stem lives mid-left, the horizontal stem at the bottom.
+      // Use a tight zone for initial AND require the component to NOT extend deep down.
+      if (hasFinal && relY > 0.68) bucket = 'final';
+      else if (relX < 0.42 && relY < 0.40 && relMaxY < 0.55) bucket = 'initial';
+      else bucket = 'medial';
+    }
+    groups[bucket].push(...c.pixels);
+  }
+
+  // Convert to typed arrays for fast paint
+  return {
+    canvas,
+    ctx,
+    groups: {
+      initial: new Uint32Array(groups.initial),
+      medial:  new Uint32Array(groups.medial),
+      final:   new Uint32Array(groups.final)
+    },
+    w: wCss, h: hCss, hasFinal
+  };
+}
+
+function paintSyllable(cached, stateMap) {
+  const { canvas, ctx, groups, hasFinal } = cached;
+  const W = canvas.width, H = canvas.height;
+  const img = ctx.createImageData(W, H);
+  const px = img.data;
+  const paint = (group, hex) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    for (let i = 0; i < group.length; i++) {
+      const p = group[i];
+      px[p*4] = r; px[p*4+1] = g; px[p*4+2] = b; px[p*4+3] = 255;
+    }
+  };
+  paint(groups.initial, STATE_COLORS[stateMap.initial || 'pending']);
+  paint(groups.medial,  STATE_COLORS[stateMap.medial  || 'pending']);
+  if (hasFinal) paint(groups.final, STATE_COLORS[stateMap.final || 'pending']);
+  ctx.putImageData(img, 0, 0);
+}
+
+function getOrBuildSyllable(syllableChar, fontSizePx) {
+  const key = `${syllableChar}|${fontSizePx}`;
+  let seg = SYL_CACHE.get(key);
+  if (!seg) {
+    seg = buildSyllableCanvas(syllableChar, fontSizePx);
+    SYL_CACHE.set(key, seg);
+    if (SYL_CACHE.size > 240) {
+      const firstKey = SYL_CACHE.keys().next().value;
+      SYL_CACHE.delete(firstKey);
+    }
+  }
+  // Always return a FRESH canvas + ctx so the same syllable can appear multiple times
+  // in one word (e.g. "이름이") without DOM-node aliasing moving the original.
+  const dpr = window.devicePixelRatio || 1;
+  const fresh = document.createElement('canvas');
+  fresh.width = seg.w * dpr;
+  fresh.height = seg.h * dpr;
+  fresh.style.width = seg.w + 'px';
+  fresh.style.height = seg.h + 'px';
+  const freshCtx = fresh.getContext('2d');
+  return { canvas: fresh, ctx: freshCtx, groups: seg.groups, w: seg.w, h: seg.h, hasFinal: seg.hasFinal };
+}
+
+function renderTargetWord() {
+  const wordEl = document.getElementById('targetWord');
+  wordEl.classList.remove('lg', 'md', 'sm');
+  const sylCount = state.expectedSyllables.length;
+  let sizeClass = '';
+  if (sylCount > 12) sizeClass = 'sm';
+  else if (sylCount > 8) sizeClass = 'md';
+  else if (sylCount > 5) sizeClass = 'lg';
+  if (sizeClass) wordEl.classList.add(sizeClass);
+  const fontPx = FONT_SIZE_BY_CLASS[sizeClass];
+
+  const w = state.activeWords[state.wordIdx];
+  const koChars = [...w.ko];
+
+  wordEl.innerHTML = '';
+  let kIdx = 0;
+  for (let s = 0; s < state.expectedSyllables.length; s++) {
+    const syl = state.expectedSyllables[s];
+    const sylChar = koChars[s];
+    const isSpace = syl.length === 1 && syl[0] === ' ';
+    if (isSpace) {
+      const sp = document.createElement('span');
+      sp.className = 'syl space';
+      sp.dataset.sylStart = kIdx;
+      sp.dataset.sylLen = '1';
+      const cls = jamoStateClass(kIdx);
+      if (cls) sp.classList.add(cls);
+      wordEl.appendChild(sp);
+      kIdx++;
+      continue;
+    }
+
+    const code = sylChar.charCodeAt(0);
+    if (code < 0xAC00 || code > 0xD7A3) {
+      const fb = document.createElement('span');
+      fb.className = 'syl';
+      fb.style.fontSize = fontPx + 'px';
+      fb.style.color = STATE_COLORS.pending;
+      fb.textContent = sylChar;
+      wordEl.appendChild(fb);
+      kIdx += syl.length;
+      continue;
+    }
+    const x = code - 0xAC00;
+    const mIdx = Math.floor((x % 588) / 28);
+    const fIdx = x % 28;
+
+    const medialIsCompound = !!VOWEL_DECOMPOSE[MEDIALS[mIdx]];
+    const finalIsCompound  = fIdx > 0 && !!FINAL_DECOMPOSE[FINALS[fIdx]];
+    const initialPositions = [kIdx];
+    const medialPositions  = medialIsCompound ? [kIdx + 1, kIdx + 2] : [kIdx + 1];
+    const finalStart       = kIdx + 1 + medialPositions.length;
+    const finalPositions   = fIdx > 0 ? (finalIsCompound ? [finalStart, finalStart + 1] : [finalStart]) : [];
+
+    const cached = getOrBuildSyllable(sylChar, fontPx);
+    const wrapper = document.createElement('span');
+    wrapper.className = 'syl';
+    wrapper.dataset.sylStart = kIdx;
+    wrapper.dataset.sylLen = syl.length;
+    wrapper.dataset.iPos = initialPositions.join(',');
+    wrapper.dataset.mPos = medialPositions.join(',');
+    if (finalPositions.length) wrapper.dataset.fPos = finalPositions.join(',');
+    wrapper._cached = cached;
+    wrapper.appendChild(cached.canvas);
+    paintSyllable(cached, computeSyllableStateMap(initialPositions, medialPositions, finalPositions));
+    setSyllablePulse(wrapper, initialPositions, medialPositions, finalPositions);
+    wordEl.appendChild(wrapper);
+
+    kIdx += syl.length;
+  }
+}
+
+function computeSyllableStateMap(iPos, mPos, fPos) {
+  return {
+    initial: positionsState(iPos) || 'pending',
+    medial:  positionsState(mPos) || 'pending',
+    final:   fPos.length ? (positionsState(fPos) || 'pending') : 'pending'
+  };
+}
+
+function setSyllablePulse(wrapper, iPos, mPos, fPos) {
+  const allPos = iPos.concat(mPos, fPos);
+  const isPulsing = allPos.some(p => jamoStateClass(p) === 'now');
+  if (isPulsing) wrapper.dataset.pulse = '1';
+  else delete wrapper.dataset.pulse;
+}
+
+function positionsState(positions) {
+  let allDone = true;
+  for (const p of positions) {
+    const cls = jamoStateClass(p);
+    if (cls === 'now') return 'now';
+    if (cls === 'err') return 'err';
+    if (cls !== 'done') allDone = false;
+  }
+  return allDone ? 'done' : '';
+}
+
+function computeSylState(start, len) {
+  let anyDone = false, allDone = true, anyNow = false, anyErr = false;
+  for (let i = 0; i < len; i++) {
+    const cls = jamoStateClass(start + i);
+    if (cls === 'done') anyDone = true; else allDone = false;
+    if (cls === 'now') anyNow = true;
+    if (cls === 'err') anyErr = true;
+  }
+  if (anyErr) return 'err';
+  if (allDone && len > 0) return 'done';
+  if (anyNow || anyDone) return 'now';
+  return '';
+}
+
+function jamoStateClass(idx) {
+  if (idx < state.posKs) return 'done';
+  if (idx === state.posKs) return state.errFlashIdx === idx ? 'err' : 'now';
+  return '';
+}
+
+function updateTargetJamoStates() {
+  document.querySelectorAll('#targetWord .syl').forEach(el => {
+    if (el.classList.contains('space')) {
+      const idx = parseInt(el.dataset.sylStart, 10);
+      el.classList.remove('done', 'now', 'err');
+      const cls = jamoStateClass(idx);
+      if (cls) el.classList.add(cls);
+      return;
+    }
+    const cached = el._cached;
+    if (!cached) return;
+    const iPos = (el.dataset.iPos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
+    const mPos = (el.dataset.mPos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
+    const fPos = (el.dataset.fPos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
+    paintSyllable(cached, computeSyllableStateMap(iPos, mPos, fPos));
+    setSyllablePulse(el, iPos, mPos, fPos);
+  });
+}
+
+function flashJamoErr() {
+  state.errFlashIdx = state.posKs;
+  updateTargetJamoStates();
+  setTimeout(() => {
+    state.errFlashIdx = -1;
+    updateTargetJamoStates();
+  }, 360);
+}
+
+// Live bar removed — target word's per-jamo coloring is sufficient feedback.
+// Function preserved as a no-op so existing call sites don't error.
+function renderLive() {}
+
+function highlightNextKey() {
+  const next = state.expectedKs[state.posKs];
+  highlightTargetKey(next);
+}
+
+const MASTERY_ICONS = ['', '·', '◐', '◑', '◕', '★']; // 0..5; we use 1..5
+
+function topicsByLevel(level) {
+  return TOPICS.filter(t => (t.topikLevel || 1) === level);
+}
+function wordsForLevel(level) {
+  const out = [];
+  for (const t of topicsByLevel(level)) for (const w of t.words) out.push(w);
+  return out;
+}
+function uniqueDoneForLevel(level) {
+  const seen = new Set();
+  for (const t of topicsByLevel(level)) {
+    for (const w of (progress.topicCompleted[t.id] || [])) seen.add(w);
+  }
+  return seen.size;
+}
+
+// "Mastered" = SRS interval >= 6 days. Stronger than "typed once".
+function isMastered(ko) {
+  const s = progress.wordSrs[ko];
+  return !!(s && s.interval >= 6);
+}
+function masteredCountForTopic(t) {
+  let n = 0;
+  for (const w of t.words) if (isMastered(w.ko)) n++;
+  return n;
+}
+function masteredCountForLevel(level) {
+  let n = 0;
+  for (const t of topicsByLevel(level)) for (const w of t.words) if (isMastered(w.ko)) n++;
+  return n;
+}
+
+// Build a level-scoped word pool that biases toward subcategories with the
+// largest gap between TOUCHED and total (matches what the chip bar displays).
+// Categories the user has already filled drop out of the pool unless every
+// category is full. Used when state.activeTopic is topik1/topik2.
+function buildPriorityPool(level) {
+  const topics = topicsByLevel(level);
+  const ranked = topics.map(t => {
+    const total = t.words.length;
+    const touched = (progress.topicCompleted[t.id] || []).length;
+    return { t, total, touched, gap: total - touched };
+  });
+  const incomplete = ranked.filter(x => x.gap > 0);
+  // If every category is full, fall back to the full pool so SRS can drive review.
+  const pool = (incomplete.length ? incomplete : ranked);
+  // Biggest-gap first; flatten words. Within each category, drop words the user
+  // has already typed so progress fills evenly rather than re-showing the same
+  // few words from the front.
+  pool.sort((a, b) => b.gap - a.gap);
+  const out = [];
+  for (const x of pool) {
+    const seen = new Set(progress.topicCompleted[x.t.id] || []);
+    const fresh = x.t.words.filter(w => !seen.has(w.ko));
+    const repeats = x.t.words.filter(w => seen.has(w.ko));
+    // Fresh words first, then repeats (repeats keep SRS reviews flowing)
+    for (const w of fresh) out.push(w);
+    for (const w of repeats) out.push(w);
+  }
+  return out;
+}
+
+// Which TOPIK level corresponds to state.activeTopic — used to decide which
+// subcategory chips to render below the 3 main pills.
+function activeLevel() {
+  if (state.activeTopic === 'topik2') return 2;
+  if (state.activeTopic === 'topik1' || state.activeTopic === 'mistakes') return 1;
+  const t = TOPICS.find(x => x.id === state.activeTopic);
+  return t ? (t.topikLevel || 1) : 1;
+}
+
+const TOPIC_ICONS = {
+  basics: '👋', family: '👨‍👩‍👧', food: '🍙', time: '⏰', numbers: '🔢',
+  verbs: '🏃', places: '🏠', feelings: '💗', sentences: '💬',
+  t2_verbs: '⚙️', t2_adj: '🌟', t2_nouns: '📚', t2_phrases: '🗣️', t2_sentences: '📜'
+};
+
+function buildTopicsPicker() {
+  const el = document.getElementById('topics');
+  const t1Count = wordsForLevel(1).length;
+  const t2Count = wordsForLevel(2).length;
+  const t1Done  = uniqueDoneForLevel(1);
+  const t2Done  = uniqueDoneForLevel(2);
+  const lv = activeLevel();
+  const isT1Active = lv === 1;
+  const isT2Active = lv === 2;
+
+  let html = `<div class="topics-row">
+    <div class="topic-pill big ${isT1Active ? 'on' : ''}" data-topic="topik1">
+      <span class="t-icon">📗</span> TOPIK 1 <span class="count">${t1Done}/${t1Count}</span>
+    </div>
+    <div class="topic-pill big ${isT2Active ? 'on' : ''}" data-topic="topik2">
+      <span class="t-icon">📘</span> TOPIK 2 <span class="count">${t2Done}/${t2Count}</span>
+    </div>
+  </div>`;
+
+  // Sub-category progress: small chips under the main pills. Each shows
+  // {topic name} {done}/{total} with a translucent progress fill so the user
+  // sees which buckets still have words to fill. Click a chip to drill that
+  // subcategory only.
+  const subTopics = TOPICS.filter(t => (t.topikLevel || 1) === lv);
+  if (subTopics.length) {
+    html += '<div class="subtopic-tracker" aria-label="Subcategory progress">';
+    for (const t of subTopics) {
+      const done = (progress.topicCompleted[t.id] || []).length;
+      const total = t.words.length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      const cls = (state.activeTopic === t.id ? 'on ' : '') + (done >= total && total > 0 ? 'complete ' : '');
+      const ico = TOPIC_ICONS[t.id] || '·';
+      html += `<button class="subtopic-chip ${cls}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)} — ${done}/${total} typed. Click to pin/unpin.">
+        <span class="fill" style="width:${pct}%"></span>
+        <span class="label"><span class="ico">${ico}</span> ${escapeHtml(t.name.replace(/^TOPIK 2 · /, ''))}</span>
+        <span class="count">${done}/${total}</span>
+      </button>`;
+    }
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+  el.querySelectorAll('.topic-pill, .subtopic-chip').forEach(pill => {
+    pill.addEventListener('click', () => setTopic(pill.dataset.topic));
+  });
+  const drillBtn = document.getElementById('btnMistakeDrill');
+  if (drillBtn) drillBtn.style.display = 'none';
+}
+
+function setTopic(id) {
+  state.activeTopic = id;
+  if (id === 'mistakes') {
+    state.activeWords = getMistakeWords(20).map(m => ({ ko: m.ko, en: m.en }));
+  } else if (id === 'topik1') {
+    state.activeWords = shuffle(buildPriorityPool(1));
+  } else if (id === 'topik2') {
+    state.activeWords = shuffle(buildPriorityPool(2));
+  } else if (id === 'all') {
+    state.activeWords = shuffle(buildAllWords());
+  } else {
+    const t = TOPICS.find(x => x.id === id);
+    state.activeWords = t ? t.words.slice() : [];
+  }
+  state.wordIdx = 0;
+  state.wordsDone = 0;
+  state.totalKeys = 0;
+  state.hitKeys = 0;
+  state.startedAt = null;
+  buildTopicsPicker();
+  loadWord(0);
+  updateStats();
+}
+
+function updateProgress() {
+  const pct = state.expectedKs.length ? (state.posKs / state.expectedKs.length) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function setDiag(kind, html) {
+  const diag = document.getElementById('diag');
+  if (!diag) return;
+  diag.classList.remove('ok', 'err');
+  if (kind === 'ok') diag.classList.add('ok');
+  if (kind === 'err') diag.classList.add('err');
+  diag.innerHTML = html || '';
+  // Hide the bar when there's no content — quiet by default, only appears for misses / completion toasts.
+  diag.style.display = (html && String(html).trim()) ? '' : 'none';
+}
+
+function explainError(expectedJamo, actualJamo) {
+  const expMap = JAMO_TO_KEY[expectedJamo];
+  const actMap = JAMO_TO_KEY[actualJamo];
+  const expIsCons = CONSONANTS.has(expectedJamo);
+  const actIsCons = CONSONANTS.has(actualJamo);
+
+  let msg = '';
+  if (expIsCons && actIsCons) {
+    msg = `You typed <span class="ko">${actualJamo}</span> but expected <span class="ko">${expectedJamo}</span>. `;
+    if (expMap) msg += `Press <span class="key-hint">${expMap.shift ? 'Shift+' : ''}${expMap.key.toUpperCase()}</span>.`;
+  } else if (!expIsCons && !actIsCons) {
+    msg = `Vowel mix-up: typed <span class="ko">${actualJamo}</span>, expected <span class="ko">${expectedJamo}</span>. `;
+    if (expMap) msg += `Press <span class="key-hint">${expMap.key.toUpperCase()}</span>.`;
+  } else if (expIsCons && !actIsCons) {
+    msg = `Hold up: you skipped a consonant. Expected <span class="ko">${expectedJamo}</span> as ${state.ime.buf.initial && state.ime.buf.medial ? 'a batchim (final)' : 'an initial'}. `;
+    if (expMap) msg += `Press <span class="key-hint">${expMap.shift ? 'Shift+' : ''}${expMap.key.toUpperCase()}</span>.`;
+  } else {
+    msg = `Vowel needed before another consonant. Expected <span class="ko">${expectedJamo}</span>. `;
+    if (expMap) msg += `Press <span class="key-hint">${expMap.key.toUpperCase()}</span>.`;
+  }
+  return msg;
+}
+
+function recordRecent(word, ok, accuracy) {
+  state.doneList.unshift({ word, ok, accuracy, at: Date.now() });
+  state.doneList = state.doneList.slice(0, 8);
+  renderRecent();
+}
+
+function renderRecent() {
+  const el = document.getElementById('recent');
+  el.innerHTML = state.doneList.length === 0
+    ? '<div style="font-size:12px;color:var(--tlo);">Nothing yet.</div>'
+    : state.doneList.map(d => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:${d.ok ? '#ecfdf5' : '#fef2f2'};border-radius:6px;">
+        <span style="font-family: var(--korean); font-weight: 600;">${d.word}</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: ${d.ok ? '#065f46' : '#991b1b'};">${d.accuracy}%</span>
+      </div>`).join('');
+}
+
+function updateStats() {
+  // WPM: 5 chars = 1 word. Wait until we have enough samples to avoid the
+  // first-keystroke spike (tiny elapsed time → absurd WPM like 12000).
+  const elapsed = state.startedAt ? Date.now() - state.startedAt : 0;
+  const elapsedMin = elapsed / 60000;
+  const enoughTime = elapsed >= 5000;             // at least 5 seconds
+  const enoughKeys = state.hitKeys >= 20;          // at least 20 correct keys
+  const rawWpm = elapsedMin > 0 ? (state.hitKeys / 5) / elapsedMin : 0;
+  // Clamp the displayed WPM at a sane ceiling and only count toward best-of
+  // when we have enough samples.
+  const wpm = Math.round(Math.min(rawWpm, 220));
+  if (enoughTime && enoughKeys && wpm > 0 && wpm <= 220) maybeUpdateBestWPM(wpm);
+  document.getElementById('wpm').textContent = wpm;
+  document.getElementById('acc').textContent = (state.totalKeys ? Math.round((state.hitKeys / state.totalKeys) * 100) : 100) + '%';
+  document.getElementById('done').textContent = `${state.wordsDone}/${state.activeWords.length}`;
+  document.getElementById('bestWpm').textContent = progress.bestWPM;
+  renderStreak();
+}
+
+// Per-jamo grid in 4 logical rows: plain cons, tense cons, cardinal vowels, compound vowels
+const JAMO_GROUPS = [
+  { label: 'Plain consonants',  jamos: 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ'.split('') },
+  { label: 'Tense (double)',    jamos: 'ㄲㄸㅃㅆㅉ'.split('') },
+  { label: 'Cardinal vowels',   jamos: 'ㅏㅓㅗㅜㅡㅣ'.split('') },
+  { label: 'Compound / y-vowels', jamos: 'ㅐㅔㅑㅕㅛㅠㅒㅖ'.split('') }
+];
+function renderJamoCell(j) {
+  const s = stats.perJamo[j];
+  const acc = s && s.tries ? Math.round((s.hits / s.tries) * 100) : null;
+  let cls = '';
+  if (acc !== null) {
+    if (acc < 70) cls = 'weak';
+    else if (acc < 90) cls = 'med';
+    else cls = 'good';
+  }
+  const accLabel = acc === null ? '–' : (acc + '%');
+  return `<div class="jamo-cell ${cls}">${j}<div class="acc">${accLabel}</div></div>`;
+}
+function renderJamoGrid() {
+  const grid = document.getElementById('jamoGrid');
+  grid.innerHTML = JAMO_GROUPS.map(g => `
+    <div class="jamo-group">
+      <div class="jamo-group-label">${g.label}</div>
+      <div class="jamo-grid">${g.jamos.map(renderJamoCell).join('')}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// Input handling
+// ============================================================
+
+function afterCorrectKeystroke() {
+  playClick();
+  renderLive();
+  updateTargetJamoStates();
+  updateProgress();
+  updateStats();
+  renderJamoGrid();
+
+  if (state.posKs >= state.expectedKs.length) {
+    state.ime.commitBuffer();
+    const target = state.activeWords[state.wordIdx].ko;
+    const displayed = state.ime.display;
+    if (displayed === target) {
+      state.wordsDone++;
+      const wAcc = Math.round((state.hitKeys / Math.max(state.totalKeys, 1)) * 100);
+      recordRecent(target, true, wAcc);
+      recordDailyStreak();
+      recordTopicCompletion(state.activeTopic, target);
+      // SRS: rate this word and update topic mastery
+      rateWord(target, ratingFromAccuracy(wAcc));
+      if (state.activeTopic !== 'all') recordTopicPractice(state.activeTopic);
+      else {
+        for (const t of TOPICS) if (t.words.some(w => w.ko === target)) { recordTopicPractice(t.id); break; }
+      }
+      saveProgress(progress);
+      buildTopicsPicker();
+      renderAvatarBlob({ bump: true });
+      // Word-completion juice (kept lightweight; XP/level system removed)
+      const wordEl = document.querySelector('#targetWord');
+      confettiBurst(wordEl, 8);
+      playWordDing();
+      renderStreak();
+      if (state.sprintMode) {
+        state.sprintWords++;
+        state.sprintChars += [...target].filter(c => c !== ' ').length;
+        updateSprintUI();
+        setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 200);
+      } else {
+        setDiag('ok', `<span class="label">Nice.</span> <span class="ko">${target}</span> done.`);
+        setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 700);
+      }
+      updateStats();
+    } else {
+      setDiag('err', `<span class="label">Almost.</span> Expected <span class="ko">${target}</span>, got <span class="ko">${displayed}</span>. Try again.`);
+      setTimeout(() => loadWord(state.wordIdx), 1100);
+    }
+    return;
+  }
+
+  // Per-keystroke "Hit." messages were noise — the keyboard highlight + canvas color already say it.
+  setDiag('', '');
+  highlightNextKey();
+}
+
+function handleKeystroke(rawKey, isShift) {
+  if (!state.startedAt) state.startedAt = Date.now();
+  const expected = state.expectedKs[state.posKs];
+
+  // Space key
+  if (rawKey === ' ') {
+    state.totalKeys++;
+    if (expected === ' ') {
+      state.hitKeys++;
+      state.posKs++;
+      state.ime.commitBuffer();
+      state.ime.committed += ' ';
+      if (state.sprintMode) { state.sprintHits++; state.sprintTotal++; }
+      bumpCombo();
+      afterCorrectKeystroke();
+      return true;
+    }
+    if (state.sprintMode) state.sprintTotal++;
+    resetCombo();
+    setDiag('err', `<span class="label">Hold.</span> Space is not expected here. Type the next jamo.`);
+    flashJamoErr();
+    playMiss();
+    updateStats();
+    return false;
+  }
+
+  // Determine the keymap key for jamo input
+  let lookupKey = rawKey;
+  if (isShift && KEYMAP[rawKey.toUpperCase()]) lookupKey = rawKey.toUpperCase();
+  else lookupKey = rawKey.toLowerCase();
+  const jamo = KEYMAP[lookupKey];
+  if (!jamo) return false;
+
+  state.totalKeys++;
+
+  if (jamo === expected) {
+    state.hitKeys++;
+    state.posKs++;
+    state.ime.type(jamo);
+    flashKey(rawKey);
+    recordKeystroke(expected, jamo);
+    if (state.sprintMode) { state.sprintHits++; state.sprintTotal++; }
+    bumpCombo();
+    afterCorrectKeystroke();
+    return true;
+  }
+
+  // Mistake
+  if (state.sprintMode) state.sprintTotal++;
+  resetCombo();
+  recordKeystroke(expected, jamo);
+  setDiag('err', explainError(expected, jamo));
+  flashKey(rawKey);
+  flashJamoErr();
+  playMiss();
+  renderJamoGrid();
+  updateStats();
+  return false;
+}
+
+// Korean IME: given a compatibility jamo, simulate the equivalent QWERTY
+// keystroke so all the existing scoring / SRS / animation logic just works.
+function handleKoreanJamoInput(jamo) {
+  const map = JAMO_TO_KEY[jamo];
+  if (!map) return;
+  if (!state.startedAt) state.startedAt = Date.now();
+  const rawKey = map.shift ? map.key.toUpperCase() : map.key;
+  handleKeystroke(rawKey, !!map.shift);
+}
+
+function attachInput() {
+  const shield = document.getElementById('shield');
+  // Keep focus
+  // Shield is only useful for capturing keystrokes on desktop. On small viewports
+  // the visual keyboard is hidden anyway and re-focusing an offscreen input causes
+  // mobile browsers to scroll-into-view, jumping the page to the jamoGrid.
+  if (window.innerWidth >= 700) {
+    shield.focus({ preventScroll: true });
+  }
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth < 700) return;
+    // Don't refocus if the user clicked an interactive control (buttons, pills, modals)
+    const t = e.target;
+    if (t && t.closest && t.closest('button, input, select, .topic-pill, .records-tab, .profile-modal, .celebration-overlay')) return;
+    shield.focus({ preventScroll: true });
+  });
+
+  // Korean IME path: when the system keyboard is set to Korean, keydown
+  // events arrive while the IME is composing (e.isComposing or keyCode 229),
+  // and the resulting Korean text lands in #shield via 'input' events.
+  // We process those Korean chars as direct jamo input.
+  shield.addEventListener('input', () => {
+    const v = shield.value;
+    if (!v) return;
+    for (const ch of v) {
+      const code = ch.charCodeAt(0);
+      if (code >= 0xAC00 && code <= 0xD7A3) {
+        // Hangul syllable — decompose to constituent jamos
+        const jamos = syllableToKeystrokes(ch);
+        for (const j of jamos) handleKoreanJamoInput(j);
+      } else if (JAMO_TO_KEY[ch]) {
+        // Compatibility jamo (ㄱ-ㅎ ㅏ-ㅣ)
+        handleKoreanJamoInput(ch);
+      }
+    }
+    shield.value = '';
+  });
+  shield.addEventListener('compositionend', () => {
+    // Some browsers commit via compositionend instead of input — clear here too
+    shield.value = '';
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Korean IME is composing — let the IME finish; we'll grab text via 'input'
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Escape') { e.preventDefault(); loadWord(pickNextWordIdx(state.wordIdx)); return; }
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const next = state.activeWords[(state.wordIdx + 1) % state.activeWords.length];
+      setDiag('tip', `<span class="label">Next up:</span> <span class="ko">${next.ko}</span> (${next.en})`);
+      return;
+    }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      state.ime.backspace();
+      if (state.posKs > 0) state.posKs--;
+      renderLive();
+      updateTargetJamoStates();
+      updateProgress();
+      highlightNextKey();
+      return;
+    }
+    if (e.key === ' ') {
+      e.preventDefault();
+      handleKeystroke(' ', false);
+      return;
+    }
+    if (e.key.length === 1) {
+      // Always prevent default — even on a wrong key. Otherwise the focused
+      // shield input absorbs the character and the browser scrolls to keep
+      // its caret visible, which yanks the page down on every mistake.
+      e.preventDefault();
+      handleKeystroke(e.key, e.shiftKey);
+    }
+  });
+}
+
+// ============================================================
+// Boot
+// ============================================================
+
+function boot() {
+  buildKeyboard();
+  buildTopicsPicker();
+  renderAvatarBlob();
+  loadWord(0);
+  renderJamoGrid();
+  renderRecent();
+  attachInput();
+  renderProfileChip();
+  renderBattleChip();
+  renderStreak();
+  renderRecords();
+  updateStats();
+  document.getElementById('profileChip').addEventListener('click', openProfileModal);
+
+  // Records panel toggle
+  const recordsBtn = document.getElementById('btnRecords');
+  const recordsPanel = document.getElementById('recordsPanel');
+  if (recordsBtn && recordsPanel) {
+    recordsBtn.addEventListener('click', () => {
+      const open = recordsPanel.style.display !== 'none';
+      recordsPanel.style.display = open ? 'none' : 'block';
+      if (!open) renderRecords();
+    });
+  }
+  // (per-jamo accuracy is now an always-visible section under the practice card)
+
+  document.getElementById('btnSkip').addEventListener('click', () => loadWord(pickNextWordIdx(state.wordIdx)));
+  document.getElementById('btnSprint').addEventListener('click', startSprint);
+  document.getElementById('btnSprintExit').addEventListener('click', exitSprint);
+  const btnAudio = document.getElementById('btnAudio');
+  function syncAudioBtn() {
+    btnAudio.textContent = `${state.audioOn ? '🔊' : '🔇'} Audio: ${state.audioOn ? 'ON' : 'OFF'}`;
+    btnAudio.classList.toggle('primary', state.audioOn);
+  }
+  syncAudioBtn();
+  btnAudio.addEventListener('click', () => {
+    state.audioOn = !state.audioOn;
+    saveAudio();
+    syncAudioBtn();
+    if (state.audioOn) {
+      ensureAudio();
+      playClick();
+    }
+  });
+  const btnRomanize = document.getElementById('btnRomanize');
+  function syncRomanizeBtn() {
+    btnRomanize.textContent = `🅰️ Romanize: ${state.romanizeOn ? 'ON' : 'OFF'}`;
+    btnRomanize.classList.toggle('primary', state.romanizeOn);
+  }
+  syncRomanizeBtn();
+  btnRomanize.addEventListener('click', () => {
+    state.romanizeOn = !state.romanizeOn;
+    saveRomanize();
+    syncRomanizeBtn();
+    const w = state.activeWords[state.wordIdx];
+    if (w) renderRomanization(w.ko);
+  });
+  // Mistake-graveyard drill — load top lapsed words as a virtual topic
+  const mistakeDrillBtn = document.getElementById('btnMistakeDrill');
+  if (mistakeDrillBtn) {
+    mistakeDrillBtn.addEventListener('click', () => {
+      const mistakes = getMistakeWords(20);
+      if (mistakes.length === 0) return;
+      setTopic('mistakes');
+      setDiag('ok', `<span class="label">🚨 Drill mode.</span> Reviewing ${mistakes.length} weak word${mistakes.length === 1 ? '' : 's'}. Get them right to remove from this list.`);
+    });
+  }
+  document.getElementById('btnReset').addEventListener('click', () => {
+    if (!confirm('Reset everything? This clears per-jamo history, streak, XP, level, leaderboard, daily quest, and topic completion.')) return;
+    stats = { perJamo: {}, history: [] };
+    saveStats(stats);
+    progress = JSON.parse(JSON.stringify(DEFAULT_PROGRESS));
+    saveProgress(progress);
+    state.startedAt = null;
+    state.totalKeys = 0;
+    state.hitKeys = 0;
+    state.wordsDone = 0;
+    state.doneList = [];
+    state.combo = 0;
+    state.comboMax = 0;
+    renderJamoGrid();
+    renderRecent();
+    buildTopicsPicker();
+    renderStreak();
+    renderRecords();
+    updateStats();
+    loadWord(0);
+  });
+
+  // Per-jamo accuracy collapse toggle
+  const jamoCard = document.getElementById('jamoCard');
+  const btnJamoToggle = document.getElementById('btnJamoToggle');
+  if (jamoCard && btnJamoToggle) {
+    btnJamoToggle.addEventListener('click', () => {
+      const collapsed = jamoCard.classList.toggle('collapsed');
+      btnJamoToggle.setAttribute('aria-expanded', String(!collapsed));
+    });
+  }
+
+  // Settings menu — kebab dropdown holding Audio / Romanize / Reset
+  const btnSettings = document.getElementById('btnSettings');
+  const settingsMenu = document.getElementById('settingsMenu');
+  if (btnSettings && settingsMenu) {
+    btnSettings.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = !settingsMenu.hasAttribute('hidden');
+      if (isOpen) {
+        settingsMenu.setAttribute('hidden', '');
+        btnSettings.setAttribute('aria-expanded', 'false');
+      } else {
+        settingsMenu.removeAttribute('hidden');
+        btnSettings.setAttribute('aria-expanded', 'true');
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!settingsMenu.contains(e.target) && e.target !== btnSettings) {
+        settingsMenu.setAttribute('hidden', '');
+        btnSettings.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+}
+
+boot();
+
+// Re-render canvases once Noto Sans KR is fully loaded (the first segmentation may have used a fallback font)
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    SYL_CACHE.clear();
+    if (state.activeWords.length) renderTargetWord();
+  });
+}
+
+// Re-render on window resize when the breakpoint changes (font-size class swaps)
+let _resizeT = null;
+let _lastSizeClass = '';
+window.addEventListener('resize', () => {
+  if (_resizeT) clearTimeout(_resizeT);
+  _resizeT = setTimeout(() => {
+    const sylCount = state.expectedSyllables.length;
+    let sizeClass = '';
+    if (sylCount > 12) sizeClass = 'sm';
+    else if (sylCount > 8) sizeClass = 'md';
+    else if (sylCount > 5) sizeClass = 'lg';
+    if (sizeClass !== _lastSizeClass) {
+      _lastSizeClass = sizeClass;
+      SYL_CACHE.clear();
+      renderTargetWord();
+    }
+  }, 150);
+});
+</script>
+</body>
+</html>

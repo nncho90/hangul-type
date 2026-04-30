@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한글 BATTLE — Hangul Type</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  :root {
+    --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
+    --bd: #e2e8f0;   --bdhi: #cbd5e1;
+    --thi: #0f172a;  --tmd: #475569;   --tlo: #94a3b8;
+    --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
+    --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
+    --korean: 'Noto Sans KR', 'Inter', sans-serif;
+  }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--thi);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Soft gradient backdrop with floating accent blobs */
+  .backdrop {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.07), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.06), transparent 50%),
+      radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.05), transparent 50%),
+      var(--bg);
+    z-index: 0;
+  }
+  .backdrop::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle 1px at 25% 20%, rgba(148, 163, 184, 0.4), transparent),
+      radial-gradient(circle 1px at 75% 60%, rgba(148, 163, 184, 0.3), transparent),
+      radial-gradient(circle 1px at 50% 90%, rgba(148, 163, 184, 0.4), transparent),
+      radial-gradient(circle 1px at 90% 30%, rgba(148, 163, 184, 0.3), transparent),
+      radial-gradient(circle 1px at 10% 70%, rgba(148, 163, 184, 0.3), transparent);
+    background-size: 100% 100%;
+    animation: drift 30s linear infinite;
+  }
+  @keyframes drift {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-20px); }
+  }
+
+  /* HUD */
+  .hud {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--l1);
+    border-bottom: 1px solid var(--bd);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .hud-left, .hud-right { display: flex; align-items: center; gap: 18px; }
+  .hud-center {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 22px;
+    color: var(--thi);
+    letter-spacing: 0.04em;
+  }
+  .stat {
+    display: flex; flex-direction: column;
+    line-height: 1.1;
+  }
+  .stat-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--tlo);
+    font-weight: 700;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--thi);
+    margin-top: 2px;
+  }
+  .stat-value.level   { color: var(--blue); }
+  .stat-value.score   { color: var(--green); }
+  .stat-value.combo   { color: var(--orange); min-width: 56px; text-align: right; }
+  .stat-value.combo.zero { color: var(--tlo); }
+  .lives {
+    font-size: 18px;
+    letter-spacing: 4px;
+    color: var(--red);
+  }
+  .lives .lost { color: var(--bd); }
+
+  .menu-btn {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tmd);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .menu-btn:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
+
+  /* XP bar */
+  .xpbar {
+    position: fixed;
+    top: 64px; left: 0; right: 0;
+    height: 4px;
+    background: var(--l3);
+    z-index: 99;
+    overflow: hidden;
+  }
+  .xpbar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--blue), #60a5fa);
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+    transition: width 0.3s;
+  }
+
+  /* Stage */
+  .stage {
+    position: fixed;
+    inset: 68px 0 88px 0;
+    z-index: 50;
+    overflow: hidden;
+  }
+
+  /* Player */
+  .player {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 72px;
+    line-height: 1;
+    z-index: 60;
+    filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.15));
+    animation: breathe 2.6s ease-in-out infinite;
+    transition: filter 0.4s, transform 0.2s;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 0;
+  }
+  .player .player-main { font-size: 72px; line-height: 1; }
+  .player .player-equip {
+    font-size: 32px;
+    margin-left: -8px;
+    margin-bottom: 4px;
+    transform: rotate(-12deg);
+    filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.2));
+    animation: equip-bob 2.6s ease-in-out infinite reverse;
+  }
+  @keyframes equip-bob {
+    0%, 100% { transform: rotate(-12deg) translateY(0); }
+    50%      { transform: rotate(-8deg) translateY(-3px); }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+    50%      { transform: translateX(-50%) translateY(-6px) scale(1.02); }
+  }
+  .player.hit { animation: shake 0.4s; filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.6)); }
+  @keyframes shake {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    20% { transform: translateX(calc(-50% - 8px)) translateY(2px); }
+    40% { transform: translateX(calc(-50% + 8px)) translateY(-2px); }
+    60% { transform: translateX(calc(-50% - 5px)) translateY(2px); }
+    80% { transform: translateX(calc(-50% + 5px)) translateY(0); }
+  }
+  .player.levelup { animation: levelup 1.1s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes levelup {
+    0%   { transform: translateX(-50%) scale(1); }
+    50%  { transform: translateX(-50%) scale(1.6) rotate(360deg); filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.6)); }
+    100% { transform: translateX(-50%) scale(1); }
+  }
+
+  /* Monsters */
+  .monster {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: filter 0.2s;
+    will-change: transform, top;
+    pointer-events: none;
+  }
+  .monster .sprite {
+    font-size: 56px;
+    line-height: 1;
+    filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.15));
+    animation: bob 1.8s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50%      { transform: translateY(-5px) rotate(2deg); }
+  }
+  .monster.tier-1 .sprite { font-size: 44px; }
+  .monster.tier-2 .sprite { font-size: 54px; }
+  .monster.tier-3 .sprite { font-size: 62px; }
+  .monster.tier-4 .sprite { font-size: 72px; }
+  .monster.tier-5 .sprite { font-size: 84px; }
+  .monster.boss .sprite {
+    font-size: 110px;
+    animation: bossbob 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(239, 68, 68, 0.3));
+  }
+  @keyframes bossbob {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-8px) scale(1.04); }
+  }
+  .monster.locked .sprite {
+    filter: drop-shadow(0 0 18px rgba(37, 99, 235, 0.5)) brightness(1.05);
+    animation: locked-pulse 1.0s ease-in-out infinite;
+  }
+  @keyframes locked-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+  .monster.dying .sprite { animation: explode 0.55s ease-out forwards; }
+  @keyframes explode {
+    0%   { transform: scale(1) rotate(0); opacity: 1; }
+    50%  { transform: scale(2.2) rotate(120deg); opacity: 1; filter: brightness(1.3) drop-shadow(0 0 40px rgba(245, 158, 11, 0.9)); }
+    100% { transform: scale(0) rotate(540deg); opacity: 0; }
+  }
+  .monster.teleport-flash { animation: tp-flash 0.32s ease-out; }
+  @keyframes tp-flash {
+    0%   { opacity: 0.0; transform: translateX(-50%) scale(0.6); filter: blur(8px); }
+    50%  { opacity: 1.0; transform: translateX(-50%) scale(1.15); filter: blur(0); }
+    100% { opacity: 1.0; transform: translateX(-50%) scale(1); }
+  }
+  .monster .word {
+    margin-top: 10px;
+    background: var(--l1);
+    border: 2px solid var(--blue);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+    padding: 8px 14px;
+    border-radius: 12px;
+    color: var(--thi);
+    position: relative;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    max-width: min(720px, calc(100vw - 64px));
+  }
+  .monster .word .word-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .monster .word .word-row canvas {
+    display: block;
+    vertical-align: bottom;
+  }
+  .monster .word .word-row .syl-space {
+    display: inline-block;
+    width: 14px; height: 5px;
+    background: var(--bd);
+    border-radius: 2px;
+    align-self: center;
+    margin: 0 4px 8px;
+    transition: background 0.2s;
+  }
+  .monster .word .word-row .syl-space.done { background: var(--green); }
+  .monster .word .word-row .syl-space.now  { background: var(--blue); }
+  .monster .word .word-row .syl-fallback {
+    font-family: var(--korean);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--thi);
+  }
+  .monster .word::before {
+    content: '';
+    position: absolute;
+    top: -8px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--blue);
+  }
+  .monster.locked .word {
+    border-color: var(--orange);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.25);
+  }
+  .monster.locked .word::before { border-bottom-color: var(--orange); }
+  .monster .word .typed {
+    color: var(--green);
+  }
+  .monster .word .pending { color: var(--thi); }
+  .monster.boss .word {
+    font-size: 22px;
+    max-width: 600px;
+    white-space: normal;
+    line-height: 1.35;
+    border-color: var(--red);
+    border-width: 3px;
+  }
+  .monster.boss .word::before { border-bottom-color: var(--red); }
+
+  .monster .hp-bar {
+    margin-top: 8px;
+    height: 5px;
+    width: 80px;
+    background: var(--l3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .monster .hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+    transition: width 0.18s;
+  }
+  .monster.boss .hp-bar { width: 280px; height: 8px; }
+
+  /* Projectile */
+  .projectile {
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--blue);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+    z-index: 55;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+  .projectile.glyph {
+    width: auto; height: auto;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    line-height: 1;
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+  .trail-particle {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    z-index: 54;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: trail-fade 300ms ease-out forwards;
+  }
+  @keyframes trail-fade {
+    0%   { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  }
+
+  /* Particles */
+  .particle {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 70;
+    animation: particle-fly 700ms ease-out forwards;
+  }
+  @keyframes particle-fly {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: var(--end) scale(0.4); }
+  }
+
+  /* Score pop */
+  .score-pop {
+    position: absolute;
+    z-index: 75;
+    pointer-events: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--green);
+    text-shadow: 0 1px 0 white;
+    animation: pop-rise 900ms ease-out forwards;
+  }
+  @keyframes pop-rise {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+    20%  { opacity: 1; transform: translate(-50%, -10px) scale(1.15); }
+    100% { opacity: 0; transform: translate(-50%, -56px) scale(1); }
+  }
+
+  /* Combo banner */
+  .combo-banner {
+    position: fixed;
+    top: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    font-family: 'Black Han Sans', 'Inter', sans-serif;
+    color: var(--orange);
+    font-size: 36px;
+    text-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    pointer-events: none;
+    animation: combo-banner 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    letter-spacing: 2px;
+  }
+  @keyframes combo-banner {
+    0%   { opacity: 0; transform: translateX(-50%) scale(0.4); }
+    25%  { opacity: 1; transform: translateX(-50%) scale(1.15); }
+    70%  { opacity: 1; transform: translateX(-50%) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1); }
+  }
+
+  /* Typing strip */
+  .typing-strip {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    background: var(--l1);
+    border-top: 1px solid var(--bd);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-height: 60px;
+    font-family: var(--korean);
+    box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .typing-strip .live {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--blue);
+    min-width: 40px;
+    letter-spacing: 1px;
+  }
+  .typing-strip .ime-cursor {
+    display: inline-block;
+    width: 2px; height: 26px;
+    background: var(--blue);
+    vertical-align: middle;
+    margin-left: 4px;
+    animation: blink 0.9s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .typing-strip .hint {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--tlo);
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+
+  /* Modals */
+  .modal-veil {
+    position: fixed; inset: 0;
+    z-index: 500;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fade-in 0.3s ease;
+    padding: 20px;
+  }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .modal-card {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 18px;
+    padding: 36px 44px;
+    text-align: center;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+    animation: modal-rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes modal-rise {
+    0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-card .badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #2563eb, #8b5cf6);
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .modal-card .badge.danger {
+    background: linear-gradient(135deg, var(--red), var(--orange));
+  }
+  .modal-card h1 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 36px;
+    color: var(--thi);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+  .modal-card .subtitle {
+    font-size: 14px;
+    color: var(--tmd);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .modal-card .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .modal-card .stat-grid > div {
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .modal-card .stat-grid .k {
+    font-size: 10px;
+    color: var(--tlo);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+  }
+  .modal-card .stat-grid .v {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    color: var(--thi);
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  .modal-card .actions {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  .modal-card button {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    color: var(--tmd);
+    padding: 12px 22px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .modal-card button:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
+  .modal-card button.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+  }
+  .modal-card button.primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: white; }
+
+  .practice-carry {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #ecfdf5, #f0f9ff);
+    border: 1px solid #6ee7b7;
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--tmd);
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+  }
+  .practice-carry .ico { font-size: 20px; }
+  .practice-carry strong { color: var(--green); }
+
+  .new-high {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--yellow), var(--orange));
+    color: white;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Story dialog (Pokemon-style) */
+  .story-dialog {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 600;
+    padding: 24px 24px 32px;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.3));
+    animation: fade-in 0.3s ease;
+  }
+  .story-card {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--l1);
+    border: 2px solid var(--blue);
+    border-radius: 14px;
+    padding: 20px 28px 28px;
+    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.35);
+    position: relative;
+  }
+  .story-speaker {
+    font-size: 11px; font-weight: 800;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 8px;
+  }
+  .story-text {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--thi);
+    min-height: 64px;
+    font-weight: 500;
+  }
+  .story-text .ko {
+    font-family: var(--korean);
+    font-weight: 800;
+    color: var(--blue);
+  }
+  .story-meta {
+    position: absolute;
+    bottom: 8px; right: 14px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 11px; color: var(--tlo);
+  }
+  .story-meta .story-prompt {
+    color: var(--blue);
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    animation: prompt-bounce 0.9s ease-in-out infinite;
+  }
+  .story-meta .story-prompt.ready { opacity: 1; }
+  @keyframes prompt-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
+
+  /* Body shake for visceral combo-break / damage */
+  body.shake { animation: body-shake 0.32s ease-in-out; }
+  @keyframes body-shake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-8px, 4px); }
+    40% { transform: translate(8px, -3px); }
+    60% { transform: translate(-6px, 3px); }
+    80% { transform: translate(6px, -2px); }
+  }
+
+  /* Pause overlay */
+  .pause-overlay {
+    position: fixed; inset: 0; z-index: 400;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px;
+  }
+  .pause-overlay .pause-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 56px;
+    color: var(--blue);
+    letter-spacing: 4px;
+  }
+  .pause-overlay .pause-hint {
+    font-size: 13px;
+    color: var(--tlo, #94a3b8);
+    letter-spacing: 0.04em;
+  }
+
+  /* Mobile guard */
+  .mobile-block {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 1000;
+    background: var(--l1);
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+  }
+  .mobile-block .ico {
+    font-size: 64px;
+    display: block;
+    margin-bottom: 18px;
+  }
+  .mobile-block h2 {
+    font-size: 22px;
+    color: var(--thi);
+    margin-bottom: 10px;
+  }
+  .mobile-block p {
+    font-size: 14px;
+    color: var(--tmd);
+    margin-bottom: 16px;
+  }
+  .mobile-block a {
+    display: inline-block;
+    background: var(--blue);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  @media (max-width: 720px) {
+    .mobile-block { display: flex; }
+    .stage, .hud, .typing-strip, .xpbar, .backdrop { display: none; }
+  }
+
+  /* Hidden input */
+  .shield {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="backdrop"></div>
+
+<header class="hud">
+  <div class="hud-left">
+    <div class="stat">
+      <span class="stat-label">Level</span>
+      <span class="stat-value level" id="hudLevel">1</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Score</span>
+      <span class="stat-value score" id="hudScore">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Lives</span>
+      <span class="stat-value lives" id="hudLives">♥♥♥</span>
+    </div>
+  </div>
+  <div class="hud-center">한글 BATTLE</div>
+  <div class="hud-right">
+    <div class="stat" style="text-align: right;">
+      <span class="stat-label">Combo</span>
+      <span class="stat-value combo zero" id="hudCombo">×1</span>
+    </div>
+    <button class="menu-btn" id="btnMenu">⏸ Pause</button>
+  </div>
+</header>
+
+<div class="xpbar"><div class="xpbar-fill" id="xpFill"></div></div>
+
+<div class="stage" id="stage">
+  <div class="player" id="player">🥷</div>
+</div>
+
+<footer class="typing-strip">
+  <span class="hint">▶ Type</span>
+  <span class="live" id="liveOut"></span><span class="ime-cursor"></span>
+  <span class="hint">Type the Korean word on a monster to lock on · Esc releases (or pauses if not locked) · ` pauses</span>
+</footer>
+
+<input class="shield" id="shield" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+
+<div id="introModal" class="modal-veil">
+  <div class="modal-card">
+    <div class="badge">⚔️ Battle Mode</div>
+    <h1>한글 전투</h1>
+    <p class="subtitle">Defeat the invading 한글 demons by typing the Korean word floating above each one. Each correct keystroke fires a projectile. Wrong keys break your combo. Survive as long as you can.</p>
+    <div class="stat-grid">
+      <div><div class="k">High Score</div><div class="v" id="introHigh">0</div></div>
+      <div><div class="k">Best Wave</div><div class="v" id="introBest">0</div></div>
+    </div>
+    <div id="practiceCarry" class="practice-carry" style="display:none;"></div>
+    <div class="actions">
+      <button class="primary" id="btnStart">Start Battle</button>
+      <button id="btnReplayStory">Replay story</button>
+      <button id="btnBack">← Back to practice</button>
+    </div>
+  </div>
+</div>
+
+<div id="gameOverModal" class="modal-veil" style="display:none;">
+  <div class="modal-card">
+    <div class="badge danger">Game Over</div>
+    <h1 id="gameOverTitle">전사 — Fallen</h1>
+    <p class="subtitle" id="gameOverFlavor">The demons broke through. Try again?</p>
+    <div id="newHighSign" style="display:none;"><span class="new-high">⭐ New high score</span></div>
+    <div class="stat-grid">
+      <div><div class="k">Score</div><div class="v" id="overScore">0</div></div>
+      <div><div class="k">Level</div><div class="v" id="overLevel">1</div></div>
+      <div><div class="k">Kills</div><div class="v" id="overKills">0</div></div>
+      <div><div class="k">Best combo</div><div class="v" id="overCombo">0</div></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btnRetry">Retry</button>
+      <button id="btnHome">Back to practice</button>
+    </div>
+  </div>
+</div>
+
+<div id="pauseOverlay" class="pause-overlay" style="display:none;">
+  <div class="pause-title">PAUSED</div>
+  <div class="pause-hint">press Esc to resume</div>
+</div>
+
+<div id="storyDialog" class="story-dialog" style="display:none;">
+  <div class="story-card">
+    <div class="story-speaker" id="storySpeaker">Narrator</div>
+    <div class="story-text" id="storyText"></div>
+    <div class="story-meta">
+      <span class="story-prompt" id="storyPrompt">▼</span>
+      <span class="story-skip" id="storySkip">Esc to skip</span>
+    </div>
+  </div>
+</div>
+
+<div class="mobile-block">
+  <div>
+    <span class="ico">⌨️</span>
+    <h2>한글 BATTLE needs a real keyboard</h2>
+    <p>Open this on a desktop browser to play.</p>
+    <a href="index.html">← Back to practice</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// Hangul IME (mirrors index.html)
+// ============================================================
+
+const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const MEDIALS  = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const FINALS   = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const KEYMAP = {
+  'q':'ㅂ','w':'ㅈ','e':'ㄷ','r':'ㄱ','t':'ㅅ','y':'ㅛ','u':'ㅕ','i':'ㅑ','o':'ㅐ','p':'ㅔ',
+  'a':'ㅁ','s':'ㄴ','d':'ㅇ','f':'ㄹ','g':'ㅎ','h':'ㅗ','j':'ㅓ','k':'ㅏ','l':'ㅣ',
+  'z':'ㅋ','x':'ㅌ','c':'ㅊ','v':'ㅍ','b':'ㅠ','n':'ㅜ','m':'ㅡ',
+  'Q':'ㅃ','W':'ㅉ','E':'ㄸ','R':'ㄲ','T':'ㅆ','O':'ㅒ','P':'ㅖ'
+};
+const VOWEL_COMPOUND = { 'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ','ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ','ㅡㅣ':'ㅢ' };
+const FINAL_COMPOUND = { 'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ','ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ','ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ','ㅂㅅ':'ㅄ' };
+const FINAL_DECOMPOSE = { 'ㄳ':['ㄱ','ㅅ'],'ㄵ':['ㄴ','ㅈ'],'ㄶ':['ㄴ','ㅎ'],'ㄺ':['ㄹ','ㄱ'],'ㄻ':['ㄹ','ㅁ'],'ㄼ':['ㄹ','ㅂ'],'ㄽ':['ㄹ','ㅅ'],'ㄾ':['ㄹ','ㅌ'],'ㄿ':['ㄹ','ㅍ'],'ㅀ':['ㄹ','ㅎ'],'ㅄ':['ㅂ','ㅅ'] };
+const VOWEL_DECOMPOSE = { 'ㅘ':['ㅗ','ㅏ'],'ㅙ':['ㅗ','ㅐ'],'ㅚ':['ㅗ','ㅣ'],'ㅝ':['ㅜ','ㅓ'],'ㅞ':['ㅜ','ㅔ'],'ㅟ':['ㅜ','ㅣ'],'ㅢ':['ㅡ','ㅣ'] };
+const CONSONANTS = new Set('ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split(''));
+const VOWELS_BASIC = new Set('ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅛㅜㅠㅡㅣ'.split(''));
+
+function composeSyllable(i, m, f) {
+  const ii = INITIALS.indexOf(i), mi = MEDIALS.indexOf(m), fi = FINALS.indexOf(f || '');
+  if (ii < 0 || mi < 0) return (i || '') + (m || '') + (f || '');
+  return String.fromCharCode(0xAC00 + ii * 588 + mi * 28 + fi);
+}
+function syllableToKeystrokes(syl) {
+  const code = syl.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return [syl];
+  const x = code - 0xAC00;
+  const i = INITIALS[Math.floor(x / 588)];
+  const m = MEDIALS[Math.floor((x % 588) / 28)];
+  const f = FINALS[x % 28];
+  const ks = [i];
+  if (VOWEL_DECOMPOSE[m]) ks.push(...VOWEL_DECOMPOSE[m]); else ks.push(m);
+  if (f) { if (FINAL_DECOMPOSE[f]) ks.push(...FINAL_DECOMPOSE[f]); else ks.push(f); }
+  return ks;
+}
+function wordToKeystrokes(word) {
+  const ks = [];
+  for (const ch of word) { if (ch === ' ') ks.push(' '); else ks.push(...syllableToKeystrokes(ch)); }
+  return ks;
+}
+
+class HangulIME {
+  constructor() { this.reset(); }
+  reset() { this.committed = ''; this.buf = { initial:'', medial:'', final:'' }; }
+  get display() { let o = this.committed; if (this.buf.initial || this.buf.medial || this.buf.final) o += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final); return o; }
+  commitBuffer() { if (this.buf.initial || this.buf.medial || this.buf.final) this.committed += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final); this.buf = { initial:'', medial:'', final:'' }; }
+  type(j) {
+    const c = CONSONANTS.has(j), v = VOWELS_BASIC.has(j);
+    if (!c && !v) return;
+    if (c) this._con(j); else this._vow(j);
+  }
+  _con(c) {
+    const b = this.buf;
+    if (!b.initial && !b.medial && !b.final) b.initial = c;
+    else if (b.initial && !b.medial) { this.commitBuffer(); this.buf.initial = c; }
+    else if (b.initial && b.medial && !b.final) { if (FINALS.includes(c)) b.final = c; else { this.commitBuffer(); this.buf.initial = c; } }
+    else if (b.initial && b.medial && b.final) { const cmp = FINAL_COMPOUND[b.final + c]; if (cmp) b.final = cmp; else { this.commitBuffer(); this.buf.initial = c; } }
+  }
+  _vow(v) {
+    const b = this.buf;
+    if (!b.initial && !b.medial) { this.committed += v; return; }
+    if (b.initial && !b.medial) { b.medial = v; return; }
+    if (b.initial && b.medial && !b.final) { const cmp = VOWEL_COMPOUND[b.medial + v]; if (cmp) b.medial = cmp; else { this.commitBuffer(); this.committed += v; } return; }
+    if (b.initial && b.medial && b.final) {
+      const dec = FINAL_DECOMPOSE[b.final] || [b.final];
+      const newI = dec[dec.length - 1];
+      const rest = dec.length > 1 ? dec.slice(0, -1).join('') : '';
+      let rf = ''; if (rest.length === 1) rf = rest; else if (rest.length > 1) rf = FINAL_COMPOUND[rest] || rest[0];
+      this.committed += composeSyllable(b.initial, b.medial, rf);
+      this.buf = { initial: newI, medial: v, final: '' };
+    }
+  }
+}
+
+// ============================================================
+// Canvas-based per-jamo renderer (mirrors index.html)
+// ============================================================
+
+const HORIZ_VOWELS    = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅐ','ㅒ','ㅔ','ㅖ','ㅣ']);
+const VERT_VOWELS     = new Set(['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ']);
+const COMPOUND_VOWELS = new Set(['ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ']);
+const STATE_COLORS = { done:'#10b981', now:'#2563eb', err:'#ef4444', pending:'#0f172a' };
+const SYL_CACHE = new Map();
+
+function syllableLayoutType(mIdx) {
+  const m = MEDIALS[mIdx];
+  if (COMPOUND_VOWELS.has(m)) return 'compound';
+  if (VERT_VOWELS.has(m)) return 'vert';
+  return 'horiz';
+}
+
+function buildSyllableCanvas(syllableChar, fontSizePx) {
+  const dpr = window.devicePixelRatio || 1;
+  const code = syllableChar.charCodeAt(0);
+  const x = code - 0xAC00;
+  const mIdx = Math.floor((x % 588) / 28);
+  const fIdx = x % 28;
+  const layout = syllableLayoutType(mIdx);
+  const hasFinal = fIdx > 0;
+  const wCss = Math.ceil(fontSizePx * 1.05);
+  const hCss = Math.ceil(fontSizePx * 1.20);
+  const canvas = document.createElement('canvas');
+  canvas.width = wCss * dpr;
+  canvas.height = hCss * dpr;
+  canvas.style.width = wCss + 'px';
+  canvas.style.height = hCss + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#000000';
+  ctx.font = `700 ${fontSizePx}px "Noto Sans KR", system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(syllableChar, wCss / 2, fontSizePx * 0.95);
+  const W = canvas.width, H = canvas.height;
+  const data = ctx.getImageData(0, 0, W, H).data;
+  const isInk = (i) => data[i*4 + 3] > 32 && (data[i*4] + data[i*4+1] + data[i*4+2]) < 600;
+  const visited = new Uint8Array(W * H);
+  const components = [];
+  const queue = new Int32Array(W * H);
+  for (let y = 0; y < H; y++) {
+    for (let xp = 0; xp < W; xp++) {
+      const i0 = y * W + xp;
+      if (visited[i0] || !isInk(i0)) continue;
+      let qh = 0, qt = 0;
+      queue[qt++] = i0; visited[i0] = 1;
+      let minX = xp, maxX = xp, minY = y, maxY = y, area = 0;
+      const pixels = [];
+      while (qh < qt) {
+        const j = queue[qh++];
+        pixels.push(j); area++;
+        const jy = (j / W) | 0, jx = j - jy * W;
+        if (jx < minX) minX = jx; if (jx > maxX) maxX = jx;
+        if (jy < minY) minY = jy; if (jy > maxY) maxY = jy;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const nx = jx + dx, ny = jy + dy;
+          if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+          const ni = ny * W + nx;
+          if (visited[ni] || !isInk(ni)) continue;
+          visited[ni] = 1;
+          queue[qt++] = ni;
+        }
+      }
+      if (area >= 4) components.push({ pixels, minX, maxX, minY, maxY, area, cx: (minX+maxX)/2, cy: (minY+maxY)/2 });
+    }
+  }
+  if (components.length === 0) {
+    return { canvas, groups: { initial: new Uint32Array(0), medial: new Uint32Array(0), final: new Uint32Array(0) }, w: wCss, h: hCss, hasFinal };
+  }
+  let inkMinX = W, inkMaxX = 0, inkMinY = H, inkMaxY = 0;
+  for (const c of components) {
+    if (c.minX < inkMinX) inkMinX = c.minX;
+    if (c.maxX > inkMaxX) inkMaxX = c.maxX;
+    if (c.minY < inkMinY) inkMinY = c.minY;
+    if (c.maxY > inkMaxY) inkMaxY = c.maxY;
+  }
+  const inkW = inkMaxX - inkMinX, inkH = inkMaxY - inkMinY;
+  const groups = { initial: [], medial: [], final: [] };
+  for (const c of components) {
+    const relX = (c.cx - inkMinX) / Math.max(1, inkW);
+    const relY = (c.cy - inkMinY) / Math.max(1, inkH);
+    const relMaxY = (c.maxY - inkMinY) / Math.max(1, inkH);
+    let bucket;
+    if (layout === 'horiz') {
+      if (hasFinal && relY > 0.60) bucket = 'final';
+      else if (relX < 0.50) bucket = 'initial';
+      else bucket = 'medial';
+    } else if (layout === 'vert') {
+      if (hasFinal) {
+        if (relY < 0.38) bucket = 'initial';
+        else if (relY < 0.72) bucket = 'medial';
+        else bucket = 'final';
+      } else {
+        bucket = relY < 0.50 ? 'initial' : 'medial';
+      }
+    } else {
+      if (hasFinal && relY > 0.68) bucket = 'final';
+      else if (relX < 0.42 && relY < 0.40 && relMaxY < 0.55) bucket = 'initial';
+      else bucket = 'medial';
+    }
+    groups[bucket].push(...c.pixels);
+  }
+  return {
+    canvas, ctx,
+    groups: {
+      initial: new Uint32Array(groups.initial),
+      medial:  new Uint32Array(groups.medial),
+      final:   new Uint32Array(groups.final)
+    },
+    w: wCss, h: hCss, hasFinal
+  };
+}
+
+function paintSyllable(cached, stateMap) {
+  const { canvas, ctx, groups, hasFinal } = cached;
+  const W = canvas.width, H = canvas.height;
+  const img = ctx.createImageData(W, H);
+  const px = img.data;
+  const paint = (group, hex) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    for (let i = 0; i < group.length; i++) {
+      const p = group[i];
+      px[p*4] = r; px[p*4+1] = g; px[p*4+2] = b; px[p*4+3] = 255;
+    }
+  };
+  paint(groups.initial, STATE_COLORS[stateMap.initial || 'pending']);
+  paint(groups.medial,  STATE_COLORS[stateMap.medial  || 'pending']);
+  if (hasFinal) paint(groups.final, STATE_COLORS[stateMap.final || 'pending']);
+  ctx.putImageData(img, 0, 0);
+}
+
+function getOrBuildSyllable(syllableChar, fontSizePx) {
+  const key = `${syllableChar}|${fontSizePx}`;
+  let seg = SYL_CACHE.get(key);
+  if (!seg) {
+    seg = buildSyllableCanvas(syllableChar, fontSizePx);
+    SYL_CACHE.set(key, seg);
+    if (SYL_CACHE.size > 240) {
+      const firstKey = SYL_CACHE.keys().next().value;
+      SYL_CACHE.delete(firstKey);
+    }
+  }
+  const dpr = window.devicePixelRatio || 1;
+  const fresh = document.createElement('canvas');
+  fresh.width = seg.w * dpr;
+  fresh.height = seg.h * dpr;
+  fresh.style.width = seg.w + 'px';
+  fresh.style.height = seg.h + 'px';
+  const freshCtx = fresh.getContext('2d');
+  return { canvas: fresh, ctx: freshCtx, groups: seg.groups, w: seg.w, h: seg.h, hasFinal: seg.hasFinal };
+}
+
+function positionsStateAt(positions, lockPos) {
+  let allDone = true;
+  for (const p of positions) {
+    if (p < lockPos) continue;
+    if (p === lockPos) return 'now';
+    allDone = false;
+  }
+  return allDone ? 'done' : 'pending';
+}
+
+function buildWordRow(wordStr, fontPx) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'word-row';
+  const syllables = [];
+  let kIdx = 0;
+  for (const ch of wordStr) {
+    if (ch === ' ') {
+      const sp = document.createElement('span');
+      sp.className = 'syl-space';
+      sp.dataset.kStart = kIdx;
+      wrapper.appendChild(sp);
+      syllables.push({ isSpace: true, el: sp, kStart: kIdx });
+      kIdx++;
+      continue;
+    }
+    const code = ch.charCodeAt(0);
+    if (code < 0xAC00 || code > 0xD7A3) {
+      const sp = document.createElement('span');
+      sp.className = 'syl-fallback';
+      sp.textContent = ch;
+      wrapper.appendChild(sp);
+      kIdx++;
+      continue;
+    }
+    const x = code - 0xAC00;
+    const mIdx = Math.floor((x % 588) / 28);
+    const fIdx = x % 28;
+    const medialIsCompound = !!VOWEL_DECOMPOSE[MEDIALS[mIdx]];
+    const finalIsCompound = fIdx > 0 && !!FINAL_DECOMPOSE[FINALS[fIdx]];
+    const iPos = [kIdx];
+    const mPos = medialIsCompound ? [kIdx+1, kIdx+2] : [kIdx+1];
+    const fPos = fIdx > 0 ? (finalIsCompound ? [kIdx+1+mPos.length, kIdx+1+mPos.length+1] : [kIdx+1+mPos.length]) : [];
+    const sylKsLen = 1 + mPos.length + fPos.length;
+    const cached = getOrBuildSyllable(ch, fontPx);
+    wrapper.appendChild(cached.canvas);
+    paintSyllable(cached, { initial:'pending', medial:'pending', final:'pending' });
+    syllables.push({ isSpace:false, cached, iPos, mPos, fPos, kStart: kIdx, ksLen: sylKsLen });
+    kIdx += sylKsLen;
+  }
+  return { wrapper, syllables };
+}
+
+function repaintWordRow(syllables, lockPos) {
+  for (const syl of syllables) {
+    if (syl.isSpace) {
+      syl.el.classList.remove('done', 'now');
+      if (lockPos > syl.kStart) syl.el.classList.add('done');
+      else if (lockPos === syl.kStart) syl.el.classList.add('now');
+      continue;
+    }
+    if (!syl.cached) continue;
+    paintSyllable(syl.cached, {
+      initial: positionsStateAt(syl.iPos, lockPos),
+      medial:  positionsStateAt(syl.mPos, lockPos),
+      final:   syl.fPos.length ? positionsStateAt(syl.fPos, lockPos) : 'pending'
+    });
+  }
+}
+
+// ============================================================
+// Vocab pool
+// ============================================================
+
+// TOPIK-aligned vocab. Each word tagged with topikLevel (1 = TOPIK 1, 2 = TOPIK 2).
+// Tiers map roughly to syllable count and game difficulty.
+const VOCAB = {
+  // 1 syllable — TOPIK 1.1 absolute basics
+  tier1: [
+    { ko:'네',   en:'yes',         topikLevel:1 },
+    { ko:'책',   en:'book',        topikLevel:1 },
+    { ko:'집',   en:'house',       topikLevel:1 },
+    { ko:'밥',   en:'rice / meal', topikLevel:1 },
+    { ko:'물',   en:'water',       topikLevel:1 },
+    { ko:'산',   en:'mountain',    topikLevel:1 },
+    { ko:'문',   en:'door',        topikLevel:1 },
+    { ko:'손',   en:'hand',        topikLevel:1 },
+    { ko:'발',   en:'foot',        topikLevel:1 },
+    { ko:'눈',   en:'eye / snow',  topikLevel:1 },
+    { ko:'입',   en:'mouth',       topikLevel:1 },
+    { ko:'귀',   en:'ear',         topikLevel:1 },
+    { ko:'몸',   en:'body',        topikLevel:1 },
+    { ko:'꽃',   en:'flower',      topikLevel:1 },
+    { ko:'잎',   en:'leaf',        topikLevel:1 },
+    { ko:'차',   en:'tea / car',   topikLevel:1 },
+    { ko:'옷',   en:'clothes',     topikLevel:1 },
+    { ko:'빵',   en:'bread',       topikLevel:1 },
+    { ko:'개',   en:'dog',         topikLevel:1 },
+    { ko:'말',   en:'speech / horse', topikLevel:1 },
+    { ko:'길',   en:'road',        topikLevel:1 },
+    { ko:'일',   en:'work / one',  topikLevel:1 },
+    { ko:'사',   en:'four',        topikLevel:1 },
+    { ko:'오',   en:'five',        topikLevel:1 },
+    { ko:'십',   en:'ten',         topikLevel:1 },
+    { ko:'만',   en:'10,000',      topikLevel:1 },
+    { ko:'분',   en:'minute',      topikLevel:1 },
+    { ko:'시',   en:'hour',        topikLevel:1 },
+    { ko:'뭐',   en:'what',        topikLevel:1 },
+    { ko:'왜',   en:'why',         topikLevel:1 },
+    { ko:'비',   en:'rain',        topikLevel:1 }
+  ],
+  // 2 syllables — TOPIK 1.1–1.2 daily life
+  tier2: [
+    { ko:'안녕',   en:'hello',          topikLevel:1 },
+    { ko:'감사',   en:'thanks',         topikLevel:1 },
+    { ko:'친구',   en:'friend',         topikLevel:1 },
+    { ko:'학교',   en:'school',         topikLevel:1 },
+    { ko:'음식',   en:'food',           topikLevel:1 },
+    { ko:'가족',   en:'family',         topikLevel:1 },
+    { ko:'나무',   en:'tree',           topikLevel:1 },
+    { ko:'하늘',   en:'sky',            topikLevel:1 },
+    { ko:'시간',   en:'time',           topikLevel:1 },
+    { ko:'사람',   en:'person',         topikLevel:1 },
+    { ko:'한국',   en:'Korea',          topikLevel:1 },
+    { ko:'커피',   en:'coffee',         topikLevel:1 },
+    { ko:'사랑',   en:'love',           topikLevel:1 },
+    { ko:'미안',   en:'sorry',          topikLevel:1 },
+    { ko:'영어',   en:'English',        topikLevel:1 },
+    { ko:'언니',   en:'older sister',   topikLevel:1 },
+    { ko:'동생',   en:'younger sibling', topikLevel:1 },
+    { ko:'야채',   en:'vegetable',      topikLevel:1 },
+    { ko:'어제',   en:'yesterday',      topikLevel:1 },
+    { ko:'오늘',   en:'today',          topikLevel:1 },
+    { ko:'내일',   en:'tomorrow',       topikLevel:1 },
+    { ko:'지금',   en:'now',            topikLevel:1 },
+    { ko:'아침',   en:'morning',        topikLevel:1 },
+    { ko:'저녁',   en:'evening',        topikLevel:1 },
+    { ko:'점심',   en:'lunch',          topikLevel:1 },
+    { ko:'주말',   en:'weekend',        topikLevel:1 },
+    { ko:'회사',   en:'company',        topikLevel:1 },
+    { ko:'병원',   en:'hospital',       topikLevel:1 },
+    { ko:'은행',   en:'bank',           topikLevel:1 },
+    { ko:'공항',   en:'airport',        topikLevel:1 },
+    { ko:'시장',   en:'market',         topikLevel:1 },
+    { ko:'공원',   en:'park',           topikLevel:1 },
+    { ko:'가게',   en:'store',          topikLevel:1 },
+    { ko:'우유',   en:'milk',           topikLevel:1 },
+    { ko:'고기',   en:'meat',           topikLevel:1 },
+    { ko:'사과',   en:'apple',          topikLevel:1 },
+    { ko:'라면',   en:'ramen',          topikLevel:1 },
+    { ko:'김치',   en:'kimchi',         topikLevel:1 },
+    { ko:'택시',   en:'taxi',           topikLevel:1 },
+    { ko:'버스',   en:'bus',            topikLevel:1 },
+    { ko:'지하철', en:'subway',         topikLevel:1 },
+    { ko:'하나',   en:'one (native)',   topikLevel:1 },
+    { ko:'둘',     en:'two (native)',   topikLevel:1 },
+    { ko:'셋',     en:'three (native)', topikLevel:1 },
+    { ko:'넷',     en:'four (native)',  topikLevel:1 },
+    { ko:'다섯',   en:'five (native)',  topikLevel:1 },
+    { ko:'여섯',   en:'six (native)',   topikLevel:1 },
+    { ko:'일곱',   en:'seven (native)', topikLevel:1 },
+    { ko:'여덟',   en:'eight (native)', topikLevel:1 },
+    { ko:'아홉',   en:'nine (native)',  topikLevel:1 },
+    { ko:'열',     en:'ten (native)',   topikLevel:1 },
+    { ko:'스물',   en:'twenty (native)', topikLevel:1 },
+    { ko:'서른',   en:'thirty (native)', topikLevel:1 },
+    { ko:'목요일', en:'Thursday',       topikLevel:1 },
+    { ko:'금요일', en:'Friday',         topikLevel:1 },
+    { ko:'토요일', en:'Saturday',       topikLevel:1 },
+    { ko:'일요일', en:'Sunday',         topikLevel:1 },
+    { ko:'누구',   en:'who',            topikLevel:1 },
+    { ko:'언제',   en:'when',           topikLevel:1 },
+    { ko:'어디',   en:'where',          topikLevel:1 },
+    { ko:'어떻게', en:'how',            topikLevel:1 },
+    { ko:'얼마',   en:'how much',       topikLevel:1 },
+    { ko:'덥다',   en:'hot',            topikLevel:1 },
+    { ko:'춥다',   en:'cold',           topikLevel:1 }
+  ],
+  // 3 syllables — TOPIK 1.2–2.3 verbs, family, places
+  tier3: [
+    { ko:'어머니',   en:'mother',          topikLevel:1 },
+    { ko:'아버지',   en:'father',          topikLevel:1 },
+    { ko:'할머니',   en:'grandmother',     topikLevel:1 },
+    { ko:'할아버지', en:'grandfather',     topikLevel:1 },
+    { ko:'도서관',   en:'library',         topikLevel:1 },
+    { ko:'화장실',   en:'restroom',        topikLevel:1 },
+    { ko:'좋아요',   en:'I like it',       topikLevel:1 },
+    { ko:'싫어요',   en:'I dislike',       topikLevel:1 },
+    { ko:'기쁘다',   en:'glad',            topikLevel:1 },
+    { ko:'재미있다', en:'fun',             topikLevel:1 },
+    { ko:'미안해',   en:'sorry (casual)',  topikLevel:1 },
+    { ko:'시작하다', en:'to begin',        topikLevel:1 },
+    { ko:'가르치다', en:'to teach',        topikLevel:1 },
+    { ko:'도와주다', en:'to help',         topikLevel:2 },
+    { ko:'배워요',   en:'I learn',         topikLevel:2 },
+    { ko:'어려워',   en:'difficult',       topikLevel:2 },
+    { ko:'비싸요',   en:'expensive',       topikLevel:1 },
+    { ko:'천천히',   en:'slowly',          topikLevel:1 },
+    { ko:'아니요',   en:'no',              topikLevel:1 },
+    { ko:'한국어',   en:'Korean (lang.)',  topikLevel:1 },
+    { ko:'기다려',   en:'wait',            topikLevel:2 },
+    { ko:'생각해',   en:'I think',         topikLevel:2 },
+    { ko:'사랑해',   en:'I love',          topikLevel:1 },
+    { ko:'알아요',   en:'I know',          topikLevel:1 },
+    { ko:'몰라요',   en:'I don\'t know',   topikLevel:1 },
+    { ko:'예쁘다',   en:'pretty',          topikLevel:1 },
+    { ko:'무서워',   en:'scary',           topikLevel:1 },
+    { ko:'필요해',   en:'I need',          topikLevel:2 }
+  ],
+  // Short phrases — TOPIK 2.3–2.4 polite forms
+  tier4: [
+    { ko:'만나서 반가워요',   en:'nice to meet you',     topikLevel:1 },
+    { ko:'잘 먹겠습니다',     en:'I will eat well',      topikLevel:1 },
+    { ko:'한국어를 공부해요', en:'I study Korean',       topikLevel:1 },
+    { ko:'점심을 먹어요',     en:'I eat lunch',          topikLevel:1 },
+    { ko:'친구를 만나요',     en:'I meet a friend',      topikLevel:1 },
+    { ko:'책을 읽어요',       en:'I read a book',        topikLevel:1 },
+    { ko:'커피 한 잔 주세요', en:'one coffee please',    topikLevel:1 },
+    { ko:'안녕히 가세요',     en:'goodbye (to leaver)',  topikLevel:1 },
+    { ko:'안녕히 계세요',     en:'goodbye (to stayer)',  topikLevel:1 },
+    { ko:'천천히 말하세요',   en:'please speak slowly',  topikLevel:1 },
+    { ko:'다시 한 번',        en:'one more time',        topikLevel:1 },
+    { ko:'잘 모르겠어요',     en:"I don't understand",   topikLevel:1 },
+    { ko:'잘 먹었습니다',     en:'I ate well (post-meal)', topikLevel:1 },
+    { ko:'안녕히 주무세요',   en:'goodnight (formal)',   topikLevel:1 },
+    { ko:'어디에 가요',       en:'where are you going',  topikLevel:1 }
+  ],
+  // Sentences — TOPIK 2.4–2.5
+  tier5: [
+    { ko:'오늘 날씨가 좋아요',           en:'The weather is nice today',    topikLevel:1 },
+    { ko:'저는 미국 사람이에요',         en:"I'm American",                 topikLevel:1 },
+    { ko:'시간이 없어요 빨리',           en:"I don't have time, hurry",     topikLevel:2 },
+    { ko:'안녕하세요 만나서 반가워요',   en:'Hello, nice to meet you',      topikLevel:1 },
+    { ko:'한국 음식이 정말 맛있어요',    en:'Korean food is really tasty',  topikLevel:1 },
+    { ko:'어디에서 왔어요',             en:'Where are you from',           topikLevel:1 },
+    { ko:'이름이 뭐예요',               en:"What's your name",             topikLevel:1 },
+    { ko:'학생이에요 회사원이에요',     en:'Are you a student or worker',  topikLevel:2 }
+  ],
+  // Boss-tier — TOPIK 2.5–2.6 long sentences
+  boss: [
+    { ko:'한국어를 잘 하고 싶어요',
+      en:'I want to speak Korean well', topikLevel:2 },
+    { ko:'어디에서 왔어요 이름이 뭐예요',
+      en:'Where are you from, what is your name', topikLevel:2 },
+    { ko:'안녕하세요 저는 학생이에요 만나서 반가워요',
+      en:'Hi, I am a student, nice to meet you', topikLevel:2 },
+    { ko:'한국에서 살고 싶지만 일이 많아요',
+      en:'I want to live in Korea but I have a lot of work', topikLevel:2 },
+    { ko:'오늘은 날씨가 좋고 햇빛도 따뜻해요',
+      en:"Today the weather is nice and the sun is warm", topikLevel:2 }
+  ]
+};
+
+// Make vocab queryable by topik level for the practice app
+window.HangulBattleVocab = VOCAB;
+
+const TIER_SPRITES = {
+  1: ['🐛','🦋','🐌','🐞','🦟','🪲','🐜'],
+  2: ['👻','🧚','🐸','🦊','🐰','🦔','🐭'],
+  3: ['🦅','🐺','🕷️','🦂','🦇','🦝','🐗'],
+  4: ['👹','🧟','🐲','🦹','🧛','🦴'],
+  5: ['👾','💀','🦖','🐍','🦑','🧞'],
+  boss: ['🐉','🦠','👹','💀']
+};
+
+// 30 player tiers — start as a literal nobody, slow MapleStory-style growth.
+// Each level adds a small emoji "equipment" next to the sprite so progress feels tangible.
+const PLAYER_SPRITES = [
+  { lv: 1,  emoji: '🥚', label: '무명 Nameless',          equip: '' },
+  { lv: 2,  emoji: '👶', label: '아기 Babe',              equip: '' },
+  { lv: 3,  emoji: '🧒', label: '도제 Apprentice',        equip: '🪨' },
+  { lv: 4,  emoji: '🧑', label: '학생 Student',           equip: '📓' },
+  { lv: 5,  emoji: '🧑‍🎓', label: '졸업생 Graduate',       equip: '🪙' },
+  { lv: 6,  emoji: '🥷', label: '견습생 Trainee',         equip: '🗡️' },
+  { lv: 7,  emoji: '🧝', label: '검사 Swordsman',         equip: '⚔️' },
+  { lv: 8,  emoji: '🧝‍♂️', label: '기사 Knight',          equip: '🛡️' },
+  { lv: 9,  emoji: '🧙', label: '도사 Mage',              equip: '🪄' },
+  { lv: 10, emoji: '🧙‍♂️', label: '대마법사 Archmage',     equip: '📜' },
+  { lv: 11, emoji: '🦸', label: '영웅 Hero',              equip: '🌟' },
+  { lv: 12, emoji: '🦸‍♀️', label: '챔피언 Champion',      equip: '🏆' },
+  { lv: 13, emoji: '🥷', label: '닌자 Ninja',             equip: '🎯' },
+  { lv: 14, emoji: '🧑‍🚀', label: '우주인 Cosmonaut',     equip: '🚀' },
+  { lv: 15, emoji: '🧚‍♀️', label: '요정 Fairy',           equip: '✨' },
+  { lv: 16, emoji: '🤴', label: '왕자 Prince',            equip: '👑' },
+  { lv: 17, emoji: '👸', label: '공주 Princess',          equip: '💎' },
+  { lv: 18, emoji: '🧜‍♂️', label: '인어왕 Merlord',        equip: '🔱' },
+  { lv: 19, emoji: '🧞', label: '정령 Spirit',            equip: '🌀' },
+  { lv: 20, emoji: '🐉', label: '용왕 Dragon Lord',       equip: '🔥' },
+  { lv: 21, emoji: '🦄', label: '일각수 Unicorn',         equip: '🌈' },
+  { lv: 22, emoji: '🐲', label: '용족 Drake',             equip: '🪽' },
+  { lv: 23, emoji: '⚔️', label: '전쟁신 War God',         equip: '💥' },
+  { lv: 24, emoji: '✨', label: '별 Star',                equip: '🌠' },
+  { lv: 25, emoji: '🌟', label: '신선 Immortal',          equip: '🌌' },
+  { lv: 26, emoji: '🌌', label: '우주 Cosmos',            equip: '🪐' },
+  { lv: 27, emoji: '☀️', label: '태양 Sun',               equip: '🔆' },
+  { lv: 28, emoji: '🪐', label: '행성 Planet',            equip: '🛸' },
+  { lv: 29, emoji: '🌠', label: '유성 Comet',             equip: '💫' },
+  { lv: 30, emoji: '🔱', label: '신왕 God-King',          equip: '⚡' }
+];
+
+function playerForLevel(lv) {
+  let pick = PLAYER_SPRITES[0];
+  for (const p of PLAYER_SPRITES) if (lv >= p.lv) pick = p;
+  return pick;
+}
+
+function renderPlayerSprite(lv) {
+  const sp = playerForLevel(lv);
+  const equipHtml = sp.equip ? `<span class="player-equip">${sp.equip}</span>` : '';
+  PLAYER_EL.innerHTML = `<span class="player-main">${sp.emoji}</span>${equipHtml}`;
+}
+
+// Strict tier-per-level: one monster type per stage so the player learns
+// the new behavior before it gets mixed up. Brief 1-level overlap on transition
+// (last level of a tier sprinkles a small preview of the next tier).
+function tierForLevel(lv) {
+  if (lv <= 3)  return 1;
+  if (lv <= 6)  return 2;
+  if (lv <= 9)  return 3;
+  if (lv <= 13) return 4;
+  return 5;
+}
+function pickWordForLevel(lv) {
+  const tier = tierForLevel(lv);
+  // On the final level of a tier, 30% chance to spawn the next tier as a "scout"
+  let chosen = tier;
+  const previewLevels = { 3: 2, 6: 3, 9: 4, 13: 5 };
+  if (previewLevels[lv] && Math.random() < 0.3) chosen = previewLevels[lv];
+  const pool = VOCAB['tier' + chosen] || VOCAB.tier1;
+  const word = pool[Math.floor(Math.random() * pool.length)];
+  return { ...word, tier: chosen };
+}
+
+// Movement archetype per tier. The user sees a different monster sprite AND a
+// different flight pattern, so each new enemy class teaches itself by example.
+const TIER_BEHAVIORS = {
+  1:    { speedMul: 0.85, motion: 'straight' },  // crawler — slow, straight down
+  2:    { speedMul: 1.10, motion: 'straight' },  // sprite — faster, still straight
+  3:    { speedMul: 1.10, motion: 'zigzag'   },  // predator — sinusoidal sweep
+  4:    { speedMul: 0.95, motion: 'dive'     },  // demon — accelerates as it falls
+  5:    { speedMul: 1.20, motion: 'tracker'  },  // specter — drifts toward the player
+  boss: { speedMul: 0.55, motion: 'teleport' }   // boss — pause, jump, repeat
+};
+function behaviorForTier(t) { return TIER_BEHAVIORS[t] || TIER_BEHAVIORS[1]; }
+
+// ============================================================
+// Audio — softer than before, same chiptune source
+// ============================================================
+
+let audioCtx = null;
+function ac() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+function tone({ freq, type='sine', dur=0.06, gain=0.04, slide=null }) {
+  const c = ac(); if (!c) return;
+  const t0 = c.currentTime;
+  const o = c.createOscillator(); const g = c.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t0 + dur);
+  g.gain.setValueAtTime(gain, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(c.destination);
+  o.start(t0); o.stop(t0 + dur + 0.02);
+}
+function noiseBurst({ dur=0.08, gain=0.05, freq=1200 }) {
+  const c = ac(); if (!c) return;
+  const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const src = c.createBufferSource(); src.buffer = buf;
+  const filt = c.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = freq;
+  const g = c.createGain(); g.gain.value = gain;
+  src.connect(filt).connect(g).connect(c.destination);
+  src.start();
+}
+function sfxShoot()   { tone({ freq: 1200, type:'sine',     dur:0.04, gain:0.03, slide:1700 }); }
+function sfxHit()     { tone({ freq: 600,  type:'sine',     dur:0.05, gain:0.03 }); }
+function sfxKill()    { tone({ freq: 880,  type:'sine',     dur:0.16, gain:0.05 }); noiseBurst({ dur:0.12, gain:0.03, freq:1200 }); }
+function sfxMiss()    { tone({ freq: 200,  type:'square',   dur:0.08, gain:0.03 }); }
+function sfxLevelUp() {
+  const notes = [523.25, 659.25, 783.99, 1046.50];
+  notes.forEach((f, i) => setTimeout(() => tone({ freq:f, type:'triangle', dur:0.18, gain:0.05 }), i * 90));
+}
+function sfxGameOver() {
+  [523, 392, 311, 196].forEach((f, i) => setTimeout(() => tone({ freq:f, type:'sine', dur:0.4, gain:0.06 }), i * 200));
+}
+function sfxBossWarn() { for (let i = 0; i < 3; i++) setTimeout(() => tone({ freq:120, type:'sine', dur:0.2, gain:0.06 }), i * 220); }
+
+// ============================================================
+// Game state
+// ============================================================
+
+const STAGE = document.getElementById('stage');
+const PLAYER_EL = document.getElementById('player');
+const LIVE_EL = document.getElementById('liveOut');
+const HUD_LEVEL = document.getElementById('hudLevel');
+const HUD_SCORE = document.getElementById('hudScore');
+const HUD_LIVES = document.getElementById('hudLives');
+const HUD_COMBO = document.getElementById('hudCombo');
+const XP_FILL = document.getElementById('xpFill');
+
+const HIGH_KEY = 'hangul-battle-highscore-v1';
+const PROGRESS_KEY = 'hangul-type-progress-v1';
+
+const state = {
+  running: false, paused: false,
+  lives: 3, level: 1, xp: 0, score: 0, kills: 0,
+  combo: 0, bestCombo: 0,
+  startedAt: 0,
+  ime: new HangulIME(),
+  monsters: [], projectiles: [],
+  lockId: null, lockExpectedKs: [], lockPosKs: 0,
+  spawnTimer: 0, spawnInterval: 1400,
+  bossActive: false, bossNextLevel: 5
+};
+
+function getHighScore() { try { return Number(localStorage.getItem(HIGH_KEY)) || 0; } catch (e) { return 0; } }
+function setHighScore(n) { try { localStorage.setItem(HIGH_KEY, String(n)); } catch (e) {} }
+
+// Gentler curve at low levels: 60, 180, 360, 600, 900, 1260, 1680...
+function xpThresholdForLevel(lv) { return 30 * lv * (lv + 1); }
+function xpForKill(tier) {
+  const t = tier === 'boss' ? 200 : Number(tier) * 12 + 6;
+  return Math.round(t * (1 + Math.log2(state.level + 1) * 0.2));
+}
+function scoreForKill(tier, comboBonus) {
+  const base = tier === 'boss' ? 1000 : Number(tier) * 50 + 25;
+  return Math.round(base * (1 + comboBonus * 0.05));
+}
+
+let monsterId = 0;
+function spawnMonster(forceBoss) {
+  if (forceBoss || (state.level >= state.bossNextLevel && !state.bossActive && state.kills > 0 && Math.random() < 0.3)) {
+    return spawnBoss();
+  }
+  const word = pickWordForLevel(state.level);
+  const tier = word.tier;
+  const sprites = TIER_SPRITES[tier] || TIER_SPRITES[1];
+  const sprite = sprites[Math.floor(Math.random() * sprites.length)];
+  const id = ++monsterId;
+  const ks = wordToKeystrokes(word.ko);
+  const beh = behaviorForTier(tier);
+  const baseSpeed = (14 + state.level * 1.4 + (Number(tier) || 1) * 1.5) * beh.speedMul;
+  const startX = Math.random() * (window.innerWidth - 200) + 100;
+  const monster = {
+    id, sprite, word: word.ko, en: word.en, tier,
+    ks, hp: ks.length, maxHp: ks.length,
+    speed: baseSpeed,
+    motion: beh.motion,
+    x: startX,
+    originX: startX,
+    y: -100,
+    // Per-motion state
+    zigT: Math.random() * Math.PI * 2,
+    zigAmp: 90 + Math.random() * 50,
+    zigFreq: 1.6 + Math.random() * 1.2,
+    diveSpeed: baseSpeed,
+    tpT: 0, tpHoldUntil: 600,
+    isBoss: false, el: null
+  };
+  buildMonsterEl(monster);
+  state.monsters.push(monster);
+}
+
+function spawnBoss() {
+  sfxBossWarn();
+  state.bossActive = true;
+  const word = VOCAB.boss[Math.floor(Math.random() * VOCAB.boss.length)];
+  const sprite = TIER_SPRITES.boss[Math.floor(Math.random() * TIER_SPRITES.boss.length)];
+  const id = ++monsterId;
+  const ks = wordToKeystrokes(word.ko);
+  const beh = behaviorForTier('boss');
+  const baseSpeed = (8 + state.level * 0.6) * beh.speedMul;
+  const startX = window.innerWidth / 2;
+  const monster = {
+    id, sprite, word: word.ko, en: word.en, tier: 'boss',
+    ks, hp: ks.length, maxHp: ks.length,
+    speed: baseSpeed,
+    motion: beh.motion,
+    x: startX, originX: startX,
+    y: -140,
+    zigT: 0, zigAmp: 0, zigFreq: 0,
+    diveSpeed: baseSpeed,
+    tpT: 0, tpHoldUntil: 1400,
+    isBoss: true, el: null
+  };
+  buildMonsterEl(monster);
+  state.monsters.push(monster);
+}
+
+function buildMonsterEl(m) {
+  const el = document.createElement('div');
+  el.className = 'monster' + ' tier-' + (m.tier === 'boss' ? '5 boss' : m.tier);
+  const sprite = document.createElement('span');
+  sprite.className = 'sprite';
+  sprite.textContent = m.sprite;
+  el.appendChild(sprite);
+
+  const wordBubble = document.createElement('div');
+  wordBubble.className = 'word';
+  const fontPx = m.tier === 'boss' ? 22 : 28;
+  const built = buildWordRow(m.word, fontPx);
+  wordBubble.appendChild(built.wrapper);
+  el.appendChild(wordBubble);
+  m.syllables = built.syllables;
+
+  const hpBar = document.createElement('div');
+  hpBar.className = 'hp-bar';
+  const hpFill = document.createElement('div');
+  hpFill.className = 'hp-fill';
+  hpFill.style.width = '100%';
+  hpBar.appendChild(hpFill);
+  el.appendChild(hpBar);
+
+  el.style.left = m.x + 'px';
+  el.style.top  = m.y + 'px';
+  el.style.transform = 'translateX(-50%)';
+  STAGE.appendChild(el);
+  m.el = el;
+}
+
+function killMonster(m, byPlayer) {
+  m.el.classList.add('dying');
+  particleBurst(m.x, m.y + 30, m.tier === 'boss' ? 30 : 10);
+  if (byPlayer) {
+    let xp = xpForKill(m.tier);
+    let sc = scoreForKill(m.tier, state.combo);
+    // Variable rewards: 5% crit (3× score), 1% heart drop (only if not full HP), bosses guarantee crit.
+    const isCrit = m.isBoss || Math.random() < 0.05;
+    if (isCrit) {
+      sc *= 3; xp = Math.round(xp * 1.5);
+      flashCenterText('CRIT! ×3');
+      particleBurst(m.x, m.y + 30, 18);
+    }
+    if (state.lives < 3 && Math.random() < 0.012) {
+      state.lives++;
+      flashCenterText('❤ +1 LIFE');
+      tone({ freq: 880, type:'sine', dur:0.16, gain:0.06, slide:1320 });
+    }
+    state.score += sc;
+    state.xp += xp;
+    state.kills++;
+    // Track word kill counts (for in-game mastery + future sync to practice)
+    try {
+      state.wordKills = state.wordKills || {};
+      state.wordKills[m.word] = (state.wordKills[m.word] || 0) + 1;
+    } catch (e) {}
+    floatScorePop(m.x, m.y, '+' + sc + (isCrit ? ' ✨' : ''));
+    sfxKill();
+    if (m.isBoss) {
+      state.bossActive = false;
+      state.bossNextLevel = state.level + 5;
+    }
+    maybeLevelUp();
+    updateHud();
+  }
+  setTimeout(() => m.el.remove(), 550);
+  state.monsters = state.monsters.filter(x => x.id !== m.id);
+  if (state.lockId === m.id) {
+    state.lockId = null;
+    state.lockExpectedKs = [];
+    state.lockPosKs = 0;
+    state.ime.reset();
+    LIVE_EL.textContent = '';
+  }
+}
+
+function maybeLevelUp() {
+  while (state.xp >= xpThresholdForLevel(state.level)) {
+    state.xp -= xpThresholdForLevel(state.level);
+    state.level++;
+    onLevelUp();
+  }
+  XP_FILL.style.width = Math.min(100, (state.xp / xpThresholdForLevel(state.level)) * 100) + '%';
+}
+
+function onLevelUp() {
+  sfxLevelUp();
+  PLAYER_EL.classList.remove('levelup');
+  void PLAYER_EL.offsetWidth;
+  PLAYER_EL.classList.add('levelup');
+  const sp = playerForLevel(state.level);
+  renderPlayerSprite(state.level);
+  flashCenterText('Lv. ' + state.level + ' · ' + sp.label);
+  state.spawnInterval = Math.max(700, 2200 - state.level * 80);
+}
+
+function flashCenterText(txt) {
+  const el = document.createElement('div');
+  el.className = 'combo-banner';
+  el.textContent = txt;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+function particleBurst(x, y, count) {
+  const colors = ['var(--blue)','var(--green)','var(--yellow)','var(--orange)','var(--purple)'];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+    const dist = 50 + Math.random() * 60;
+    const dx = Math.cos(angle) * dist, dy = Math.sin(angle) * dist;
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+    p.style.background = colors[i % colors.length];
+    p.style.setProperty('--end', `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`);
+    STAGE.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
+}
+
+function floatScorePop(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'score-pop';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  STAGE.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+// Projectile evolves with player level — more spectacular at higher tiers
+function projectileForLevel(lv) {
+  if (lv >= 25) return { glyph: '🐉', size: 36, color: '#dc2626', trail: 'rgba(220,38,38,0.55)' };
+  if (lv >= 20) return { glyph: '⚔️', size: 30, color: '#f59e0b', trail: 'rgba(245,158,11,0.55)' };
+  if (lv >= 16) return { glyph: '🏹', size: 28, color: '#7c3aed', trail: 'rgba(124,58,237,0.5)' };
+  if (lv >= 13) return { glyph: '⭐', size: 26, color: '#eab308', trail: 'rgba(234,179,8,0.5)' };
+  if (lv >= 10) return { glyph: '🔥', size: 24, color: '#ea580c', trail: 'rgba(234,88,12,0.5)' };
+  if (lv >= 7)  return { glyph: '⚡', size: 22, color: '#0ea5e9', trail: 'rgba(14,165,233,0.45)' };
+  if (lv >= 4)  return { glyph: '›',  size: 26, color: '#06b6d4', trail: 'rgba(6,182,212,0.4)', font: true };
+  return null; // tier 1: small dot (existing CSS)
+}
+
+function fireProjectile(toX, toY) {
+  const playerRect = PLAYER_EL.getBoundingClientRect();
+  const stageRect = STAGE.getBoundingClientRect();
+  const startX = (playerRect.left + playerRect.width / 2) - stageRect.left;
+  const startY = (playerRect.top + playerRect.height / 2)  - stageRect.top;
+  const proj = projectileForLevel(state.level);
+
+  const p = document.createElement('div');
+  if (proj) {
+    p.className = 'projectile glyph';
+    p.style.fontSize = proj.size + 'px';
+    p.style.color = proj.color;
+    p.style.fontWeight = '900';
+    p.textContent = proj.glyph;
+  } else {
+    p.className = 'projectile';
+  }
+  p.style.left = startX + 'px';
+  p.style.top  = startY + 'px';
+  STAGE.appendChild(p);
+
+  const start = performance.now();
+  const dur = 220;
+  let lastTrail = 0;
+  function step(t) {
+    const k = Math.min(1, (t - start) / dur);
+    const x = startX + (toX - startX) * k;
+    const y = startY + (toY - startY) * k;
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+    // Trail particles for higher-tier projectiles
+    if (proj && proj.trail && t - lastTrail > 28 && k < 0.95) {
+      lastTrail = t;
+      const tp = document.createElement('div');
+      tp.className = 'trail-particle';
+      tp.style.left = x + 'px';
+      tp.style.top  = y + 'px';
+      tp.style.background = proj.trail;
+      STAGE.appendChild(tp);
+      setTimeout(() => tp.remove(), 300);
+    }
+    if (k < 1) requestAnimationFrame(step); else p.remove();
+  }
+  requestAnimationFrame(step);
+}
+
+function damagePlayer() {
+  state.lives--;
+  PLAYER_EL.classList.remove('hit');
+  void PLAYER_EL.offsetWidth;
+  PLAYER_EL.classList.add('hit');
+  noiseBurst({ dur:0.15, gain:0.07, freq:300 });
+  if (state.lives <= 0) gameOver();
+  updateHud();
+}
+
+function gameOver() {
+  state.running = false;
+  sfxGameOver();
+  const high = getHighScore();
+  const newHigh = state.score > high;
+  if (newHigh) setHighScore(state.score);
+  document.getElementById('overScore').textContent = state.score.toLocaleString();
+  document.getElementById('overLevel').textContent = state.level;
+  document.getElementById('overKills').textContent = state.kills;
+  document.getElementById('overCombo').textContent = state.bestCombo;
+  document.getElementById('newHighSign').style.display = newHigh ? 'block' : 'none';
+  document.getElementById('gameOverModal').style.display = 'flex';
+  // Sync XP back to main app
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (raw) {
+      const prog = JSON.parse(raw);
+      prog.xp = (prog.xp || 0) + Math.round(state.score / 5);
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(prog));
+    }
+  } catch (e) {}
+}
+
+function updateHud() {
+  HUD_LEVEL.textContent = state.level;
+  HUD_SCORE.textContent = state.score.toLocaleString();
+  const lost = Math.max(0, 3 - state.lives);
+  HUD_LIVES.innerHTML = '♥'.repeat(Math.max(0, state.lives)) + '<span class="lost">' + '♡'.repeat(lost) + '</span>';
+  HUD_COMBO.textContent = state.combo > 0 ? `×${state.combo}` : '×1';
+  HUD_COMBO.classList.toggle('zero', state.combo === 0);
+  XP_FILL.style.width = Math.min(100, (state.xp / xpThresholdForLevel(state.level)) * 100) + '%';
+}
+
+// ============================================================
+// Input
+// ============================================================
+
+const SHIELD = document.getElementById('shield');
+
+function findTargetForChar(rawKey, isShift) {
+  const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
+  const jamo = rawKey === ' ' ? ' ' : KEYMAP[lookupKey];
+  if (!jamo) return null;
+  let best = null;
+  for (const m of state.monsters) {
+    if (m.ks[0] === jamo) {
+      if (!best || m.y > best.y) best = m;
+    }
+  }
+  return best;
+}
+
+function handleKey(rawKey, isShift) {
+  if (!state.running || state.paused) return;
+  if (state.lockId == null) {
+    const target = findTargetForChar(rawKey, isShift);
+    if (!target) { sfxMiss(); return; }
+    state.lockId = target.id;
+    state.lockExpectedKs = target.ks.slice();
+    state.lockPosKs = 0;
+    state.ime.reset();
+    target.el.classList.add('locked');
+  }
+  const m = state.monsters.find(x => x.id === state.lockId);
+  if (!m) { state.lockId = null; return; }
+
+  const expected = state.lockExpectedKs[state.lockPosKs];
+  if (rawKey === ' ') {
+    if (expected === ' ') {
+      state.ime.commitBuffer();
+      state.ime.committed += ' ';
+      advanceLock(m);
+    } else {
+      sfxMiss(); breakCombo();
+    }
+    return;
+  }
+  const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
+  const jamo = KEYMAP[lookupKey];
+  if (!jamo) return;
+  if (jamo === expected) {
+    state.ime.type(jamo);
+    advanceLock(m);
+  } else {
+    sfxMiss();
+    breakCombo();
+  }
+}
+
+function advanceLock(m) {
+  state.lockPosKs++;
+  state.combo++;
+  if (state.combo > state.bestCombo) state.bestCombo = state.combo;
+  m.hp = Math.max(0, m.maxHp - state.lockPosKs);
+  if (m.el) m.el.querySelector('.hp-fill').style.width = (m.hp / m.maxHp * 100) + '%';
+  // Repaint each syllable canvas based on the new lock position. No more "disappearing" syllables.
+  if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
+  LIVE_EL.textContent = state.ime.display;
+  fireProjectile(m.x, m.y + 30);
+  sfxShoot();
+  if (state.combo === 5 || state.combo === 10 || state.combo === 25 || state.combo === 50 || state.combo === 100) {
+    flashCenterText(state.combo + '× combo');
+  }
+  if (state.lockPosKs >= state.lockExpectedKs.length) {
+    killMonster(m, true);
+  }
+  updateHud();
+}
+
+function breakCombo() {
+  const wasCombo = state.combo;
+  if (state.combo > 0) { state.combo = 0; updateHud(); }
+  // Visceral break feedback when losing a meaningful combo
+  if (wasCombo >= 10) {
+    flashCenterText('COMBO BROKEN');
+    document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 320);
+    noiseBurst({ dur: 0.18, gain: 0.06, freq: 240 });
+  }
+}
+
+function escapeLock() {
+  if (state.lockId == null) return;
+  const m = state.monsters.find(x => x.id === state.lockId);
+  if (m && m.el) m.el.classList.remove('locked');
+  state.lockId = null;
+  state.lockPosKs = 0;
+  state.lockExpectedKs = [];
+  state.ime.reset();
+  LIVE_EL.textContent = '';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  // Story dialog: advance via Enter / Space / →↓, skip via Esc. Swallow other keys.
+  const storyDialog = document.getElementById('storyDialog');
+  if (storyDialog && storyDialog.style.display === 'block') {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault(); advanceStory(); return;
+    }
+    if (e.key === 'Escape') { e.preventDefault(); closeStory(); return; }
+    e.preventDefault();
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    if (state.running) {
+      // If currently locked on a monster, release; otherwise pause.
+      if (state.lockId != null) escapeLock();
+      else togglePause();
+    }
+    return;
+  }
+  // ` (backtick) toggles pause as a non-typing alternative to the Pause button
+  if (e.key === '`') { if (state.running) togglePause(); return; }
+  // Note: P/p are intentionally NOT bound — they're typing keys (Shift+P → ㅖ in Dubeolsik)
+  if (e.key === ' ') { e.preventDefault(); handleKey(' ', false); return; }
+  if (e.key && e.key.length === 1) { e.preventDefault(); handleKey(e.key, e.shiftKey); }
+});
+
+// ============================================================
+// Main loop
+// ============================================================
+
+let lastT = 0;
+function loop(t) {
+  if (!state.running) return;
+  if (!lastT) lastT = t;
+  const dt = Math.min(50, t - lastT);
+  lastT = t;
+
+  if (!state.paused) {
+    state.spawnTimer += dt;
+    const cap = state.level >= 13 ? 6 : state.level >= 7 ? 5 : state.level >= 4 ? 4 : 3;
+    if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap) {
+      state.spawnTimer = 0;
+      spawnMonster();
+    }
+
+    const playerRect = PLAYER_EL.getBoundingClientRect();
+    const stageRect = STAGE.getBoundingClientRect();
+    const playerY = (playerRect.top + playerRect.height / 2) - stageRect.top;
+
+    const dts = dt / 1000;
+    for (const m of state.monsters) {
+      // Per-tier flight pattern
+      if (m.motion === 'zigzag') {
+        m.y += m.speed * dts;
+        m.zigT += dts;
+        m.x = m.originX + Math.sin(m.zigT * m.zigFreq) * m.zigAmp;
+      } else if (m.motion === 'dive') {
+        m.diveSpeed += 30 * dts;       // gravity-like accel
+        m.y += m.diveSpeed * dts;
+      } else if (m.motion === 'tracker') {
+        m.y += m.speed * dts;
+        const targetX = window.innerWidth / 2; // player is centered at bottom
+        const dx = targetX - m.x;
+        const step = Math.sign(dx) * Math.min(Math.abs(dx), 50 * dts);
+        m.x += step;
+      } else if (m.motion === 'teleport') {
+        m.tpT += dt;
+        if (m.tpT < m.tpHoldUntil) {
+          m.y += m.speed * dts * 0.4;  // slow drift between hops
+        } else {
+          m.tpT = 0;
+          m.x = 100 + Math.random() * (window.innerWidth - 200);
+          if (m.el) {
+            m.el.classList.remove('teleport-flash');
+            void m.el.offsetWidth; // restart animation
+            m.el.classList.add('teleport-flash');
+          }
+        }
+      } else {
+        m.y += m.speed * dts;
+      }
+      // Keep within stage bounds horizontally
+      const minX = 60, maxX = window.innerWidth - 60;
+      if (m.x < minX) m.x = minX;
+      if (m.x > maxX) m.x = maxX;
+      m.el.style.top = m.y + 'px';
+      m.el.style.left = m.x + 'px';
+      if (m.y > playerY - 50) {
+        damagePlayer();
+        m.el.classList.add('dying');
+        setTimeout(() => m.el.remove(), 550);
+        state.monsters = state.monsters.filter(x => x.id !== m.id);
+        if (state.lockId === m.id) {
+          state.lockId = null; state.lockPosKs = 0; state.lockExpectedKs = [];
+          state.ime.reset(); LIVE_EL.textContent = '';
+        }
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+// Story (Pokemon-style dialog)
+// ============================================================
+
+const STORY_KEY = 'hangul-battle-saw-intro-v2';
+
+const STORY = [
+  { speaker: 'Narrator',          text: 'Long ago, King Sejong sealed the chaos demons of pre-Hangul speech behind a wall of letters.' },
+  { speaker: 'Narrator',          text: 'Centuries passed. The seal weakened. Tonight it broke.' },
+  { speaker: 'Narrator',          text: 'You wake without a name, without power. Just a hand, a keyboard, and a flickering breath of <span class="ko">한</span>.' },
+  { speaker: '선생님 · Teacher',  text: '"You. Yes, you. The seal will not hold without help. Take this syllable. Speak it true. Aim true."' },
+  { speaker: 'Narrator',          text: 'A demon emerges from the dark. Above its head: a Korean word. Type it correctly to defeat it.' },
+  { speaker: 'Narrator',          text: 'Each victory restores one letter to the seal. Words you master in practice flow back here as power.' },
+  { speaker: 'Narrator',          text: '1,000 letters lie scattered. Restore them all to face the Demon King <span class="ko">한글왕</span>.' },
+  { speaker: '선생님 · Teacher',  text: '"Ready your fingers. Begin."' }
+];
+
+let storyIdx = 0;
+let storyTyping = null;
+
+function showStory(force) {
+  storyIdx = 0;
+  document.getElementById('storyDialog').style.display = 'block';
+  showStoryBeat();
+}
+
+function showStoryBeat() {
+  if (storyIdx >= STORY.length) { closeStory(); return; }
+  const beat = STORY[storyIdx];
+  document.getElementById('storySpeaker').textContent = beat.speaker;
+  const textEl = document.getElementById('storyText');
+  textEl.innerHTML = '';
+  document.getElementById('storyPrompt').classList.remove('ready');
+  if (storyTyping) clearInterval(storyTyping);
+
+  // Tokenize so HTML tags reveal atomically (don't mid-tag)
+  const html = beat.text;
+  let i = 0;
+  storyTyping = setInterval(() => {
+    if (i >= html.length) {
+      clearInterval(storyTyping); storyTyping = null;
+      document.getElementById('storyPrompt').classList.add('ready');
+      return;
+    }
+    // If we're at the start of a tag, append the whole tag in one tick
+    if (html[i] === '<') {
+      const close = html.indexOf('>', i);
+      if (close > -1) { textEl.innerHTML += html.slice(i, close + 1); i = close + 1; return; }
+    }
+    textEl.innerHTML += html.charAt(i);
+    i++;
+    // Tiny click for character reveal
+    if (i % 4 === 0) tone({ freq: 1500, type:'sine', dur:0.012, gain:0.012 });
+  }, 22);
+}
+
+function advanceStory() {
+  if (storyTyping) {
+    // Skip typewriter animation on this beat
+    clearInterval(storyTyping); storyTyping = null;
+    document.getElementById('storyText').innerHTML = STORY[storyIdx].text;
+    document.getElementById('storyPrompt').classList.add('ready');
+    return;
+  }
+  storyIdx++;
+  if (storyIdx >= STORY.length) { closeStory(); return; }
+  showStoryBeat();
+}
+
+function closeStory() {
+  document.getElementById('storyDialog').style.display = 'none';
+  if (storyTyping) { clearInterval(storyTyping); storyTyping = null; }
+  try { localStorage.setItem(STORY_KEY, '1'); } catch (e) {}
+  beginGameAfterStory();
+}
+
+function hasSeenStory() {
+  try { return localStorage.getItem(STORY_KEY) === '1'; } catch (e) { return false; }
+}
+
+function beginGameAfterStory() {
+  document.getElementById('introModal').style.display = 'none';
+  doStartGame();
+}
+
+function startGame() {
+  // Public entry point. Plays story first time, then starts the game.
+  if (!hasSeenStory()) {
+    document.getElementById('introModal').style.display = 'none';
+    showStory();
+  } else {
+    doStartGame();
+  }
+}
+
+function doStartGame() {
+  state.running = true; state.paused = false;
+  state.lives = 3; state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
+  state.combo = 0; state.bestCombo = 0;
+  state.startedAt = Date.now();
+  state.monsters.forEach(m => m.el && m.el.remove());
+  state.monsters = [];
+  state.spawnTimer = 0; state.spawnInterval = 1400;
+  state.bossActive = false; state.bossNextLevel = 5;
+  state.lockId = null; state.ime.reset();
+  renderPlayerSprite(1);
+  LIVE_EL.textContent = '';
+  document.getElementById('introModal').style.display = 'none';
+  document.getElementById('gameOverModal').style.display = 'none';
+  updateHud();
+  lastT = 0;
+  requestAnimationFrame(loop);
+  ac().resume && ac().resume();
+}
+
+function togglePause() {
+  state.paused = !state.paused;
+  document.getElementById('pauseOverlay').style.display = state.paused ? 'flex' : 'none';
+  document.getElementById('btnMenu').textContent = state.paused ? '▶ Resume' : '⏸ Pause';
+}
+
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnReplayStory').addEventListener('click', () => {
+  document.getElementById('introModal').style.display = 'none';
+  try { localStorage.removeItem(STORY_KEY); } catch (e) {}
+  showStory();
+});
+document.getElementById('storyDialog').addEventListener('click', advanceStory);
+document.getElementById('btnRetry').addEventListener('click', startGame);
+document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html');
+document.getElementById('btnBack').addEventListener('click', () => location.href = 'index.html');
+document.getElementById('btnMenu').addEventListener('click', () => state.running && togglePause());
+
+document.getElementById('introHigh').textContent = getHighScore().toLocaleString();
+document.getElementById('introBest').textContent = getHighScore() ? Math.floor(getHighScore() / 200) : 0;
+
+// Show "carrying from practice" chip if practice progress exists
+try {
+  const raw = localStorage.getItem(PROGRESS_KEY);
+  if (raw) {
+    const prog = JSON.parse(raw);
+    const xp = Number(prog.xp) || 0;
+    if (xp > 0) {
+      // Compute level from xp using same curve as practice (50*n*(n+1) cumulative-per-level)
+      let lvl = 1, acc = 0;
+      while (true) {
+        const need = 50 * lvl * (lvl + 1);
+        if (xp < acc + need) break;
+        acc += need; lvl++;
+        if (lvl > 99) break;
+      }
+      const sp = playerForLevel(lvl);
+      const chip = document.getElementById('practiceCarry');
+      chip.style.display = 'flex';
+      chip.innerHTML = `<span class="ico">${sp.emoji}</span> Carrying <strong>Lv.${lvl} ${sp.label}</strong> from practice`;
+    }
+  }
+} catch (e) {}
+SHIELD.focus({ preventScroll: true });
+document.addEventListener('click', () => SHIELD.focus({ preventScroll: true }));
+</script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hangul Per-Jamo Color — Compare Approaches</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f0f4f8;
+    color: #0f172a;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .lede { color: #475569; margin: 0 0 24px; font-size: 14px; }
+  h2 { font-size: 16px; margin: 28px 0 12px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px 16px;
+    text-align: center;
+    min-height: 220px;
+  }
+  .card .label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: #475569;
+    margin-bottom: 14px;
+  }
+  .card .verdict {
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 12px;
+    margin-top: 12px;
+    display: inline-block;
+  }
+  .verdict.unknown { background: #f1f5f9; color: #475569; }
+  .card .desc { font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4; min-height: 30px; }
+
+  .syl {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 120px; font-weight: 500;
+    line-height: 1;
+    display: inline-block;
+  }
+
+  /* Approach A: HTML precomposed syllable, default color */
+  .a-syl { color: #0f172a; }
+
+  /* Approach B: HTML conjoining jamo, all same color (tests if HTML shaping works at all) */
+  .b-syl span { color: #0f172a; }
+
+  /* Approach C: HTML conjoining jamo, per-span colors */
+  .c-syl .ji { color: #10b981; }
+  .c-syl .jm { color: #2563eb; }
+  .c-syl .jf { color: #94a3b8; }
+
+  /* Approach D: SVG tspan, all same color (tests if SVG shaping works at all) */
+  /* (inline) */
+
+  /* Approach E: SVG tspan, per-tspan colors */
+  /* (inline) */
+
+  /* Approach F: precomposed syllable + CSS background-clip:text with hard-stop gradient */
+  .f-syl {
+    background: linear-gradient(180deg,
+      #10b981 0%, #10b981 30%,
+      #2563eb 30%, #2563eb 60%,
+      #94a3b8 60%, #94a3b8 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    /* This won't separate horizontal ㄱ vs ㅏ in 감 — only handles batchim split */
+  }
+
+  /* Approach G: precomposed syllable + 3 stacked clipped layers */
+  .g-syl {
+    position: relative;
+    width: 1em;
+    height: 1em;
+  }
+  .g-syl .layer {
+    position: absolute; inset: 0;
+    color: #cbd5e1;
+  }
+  .g-syl .layer-i { color: #10b981; clip-path: polygon(0 0, 50% 0, 50% 60%, 0 60%); }
+  .g-syl .layer-m { color: #2563eb; clip-path: polygon(50% 0, 100% 0, 100% 60%, 50% 60%); }
+  .g-syl .layer-f { color: #94a3b8; clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%); }
+
+  /* Approach H: SVG with measured bounds via getExtentOfChar after shaping */
+  /* (inline + JS) */
+
+  /* Approach I: HTML conjoining with span wrapping but inside a single contiguous text node? */
+  /* tested as variant */
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Per-jamo color: which approach actually works in your browser?</h1>
+  <p class="lede">All show 감 (ㄱㅏㅁ). Approach A is the reference (proper composition, single color). The others try to add per-jamo color.</p>
+
+  <h2>Reference</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="label">A · HTML precomposed (reference)</div>
+      <div class="syl a-syl">감</div>
+      <div class="desc">Single Unicode char U+AC10 — should render as proper 감.</div>
+    </div>
+  </div>
+
+  <h2>HTML approaches</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="label">B · HTML conjoining, same color</div>
+      <div class="syl b-syl"><span>ᄀ</span><span>ᅡ</span><span>ᆷ</span></div>
+      <div class="desc">3 conjoining jamo in `&lt;span&gt;`s. Tests if HTML composes them at all.</div>
+    </div>
+    <div class="card">
+      <div class="label">C · HTML conjoining, per-span colors</div>
+      <div class="syl c-syl"><span class="ji">ᄀ</span><span class="jm">ᅡ</span><span class="jf">ᆷ</span></div>
+      <div class="desc">If B composes, does color preserve through shaping?</div>
+    </div>
+  </div>
+
+  <h2>SVG approaches</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="label">D · SVG tspan, same color</div>
+      <svg width="160" height="180" viewBox="0 0 160 180">
+        <text x="80" y="140" font-family="'Noto Sans KR', sans-serif" font-size="140" font-weight="500" text-anchor="middle" fill="#0f172a">
+          <tspan>ᄀ</tspan><tspan>ᅡ</tspan><tspan>ᆷ</tspan>
+        </text>
+      </svg>
+      <div class="desc">Tests SVG shaping with conjoining jamo.</div>
+    </div>
+    <div class="card">
+      <div class="label">E · SVG tspan, per-tspan colors</div>
+      <svg width="160" height="180" viewBox="0 0 160 180">
+        <text x="80" y="140" font-family="'Noto Sans KR', sans-serif" font-size="140" font-weight="500" text-anchor="middle">
+          <tspan fill="#10b981">ᄀ</tspan><tspan fill="#2563eb">ᅡ</tspan><tspan fill="#94a3b8">ᆷ</tspan>
+        </text>
+      </svg>
+      <div class="desc">What the previous demo tried. Broken if SVG shaping doesn't compose.</div>
+    </div>
+    <div class="card">
+      <div class="label">F · CSS gradient on precomposed</div>
+      <div class="syl f-syl">감</div>
+      <div class="desc">Real composed syllable, multi-color via background-clip:text. Vertical bands only.</div>
+    </div>
+  </div>
+
+  <h2>Layered + clip approaches</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="label">G · 3-layer stacked precomposed + clip-path %</div>
+      <div class="syl g-syl">
+        <span class="layer layer-i">감</span>
+        <span class="layer layer-m">감</span>
+        <span class="layer layer-f">감</span>
+      </div>
+      <div class="desc">Real composed shape. Approximate clip percentages — not 100% accurate.</div>
+    </div>
+    <div class="card">
+      <div class="label">H · SVG with JS-measured per-char bounds</div>
+      <svg id="hSvg" width="160" height="180" viewBox="0 0 160 180">
+        <defs>
+          <clipPath id="clip-h-i"><rect id="rect-h-i" x="0" y="0" width="0" height="0"/></clipPath>
+          <clipPath id="clip-h-m"><rect id="rect-h-m" x="0" y="0" width="0" height="0"/></clipPath>
+          <clipPath id="clip-h-f"><rect id="rect-h-f" x="0" y="0" width="0" height="0"/></clipPath>
+        </defs>
+        <text id="hMeasure" x="80" y="140" font-family="'Noto Sans KR', sans-serif" font-size="140" font-weight="500" text-anchor="middle" visibility="hidden">감</text>
+        <text x="80" y="140" font-family="'Noto Sans KR', sans-serif" font-size="140" font-weight="500" text-anchor="middle" fill="#10b981" clip-path="url(#clip-h-i)">감</text>
+        <text x="80" y="140" font-family="'Noto Sans KR', sans-serif" font-size="140" font-weight="500" text-anchor="middle" fill="#2563eb" clip-path="url(#clip-h-m)">감</text>
+        <text x="80" y="140" font-family="'Noto Sans KR', sans-serif" font-size="140" font-weight="500" text-anchor="middle" fill="#94a3b8" clip-path="url(#clip-h-f)">감</text>
+      </svg>
+      <div class="desc" id="hDesc">JS measures actual per-char bounds via getExtentOfChar after shaping. 100% accurate IF the API returns them.</div>
+    </div>
+    <div class="card">
+      <div class="label">I · Pixel-region segmentation (canvas)</div>
+      <canvas id="iCanvas" width="160" height="180" style="width:160px;height:180px;"></canvas>
+      <div class="desc" id="iDesc">Render 감 in canvas, find connected ink components, color each region. Truly font-accurate.</div>
+    </div>
+  </div>
+
+  <h2>What to look for</h2>
+  <ul style="color:#475569; font-size: 14px; line-height: 1.7;">
+    <li><strong>A</strong> must show a proper composed 감 — that's the reference.</li>
+    <li><strong>B</strong> tells us if HTML shaping works for conjoining jamo. If B looks like A, HTML shaping is fine.</li>
+    <li><strong>C</strong> is the prize: composed AND multi-colored. If C works, we use it.</li>
+    <li>If C fails but I works, we use I (canvas pixel segmentation).</li>
+  </ul>
+</div>
+
+<script>
+'use strict';
+
+document.fonts.ready.then(() => {
+  // Approach H: measure each char's bounds after shaping
+  try {
+    const text = document.getElementById('hMeasure');
+    const n = text.getNumberOfChars();
+    const desc = document.getElementById('hDesc');
+    if (n === 1) {
+      desc.textContent = 'getExtentOfChar collapses ligature to 1 char (n=' + n + '). Approach H not viable in this browser.';
+    } else {
+      const bbox = text.getBBox();
+      const rects = [];
+      for (let i = 0; i < n; i++) {
+        try { rects.push(text.getExtentOfChar(i)); } catch (e) { rects.push(null); }
+      }
+      if (rects.every(r => r)) {
+        const apply = (id, r) => {
+          const el = document.getElementById(id);
+          el.setAttribute('x', r.x);
+          el.setAttribute('y', r.y);
+          el.setAttribute('width', r.width);
+          el.setAttribute('height', r.height);
+        };
+        apply('rect-h-i', rects[0]);
+        apply('rect-h-m', rects[1]);
+        apply('rect-h-f', rects[2]);
+        desc.textContent = 'Measured bounds: i='+Math.round(rects[0].width)+'×'+Math.round(rects[0].height)+', m='+Math.round(rects[1].width)+'×'+Math.round(rects[1].height)+', f='+Math.round(rects[2].width)+'×'+Math.round(rects[2].height);
+      } else {
+        desc.textContent = 'getExtentOfChar threw. API not supported here.';
+      }
+    }
+  } catch (e) {
+    document.getElementById('hDesc').textContent = 'Measurement failed: ' + e.message;
+  }
+
+  // Approach I: canvas pixel segmentation
+  try {
+    const canvas = document.getElementById('iCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.font = '500 140px "Noto Sans KR", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('감', canvas.width / 2, 140);
+
+    // Find connected components of ink
+    const w = canvas.width, h = canvas.height;
+    const data = ctx.getImageData(0, 0, w, h).data;
+    const visited = new Uint8Array(w * h);
+    const isInk = (i) => data[i*4] < 128;  // any dark pixel
+    const components = [];
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        if (visited[i] || !isInk(i)) continue;
+        // BFS
+        const queue = [i];
+        const comp = [];
+        let minX = x, maxX = x, minY = y, maxY = y;
+        visited[i] = 1;
+        while (queue.length) {
+          const j = queue.shift();
+          comp.push(j);
+          const jy = Math.floor(j / w), jx = j % w;
+          if (jx < minX) minX = jx; if (jx > maxX) maxX = jx;
+          if (jy < minY) minY = jy; if (jy > maxY) maxY = jy;
+          // 8-connected
+          for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+            const nx = jx+dx, ny = jy+dy;
+            if (nx<0||nx>=w||ny<0||ny>=h) continue;
+            const ni = ny*w+nx;
+            if (visited[ni] || !isInk(ni)) continue;
+            visited[ni] = 1;
+            queue.push(ni);
+          }
+        }
+        if (comp.length > 6) components.push({ pixels: comp, minX, maxX, minY, maxY, area: comp.length });
+      }
+    }
+
+    // Group components by jamo: simple heuristic for 감 (ㄱㅏㅁ horizontal+batchim layout)
+    // ㄱ = upper-left, ㅏ = upper-right, ㅁ = bottom (full width)
+    // Use centroid x and y to assign
+    const inkBounds = components.reduce((b, c) => ({
+      minX: Math.min(b.minX, c.minX),
+      maxX: Math.max(b.maxX, c.maxX),
+      minY: Math.min(b.minY, c.minY),
+      maxY: Math.max(b.maxY, c.maxY)
+    }), { minX: w, maxX: 0, minY: h, maxY: 0 });
+    const inkH = inkBounds.maxY - inkBounds.minY;
+    const inkW = inkBounds.maxX - inkBounds.minX;
+    const splitY = inkBounds.minY + inkH * 0.62; // batchim split ~62% down
+    const splitX = inkBounds.minX + inkW * 0.5;
+    const groups = { i: [], m: [], f: [] };
+    for (const c of components) {
+      const cy = (c.minY + c.maxY) / 2;
+      const cx = (c.minX + c.maxX) / 2;
+      if (cy > splitY) groups.f.push(c);
+      else if (cx < splitX) groups.i.push(c);
+      else groups.m.push(c);
+    }
+
+    // Repaint each group with its color
+    const out = ctx.createImageData(w, h);
+    for (let i = 0; i < w * h; i++) { out.data[i*4]=255; out.data[i*4+1]=255; out.data[i*4+2]=255; out.data[i*4+3]=255; }
+    const colorize = (group, r, g, b) => {
+      for (const c of group) for (const p of c.pixels) {
+        out.data[p*4] = r; out.data[p*4+1] = g; out.data[p*4+2] = b; out.data[p*4+3] = 255;
+      }
+    };
+    colorize(groups.i, 16, 185, 129);   // green
+    colorize(groups.m, 37, 99, 235);    // blue
+    colorize(groups.f, 148, 163, 184);  // gray
+    ctx.putImageData(out, 0, 0);
+    document.getElementById('iDesc').textContent = `Found ${components.length} ink components. Grouped: ㄱ=${groups.i.length}, ㅏ=${groups.m.length}, ㅁ=${groups.f.length}.`;
+  } catch (e) {
+    document.getElementById('iDesc').textContent = 'Canvas approach failed: ' + e.message;
+  }
+});
+</script>
+</body>
+</html>
