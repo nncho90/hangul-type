@@ -2135,11 +2135,12 @@ const STATS_KEY = 'hangul-type-stats-v1';
 const PROGRESS_KEY = 'hangul-type-progress-v1';
 
 // ============================================================
-// Supabase backend config (leave empty until you've deployed; app
-// degrades gracefully — Practice mode works fully offline)
+// Supabase backend config — paste your values after creating a project.
+// App degrades gracefully when empty: leaderboard shows seeded fake data,
+// all practice/sprint features work fully offline.
 // ============================================================
-// e.g. 'https://xyzcompany.supabase.co'
-// your project's anon key
+const SUPABASE_URL      = '';  // e.g. 'https://abcdefgh.supabase.co'
+const SUPABASE_ANON_KEY = '';  // anon/public key — safe to commit
 function loadStats() {
   try {
     const raw = localStorage.getItem(STATS_KEY);
@@ -2947,10 +2948,45 @@ function relTime(iso) {
 // Supabase backend: identity, XP submission queue, leaderboard fetch
 // ============================================================
 
-// Flush when the page is hidden so users don't lose XP on navigation
-document.addEventListener('visibilitychange', () => {
-  // (no remote XP queue any more — left as a no-op visibility hook)
-});
+// ── Supabase backend: leaderboard fetch + sprint score submission ──
+let _lbCache = null, _lbCacheAt = 0;
+
+async function fetchOnlineLeaderboard() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  const now = Date.now();
+  if (_lbCache && now - _lbCacheAt < 60000) return _lbCache;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/players?select=name,country,all_time_xp&order=all_time_xp.desc&limit=250&flagged=eq.false`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    _lbCache = rows.map(r => ({ name: r.name || 'Player', flag: flagEmoji(r.country || 'US'), wpm: r.all_time_xp || 0 }));
+    _lbCacheAt = now;
+    return _lbCache;
+  } catch (e) { return null; }
+}
+
+async function submitSprintScore(bestWpm) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !bestWpm) return;
+  const pid = progress.playerId;
+  if (!pid) return;
+  const name = (progress.profile && progress.profile.name) || 'Player';
+  const country = (progress.profile && progress.profile.countryCode) || detectCountry();
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_sprint_score`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_id: pid, p_name: name, p_country: country, p_wpm: bestWpm })
+    });
+    _lbCache = null; // invalidate so next fetch reflects the new score
+  } catch (e) {}
+}
 
 const state = {
   wordIdx: 0,
@@ -3145,21 +3181,15 @@ function ensureFakeLeaderboard() {
   return list;
 }
 
-function renderLeaderboard(userWpm) {
-  const fake = ensureFakeLeaderboard();
-  const userName = (progress.profile && progress.profile.name) || 'Player';
-  const userFlag = flagEmoji((progress.profile && progress.profile.countryCode) || detectCountry());
-  const merged = fake.concat([{ name: userName, flag: userFlag, wpm: userWpm, isUser: true }]);
+function buildLeaderboardRows(list, userName, userFlag, userWpm) {
+  const merged = list.concat([{ name: userName, flag: userFlag, wpm: userWpm, isUser: true }]);
   merged.sort((a, b) => b.wpm - a.wpm);
   const userRank = merged.findIndex(x => x.isUser) + 1;
   const total = merged.length;
 
   const rows = [];
-  // Always show top 3
   for (let i = 0; i < 3 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
-
   if (userRank <= 5) {
-    // User is near the top — extend without ellipsis
     for (let i = 3; i < 6 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
   } else {
     rows.push({ isEllipsis: true });
@@ -3169,26 +3199,46 @@ function renderLeaderboard(userWpm) {
   }
 
   return `
-    <div class="leaderboard">
-      <div class="lb-header">
-        <span>Global leaderboard</span>
-        <span class="lb-meta">You: <strong>#${userRank}</strong> of ${total.toLocaleString()}</span>
-      </div>
-      <div class="lb-list">
-        ${rows.map(r => {
-          if (r.isEllipsis) return '<div class="lb-row lb-ellipsis">⋯</div>';
-          const cls = r.isUser ? 'lb-row you' : 'lb-row';
-          return `<div class="${cls}"${r.isUser ? ' data-edit-profile="1"' : ''}>
-            <span class="lb-rank">#${r.rank}</span>
-            <span class="lb-flag">${r.flag}</span>
-            <span class="lb-name">${escapeHtml(r.name)}</span>
-            <span class="lb-wpm">${r.wpm}</span>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="lb-edit-hint">Click your row or the profile chip to change your name and flag.</div>
+    <div class="lb-header">
+      <span>Global leaderboard</span>
+      <span class="lb-meta">You: <strong>#${userRank}</strong> of ${total.toLocaleString()}</span>
     </div>
+    <div class="lb-list">
+      ${rows.map(r => {
+        if (r.isEllipsis) return '<div class="lb-row lb-ellipsis">⋯</div>';
+        const cls = r.isUser ? 'lb-row you' : 'lb-row';
+        return `<div class="${cls}"${r.isUser ? ' data-edit-profile="1"' : ''}>
+          <span class="lb-rank">#${r.rank}</span>
+          <span class="lb-flag">${r.flag}</span>
+          <span class="lb-name">${escapeHtml(r.name)}</span>
+          <span class="lb-wpm">${r.wpm}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="lb-edit-hint">Click your row or the profile chip to change your name and flag.</div>
   `;
+}
+
+function renderLeaderboard(userWpm) {
+  const fake = ensureFakeLeaderboard();
+  const userName = (progress.profile && progress.profile.name) || 'Player';
+  const userFlag = flagEmoji((progress.profile && progress.profile.countryCode) || detectCountry());
+
+  // Kick off async fetch — updates the container in place when data arrives
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    setTimeout(async () => {
+      const online = await fetchOnlineLeaderboard();
+      if (!online) return;
+      const el = document.getElementById('lbLive');
+      if (!el) return;
+      el.innerHTML = buildLeaderboardRows(online, userName, userFlag, userWpm);
+      el.querySelectorAll('[data-edit-profile]').forEach(e => {
+        e.addEventListener('click', () => openProfileModal());
+      });
+    }, 0);
+  }
+
+  return `<div class="leaderboard" id="lbLive">${buildLeaderboardRows(fake, userName, userFlag, userWpm)}</div>`;
 }
 
 function endSprint() {
@@ -3216,6 +3266,7 @@ function endSprint() {
   });
   if (progress.sprintHistory.length > 500) progress.sprintHistory = progress.sprintHistory.slice(-500);
   saveProgress(progress);
+  submitSprintScore(progress.bestSprintWPM || wpm);
 
   const deltaLine = isNewBest && previousBest > 0
     ? `<span class="recap-best-pill">🎉 New personal best!</span>`
