@@ -83,3 +83,19 @@ as $$
 $$;
 
 grant execute on function public.get_my_bracket(uuid) to anon, authenticated;
+
+-- Upsert a player's sprint best-WPM score safely (GREATEST prevents regressions)
+-- all_time_xp is repurposed here as the player's best WPM for leaderboard ranking.
+create or replace function public.upsert_sprint_score(
+  p_id uuid, p_name text, p_country text, p_wpm integer
+)
+returns void language sql security definer as $$
+  insert into public.players (id, name, country, all_time_xp, last_active_at)
+  values (p_id, p_name, p_country, p_wpm, now())
+  on conflict (id) do update
+    set name            = excluded.name,
+        country         = excluded.country,
+        all_time_xp     = greatest(players.all_time_xp, excluded.all_time_xp),
+        last_active_at  = excluded.last_active_at;
+$$;
+grant execute on function public.upsert_sprint_score(uuid, text, text, integer) to anon, authenticated;
