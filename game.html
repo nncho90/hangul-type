@@ -723,19 +723,118 @@
   }
   /* ── Battle leaderboard ── */
   .battle-lb { margin: 16px 0 4px; border: 1px solid var(--bd); border-radius: 10px; overflow: hidden; }
+  .battle-lb-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0 8px;
+  }
+  .battle-lb-toolbar .title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tmd);
+  }
+  .battle-lb-toolbar .meta {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--tlo);
+    font-family: 'JetBrains Mono', monospace;
+  }
   .battle-lb-header { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 14px; background: var(--l2); border-bottom: 1px solid var(--bd); }
   .battle-lb-header .title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tmd); }
   .battle-lb-header .meta { font-size: 11px; color: var(--tlo); font-family: 'JetBrains Mono', monospace; }
   .battle-lb-header .meta strong { color: var(--thi); }
   .battle-lb-list { display: flex; flex-direction: column; }
-  .battle-lb-row { display: grid; grid-template-columns: 32px 24px 1fr auto; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; }
+  .battle-lb-row { display: grid; grid-template-columns: 32px 24px 1fr 52px 92px; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; }
   .battle-lb-row:last-child { border-bottom: none; }
   .battle-lb-row.you { background: rgba(37,99,235,0.06); font-weight: 600; }
   .battle-lb-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
   .battle-lb-row .n { color: var(--thi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .battle-lb-row .w { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--blue); text-align: right; white-space: nowrap; }
+  .battle-lb-row .lv { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--blue); text-align: right; white-space: nowrap; }
+  .battle-lb-row .pts { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); text-align: right; white-space: nowrap; }
   .battle-lb-row.ellipsis { justify-content: center; color: var(--tlo); font-size: 16px; letter-spacing: 4px; grid-template-columns: 1fr; text-align: center; }
   .battle-lb-loading { padding: 14px; text-align: center; font-size: 12px; color: var(--tlo); }
+  .profile-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(6px);
+  }
+  .profile-modal-card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 16px;
+    padding: 24px 24px 22px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  }
+  .profile-modal-card h3 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    color: var(--thi);
+  }
+  .profile-modal-card p {
+    margin: 0 0 18px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--tmd);
+  }
+  .profile-field { margin-bottom: 14px; }
+  .profile-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tlo);
+  }
+  .profile-field input,
+  .profile-field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    background: var(--l2);
+    color: var(--thi);
+    font: inherit;
+  }
+  .profile-field input:focus,
+  .profile-field select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .profile-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .profile-modal-card .primary {
+    background: var(--blue);
+    color: white;
+    border: 1px solid var(--blue);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .profile-modal-card .primary:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+  }
 </style>
 </head>
 <body>
@@ -805,18 +904,44 @@
     <h1 id="gameOverTitle">전사 — Fallen</h1>
     <p class="subtitle" id="gameOverFlavor">The demons broke through. Try again?</p>
     <div id="newHighSign" style="display:none;"><span class="new-high">⭐ New high score</span></div>
-    <div class="stat-grid">
+  <div class="stat-grid">
       <div><div class="k">Score</div><div class="v" id="overScore">0</div></div>
       <div><div class="k">Level</div><div class="v" id="overLevel">1</div></div>
       <div><div class="k">Kills</div><div class="v" id="overKills">0</div></div>
       <div><div class="k">Best combo</div><div class="v" id="overCombo">0</div></div>
     </div>
+    <div class="battle-lb-toolbar">
+      <div>
+        <div class="title">Battle ranking</div>
+        <div class="meta">Sorted by level, then points.</div>
+      </div>
+      <button class="menu-btn" id="btnEditProfile">Edit profile</button>
+    </div>
     <div id="battleLbContainer" class="battle-lb">
-      <div class="battle-lb-loading">Loading global rankings…</div>
+      <div class="battle-lb-loading">Loading battle rankings…</div>
     </div>
     <div class="actions">
       <button class="primary" id="btnRetry">Retry</button>
       <button id="btnHome">Back to practice</button>
+    </div>
+  </div>
+</div>
+
+<div id="profileModal" class="profile-modal">
+  <div class="profile-modal-card">
+    <h3>Your profile</h3>
+    <p>Pick a display name and default country. This is saved in your browser and reused the next time you play.</p>
+    <div class="profile-field">
+      <label for="profileNameInput">Display name</label>
+      <input id="profileNameInput" type="text" maxlength="24" autocomplete="nickname" />
+    </div>
+    <div class="profile-field">
+      <label for="profileCountrySelect">Country</label>
+      <select id="profileCountrySelect"></select>
+    </div>
+    <div class="profile-modal-actions">
+      <button class="menu-btn" id="profileCancel">Cancel</button>
+      <button class="primary" id="profileSave">Save</button>
     </div>
   </div>
 </div>
@@ -1406,14 +1531,31 @@ function tierForLevel(lv) {
   if (lv <= 13) return 4;
   return 5;
 }
-function pickWordForLevel(lv) {
+function firstKeystrokeForWord(word) {
+  const ko = typeof word === 'string' ? word : (word && word.ko) || '';
+  return wordToKeystrokes(ko)[0] || '';
+}
+
+function activeFirstJamos() {
+  return new Set(state.monsters.map(m => m.ks && m.ks[0]).filter(Boolean));
+}
+
+function pickAvailableWord(pool, blockedFirstJamos) {
+  const available = pool.filter(w => !blockedFirstJamos.has(firstKeystrokeForWord(w)));
+  if (!available.length) return null;
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+function pickWordForLevel(lv, blockedFirstJamos) {
+  const blocked = blockedFirstJamos || new Set();
   const tier = tierForLevel(lv);
   // On the final level of a tier, 30% chance to spawn the next tier as a "scout"
   let chosen = tier;
   const previewLevels = { 3: 2, 6: 3, 9: 4, 13: 5 };
   if (previewLevels[lv] && Math.random() < 0.3) chosen = previewLevels[lv];
   const pool = VOCAB['tier' + chosen] || VOCAB.tier1;
-  const word = pool[Math.floor(Math.random() * pool.length)];
+  const word = pickAvailableWord(pool, blocked);
+  if (!word) return null;
   return { ...word, tier: chosen };
 }
 
@@ -1510,90 +1652,258 @@ function flagEmoji(cc) {
   return String.fromCodePoint(cc.charCodeAt(0) + B) + String.fromCodePoint(cc.charCodeAt(1) + B);
 }
 
-// ── Leaderboard fetch ──
-let _lbCache = null, _lbCacheAt = 0;
-async function fetchOnlineLeaderboard() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
-  const now = Date.now();
-  if (_lbCache && now - _lbCacheAt < 60000) return _lbCache;
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/players?select=name,country,all_time_xp&order=all_time_xp.desc&limit=250&flagged=eq.false`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
-    );
-    if (!res.ok) return null;
-    const rows = await res.json();
-    _lbCache = rows.map(r => ({ name: r.name || 'Player', flag: flagEmoji(r.country || 'US'), wpm: r.all_time_xp || 0 }));
-    _lbCacheAt = now;
-    return _lbCache;
-  } catch (e) { return null; }
+const COUNTRY_NAMES = {
+  KR:'South Korea',KP:'North Korea',JP:'Japan',CN:'China',HK:'Hong Kong',TW:'Taiwan',SG:'Singapore',
+  MY:'Malaysia',TH:'Thailand',ID:'Indonesia',PH:'Philippines',VN:'Vietnam',IN:'India',AE:'UAE',
+  SA:'Saudi Arabia',IR:'Iran',PK:'Pakistan',BD:'Bangladesh',MM:'Myanmar',KZ:'Kazakhstan',UZ:'Uzbekistan',
+  GB:'United Kingdom',IE:'Ireland',FR:'France',DE:'Germany',ES:'Spain',IT:'Italy',NL:'Netherlands',
+  BE:'Belgium',PT:'Portugal',AT:'Austria',CH:'Switzerland',SE:'Sweden',NO:'Norway',DK:'Denmark',
+  FI:'Finland',PL:'Poland',CZ:'Czechia',HU:'Hungary',GR:'Greece',RO:'Romania',BG:'Bulgaria',
+  RU:'Russia',TR:'Turkey',UA:'Ukraine',US:'United States',CA:'Canada',MX:'Mexico',BR:'Brazil',
+  AR:'Argentina',CL:'Chile',PE:'Peru',CO:'Colombia',VE:'Venezuela',CU:'Cuba',PA:'Panama',
+  EG:'Egypt',ZA:'South Africa',NG:'Nigeria',KE:'Kenya',MA:'Morocco',DZ:'Algeria',TN:'Tunisia',
+  GH:'Ghana',ET:'Ethiopia',AU:'Australia',NZ:'New Zealand',FJ:'Fiji'
+};
+
+function saveProgress(p) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
 }
 
-// Seeded fake data for instant render while real data loads
-const FAKE_NAMES = ['민수','지은','Alex','Maya','Rin','Yui','Hugo','Sora','Felix','Priya','Kenji','Lena','Otto','Iris','Ana','Theo','Mei','Diego','Arjun','Wei'];
-let _fakeLb = null;
-function ensureFakeLb() {
-  if (_fakeLb) return _fakeLb;
+let progress = getProgress();
+if (!progress.playerId) {
+  progress.playerId = generatePlayerId();
+  saveProgress(progress);
+}
+
+function generatePlayerId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+const BATTLE_LB_KEY = 'hangul-battle-leaderboard-v1';
+const FAKE_BATTLE_NAMES = ['민수','지은','Alex','Maya','Rin','Yui','Hugo','Sora','Felix','Priya','Kenji','Lena','Otto','Iris','Ana','Theo','Mei','Diego','Arjun','Wei'];
+const FAKE_BATTLE_FLAGS = ['🇰🇷','🇺🇸','🇯🇵','🇨🇳','🇬🇧','🇫🇷','🇩🇪','🇧🇷','🇮🇳','🇦🇺','🇸🇬','🇨🇦','🇪🇸','🇮🇹','🇳🇱','🇸🇪'];
+let _fakeBattleLb = null;
+
+function battlePointsToLevel(points) {
+  const pts = Math.max(0, Number(points) || 0);
+  return Math.max(1, Math.min(99, Math.floor(pts / 10000) + 1));
+}
+
+function compareBattleEntries(a, b) {
+  return (Number(b.level) || 0) - (Number(a.level) || 0)
+    || (Number(b.points) || 0) - (Number(a.points) || 0)
+    || String(a.name || '').localeCompare(String(b.name || ''));
+}
+
+function normalizeBattleEntry(r) {
+  const countryCode = (r.countryCode || r.country || 'US').toString().slice(0, 2).toUpperCase();
+  const points = Math.max(0, Number(r.points ?? r.score ?? r.all_time_xp ?? 0) || 0);
+  const level = Math.max(1, Math.min(99, Number(r.level) || battlePointsToLevel(points)));
+  return {
+    playerId: r.playerId || null,
+    name: r.name || 'Player',
+    countryCode,
+    flag: r.flag || flagEmoji(countryCode),
+    level,
+    points,
+    isUser: !!r.isUser
+  };
+}
+
+function loadBattleLeaderboard() {
+  try {
+    const raw = localStorage.getItem(BATTLE_LB_KEY);
+    const rows = raw ? JSON.parse(raw) : [];
+    return Array.isArray(rows) ? rows.map(normalizeBattleEntry) : [];
+  } catch (e) { return []; }
+}
+
+function saveBattleLeaderboard(rows) {
+  try {
+    localStorage.setItem(BATTLE_LB_KEY, JSON.stringify(rows.slice(0, 120)));
+  } catch (e) {}
+}
+
+function recordBattleResult(entry) {
+  const normalized = normalizeBattleEntry(entry);
+  const existing = loadBattleLeaderboard().filter(r => !normalized.playerId || r.playerId !== normalized.playerId);
+  existing.push({ ...normalized, updatedAt: new Date().toISOString() });
+  existing.sort(compareBattleEntries);
+  saveBattleLeaderboard(existing);
+}
+
+function updateBattleLeaderboardIdentity(playerId, name, countryCode) {
+  if (!playerId) return;
+  const rows = loadBattleLeaderboard().map(r => {
+    if (r.playerId !== playerId) return r;
+    return {
+      ...r,
+      name,
+      countryCode,
+      flag: flagEmoji(countryCode)
+    };
+  });
+  saveBattleLeaderboard(rows);
+}
+
+function ensureFakeBattleLb() {
+  if (_fakeBattleLb) return _fakeBattleLb;
   let s = 0x9e3779b9;
   const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
-  const flags = ['🇰🇷','🇺🇸','🇯🇵','🇨🇳','🇬🇧','🇫🇷','🇩🇪','🇧🇷','🇮🇳','🇦🇺','🇸🇬','🇨🇦'];
   const list = [];
   for (let i = 0; i < 120; i++) {
-    const t = rnd();
-    const wpm = t < 0.05 ? 130 + Math.floor(rnd() * 60) : t < 0.2 ? 85 + Math.floor(rnd() * 45) : t < 0.6 ? 45 + Math.floor(rnd() * 40) : 15 + Math.floor(rnd() * 32);
-    list.push({ name: FAKE_NAMES[Math.floor(rnd() * FAKE_NAMES.length)] + (rnd() < 0.4 ? '_' + Math.floor(rnd() * 99) : ''), flag: flags[Math.floor(rnd() * flags.length)], wpm });
+    const baseName = FAKE_BATTLE_NAMES[Math.floor(rnd() * FAKE_BATTLE_NAMES.length)];
+    const suffix = rnd() < 0.45 ? '' : '_' + Math.floor(rnd() * 99);
+    const countryCode = ['KR','US','JP','CN','GB','FR','DE','BR','IN','AU','SG','CA'][Math.floor(rnd() * 12)];
+    const level = 1 + Math.floor(rnd() * 20);
+    const points = Math.round(level * 10000 + rnd() * 9000 + rnd() * 4000);
+    list.push({
+      name: baseName + suffix,
+      countryCode,
+      flag: flagEmoji(countryCode),
+      level,
+      points
+    });
   }
-  list.sort((a, b) => b.wpm - a.wpm);
-  _fakeLb = list;
+  list.sort(compareBattleEntries);
+  _fakeBattleLb = list;
   return list;
 }
 
-function buildLbHtml(list, userName, userFlag) {
-  const merged = list.concat([{ name: userName, flag: userFlag, wpm: 0, isUser: true }]);
-  merged.sort((a, b) => b.wpm - a.wpm);
-  const userRank = merged.findIndex(x => x.isUser) + 1;
+function mergeBattleLeaderboard(rows, userRow) {
+  const merged = [];
+  const bestByPlayerId = new Map();
+  for (const row of rows.concat(userRow ? [userRow] : [])) {
+    const entry = normalizeBattleEntry(row);
+    if (entry.playerId) {
+      const prev = bestByPlayerId.get(entry.playerId);
+      if (!prev || compareBattleEntries(entry, prev) < 0) bestByPlayerId.set(entry.playerId, entry);
+    } else {
+      merged.push(entry);
+    }
+  }
+  for (const entry of bestByPlayerId.values()) merged.push(entry);
+  merged.sort(compareBattleEntries);
+  if (userRow && userRow.playerId) {
+    const idx = merged.findIndex(r => r.playerId === userRow.playerId);
+    if (idx >= 0) merged[idx].isUser = true;
+  }
+  return merged;
+}
+
+function pickLeaderboardWindow(merged, userIdx) {
   const total = merged.length;
   const rows = [];
-  for (let i = 0; i < 3 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
-  if (userRank <= 5) {
-    for (let i = 3; i < 6 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
-  } else {
+  const topCount = 3;
+  for (let i = 0; i < topCount && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
+  if (userIdx <= 5) {
+    for (let i = topCount; i < 6 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
+  } else if (userIdx > 0) {
     rows.push({ isEllipsis: true });
-    rows.push({ rank: userRank - 1, ...merged[userRank - 2] });
-    rows.push({ rank: userRank, ...merged[userRank - 1] });
-    if (userRank < total) rows.push({ rank: userRank + 1, ...merged[userRank] });
+    if (userIdx - 2 >= 0) rows.push({ rank: userIdx - 1, ...merged[userIdx - 2] });
+    rows.push({ rank: userIdx, ...merged[userIdx - 1] });
+    if (userIdx < total) rows.push({ rank: userIdx + 1, ...merged[userIdx] });
   }
-  const headerNote = list === ensureFakeLb() ? 'speed test ranking · play speed test to update' : 'speed test ranking · live';
+  return rows;
+}
+
+function buildBattleLeaderboardHtml(rows, userIdx, total) {
+  const headerNote = 'sorted by level, then points';
   return `<div class="battle-lb-header">
-    <span class="title">Global ranking</span>
-    <span class="meta">You: <strong>#${userRank}</strong> of ${total.toLocaleString()} · ${headerNote}</span>
+    <span class="title">Battle ranking</span>
+    <span class="meta">You: <strong>#${userIdx}</strong> of ${total.toLocaleString()} · ${headerNote}</span>
   </div>
   <div class="battle-lb-list">
     ${rows.map(r => {
       if (r.isEllipsis) return '<div class="battle-lb-row ellipsis">⋯</div>';
       const cls = r.isUser ? 'battle-lb-row you' : 'battle-lb-row';
-      return `<div class="${cls}"><span class="r">#${r.rank}</span><span>${r.flag}</span><span class="n">${r.name}</span><span class="w">${r.wpm > 0 ? r.wpm + ' WPM' : '—'}</span></div>`;
+      return `<div class="${cls}"${r.isUser ? ' data-edit-profile="1"' : ''}>
+        <span class="r">#${r.rank}</span>
+        <span>${r.flag}</span>
+        <span class="n">${r.name}</span>
+        <span class="lv">Lv.${r.level}</span>
+        <span class="pts">${r.points.toLocaleString()}</span>
+      </div>`;
     }).join('')}
   </div>`;
 }
 
 function renderBattleLeaderboard() {
-  const prog = getProgress();
-  const userName = (prog.profile && prog.profile.name) || 'Player';
-  const userFlag = flagEmoji((prog.profile && prog.profile.countryCode) || detectCountry());
+  progress = getProgress();
+  const userName = (progress.profile && progress.profile.name) || 'Player';
+  const userCountry = (progress.profile && progress.profile.countryCode) || detectCountry();
+  const userRow = {
+    playerId: progress.playerId || null,
+    name: userName,
+    countryCode: userCountry,
+    flag: flagEmoji(userCountry),
+    level: state.level,
+    points: state.score,
+    isUser: true
+  };
   const container = document.getElementById('battleLbContainer');
   if (!container) return;
+  const merged = mergeBattleLeaderboard(ensureFakeBattleLb().concat(loadBattleLeaderboard()), userRow);
+  const userIdx = Math.max(1, merged.findIndex(r => r.isUser) + 1);
+  const rows = pickLeaderboardWindow(merged, userIdx);
+  container.innerHTML = buildBattleLeaderboardHtml(rows, userIdx, merged.length);
+  container.querySelectorAll('[data-edit-profile]').forEach(el => {
+    el.addEventListener('click', openProfileModal);
+  });
+}
 
-  // Render fake immediately
-  container.innerHTML = buildLbHtml(ensureFakeLb(), userName, userFlag);
+function renderProfilePreview() {
+  progress = getProgress();
+  const nameEl = document.getElementById('profileNameInput');
+  const countryEl = document.getElementById('profileCountrySelect');
+  if (!nameEl || !countryEl) return;
+  const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
+  const name = (progress.profile && progress.profile.name) || 'Player';
+  nameEl.value = name;
+  const opts = Object.entries(COUNTRY_NAMES)
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([code, label]) => `<option value="${code}" ${code === cc ? 'selected' : ''}>${flagEmoji(code)} ${label}</option>`)
+    .join('');
+  countryEl.innerHTML = opts;
+}
 
-  // Swap in real data
-  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-    fetchOnlineLeaderboard().then(online => {
-      if (!online || !document.getElementById('battleLbContainer')) return;
-      document.getElementById('battleLbContainer').innerHTML = buildLbHtml(online, userName, userFlag);
-    });
-  }
+function openProfileModal() {
+  progress = getProgress();
+  const modal = document.getElementById('profileModal');
+  if (!modal) return;
+  const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
+  const name = (progress.profile && progress.profile.name) || 'Player';
+  const nameInput = document.getElementById('profileNameInput');
+  const countrySelect = document.getElementById('profileCountrySelect');
+  nameInput.value = name;
+  countrySelect.innerHTML = Object.entries(COUNTRY_NAMES)
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([code, label]) => `<option value="${code}" ${code === cc ? 'selected' : ''}>${flagEmoji(code)} ${label}</option>`)
+    .join('');
+  modal.style.display = 'flex';
+  const close = () => { modal.style.display = 'none'; };
+  const onBackdrop = (e) => { if (e.target === modal) close(); };
+  const onCancel = () => close();
+  const onSave = () => {
+    const newName = (nameInput.value || 'Player').trim().slice(0, 24) || 'Player';
+    const newCC = countrySelect.value || detectCountry();
+    progress.profile = { name: newName, countryCode: newCC };
+    saveProgress(progress);
+    updateBattleLeaderboardIdentity(progress.playerId || null, newName, newCC);
+    renderBattleLeaderboard();
+    close();
+  };
+  modal.onclick = onBackdrop;
+  document.getElementById('profileCancel').onclick = onCancel;
+  document.getElementById('profileSave').onclick = onSave;
+  requestAnimationFrame(() => {
+    nameInput.focus();
+    nameInput.select();
+  });
 }
 
 const state = {
@@ -1627,7 +1937,8 @@ function spawnMonster(forceBoss) {
   if (forceBoss || (state.level >= state.bossNextLevel && !state.bossActive && state.kills > 0 && Math.random() < 0.3)) {
     return spawnBoss();
   }
-  const word = pickWordForLevel(state.level);
+  const word = pickWordForLevel(state.level, activeFirstJamos());
+  if (!word) return null;
   const tier = word.tier;
   const sprites = TIER_SPRITES[tier] || TIER_SPRITES[1];
   const sprite = sprites[Math.floor(Math.random() * sprites.length)];
@@ -1659,7 +1970,8 @@ function spawnMonster(forceBoss) {
 function spawnBoss() {
   sfxBossWarn();
   state.bossActive = true;
-  const word = VOCAB.boss[Math.floor(Math.random() * VOCAB.boss.length)];
+  const word = pickAvailableWord(VOCAB.boss, activeFirstJamos());
+  if (!word) { state.bossActive = false; return null; }
   const sprite = TIER_SPRITES.boss[Math.floor(Math.random() * TIER_SPRITES.boss.length)];
   const id = ++monsterId;
   const ks = wordToKeystrokes(word.ko);
@@ -1893,6 +2205,15 @@ function gameOver() {
   document.getElementById('overKills').textContent = state.kills;
   document.getElementById('overCombo').textContent = state.bestCombo;
   document.getElementById('newHighSign').style.display = newHigh ? 'block' : 'none';
+  progress = getProgress();
+  recordBattleResult({
+    playerId: progress.playerId || null,
+    name: (progress.profile && progress.profile.name) || 'Player',
+    countryCode: (progress.profile && progress.profile.countryCode) || detectCountry(),
+    level: state.level,
+    points: state.score,
+    isUser: true
+  });
   document.getElementById('gameOverModal').style.display = 'flex';
   renderBattleLeaderboard();
   // Sync XP back to main app
@@ -2017,6 +2338,10 @@ function escapeLock() {
 
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const activeEl = document.activeElement;
+  if (activeEl && activeEl.closest && activeEl.closest('input, textarea, select, .profile-modal')) {
+    return;
+  }
 
   // Story dialog: advance via Enter / Space / →↓, skip via Esc. Swallow other keys.
   const storyDialog = document.getElementById('storyDialog');
@@ -2247,6 +2572,7 @@ document.getElementById('btnReplayStory').addEventListener('click', () => {
   try { localStorage.removeItem(STORY_KEY); } catch (e) {}
   showStory();
 });
+document.getElementById('btnEditProfile').addEventListener('click', openProfileModal);
 document.getElementById('storyDialog').addEventListener('click', advanceStory);
 document.getElementById('btnRetry').addEventListener('click', startGame);
 document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html');
@@ -2279,7 +2605,11 @@ try {
   }
 } catch (e) {}
 SHIELD.focus({ preventScroll: true });
-document.addEventListener('click', () => SHIELD.focus({ preventScroll: true }));
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (t && t.closest && t.closest('button, input, textarea, select, .profile-modal, .modal-veil')) return;
+  SHIELD.focus({ preventScroll: true });
+});
 </script>
 </body>
 </html>

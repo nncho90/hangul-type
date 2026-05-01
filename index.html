@@ -133,24 +133,119 @@
     font-size: 13px;
     line-height: 1.55;
   }
+  .mobile-actions { display: none; }
+  .mobile-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    background: var(--l1);
+    color: var(--thi);
+    cursor: pointer;
+    padding: 0;
+  }
+  .mobile-menu-btn .bars,
+  .mobile-menu-btn .bars::before,
+  .mobile-menu-btn .bars::after {
+    display: block;
+    width: 17px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    content: "";
+  }
+  .mobile-menu-btn .bars { position: relative; }
+  .mobile-menu-btn .bars::before { position: absolute; top: -6px; left: 0; }
+  .mobile-menu-btn .bars::after { position: absolute; top: 6px; left: 0; }
+  .mobile-menu-popover { display: none; }
+  .mobile-vocab-toggle { display: none; }
+  .drawer-scrim { display: none; }
   @media (max-width: 700px) {
     body { font-size: 14px; }
-    .wrap { padding: 16px 12px 32px; }
-    header { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .stats { flex-wrap: wrap; gap: 12px 18px; width: 100%; }
-    .stat { text-align: left; }
+    body.mobile-drawer-open { overflow: hidden; }
+    .wrap { padding: 14px 10px 28px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+    }
+    .brand { min-width: 0; }
+    .brand h1 { font-size: 20px; }
+    .brand-logo { font-size: 20px; }
+    .header-mid { display: none; }
+    .stats { justify-content: flex-end; gap: 10px; width: auto; }
+    .stat { text-align: right; }
+    .stat-label { font-size: 8px; }
+    .stat-value { font-size: 12px; }
+    .stat.primary .stat-value { font-size: 22px; }
+    .mobile-menu-btn { display: inline-flex; }
+    .mobile-menu-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 60;
+      min-width: 196px;
+      padding: 8px;
+      background: var(--l1);
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+    }
+    .mobile-menu-popover.open { display: grid; gap: 6px; }
+    .mobile-actions .battle-link,
+    .mobile-actions .icon-btn {
+      width: 100%;
+      min-height: 40px;
+      justify-content: flex-start;
+      border-radius: 9px;
+      padding: 8px 14px;
+      gap: 12px;
+      font-size: 14px;
+    }
+    .mobile-actions #btnSettings::after {
+      content: "Settings";
+      margin-left: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--tmd);
+    }
+    .mobile-actions .settings-wrap { width: 100%; }
+    .mobile-actions .settings-menu {
+      left: auto;
+      right: 0;
+      bottom: auto;
+      top: calc(100% + 6px);
+      min-width: 100%;
+    }
     .grid { grid-template-columns: 1fr; }
     .target .word { font-size: 40px; gap: 12px; }
     .target .word.lg { font-size: 32px; gap: 10px; }
     .target .word.md { font-size: 26px; gap: 8px; }
     .target .word.sm { font-size: 22px; gap: 6px; }
-    .keyboard { display: none; }
-    .kb-mobile-hint { display: block; }
+    .keyboard { display: block; }
+    .kb-mobile-hint { display: none; }
     .btn { min-height: 36px; padding: 9px 14px; font-size: 13px; }
     .topic-pill { min-height: 36px; padding: 8px 14px; font-size: 12px; display: inline-flex; align-items: center; }
-    .kb-toggle button { min-height: 36px; }
+    .kb-toggle button { min-height: 34px; }
     .topics { gap: 8px; }
     .controls { flex-wrap: wrap; }
+    .drawer-scrim {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 910;
+      background: rgba(15, 23, 42, 0.36);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    body.mobile-drawer-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   }
   @media (max-width: 400px) {
     .target .word { font-size: 32px; gap: 10px; }
@@ -282,10 +377,21 @@
     transition: width 0.3s ease;
   }
   .subtopic-chip .label,
+  .subtopic-chip .mastery,
   .subtopic-chip .count,
   .subtopic-chip .ico { position: relative; z-index: 1; }
+  .subtopic-chip .label {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
   .subtopic-chip .ico { font-size: 11px; }
+  .subtopic-chip .mastery {
+    flex: 0 0 auto;
+    color: var(--amber);
+    font-size: 11px;
+  }
   .subtopic-chip .count {
+    flex: 0 0 auto;
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     color: var(--tlo);
@@ -400,7 +506,34 @@
     width: 100%;
   }
   @media (max-width: 900px) {
-    .practice-grid { grid-template-columns: 1fr; gap: 16px; }
+    .practice-grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .practice-content {
+      max-width: none;
+    }
+    .practice-side {
+      grid-column: auto;
+      grid-row: auto;
+      opacity: 1;
+    }
+    .practice-side .side-footer {
+      margin-top: 0;
+    }
+    .topics-row,
+    .subtopic-tracker {
+      grid-template-columns: 1fr;
+    }
+    .target {
+      padding: 22px 0 18px;
+    }
+    .target .word { font-size: 32px; gap: 10px; }
+    .target .word.lg { font-size: 26px; gap: 8px; }
+    .target .word.md { font-size: 22px; gap: 6px; }
+    .target .word.sm { font-size: 20px; gap: 5px; }
+    .keyboard { display: block; }
+    .kb-mobile-hint { display: none; }
   }
   .practice-side {
     display: flex;
@@ -419,6 +552,58 @@
   .practice-side:hover { opacity: 1; }
   @media (max-width: 900px) {
     .practice-side { padding-left: 0; border-left: 0; padding-top: 12px; border-top: 1px solid var(--bd); }
+  }
+  @media (max-width: 700px) {
+    .practice-side {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 920;
+      width: min(86vw, 340px);
+      padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+      background: var(--l1);
+      border-top: 0;
+      border-left: 1px solid var(--bd);
+      box-shadow: -18px 0 44px rgba(15, 23, 42, 0.18);
+      transform: translateX(100%);
+      transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
+      overflow-y: auto;
+      opacity: 1;
+    }
+    .practice-side.open { transform: translateX(0); }
+    .practice-side .side-head {
+      position: sticky;
+      top: -18px;
+      background: var(--l1);
+      padding: 0 0 12px;
+      z-index: 1;
+    }
+    .practice-side .side-head::before {
+      content: "Vocab";
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--tlo);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .practice-side .side-footer { padding-bottom: 8px; }
+    .mobile-vocab-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      min-height: 40px;
+      margin-bottom: 8px;
+      background: var(--l1);
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      color: var(--thi);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
   }
   .practice-side .side-head {
     display: flex;
@@ -607,6 +792,7 @@
   }
   .target .word .syl {
     display: inline-block;
+    position: relative;
     vertical-align: bottom;
   }
   .target .word .syl canvas {
@@ -739,6 +925,48 @@
   .finger-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--bd);
+  }
+  @media (max-width: 700px) {
+    .keyboard {
+      padding: 10px 8px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .kb-toggle {
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .kb-legend { margin-left: 0; }
+    .kb-toggle .pill { padding: 2px; }
+    .kb-toggle button { padding: 4px 9px; font-size: 10px; }
+    .kb-row {
+      gap: 3px;
+      margin-bottom: 3px;
+      justify-content: center;
+    }
+    .kb-row.r2 { padding-left: clamp(8px, 4vw, 16px); }
+    .kb-row.r3 { padding-left: clamp(18px, 9vw, 34px); }
+    .key {
+      flex: 0 1 32px;
+      width: auto;
+      min-width: 0;
+      max-width: none;
+      height: 44px;
+      min-height: 44px;
+      max-height: 44px;
+      border-radius: 5px;
+    }
+    .key .jamo { font-size: 15px; }
+    .key .qwerty { font-size: 8px; }
+    .key .shift { font-size: 9px; top: 1px; right: 3px; }
+  }
+  @media (max-width: 400px) {
+    .keyboard { padding: 9px 6px; }
+    .kb-row { gap: 2px; }
+    .key { height: 40px; min-height: 40px; max-height: 40px; }
+    .key .jamo { font-size: 14px; }
+    .key .qwerty { font-size: 7px; }
   }
 
   /* Diagnostic */
@@ -1445,8 +1673,42 @@
     text-align: center;
   }
   @media (max-width: 600px) {
-    .sprint-result .result-grid { grid-template-columns: repeat(2, 1fr); }
-    .sprint-bar { flex-wrap: wrap; }
+    .wrap { padding: 12px 10px 24px; }
+    header { padding-bottom: 12px; }
+    .practice-card { padding: 16px 12px; }
+    .sprint-result { padding: 12px; }
+    .sprint-result .result-card {
+      padding: 18px 14px;
+      max-height: 92vh;
+      border-radius: 14px;
+    }
+    .sprint-result h3 { font-size: 18px; margin-bottom: 14px; }
+    .recap-wpm { font-size: 46px; }
+    .recap-wpm .unit { font-size: 15px; }
+    .sprint-result .result-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .sprint-result .rv { font-size: 20px; }
+    .leaderboard .lb-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .leaderboard .lb-list { max-height: 260px; }
+    .leaderboard .lb-row {
+      grid-template-columns: 34px 20px minmax(0, 1fr) 42px;
+      gap: 6px;
+      padding: 8px 10px;
+      font-size: 11px;
+    }
+    .leaderboard .lb-rank { font-size: 10px; }
+    .leaderboard .lb-flag { font-size: 13px; }
+    .leaderboard .lb-wpm { font-size: 11px; }
+    .leaderboard .lb-row.you .lb-name::after { display: block; font-size: 10px; }
+    .leaderboard .lb-edit-hint { font-size: 9px; line-height: 1.35; }
+    .sprint-bar {
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      padding: 10px 12px;
+    }
     .sprint-exit { margin-left: 0; }
   }
   .btn {
@@ -1479,9 +1741,15 @@
   .input-shield {
     position: fixed;
     top: 0;
-    left: -9999px;
+    left: 0;
+    width: 1px;
+    height: 1px;
     opacity: 0;
     pointer-events: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    caret-color: transparent;
   }
 </style>
 </head>
@@ -1520,6 +1788,10 @@
         <div class="stat-value" id="acc">100%</div>
       </div>
     </div>
+    <button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileActions">
+      <span class="bars" aria-hidden="true"></span>
+    </button>
+    <div id="mobileActions" class="mobile-menu-popover mobile-actions"></div>
     <!-- Streak + Best moved into the records modal; kept as hidden stubs for legacy renderers -->
     <span id="streak" class="legacy-stub" hidden><span class="streak-flame">🔥</span><span class="streak-num">0</span></span>
     <span id="bestWpm" class="legacy-stub" hidden>0</span>
@@ -1536,13 +1808,14 @@
   <div id="comboChip" class="combo-chip" style="display:none;"></div>
   <div id="celebrationOverlay" class="celebration-overlay" style="display:none;"></div>
   <div id="profileModal" class="profile-modal" style="display:none;"></div>
+  <div id="drawerScrim" class="drawer-scrim" aria-hidden="true"></div>
 
   <main class="practice-main">
 
     <!-- Practice -->
     <section class="card practice-card">
       <div class="practice-grid">
-        <aside class="practice-side">
+        <aside class="practice-side" id="practiceSide" aria-label="Vocabulary list">
           <div class="side-head">
             <div class="avatar-blob" id="avatarBlob" title="Your typing rank">
               <span class="avatar-emoji" id="avatarEmoji">🥚</span>
@@ -1554,7 +1827,7 @@
           <div class="topics" id="topics"></div>
 
           <div class="side-footer">
-            <div class="settings-wrap">
+            <div class="settings-wrap" id="settingsWrap">
               <button class="icon-btn" id="btnSettings" title="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
               <div class="settings-menu" id="settingsMenu" hidden>
                 <button class="setting-row" id="btnAudio">🔊 Audio: ON</button>
@@ -1566,6 +1839,7 @@
         </aside>
 
         <div class="practice-content">
+          <button id="mobileVocabBtn" class="mobile-vocab-toggle" type="button" aria-expanded="false" aria-controls="practiceSide">Vocab list</button>
           <div class="target">
             <div class="gloss" id="gloss">hello</div>
             <div class="word" id="targetWord">안녕</div>
@@ -1588,7 +1862,7 @@
             </div>
             <div id="kb"></div>
           </div>
-          <div class="kb-mobile-hint">⌨️ Use a desktop keyboard for the best experience. The visual keyboard guide is hidden on small screens.</div>
+          <div class="kb-mobile-hint">Tap the word area and type on your phone keyboard.</div>
         </div>
       </div>
 
@@ -2053,7 +2327,7 @@ const TOPICS = [
     { ko: '연습하다', en: 'to practice' },   { ko: '운동하다', en: 'to exercise' },
     { ko: '청소하다', en: 'to clean' },      { ko: '요리하다', en: 'to cook' },
     { ko: '쇼핑하다', en: 'to shop' },       { ko: '구경하다', en: 'to look around' }
-  ], topikLevel: 1 },
+  ] },
   { id: 't2_adj', name: 'TOPIK 2 · Adjectives', topikLevel: 2, words: [
     { ko: '깨끗하다', en: 'clean' },        { ko: '더럽다', en: 'dirty' },
     { ko: '친절하다', en: 'kind' },         { ko: '똑똑하다', en: 'smart' },
@@ -2066,7 +2340,7 @@ const TOPICS = [
     { ko: '특별하다', en: 'special' },      { ko: '비슷하다', en: 'similar' },
     { ko: '다르다', en: 'different' },      { ko: '느리다', en: 'slow' },
     { ko: '조용하다', en: 'quiet' },        { ko: '시끄럽다', en: 'noisy' }
-  ], topikLevel: 1 },
+  ] },
   { id: 't2_nouns', name: 'TOPIK 2 · Nouns', topikLevel: 2, words: [
     { ko: '사회', en: 'society' },          { ko: '경제', en: 'economy' },
     { ko: '정부', en: 'government' },       { ko: '회의', en: 'meeting' },
@@ -2081,7 +2355,7 @@ const TOPICS = [
     { ko: '현재', en: 'present' },          { ko: '의견', en: 'opinion' },
     { ko: '설명', en: 'explanation' },      { ko: '계획', en: 'plan' },
     { ko: '경험', en: 'experience' },       { ko: '관계', en: 'relationship' }
-  ], topikLevel: 1 },
+  ] },
   { id: 't2_phrases', name: 'TOPIK 2 · Phrases', topikLevel: 2, words: [
     { ko: '도와주세요', en: 'please help me' },
     { ko: '잠깐만요', en: 'just a moment' },
@@ -2098,7 +2372,7 @@ const TOPICS = [
     { ko: '꿈이 무엇입니까', en: "what's your dream" },
     { ko: '취미가 뭐예요', en: "what's your hobby" },
     { ko: '한국에서 오래 살았어요', en: "I've lived in Korea a long time" }
-  ], topikLevel: 1 },
+  ] },
   { id: 't2_sentences', name: 'TOPIK 2 · Sentences', topikLevel: 2, words: [
     { ko: '오늘은 바빠서 시간이 없어요', en: "I'm busy today so I have no time" },
     { ko: '한국어를 배우는 것이 어려워요', en: 'Learning Korean is difficult' },
@@ -2442,14 +2716,57 @@ function topicMasteryLevel(topicId) {
 }
 
 function topicMasteryStored(topicId) {
-  return progress.topicMastery[topicId] || { level: 1, lastDecayCheck: nowIso(), lastPracticedAt: null };
+  const m = progress.topicMastery[topicId] || { level: 1, lastDecayCheck: nowIso(), lastPracticedAt: null };
+  m.level = Math.min(5, Math.max(1, Number(m.level) || 1));
+  m.lastDecayCheck = m.lastDecayCheck || nowIso();
+  m.lastPracticedAt = m.lastPracticedAt || null;
+  applyTopicMasteryDecay(m);
+  progress.topicMastery[topicId] = m;
+  return m;
 }
 
 function recordTopicPractice(topicId) {
   const m = topicMasteryStored(topicId);
   m.lastPracticedAt = nowIso();
+  m.lastDecayCheck = m.lastPracticedAt;
   m.level = Math.max(m.level, topicMasteryLevel(topicId));
   progress.topicMastery[topicId] = m;
+}
+
+function decayDaysForLevel(lv) {
+  if (lv >= 5) return Infinity;
+  if (lv === 4) return 14;
+  if (lv === 3) return 7;
+  return 4;
+}
+
+function applyTopicMasteryDecay(m, nowMs) {
+  nowMs = nowMs || Date.now();
+  if (!m || m.level >= 5) return false;
+  let anchorMs = Date.parse(m.lastPracticedAt || m.lastDecayCheck || nowIso());
+  if (!Number.isFinite(anchorMs)) anchorMs = nowMs;
+  let changed = false;
+  while (m.level > 1) {
+    const days = decayDaysForLevel(m.level);
+    const thresholdMs = days * DAY_MS;
+    if (!Number.isFinite(thresholdMs) || nowMs - anchorMs < thresholdMs) break;
+    m.level--;
+    anchorMs += thresholdMs;
+    changed = true;
+  }
+  if (changed) m.lastDecayCheck = new Date(anchorMs).toISOString();
+  return changed;
+}
+
+function applyAllTopicMasteryDecay() {
+  let changed = false;
+  for (const t of TOPICS) {
+    if (!progress.topicMastery[t.id]) continue;
+    const before = progress.topicMastery[t.id].level;
+    const m = topicMasteryStored(t.id);
+    if (m.level !== before) changed = true;
+  }
+  if (changed) saveProgress(progress);
 }
 
 // Non-linear decay: high tiers fade slow, low tiers fade fast.
@@ -2641,36 +2958,8 @@ function playTone({ freq, type = 'sine', duration = 0.05, gain = 0.06 }) {
   o.stop(t + duration + 0.02);
 }
 
-// Soft mechanical-keyboard "thock": low-mid sine + tiny noise burst, very short.
-// Quieter and warmer than the old 880Hz sine tick.
 function playClick() {
-  if (!state || !state.audioOn) return;
-  const ctx = ensureAudio();
-  if (!ctx) return;
-  const t = ctx.currentTime;
-  // 1) Low fundamental — gives the "body" of the key
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.type = 'sine';
-  o.frequency.setValueAtTime(280, t);
-  o.frequency.exponentialRampToValueAtTime(160, t + 0.05);
-  g.gain.setValueAtTime(0.04, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-  o.connect(g).connect(ctx.destination);
-  o.start(t);
-  o.stop(t + 0.08);
-  // 2) Tiny noise burst — gives the "tap" attack
-  const bufSize = ctx.sampleRate * 0.012;
-  const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-  const ng = ctx.createGain();
-  ng.gain.setValueAtTime(0.025, t);
-  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
-  noise.connect(ng).connect(ctx.destination);
-  noise.start(t);
+  playTone({ freq: 880, type: 'sine', duration: 0.035, gain: 0.045 });
 }
 function playMiss()  { playTone({ freq: 220, type: 'square', duration: 0.10, gain: 0.04 }); }
 function playWordDing() { playTone({ freq: 1320, type: 'sine', duration: 0.14, gain: 0.04 }); }
@@ -2862,6 +3151,14 @@ function openProfileModal() {
     saveProgress(progress);
     renderProfileChip();
     renderRecords();
+    const sprintResultEl = document.getElementById('sprintResult');
+    if (sprintResultEl && sprintResultEl.style.display !== 'none') {
+      const lb = sprintResultEl.querySelector('.leaderboard');
+      if (lb) lb.outerHTML = renderLeaderboard(activeSprintLeaderboardWpm);
+      sprintResultEl.querySelectorAll('[data-edit-profile]').forEach(el => {
+        el.addEventListener('click', () => openProfileModal());
+      });
+    }
     close();
   });
   document.getElementById('profileNameInput').focus();
@@ -3221,7 +3518,9 @@ function buildLeaderboardRows(list, userName, userFlag, userWpm) {
   `;
 }
 
+let activeSprintLeaderboardWpm = 0;
 function renderLeaderboard(userWpm) {
+  activeSprintLeaderboardWpm = userWpm;
   const fake = ensureFakeLeaderboard();
   const userName = (progress.profile && progress.profile.name) || 'Player';
   const userFlag = flagEmoji((progress.profile && progress.profile.countryCode) || detectCountry());
@@ -3399,11 +3698,15 @@ const COMPOUND_VOWELS = new Set(['ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ']);
 const STATE_COLORS = {
   done:   '#10b981',
   now:    '#2563eb',
+  now0:   '#2563eb',
+  now1:   '#5b7cfa',
+  now2:   '#1d4ed8',
+  now3:   '#60a5fa',
   err:    '#ef4444',
   pending: '#cbd5e1'
 };
 
-const SYL_CACHE = new Map(); // key: `${char}|${px}`  → { canvas, groups: { initial: Uint32Array, medial: Uint32Array, final: Uint32Array }, w, h }
+const SYL_CACHE = new Map(); // key: `${char}|${px}` -> rendered syllable segmentation
 const FONT_SIZE_BY_CLASS = { '': 96, lg: 72, md: 56, sm: 44 };
 
 function syllableLayoutType(mIdx) {
@@ -3419,6 +3722,8 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
   const x = code - 0xAC00;
   const mIdx = Math.floor((x % 588) / 28);
   const fIdx = x % 28;
+  const medial = MEDIALS[mIdx];
+  const final = FINALS[fIdx];
   const layout = syllableLayoutType(mIdx);
   const hasFinal = fIdx > 0;
 
@@ -3441,7 +3746,9 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
 
   const W = canvas.width, H = canvas.height;
   const data = ctx.getImageData(0, 0, W, H).data;
-  const isInk = (i) => data[i*4 + 3] > 32 && (data[i*4] + data[i*4+1] + data[i*4+2]) < 600;
+  const alpha = new Uint8ClampedArray(W * H);
+  for (let i = 0; i < W * H; i++) alpha[i] = data[i*4 + 3];
+  const isInk = (i) => alpha[i] > 0 && (data[i*4] + data[i*4+1] + data[i*4+2]) < 700;
 
   // 8-connected BFS
   const visited = new Uint8Array(W * H);
@@ -3480,7 +3787,7 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
 
   // Overall ink bounds
   if (components.length === 0) {
-    return { canvas, groups: { initial: new Uint32Array(0), medial: new Uint32Array(0), final: new Uint32Array(0) }, w: wCss, h: hCss };
+    return { canvas, groups: [], alpha, w: wCss, h: hCss };
   }
   let inkMinX = W, inkMaxX = 0, inkMinY = H, inkMaxY = 0;
   for (const c of components) {
@@ -3492,28 +3799,125 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
   const inkW = inkMaxX - inkMinX;
   const inkH = inkMaxY - inkMinY;
 
+  const findRowCut = (fromRel, toRel, fallbackRel) => {
+    const fromY = Math.max(inkMinY + 1, Math.floor(inkMinY + inkH * fromRel));
+    const toY = Math.min(inkMaxY - 1, Math.ceil(inkMinY + inkH * toRel));
+    if (toY <= fromY) return fallbackRel;
+    let bestY = Math.floor(inkMinY + inkH * fallbackRel);
+    let bestScore = Infinity;
+    for (let y = fromY; y <= toY; y++) {
+      let score = 0;
+      for (let yy = Math.max(0, y - 1); yy <= Math.min(H - 1, y + 1); yy++) {
+        for (let x = inkMinX; x <= inkMaxX; x++) {
+          if (alpha[yy * W + x] > 0) score++;
+        }
+      }
+      const rel = (y - inkMinY) / Math.max(1, inkH);
+      score += Math.abs(rel - fallbackRel) * 4;
+      if (score < bestScore) {
+        bestScore = score;
+        bestY = y;
+      }
+    }
+    return (bestY - inkMinY) / Math.max(1, inkH);
+  };
+
+  const flattenPixels = (pixels) => new Uint32Array(pixels);
+  const splitPixelsByX = (pixels, count) => {
+    if (count <= 1) return [pixels];
+    if (count === 2 && pixels.length) {
+      let minX = W, maxX = 0;
+      for (const p of pixels) {
+        const x = p % W;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+      }
+      const width = Math.max(1, maxX - minX);
+      const fromX = Math.floor(minX + width * 0.35);
+      const toX = Math.ceil(minX + width * 0.70);
+      let bestX = Math.floor(minX + width * 0.52);
+      let bestScore = Infinity;
+      for (let x = fromX; x <= toX; x++) {
+        let score = 0;
+        for (const p of pixels) {
+          const px = p % W;
+          if (Math.abs(px - x) <= 1) score++;
+        }
+        const rel = (x - minX) / width;
+        score += Math.abs(rel - 0.52) * 3;
+        if (score < bestScore) {
+          bestScore = score;
+          bestX = x;
+        }
+      }
+      const left = [], right = [];
+      for (const p of pixels) ((p % W) <= bestX ? left : right).push(p);
+      if (left.length && right.length) return [left, right];
+    }
+    const sorted = pixels.slice().sort((a, b) => (a % W) - (b % W));
+    const out = Array.from({ length: count }, () => []);
+    sorted.forEach((p, i) => out[Math.min(count - 1, Math.floor(i * count / sorted.length))].push(p));
+    return out;
+  };
+
+  if (layout === 'vert' && hasFinal) {
+    const topCut = findRowCut(0.30, 0.50, 0.40);
+    const bottomCut = findRowCut(0.50, 0.76, 0.62);
+    const initialPixels = [];
+    const medialPixels = [];
+    const finalPixels = [];
+    for (const c of components) {
+      for (const p of c.pixels) {
+        const y = (p / W) | 0;
+        const relY = (y - inkMinY) / Math.max(1, inkH);
+        if (relY < topCut) initialPixels.push(p);
+        else if (relY > bottomCut) finalPixels.push(p);
+        else medialPixels.push(p);
+      }
+    }
+    const finalParts = final ? (FINAL_DECOMPOSE[final] || [final]) : [];
+    const finalGroups = finalParts.length === 2 ? splitPixelsByX(finalPixels, 2) : [finalPixels];
+    return {
+      canvas,
+      ctx,
+      groups: [
+        flattenPixels(initialPixels),
+        flattenPixels(medialPixels),
+        ...finalGroups.map(flattenPixels)
+      ],
+      alpha,
+      w: wCss, h: hCss
+    };
+  }
+
   // Classify each component. We compare each component's centroid AND its bounding box
   // to layout-specific zones. Using both prevents tall jamo (like ㅗ vertical stem in 화)
   // from being misclassified just because their centroid lands in another jamo's zone.
-  const groups = { initial: [], medial: [], final: [] };
+  const partComponents = { initial: [], medial: [], final: [] };
   for (const c of components) {
     const relX = (c.cx - inkMinX) / Math.max(1, inkW);
     const relY = (c.cy - inkMinY) / Math.max(1, inkH);
     const relMaxY = (c.maxY - inkMinY) / Math.max(1, inkH);
+    const relMinY = (c.minY - inkMinY) / Math.max(1, inkH);
+    c.relX = relX;
+    c.relY = relY;
+    c.relMinY = relMinY;
+    c.relMaxY = relMaxY;
     let bucket;
     if (layout === 'horiz') {
       // ㄱ left, ㅏ right; batchim bottom strip ~62%+
       if (hasFinal && relY > 0.60) bucket = 'final';
-      else if (relX < 0.50) bucket = 'initial';
+      else if (relX < 0.42) bucket = 'initial';
       else bucket = 'medial';
     } else if (layout === 'vert') {
       // ㄱ top, ㅗ middle, ㄴ bottom (3-tier if final); else top/bottom split.
       // Use BOTH centroid (relY) and bounding-box extent so the medial's vertical
       // stem (ㅗ ㅛ ㅜ ㅠ) doesn't get misclassified as initial when its centroid
       // happens to land near the boundary in tighter fonts.
-      const relMinY = (c.minY - inkMinY) / Math.max(1, inkH);
       if (hasFinal) {
-        if (relY > 0.70 || relMinY > 0.62) bucket = 'final';
+        // Batchim strokes in vertical-vowel syllables often start just below the
+        // vowel bar. A high cutoff merges words like 물: ㅜ and ㄹ light together.
+        if (relY > 0.56 || relMinY > 0.46) bucket = 'final';
         else if (relY < 0.36 && relMaxY < 0.50) bucket = 'initial';
         else bucket = 'medial';
       } else {
@@ -3528,24 +3932,75 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
       else if (relX < 0.42 && relY < 0.40 && relMaxY < 0.55) bucket = 'initial';
       else bucket = 'medial';
     }
-    groups[bucket].push(...c.pixels);
+    partComponents[bucket].push(c);
   }
 
-  // Convert to typed arrays for fast paint
+  const flattenComponents = (items) => {
+    const out = [];
+    for (const c of items) out.push(...c.pixels);
+    return new Uint32Array(out);
+  };
+
+  const splitByX = (items, count) => {
+    if (count <= 1) return [items];
+    if (!items.length) return Array.from({ length: count }, () => []);
+    const sorted = items.slice().sort((a, b) => a.cx - b.cx || b.area - a.area);
+    if (count === 2) {
+      const min = sorted[0].cx;
+      const max = sorted[sorted.length - 1].cx;
+      const mid = (min + max) / 2;
+      const left = [], right = [];
+      for (const c of sorted) (c.cx <= mid ? left : right).push(c);
+      if (!left.length || !right.length) {
+        left.length = 0; right.length = 0;
+        sorted.forEach((c, i) => (i < Math.ceil(sorted.length / 2) ? left : right).push(c));
+      }
+      return [left, right];
+    }
+    return sorted.reduce((acc, c, i) => {
+      acc[Math.min(count - 1, Math.floor(i * count / sorted.length))].push(c);
+      return acc;
+    }, Array.from({ length: count }, () => []));
+  };
+
+  const splitCompoundMedial = (items, medialChar) => {
+    if (!VOWEL_DECOMPOSE[medialChar]) return [items];
+    const first = [], second = [];
+    for (const c of items) {
+      // In ㅘ/ㅙ/ㅚ/ㅝ/ㅞ/ㅟ/ㅢ, the second typed jamo is the right-side
+      // vowel stroke(s). The first typed jamo is the horizontal base/stem.
+      const rightSide = c.relX > 0.56 || (c.minX - inkMinX) / Math.max(1, inkW) > 0.50;
+      (rightSide ? second : first).push(c);
+    }
+    if (!first.length || !second.length) return splitByX(items, 2);
+    return [first, second];
+  };
+
+  const medialParts = VOWEL_DECOMPOSE[medial] || [medial];
+  const finalParts = final ? (FINAL_DECOMPOSE[final] || [final]) : [];
+  const medialGroups = medialParts.length === 2
+    ? splitCompoundMedial(partComponents.medial, medial)
+    : [partComponents.medial];
+  const finalGroups = finalParts.length === 2
+    ? splitByX(partComponents.final, 2)
+    : (finalParts.length ? [partComponents.final] : []);
+  const groups = [
+    flattenComponents(partComponents.initial),
+    ...medialGroups.map(flattenComponents),
+    ...finalGroups.map(flattenComponents)
+  ];
+
   return {
     canvas,
     ctx,
-    groups: {
-      initial: new Uint32Array(groups.initial),
-      medial:  new Uint32Array(groups.medial),
-      final:   new Uint32Array(groups.final)
-    },
-    w: wCss, h: hCss, hasFinal
+    groups,
+    alpha,
+    w: wCss, h: hCss
   };
 }
 
-function paintSyllable(cached, stateMap) {
-  const { canvas, ctx, groups, hasFinal } = cached;
+function paintSyllable(cached, states) {
+  const { canvas, ctx, groups, alpha } = cached;
   const W = canvas.width, H = canvas.height;
   const img = ctx.createImageData(W, H);
   const px = img.data;
@@ -3555,12 +4010,12 @@ function paintSyllable(cached, stateMap) {
     const b = parseInt(hex.slice(5, 7), 16);
     for (let i = 0; i < group.length; i++) {
       const p = group[i];
-      px[p*4] = r; px[p*4+1] = g; px[p*4+2] = b; px[p*4+3] = 255;
+      px[p*4] = r; px[p*4+1] = g; px[p*4+2] = b; px[p*4+3] = alpha[p] || 0;
     }
   };
-  paint(groups.initial, STATE_COLORS[stateMap.initial || 'pending']);
-  paint(groups.medial,  STATE_COLORS[stateMap.medial  || 'pending']);
-  if (hasFinal) paint(groups.final, STATE_COLORS[stateMap.final || 'pending']);
+  for (let i = 0; i < groups.length; i++) {
+    paint(groups[i], STATE_COLORS[states[i] || 'pending']);
+  }
   ctx.putImageData(img, 0, 0);
 }
 
@@ -3584,7 +4039,7 @@ function getOrBuildSyllable(syllableChar, fontSizePx) {
   fresh.style.width = seg.w + 'px';
   fresh.style.height = seg.h + 'px';
   const freshCtx = fresh.getContext('2d');
-  return { canvas: fresh, ctx: freshCtx, groups: seg.groups, w: seg.w, h: seg.h, hasFinal: seg.hasFinal };
+  return { canvas: fresh, ctx: freshCtx, groups: seg.groups, alpha: seg.alpha, w: seg.w, h: seg.h };
 }
 
 function renderTargetWord() {
@@ -3634,55 +4089,30 @@ function renderTargetWord() {
     const mIdx = Math.floor((x % 588) / 28);
     const fIdx = x % 28;
 
-    const medialIsCompound = !!VOWEL_DECOMPOSE[MEDIALS[mIdx]];
-    const finalIsCompound  = fIdx > 0 && !!FINAL_DECOMPOSE[FINALS[fIdx]];
-    const initialPositions = [kIdx];
-    const medialPositions  = medialIsCompound ? [kIdx + 1, kIdx + 2] : [kIdx + 1];
-    const finalStart       = kIdx + 1 + medialPositions.length;
-    const finalPositions   = fIdx > 0 ? (finalIsCompound ? [finalStart, finalStart + 1] : [finalStart]) : [];
-
     const cached = getOrBuildSyllable(sylChar, fontPx);
     const wrapper = document.createElement('span');
     wrapper.className = 'syl';
     wrapper.dataset.sylStart = kIdx;
     wrapper.dataset.sylLen = syl.length;
-    wrapper.dataset.iPos = initialPositions.join(',');
-    wrapper.dataset.mPos = medialPositions.join(',');
-    if (finalPositions.length) wrapper.dataset.fPos = finalPositions.join(',');
+    wrapper.dataset.pos = syl.map((_, i) => kIdx + i).join(',');
     wrapper._cached = cached;
     wrapper.appendChild(cached.canvas);
-    paintSyllable(cached, computeSyllableStateMap(initialPositions, medialPositions, finalPositions));
-    setSyllablePulse(wrapper, initialPositions, medialPositions, finalPositions);
+    const positions = syl.map((_, i) => kIdx + i);
+    paintSyllable(cached, positions.map((idx, localIdx) => jamoPaintState(idx, localIdx)));
+    setSyllablePulse(wrapper, positions);
     wordEl.appendChild(wrapper);
 
     kIdx += syl.length;
   }
 }
 
-function computeSyllableStateMap(iPos, mPos, fPos) {
-  return {
-    initial: positionsState(iPos) || 'pending',
-    medial:  positionsState(mPos) || 'pending',
-    final:   fPos.length ? (positionsState(fPos) || 'pending') : 'pending'
-  };
-}
-
-function setSyllablePulse(wrapper, iPos, mPos, fPos) {
-  const allPos = iPos.concat(mPos, fPos);
-  const isPulsing = allPos.some(p => jamoStateClass(p) === 'now');
+function setSyllablePulse(wrapper, positions) {
+  const isPulsing = positions.some(p => {
+    const cls = jamoStateClass(p);
+    return cls === 'now' || cls === 'err';
+  });
   if (isPulsing) wrapper.dataset.pulse = '1';
   else delete wrapper.dataset.pulse;
-}
-
-function positionsState(positions) {
-  let allDone = true;
-  for (const p of positions) {
-    const cls = jamoStateClass(p);
-    if (cls === 'now') return 'now';
-    if (cls === 'err') return 'err';
-    if (cls !== 'done') allDone = false;
-  }
-  return allDone ? 'done' : '';
 }
 
 function computeSylState(start, len) {
@@ -3701,8 +4131,14 @@ function computeSylState(start, len) {
 
 function jamoStateClass(idx) {
   if (idx < state.posKs) return 'done';
-  if (idx === state.posKs) return state.errFlashIdx === idx ? 'err' : 'now';
+  if (idx === state.posKs) return (state.errFlashIdx >= 0 && state.errFlashIdx === idx) ? 'err' : 'now';
   return '';
+}
+
+function jamoPaintState(idx, localIdx) {
+  const cls = jamoStateClass(idx);
+  if (cls !== 'now') return cls;
+  return `now${localIdx % 4}`;
 }
 
 function updateTargetJamoStates() {
@@ -3716,11 +4152,9 @@ function updateTargetJamoStates() {
     }
     const cached = el._cached;
     if (!cached) return;
-    const iPos = (el.dataset.iPos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
-    const mPos = (el.dataset.mPos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
-    const fPos = (el.dataset.fPos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
-    paintSyllable(cached, computeSyllableStateMap(iPos, mPos, fPos));
-    setSyllablePulse(el, iPos, mPos, fPos);
+    const positions = (el.dataset.pos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
+    paintSyllable(cached, positions.map((idx, localIdx) => jamoPaintState(idx, localIdx)));
+    setSyllablePulse(el, positions);
   });
 }
 
@@ -3853,9 +4287,12 @@ function buildTopicsPicker() {
       const pct = total ? Math.round((done / total) * 100) : 0;
       const cls = (state.activeTopic === t.id ? 'on ' : '') + (done >= total && total > 0 ? 'complete ' : '');
       const ico = TOPIC_ICONS[t.id] || '·';
-      html += `<button class="subtopic-chip ${cls}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)} — ${done}/${total} typed. Click to pin/unpin.">
+      const mastery = topicMasteryStored(t.id).level;
+      const masteryIcon = MASTERY_ICONS[mastery] || MASTERY_ICONS[1];
+      html += `<button class="subtopic-chip ${cls}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)} — ${done}/${total} typed · mastery Lv ${mastery}. Click to pin/unpin.">
         <span class="fill" style="width:${pct}%"></span>
         <span class="label"><span class="ico">${ico}</span> ${escapeHtml(t.name.replace(/^TOPIK 2 · /, ''))}</span>
+        <span class="mastery">${masteryIcon}</span>
         <span class="count">${done}/${total}</span>
       </button>`;
     }
@@ -4092,6 +4529,10 @@ function handleKeystroke(rawKey, isShift) {
   state.totalKeys++;
 
   if (jamo === expected) {
+    if (state.errFlashIdx !== -1) {
+      state.errFlashIdx = -1;
+      updateTargetJamoStates();
+    }
     state.hitKeys++;
     state.posKs++;
     state.ime.type(jamo);
@@ -4128,19 +4569,29 @@ function handleKoreanJamoInput(jamo) {
 
 function attachInput() {
   const shield = document.getElementById('shield');
+  let suppressAsciiInputUntil = 0;
+  const focusShield = () => {
+    if (!shield) return;
+    shield.focus({ preventScroll: true });
+  };
   // Keep focus
   // Shield is only useful for capturing keystrokes on desktop. On small viewports
   // the visual keyboard is hidden anyway and re-focusing an offscreen input causes
   // mobile browsers to scroll-into-view, jumping the page to the jamoGrid.
   if (window.innerWidth >= 700) {
-    shield.focus({ preventScroll: true });
+    focusShield();
   }
   document.addEventListener('click', (e) => {
     if (window.innerWidth < 700) return;
     // Don't refocus if the user clicked an interactive control (buttons, pills, modals)
     const t = e.target;
     if (t && t.closest && t.closest('button, input, select, .topic-pill, .records-tab, .profile-modal, .celebration-overlay')) return;
-    shield.focus({ preventScroll: true });
+    focusShield();
+  });
+  document.addEventListener('touchstart', (e) => {
+    const t = e.target;
+    if (t && t.closest && t.closest('button, input, select, .topic-pill, .records-tab, .profile-modal, .celebration-overlay')) return;
+    focusShield();
   });
 
   // Korean IME path: when the system keyboard is set to Korean, keydown
@@ -4150,12 +4601,21 @@ function attachInput() {
   shield.addEventListener('input', () => {
     const v = shield.value;
     if (!v) return;
+    const asciiFallback = [...v].every(ch => ch === ' ' || KEYMAP[ch] || KEYMAP[ch.toLowerCase()] || KEYMAP[ch.toUpperCase()]);
+    if (asciiFallback && Date.now() < suppressAsciiInputUntil) {
+      shield.value = '';
+      return;
+    }
     for (const ch of v) {
       const code = ch.charCodeAt(0);
       if (code >= 0xAC00 && code <= 0xD7A3) {
         // Hangul syllable — decompose to constituent jamos
         const jamos = syllableToKeystrokes(ch);
         for (const j of jamos) handleKoreanJamoInput(j);
+      } else if (ch === ' ') {
+        handleKeystroke(' ', false);
+      } else if (KEYMAP[ch] || KEYMAP[ch.toLowerCase()] || KEYMAP[ch.toUpperCase()]) {
+        handleKeystroke(ch, ch !== ch.toLowerCase());
       } else if (JAMO_TO_KEY[ch]) {
         // Compatibility jamo (ㄱ-ㅎ ㅏ-ㅣ)
         handleKoreanJamoInput(ch);
@@ -4170,9 +4630,10 @@ function attachInput() {
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    // Don't intercept when the user is typing in a modal input or textarea
+    // Don't intercept when the user is typing in a real input. The hidden
+    // shield input is our keyboard capture surface, so it must pass through.
     const tag = document.activeElement && document.activeElement.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (document.activeElement !== shield && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT')) return;
     // Korean IME is composing — let the IME finish; we'll grab text via 'input'
     if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Escape') { e.preventDefault(); loadWord(pickNextWordIdx(state.wordIdx)); return; }
@@ -4192,8 +4653,9 @@ function attachInput() {
       highlightNextKey();
       return;
     }
-    if (e.key === ' ') {
+    if (e.key === ' ' || e.code === 'Space' || e.key === 'Spacebar') {
       e.preventDefault();
+      suppressAsciiInputUntil = Date.now() + 80;
       handleKeystroke(' ', false);
       return;
     }
@@ -4202,6 +4664,7 @@ function attachInput() {
       // shield input absorbs the character and the browser scrolls to keep
       // its caret visible, which yanks the page down on every mistake.
       e.preventDefault();
+      suppressAsciiInputUntil = Date.now() + 80;
       handleKeystroke(e.key, e.shiftKey);
     }
   });
@@ -4212,6 +4675,7 @@ function attachInput() {
 // ============================================================
 
 function boot() {
+  applyAllTopicMasteryDecay();
   buildKeyboard();
   buildTopicsPicker();
   renderAvatarBlob();
@@ -4238,6 +4702,74 @@ function boot() {
   }
   // (per-jamo accuracy is now an always-visible section under the practice card)
 
+  // Mobile chrome: keep the Korean keyboard guide visible and move secondary surfaces
+  // into compact menus so the practice area stays first.
+  const mobileActions = document.getElementById('mobileActions');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const practiceSide = document.getElementById('practiceSide');
+  const mobileVocabBtn = document.getElementById('mobileVocabBtn');
+  const drawerScrim = document.getElementById('drawerScrim');
+  const mobileMenuItems = ['btnSprint', 'battleLink', 'btnRecords', 'settingsWrap']
+    .map(id => document.getElementById(id) || (id === 'settingsWrap' ? document.querySelector('.settings-wrap') : null))
+    .filter(Boolean)
+    .map(el => ({ el, parent: el.parentElement, next: el.nextSibling }));
+  const mobileMq = window.matchMedia('(max-width: 700px)');
+  function placeMobileMenuItems() {
+    if (!mobileActions) return;
+    if (mobileMq.matches) {
+      mobileMenuItems.forEach(({ el }) => {
+        if (el.parentElement !== mobileActions) mobileActions.appendChild(el);
+      });
+    } else {
+      closeMobileMenu();
+      closeVocabDrawer();
+      mobileMenuItems.forEach(({ el, parent, next }) => {
+        if (!parent || el.parentElement === parent) return;
+        if (next && next.parentElement === parent) parent.insertBefore(el, next);
+        else parent.appendChild(el);
+      });
+    }
+  }
+  function closeMobileMenu() {
+    if (!mobileActions || !mobileMenuBtn) return;
+    mobileActions.classList.remove('open');
+    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+  }
+  function closeVocabDrawer() {
+    if (!practiceSide || !mobileVocabBtn) return;
+    practiceSide.classList.remove('open');
+    document.body.classList.remove('mobile-drawer-open');
+    mobileVocabBtn.setAttribute('aria-expanded', 'false');
+  }
+  function openVocabDrawer() {
+    if (!practiceSide || !mobileVocabBtn) return;
+    closeMobileMenu();
+    practiceSide.classList.add('open');
+    document.body.classList.add('mobile-drawer-open');
+    mobileVocabBtn.setAttribute('aria-expanded', 'true');
+  }
+  if (mobileMenuBtn && mobileActions) {
+    mobileMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = !mobileActions.classList.contains('open');
+      closeVocabDrawer();
+      mobileActions.classList.toggle('open', willOpen);
+      mobileMenuBtn.setAttribute('aria-expanded', String(willOpen));
+    });
+    mobileActions.addEventListener('click', (e) => e.stopPropagation());
+  }
+  if (mobileVocabBtn) mobileVocabBtn.addEventListener('click', openVocabDrawer);
+  if (drawerScrim) drawerScrim.addEventListener('click', closeVocabDrawer);
+  placeMobileMenuItems();
+  if (mobileMq.addEventListener) mobileMq.addEventListener('change', placeMobileMenuItems);
+  else mobileMq.addListener(placeMobileMenuItems);
+  document.addEventListener('click', closeMobileMenu);
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    closeMobileMenu();
+    closeVocabDrawer();
+  });
+
   document.getElementById('btnSkip').addEventListener('click', () => loadWord(pickNextWordIdx(state.wordIdx)));
   document.getElementById('btnSprint').addEventListener('click', startSprint);
   document.getElementById('btnSprintExit').addEventListener('click', exitSprint);
@@ -4248,6 +4780,7 @@ function boot() {
   }
   syncAudioBtn();
   btnAudio.addEventListener('click', () => {
+    closeMobileMenu();
     state.audioOn = !state.audioOn;
     saveAudio();
     syncAudioBtn();
@@ -4263,6 +4796,7 @@ function boot() {
   }
   syncRomanizeBtn();
   btnRomanize.addEventListener('click', () => {
+    closeMobileMenu();
     state.romanizeOn = !state.romanizeOn;
     saveRomanize();
     syncRomanizeBtn();
@@ -4280,6 +4814,7 @@ function boot() {
     });
   }
   document.getElementById('btnReset').addEventListener('click', () => {
+    closeMobileMenu();
     if (!confirm('Reset everything? This clears per-jamo history, streak, XP, level, leaderboard, daily quest, and topic completion.')) return;
     stats = { perJamo: {}, history: [] };
     saveStats(stats);
