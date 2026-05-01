@@ -721,6 +721,21 @@
     left: -9999px;
     opacity: 0;
   }
+  /* ── Battle leaderboard ── */
+  .battle-lb { margin: 16px 0 4px; border: 1px solid var(--bd); border-radius: 10px; overflow: hidden; }
+  .battle-lb-header { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 14px; background: var(--l2); border-bottom: 1px solid var(--bd); }
+  .battle-lb-header .title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tmd); }
+  .battle-lb-header .meta { font-size: 11px; color: var(--tlo); font-family: 'JetBrains Mono', monospace; }
+  .battle-lb-header .meta strong { color: var(--thi); }
+  .battle-lb-list { display: flex; flex-direction: column; }
+  .battle-lb-row { display: grid; grid-template-columns: 32px 24px 1fr auto; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; }
+  .battle-lb-row:last-child { border-bottom: none; }
+  .battle-lb-row.you { background: rgba(37,99,235,0.06); font-weight: 600; }
+  .battle-lb-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
+  .battle-lb-row .n { color: var(--thi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .battle-lb-row .w { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--blue); text-align: right; white-space: nowrap; }
+  .battle-lb-row.ellipsis { justify-content: center; color: var(--tlo); font-size: 16px; letter-spacing: 4px; grid-template-columns: 1fr; text-align: center; }
+  .battle-lb-loading { padding: 14px; text-align: center; font-size: 12px; color: var(--tlo); }
 </style>
 </head>
 <body>
@@ -795,6 +810,9 @@
       <div><div class="k">Level</div><div class="v" id="overLevel">1</div></div>
       <div><div class="k">Kills</div><div class="v" id="overKills">0</div></div>
       <div><div class="k">Best combo</div><div class="v" id="overCombo">0</div></div>
+    </div>
+    <div id="battleLbContainer" class="battle-lb">
+      <div class="battle-lb-loading">Loading global rankings…</div>
     </div>
     <div class="actions">
       <button class="primary" id="btnRetry">Retry</button>
@@ -1469,6 +1487,115 @@ const XP_FILL = document.getElementById('xpFill');
 const HIGH_KEY = 'hangul-battle-highscore-v1';
 const PROGRESS_KEY = 'hangul-type-progress-v1';
 
+const SUPABASE_URL      = 'https://yugrqnocdrfvpmkrddya.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_xKJO3LJAlU1qkEigRBvTRg_wTlwFVjP';
+
+// ── Player identity (shared with main app via localStorage) ──
+function getProgress() {
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; } catch (e) { return {}; }
+}
+const COUNTRY_BY_TZ = {
+  'Asia/Seoul':'KR','Asia/Tokyo':'JP','Asia/Shanghai':'CN','Asia/Singapore':'SG',
+  'America/New_York':'US','America/Los_Angeles':'US','America/Chicago':'US',
+  'Europe/London':'GB','Europe/Paris':'FR','Europe/Berlin':'DE',
+  'Australia/Sydney':'AU','Pacific/Auckland':'NZ'
+};
+function detectCountry() {
+  try { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (tz && COUNTRY_BY_TZ[tz]) return COUNTRY_BY_TZ[tz]; } catch (e) {}
+  return 'US';
+}
+function flagEmoji(cc) {
+  if (!cc || cc.length !== 2) return '🏳️';
+  const B = 0x1F1E6 - 'A'.charCodeAt(0);
+  return String.fromCodePoint(cc.charCodeAt(0) + B) + String.fromCodePoint(cc.charCodeAt(1) + B);
+}
+
+// ── Leaderboard fetch ──
+let _lbCache = null, _lbCacheAt = 0;
+async function fetchOnlineLeaderboard() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  const now = Date.now();
+  if (_lbCache && now - _lbCacheAt < 60000) return _lbCache;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/players?select=name,country,all_time_xp&order=all_time_xp.desc&limit=250&flagged=eq.false`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    _lbCache = rows.map(r => ({ name: r.name || 'Player', flag: flagEmoji(r.country || 'US'), wpm: r.all_time_xp || 0 }));
+    _lbCacheAt = now;
+    return _lbCache;
+  } catch (e) { return null; }
+}
+
+// Seeded fake data for instant render while real data loads
+const FAKE_NAMES = ['민수','지은','Alex','Maya','Rin','Yui','Hugo','Sora','Felix','Priya','Kenji','Lena','Otto','Iris','Ana','Theo','Mei','Diego','Arjun','Wei'];
+let _fakeLb = null;
+function ensureFakeLb() {
+  if (_fakeLb) return _fakeLb;
+  let s = 0x9e3779b9;
+  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
+  const flags = ['🇰🇷','🇺🇸','🇯🇵','🇨🇳','🇬🇧','🇫🇷','🇩🇪','🇧🇷','🇮🇳','🇦🇺','🇸🇬','🇨🇦'];
+  const list = [];
+  for (let i = 0; i < 120; i++) {
+    const t = rnd();
+    const wpm = t < 0.05 ? 130 + Math.floor(rnd() * 60) : t < 0.2 ? 85 + Math.floor(rnd() * 45) : t < 0.6 ? 45 + Math.floor(rnd() * 40) : 15 + Math.floor(rnd() * 32);
+    list.push({ name: FAKE_NAMES[Math.floor(rnd() * FAKE_NAMES.length)] + (rnd() < 0.4 ? '_' + Math.floor(rnd() * 99) : ''), flag: flags[Math.floor(rnd() * flags.length)], wpm });
+  }
+  list.sort((a, b) => b.wpm - a.wpm);
+  _fakeLb = list;
+  return list;
+}
+
+function buildLbHtml(list, userName, userFlag) {
+  const merged = list.concat([{ name: userName, flag: userFlag, wpm: 0, isUser: true }]);
+  merged.sort((a, b) => b.wpm - a.wpm);
+  const userRank = merged.findIndex(x => x.isUser) + 1;
+  const total = merged.length;
+  const rows = [];
+  for (let i = 0; i < 3 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
+  if (userRank <= 5) {
+    for (let i = 3; i < 6 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
+  } else {
+    rows.push({ isEllipsis: true });
+    rows.push({ rank: userRank - 1, ...merged[userRank - 2] });
+    rows.push({ rank: userRank, ...merged[userRank - 1] });
+    if (userRank < total) rows.push({ rank: userRank + 1, ...merged[userRank] });
+  }
+  const headerNote = list === ensureFakeLb() ? 'speed test ranking · play speed test to update' : 'speed test ranking · live';
+  return `<div class="battle-lb-header">
+    <span class="title">Global ranking</span>
+    <span class="meta">You: <strong>#${userRank}</strong> of ${total.toLocaleString()} · ${headerNote}</span>
+  </div>
+  <div class="battle-lb-list">
+    ${rows.map(r => {
+      if (r.isEllipsis) return '<div class="battle-lb-row ellipsis">⋯</div>';
+      const cls = r.isUser ? 'battle-lb-row you' : 'battle-lb-row';
+      return `<div class="${cls}"><span class="r">#${r.rank}</span><span>${r.flag}</span><span class="n">${r.name}</span><span class="w">${r.wpm > 0 ? r.wpm + ' WPM' : '—'}</span></div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderBattleLeaderboard() {
+  const prog = getProgress();
+  const userName = (prog.profile && prog.profile.name) || 'Player';
+  const userFlag = flagEmoji((prog.profile && prog.profile.countryCode) || detectCountry());
+  const container = document.getElementById('battleLbContainer');
+  if (!container) return;
+
+  // Render fake immediately
+  container.innerHTML = buildLbHtml(ensureFakeLb(), userName, userFlag);
+
+  // Swap in real data
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    fetchOnlineLeaderboard().then(online => {
+      if (!online || !document.getElementById('battleLbContainer')) return;
+      document.getElementById('battleLbContainer').innerHTML = buildLbHtml(online, userName, userFlag);
+    });
+  }
+}
+
 const state = {
   running: false, paused: false,
   lives: 3, level: 1, xp: 0, score: 0, kills: 0,
@@ -1767,6 +1894,7 @@ function gameOver() {
   document.getElementById('overCombo').textContent = state.bestCombo;
   document.getElementById('newHighSign').style.display = newHigh ? 'block' : 'none';
   document.getElementById('gameOverModal').style.display = 'flex';
+  renderBattleLeaderboard();
   // Sync XP back to main app
   try {
     const raw = localStorage.getItem(PROGRESS_KEY);
