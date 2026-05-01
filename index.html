@@ -4168,6 +4168,9 @@ function attachInput() {
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Don't intercept when the user is typing in a modal input or textarea
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     // Korean IME is composing — let the IME finish; we'll grab text via 'input'
     if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Escape') { e.preventDefault(); loadWord(pickNextWordIdx(state.wordIdx)); return; }
