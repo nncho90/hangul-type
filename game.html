@@ -674,45 +674,156 @@
     letter-spacing: 0.04em;
   }
 
-  /* Mobile guard */
-  .mobile-block {
-    display: none;
-    position: fixed; inset: 0;
-    z-index: 1000;
-    background: var(--l1);
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    text-align: center;
-  }
-  .mobile-block .ico {
-    font-size: 64px;
-    display: block;
-    margin-bottom: 18px;
-  }
-  .mobile-block h2 {
-    font-size: 22px;
-    color: var(--thi);
-    margin-bottom: 10px;
-  }
-  .mobile-block p {
-    font-size: 14px;
-    color: var(--tmd);
-    margin-bottom: 16px;
-  }
-  .mobile-block a {
-    display: inline-block;
-    background: var(--blue);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-  }
+  /* On-screen tappable keyboard — mobile only.
+     Battle has no on-screen keyboard above the breakpoint; the desktop layout
+     stays untouched.  Below 720px the stage shrinks to leave room for the
+     keyboard, and the keyboard pins to the bottom of the viewport. */
+  .battle-kb { display: none; }
   @media (max-width: 720px) {
-    .mobile-block { display: flex; }
-    .stage, .hud, .typing-strip, .xpbar, .backdrop { display: none; }
+    .hud { padding: 8px 10px; }
+    .hud-left, .hud-right { gap: 10px; }
+    .hud-center { display: none; }
+    .stat-label { font-size: 8px; }
+    .stat-value { font-size: 14px; }
+    .stat-value.combo { min-width: 36px; font-size: 13px; }
+    .lives { font-size: 14px; letter-spacing: 2px; }
+    .menu-btn { padding: 6px 9px; font-size: 11px; }
+    .xpbar { top: 50px; }
+    .stage { inset: 54px 0 calc(48px + 224px + env(safe-area-inset-bottom)) 0; }
+    .typing-strip {
+      bottom: calc(224px + env(safe-area-inset-bottom));
+      padding: 8px 14px;
+      min-height: 40px;
+      gap: 8px;
+    }
+    .typing-strip .live { font-size: 20px; min-width: 24px; }
+    .typing-strip .ime-cursor { height: 20px; }
+    .typing-strip .hint:last-child { display: none; }
+    .player { font-size: 56px; bottom: 4%; }
+    .player .player-main { font-size: 56px; }
+    .player .player-equip { font-size: 24px; }
+    .monster .sprite { font-size: 44px; }
+    .monster.tier-1 .sprite { font-size: 36px; }
+    .monster.tier-2 .sprite { font-size: 44px; }
+    .monster.tier-3 .sprite { font-size: 50px; }
+    .monster.tier-4 .sprite { font-size: 56px; }
+    .monster.tier-5 .sprite { font-size: 64px; }
+    .monster.boss .sprite { font-size: 80px; }
+    .monster .word {
+      padding: 6px 10px;
+      max-width: calc(100vw - 32px);
+    }
+    .monster.boss .word { font-size: 18px; }
+    .modal-card { padding: 24px 18px; }
+    .modal-card h1 { font-size: 28px; }
+    .modal-card .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .modal-card .stat-grid .v { font-size: 18px; }
+    .modal-card .actions button { padding: 10px 14px; font-size: 13px; }
+    .battle-lb-row { grid-template-columns: 28px 22px 1fr 44px 70px; padding: 6px 10px; font-size: 12px; }
+
+    /* Battle on-screen keyboard */
+    .battle-kb {
+      display: block;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 110;
+      padding: 8px 6px calc(6px + env(safe-area-inset-bottom));
+      background: var(--l1);
+      border-top: 1px solid var(--bd);
+      box-shadow: 0 -2px 14px rgba(15, 23, 42, 0.08);
+    }
+    .battle-kb .kb-row {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+    .battle-kb .kb-row.r2 { padding-left: clamp(8px, 4vw, 16px); }
+    .battle-kb .kb-row.r3 { padding-left: clamp(18px, 9vw, 34px); }
+    .battle-kb .key {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 44px;
+      background: var(--l2);
+      border: 1px solid var(--bdhi);
+      border-radius: 7px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      position: relative;
+      box-sizing: border-box;
+      color: var(--tmd);
+      font-size: 11px;
+    }
+    .battle-kb .key .jamo {
+      font-family: var(--korean);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--thi);
+    }
+    .battle-kb .key .qwerty {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--tlo);
+      margin-top: 1px;
+    }
+    .battle-kb .key .shift {
+      font-family: var(--korean);
+      font-size: 10px;
+      color: var(--orange);
+      position: absolute;
+      top: 2px; right: 4px;
+      font-weight: 600;
+    }
+    .battle-kb .key.kb-pressed,
+    .battle-kb .key:active {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+    .battle-kb .key.kb-pressed .jamo,
+    .battle-kb .key:active .jamo,
+    .battle-kb .key.kb-pressed .qwerty,
+    .battle-kb .key:active .qwerty,
+    .battle-kb .key.kb-pressed .shift,
+    .battle-kb .key:active .shift { color: white; }
+    .battle-kb .kb-row.r4 { gap: 4px; padding-left: 0; margin-bottom: 0; }
+    .battle-kb .key.kb-special {
+      flex: 0 0 auto;
+      padding: 0 8px;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--tmd);
+    }
+    .battle-kb .key.kb-shift,
+    .battle-kb .key.kb-back { flex: 0 0 56px; min-width: 56px; }
+    .battle-kb .key.kb-space {
+      flex: 1 1 auto;
+      min-width: 0;
+      color: var(--tlo);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .battle-kb .key.kb-shift.kb-armed {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: white;
+    }
+  }
+  @media (max-width: 400px) {
+    .stage { inset: 54px 0 calc(46px + 200px + env(safe-area-inset-bottom)) 0; }
+    .typing-strip { bottom: calc(200px + env(safe-area-inset-bottom)); }
+    .battle-kb .key { height: 40px; }
+    .battle-kb .kb-row { gap: 3px; margin-bottom: 3px; }
+    .battle-kb .key.kb-shift,
+    .battle-kb .key.kb-back { flex: 0 0 48px; min-width: 48px; }
   }
 
   /* Hidden input */
@@ -962,14 +1073,7 @@
   </div>
 </div>
 
-<div class="mobile-block">
-  <div>
-    <span class="ico">⌨️</span>
-    <h2>한글 BATTLE needs a real keyboard</h2>
-    <p>Open this on a desktop browser to play.</p>
-    <a href="index.html">← Back to practice</a>
-  </div>
-</div>
+<div class="battle-kb" id="battleKb" aria-hidden="true"></div>
 
 <script>
 'use strict';
@@ -2604,8 +2708,95 @@ try {
     }
   }
 } catch (e) {}
-SHIELD.focus({ preventScroll: true });
+// Mobile on-screen keyboard. Renders the same QWERTY-to-Hangul guide that
+// index.html uses but with tap handlers wired to handleKey, so phones can
+// play the battle without a physical keyboard. Hidden on desktop (>720px)
+// via CSS so the desktop experience is unchanged.
+(function buildBattleKb() {
+  const root = document.getElementById('battleKb');
+  if (!root) return;
+  const ROWS = [
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l'],
+    ['z','x','c','v','b','n','m']
+  ];
+  ROWS.forEach((row, idx) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row r' + (idx + 1);
+    row.forEach(k => {
+      const key = document.createElement('div');
+      key.className = 'key';
+      key.dataset.key = k;
+      const jamo = KEYMAP[k] || '';
+      const shifted = KEYMAP[k.toUpperCase()];
+      let html = `<div class="jamo">${jamo}</div><div class="qwerty">${k.toUpperCase()}</div>`;
+      if (shifted && shifted !== jamo) html += `<div class="shift">${shifted}</div>`;
+      key.innerHTML = html;
+      rowEl.appendChild(key);
+    });
+    root.appendChild(rowEl);
+  });
+  const utilRow = document.createElement('div');
+  utilRow.className = 'kb-row r4';
+  utilRow.innerHTML =
+    '<div class="key kb-special kb-shift" data-action="shift" aria-label="Shift">⇧</div>' +
+    '<div class="key kb-special kb-space" data-action="space" aria-label="Space">space</div>' +
+    '<div class="key kb-special kb-back" data-action="release" aria-label="Release">⌫</div>';
+  root.appendChild(utilRow);
+
+  let shiftArmed = false;
+  const shiftBtn = () => root.querySelector('.kb-shift');
+  function setShift(on) {
+    shiftArmed = !!on;
+    const btn = shiftBtn();
+    if (btn) btn.classList.toggle('kb-armed', shiftArmed);
+  }
+  function flashTap(el) {
+    if (!el) return;
+    el.classList.add('kb-pressed');
+    setTimeout(() => el.classList.remove('kb-pressed'), 110);
+  }
+  const kbMq = window.matchMedia('(max-width: 720px)');
+  root.addEventListener('pointerdown', (e) => {
+    if (!kbMq.matches) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const keyEl = e.target.closest && e.target.closest('.key');
+    if (!keyEl || !root.contains(keyEl)) return;
+    e.preventDefault();
+    const action = keyEl.dataset.action;
+    if (action === 'shift') {
+      setShift(!shiftArmed);
+      return;
+    }
+    if (action === 'space') {
+      flashTap(keyEl);
+      handleKey(' ', false);
+      if (shiftArmed) setShift(false);
+      return;
+    }
+    if (action === 'release') {
+      flashTap(keyEl);
+      escapeLock();
+      if (shiftArmed) setShift(false);
+      return;
+    }
+    const k = keyEl.dataset.key;
+    if (!k) return;
+    flashTap(keyEl);
+    handleKey(shiftArmed ? k.toUpperCase() : k, shiftArmed);
+    if (shiftArmed) setShift(false);
+  });
+})();
+
+// Focus the hidden shield only on devices that have a physical keyboard.
+// On phones, focusing #shield pops the OS soft keyboard, which would compete
+// with the on-screen battle keyboard.
+const isMobileViewport = () => window.matchMedia('(max-width: 720px)').matches;
+if (!isMobileViewport()) {
+  SHIELD.focus({ preventScroll: true });
+}
 document.addEventListener('click', (e) => {
+  if (isMobileViewport()) return;
   const t = e.target;
   if (t && t.closest && t.closest('button, input, textarea, select, .profile-modal, .modal-veil')) return;
   SHIELD.focus({ preventScroll: true });

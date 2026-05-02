@@ -969,6 +969,98 @@
     .key .qwerty { font-size: 7px; }
   }
 
+  /* On-screen tappable keyboard — mobile only.
+     Desktop ignores everything below; the keys keep their guide-only behavior
+     above the (max-width: 700px) breakpoint. */
+  .kb-row.mobile-only { display: none; }
+  .key.kb-special { display: none; }
+  @media (max-width: 700px) {
+    body { padding-bottom: calc(232px + env(safe-area-inset-bottom)); }
+    .keyboard {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 60;
+      margin: 0;
+      padding: 8px 6px calc(6px + env(safe-area-inset-bottom));
+      background: var(--l1);
+      border-top: 1px solid var(--bd);
+      border-radius: 0;
+      box-shadow: 0 -2px 14px rgba(15, 23, 42, 0.06);
+    }
+    .kb-toggle { display: none; }
+    .kb-row { gap: 4px; margin-bottom: 4px; }
+    .kb-row.r2, .kb-row.r3 { padding-left: 0; }
+    .key {
+      flex: 1 1 0;
+      width: auto;
+      height: 44px;
+      min-height: 44px;
+      max-height: 44px;
+      min-width: 0;
+      max-width: none;
+      border-radius: 7px;
+      background: var(--l2);
+      border-color: var(--bdhi);
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .key .jamo { font-size: 17px; font-weight: 600; }
+    .key .qwerty { font-size: 9px; margin-top: 1px; }
+    .key .shift { font-size: 10px; top: 2px; right: 4px; }
+    .key.kb-pressed,
+    .key:active {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+    .key.kb-pressed .jamo, .key:active .jamo,
+    .key.kb-pressed .qwerty, .key:active .qwerty,
+    .key.kb-pressed .shift, .key:active .shift { color: white; }
+    .kb-row.mobile-only { display: flex; gap: 4px; margin-bottom: 0; }
+    .key.kb-special {
+      display: flex;
+      flex: 0 0 auto;
+      padding: 0 8px;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--tmd);
+    }
+    .key.kb-shift, .key.kb-back { flex: 0 0 56px; min-width: 56px; }
+    .key.kb-space {
+      flex: 1 1 auto;
+      min-width: 0;
+      color: var(--tlo);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .key.kb-shift.kb-armed {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: white;
+    }
+    /* The shifted-target highlight from key.shifted is too aggressive on a
+       small screen; tone it down to a ring instead of a fill so the actual
+       Shift toggle is the only "armed" element the eye picks up. */
+    .key.shifted {
+      background: var(--l1);
+      border-color: var(--orange);
+      box-shadow: inset 0 0 0 1px var(--orange);
+    }
+    .key.shifted .jamo { color: var(--orange); }
+    .key.shifted .qwerty, .key.shifted .shift { color: var(--orange); }
+  }
+  @media (max-width: 400px) {
+    body { padding-bottom: calc(212px + env(safe-area-inset-bottom)); }
+    .key { height: 40px; min-height: 40px; max-height: 40px; }
+    .key .jamo { font-size: 16px; }
+    .kb-row { gap: 3px; margin-bottom: 3px; }
+    .key.kb-shift, .key.kb-back { flex: 0 0 48px; min-width: 48px; }
+  }
+
   /* Diagnostic */
   .diag {
     background: var(--l2);
@@ -2879,6 +2971,16 @@ function buildKeyboardKeys(mode) {
     });
     kb.appendChild(rowEl);
   });
+  // Mobile-only utility row: Shift, Space, Backspace. Hidden on desktop via CSS,
+  // so building it unconditionally is safe and keeps desktop output identical.
+  const utilRow = document.createElement('div');
+  utilRow.className = 'kb-row r4 mobile-only';
+  utilRow.innerHTML = `
+    <div class="key kb-special kb-shift" data-action="shift" aria-label="Shift">⇧</div>
+    <div class="key kb-special kb-space" data-action="space" aria-label="Space">space</div>
+    <div class="key kb-special kb-back" data-action="backspace" aria-label="Backspace">⌫</div>
+  `;
+  kb.appendChild(utilRow);
 }
 
 function highlightTargetKey(jamo) {
@@ -4589,10 +4691,75 @@ function attachInput() {
     focusShield();
   });
   document.addEventListener('touchstart', (e) => {
+    // On phones, focusing the offscreen shield input pops the OS keyboard,
+    // which is the second-keyboard problem the on-screen keyboard solves.
+    // The on-screen keyboard already drives input through handleKeystroke,
+    // so we never need to grab focus on touch.
+    if (window.innerWidth < 700) return;
     const t = e.target;
     if (t && t.closest && t.closest('button, input, select, .topic-pill, .records-tab, .profile-modal, .celebration-overlay')) return;
     focusShield();
   });
+
+  // Mobile on-screen keyboard: tapping a key synthesizes the same call that a
+  // physical QWERTY press would, so all the IME / scoring / animation paths
+  // run unchanged.
+  const kbEl = document.getElementById('kb');
+  if (kbEl) {
+    let shiftArmed = false;
+    const shiftBtn = () => kbEl.querySelector('.kb-shift');
+    function setShift(on) {
+      shiftArmed = !!on;
+      const btn = shiftBtn();
+      if (btn) btn.classList.toggle('kb-armed', shiftArmed);
+    }
+    function flashTap(el) {
+      if (!el) return;
+      el.classList.add('kb-pressed');
+      setTimeout(() => el.classList.remove('kb-pressed'), 110);
+    }
+    function handleKbTap(target) {
+      const keyEl = target.closest && target.closest('.key');
+      if (!keyEl || !kbEl.contains(keyEl)) return;
+      const action = keyEl.dataset.action;
+      if (action === 'shift') {
+        setShift(!shiftArmed);
+        return;
+      }
+      if (action === 'space') {
+        flashTap(keyEl);
+        handleKeystroke(' ', false);
+        if (shiftArmed) setShift(false);
+        return;
+      }
+      if (action === 'backspace') {
+        flashTap(keyEl);
+        state.ime.backspace();
+        if (state.posKs > 0) state.posKs--;
+        renderLive();
+        updateTargetJamoStates();
+        updateProgress();
+        highlightNextKey();
+        if (shiftArmed) setShift(false);
+        return;
+      }
+      const k = keyEl.dataset.key;
+      if (!k) return;
+      flashTap(keyEl);
+      handleKeystroke(shiftArmed ? k.toUpperCase() : k, shiftArmed);
+      if (shiftArmed) setShift(false);
+    }
+    const kbMq = window.matchMedia('(max-width: 700px)');
+    kbEl.addEventListener('pointerdown', (e) => {
+      // Strictly mobile-only — the user explicitly required desktop behavior
+      // to remain identical, so the on-screen keyboard stays a pure visual
+      // guide above the breakpoint.
+      if (!kbMq.matches) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      handleKbTap(e.target);
+      e.preventDefault();
+    });
+  }
 
   // Korean IME path: when the system keyboard is set to Korean, keydown
   // events arrive while the IME is composing (e.isComposing or keyCode 229),
