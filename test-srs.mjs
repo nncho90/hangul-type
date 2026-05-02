@@ -40,6 +40,24 @@ function decayDaysForLevel(lv) {
   return 4;
 }
 
+function applyTopicMasteryDecay(m, nowMs) {
+  nowMs = nowMs || Date.now();
+  if (!m || m.level >= 5) return false;
+  let anchorMs = Date.parse(m.lastPracticedAt || m.lastDecayCheck || nowIso());
+  if (!Number.isFinite(anchorMs)) anchorMs = nowMs;
+  let changed = false;
+  while (m.level > 1) {
+    const days = decayDaysForLevel(m.level);
+    const thresholdMs = days * DAY_MS;
+    if (!Number.isFinite(thresholdMs) || nowMs - anchorMs < thresholdMs) break;
+    m.level--;
+    anchorMs += thresholdMs;
+    changed = true;
+  }
+  if (changed) m.lastDecayCheck = new Date(anchorMs).toISOString();
+  return changed;
+}
+
 const cases = [];
 function expect(name, ok, detail) { cases.push({ name, ok, detail: detail || '' }); }
 
@@ -88,6 +106,38 @@ expect('decay: Lv 5 never decays', decayDaysForLevel(5) === Infinity);
 expect('decay: Lv 4 → 3 after 14 days', decayDaysForLevel(4) === 14);
 expect('decay: Lv 3 → 2 after 7 days', decayDaysForLevel(3) === 7);
 expect('decay: Lv 2 → 1 after 4 days', decayDaysForLevel(2) === 4);
+
+// Decay application
+{
+  const now = Date.now();
+  const m = {
+    level: 4,
+    lastPracticedAt: new Date(now - 14 * DAY_MS).toISOString(),
+    lastDecayCheck: new Date(now - 14 * DAY_MS).toISOString()
+  };
+  const changed = applyTopicMasteryDecay(m, now);
+  expect('decay apply: Lv 4 drops to Lv 3 after 14 idle days', changed && m.level === 3);
+}
+{
+  const now = Date.now();
+  const m = {
+    level: 5,
+    lastPracticedAt: new Date(now - 365 * DAY_MS).toISOString(),
+    lastDecayCheck: new Date(now - 365 * DAY_MS).toISOString()
+  };
+  const changed = applyTopicMasteryDecay(m, now);
+  expect('decay apply: Lv 5 stays gold-locked', !changed && m.level === 5);
+}
+{
+  const now = Date.now();
+  const m = {
+    level: 4,
+    lastPracticedAt: new Date(now - 25 * DAY_MS).toISOString(),
+    lastDecayCheck: new Date(now - 25 * DAY_MS).toISOString()
+  };
+  const changed = applyTopicMasteryDecay(m, now);
+  expect('decay apply: long idle can pass through multiple tiers', changed && m.level === 1);
+}
 
 let pass = 0, fail = 0;
 for (const c of cases) {

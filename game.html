@@ -327,37 +327,63 @@
   }
   .monster.boss .hp-bar { width: 280px; height: 8px; }
 
-  /* Projectile */
-  .projectile {
+  /* ── Ninja teleport + sword melee ── */
+  .player.teleporting { animation: tp-out 0.10s ease-in forwards; }
+  .player.arriving    { animation: tp-in 0.16s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes tp-out {
+    to { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(180deg); filter: blur(6px); }
+  }
+  @keyframes tp-in {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.6) rotate(-180deg); filter: blur(4px); }
+    60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(0); filter: blur(0); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); filter: blur(0); }
+  }
+  .player.swinging { animation: swing 0.18s ease-out; }
+  @keyframes swing {
+    0%   { transform: translate(-50%, -50%) rotate(0); }
+    40%  { transform: translate(-50%, -50%) rotate(-22deg) translateX(8px); }
+    100% { transform: translate(-50%, -50%) rotate(0); }
+  }
+
+  .smoke-puff {
     position: absolute;
-    width: 10px; height: 10px;
-    background: var(--blue);
+    width: 64px; height: 64px;
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
-    z-index: 55;
+    background: radial-gradient(circle, rgba(220,220,228,0.85) 0%, rgba(200,200,210,0.4) 50%, rgba(200,200,210,0) 75%);
+    z-index: 65;
     pointer-events: none;
     transform: translate(-50%, -50%);
+    animation: smoke-fade 420ms ease-out forwards;
+    mix-blend-mode: multiply;
   }
-  .projectile.glyph {
-    width: auto; height: auto;
-    background: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    line-height: 1;
-    filter: drop-shadow(0 0 8px currentColor);
+  @keyframes smoke-fade {
+    0%   { opacity: 0.95; transform: translate(-50%, -50%) scale(0.35); }
+    50%  { opacity: 0.7;  transform: translate(-50%, -50%) scale(1.4); }
+    100% { opacity: 0;    transform: translate(-50%, -50%) scale(2.4); filter: blur(10px); }
   }
-  .trail-particle {
+
+  .slash-fx {
     position: absolute;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    z-index: 54;
+    width: 88px; height: 88px;
+    z-index: 78;
     pointer-events: none;
     transform: translate(-50%, -50%);
-    animation: trail-fade 300ms ease-out forwards;
+    animation: slash-pop 240ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
   }
-  @keyframes trail-fade {
-    0%   { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  .slash-fx svg { width: 100%; height: 100%; display: block; }
+  @keyframes slash-pop {
+    0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.5) rotate(-40deg); }
+    35%  { opacity: 1;   transform: translate(-50%, -50%) scale(1.15) rotate(8deg); }
+    100% { opacity: 0;   transform: translate(-50%, -50%) scale(1.6) rotate(45deg); }
+  }
+  .slash-fx.crit { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)); }
+
+  /* Hit-flash on monster when slashed */
+  .monster.struck .sprite { animation: monster-flinch 0.18s ease-out; }
+  @keyframes monster-flinch {
+    0%   { transform: translateY(0) rotate(-2deg); filter: brightness(1); }
+    40%  { transform: translateY(-4px) rotate(-12deg) scale(1.08); filter: brightness(2.2) drop-shadow(0 0 14px rgba(255,255,255,0.9)); }
+    100% { transform: translateY(0) rotate(-2deg); filter: brightness(1); }
   }
 
   /* Particles */
@@ -946,6 +972,408 @@
     background: #1d4ed8;
     border-color: #1d4ed8;
   }
+
+  /* ── 필살기 (Special Move) HUD + effects ── */
+  .special-meter {
+    display: flex; gap: 4px;
+    align-items: center;
+    padding: 4px 8px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+  }
+  .special-meter .sm-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--tlo);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+  .special-pip {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--l3);
+    border: 1.5px solid var(--bd);
+    transition: all 0.2s;
+  }
+  .special-pip.charged {
+    background: radial-gradient(circle, #fef3c7, #f59e0b);
+    border-color: #f59e0b;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+    animation: pip-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pip-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.7); }
+    50%      { box-shadow: 0 0 18px rgba(245, 158, 11, 1); }
+  }
+  .special-meter.full .special-pip.charged {
+    background: radial-gradient(circle, #fee2e2, #dc2626);
+    border-color: #dc2626;
+    box-shadow: 0 0 14px rgba(220, 38, 38, 0.85);
+  }
+
+  /* Chant mode overlay */
+  .chant-banner {
+    position: fixed;
+    bottom: 90px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 350;
+    background: linear-gradient(135deg, #dc2626, #f59e0b);
+    color: white;
+    padding: 10px 22px 6px;
+    border-radius: 14px;
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+    pointer-events: none;
+    animation: chant-pop 0.18s ease-out;
+    min-width: 260px;
+    text-align: center;
+  }
+  @keyframes chant-pop {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.85); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  }
+  .chant-banner .ko { font-family: 'Noto Sans KR', sans-serif; font-size: 22px; margin: 0 2px; }
+  .chant-banner .typed-progress { color: #fef9c3; }
+  .chant-timer-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .chant-timer-fill {
+    height: 100%;
+    background: white;
+    width: 100%;
+    transform-origin: left;
+    transition: transform 0.06s linear;
+  }
+
+  /* Sakura screen-clear + nuke flash */
+  .nuke-flash {
+    position: fixed; inset: 0;
+    z-index: 300;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95), rgba(254, 226, 226, 0.6) 40%, rgba(220, 38, 38, 0.0) 75%);
+    animation: nuke-fade 700ms ease-out forwards;
+  }
+  @keyframes nuke-fade {
+    0%   { opacity: 0; }
+    20%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .nuke-kanji {
+    position: fixed;
+    top: 38%; left: 50%;
+    z-index: 320;
+    pointer-events: none;
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-size: 140px;
+    font-weight: 900;
+    color: #dc2626;
+    text-shadow: 0 0 30px rgba(220, 38, 38, 0.7), 0 8px 24px rgba(15, 23, 42, 0.4);
+    transform: translate(-50%, -50%);
+    animation: kanji-slam 900ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    letter-spacing: 8px;
+  }
+  @keyframes kanji-slam {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(3) rotate(-12deg); filter: blur(10px); }
+    35%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0) rotate(2deg); filter: blur(0); }
+    70%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05) rotate(0); filter: blur(0); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2) rotate(0); filter: blur(2px); }
+  }
+  .nuke-arc {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 310;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .nuke-arc::before, .nuke-arc::after {
+    content: '';
+    position: absolute;
+    width: 200vw; height: 14px;
+    left: -50vw; top: 50%;
+    background: linear-gradient(90deg, transparent, white 40%, white 60%, transparent);
+    box-shadow: 0 0 40px rgba(255,255,255,0.95);
+  }
+  .nuke-arc::before {
+    animation: arc-sweep 0.42s ease-out forwards;
+    transform: translateY(-50%) rotate(-22deg) translateX(-100vw);
+  }
+  .nuke-arc::after {
+    animation: arc-sweep 0.42s 0.08s ease-out forwards;
+    transform: translateY(-50%) rotate(20deg) translateX(-100vw);
+  }
+  @keyframes arc-sweep {
+    to { transform: translateY(-50%) rotate(var(--ang, -22deg)) translateX(100vw); }
+  }
+
+  .sakura-petal {
+    position: fixed;
+    top: -20px;
+    z-index: 305;
+    pointer-events: none;
+    width: 16px; height: 16px;
+    background: radial-gradient(ellipse at 30% 30%, #fce7f3, #f9a8d4 60%, #ec4899);
+    border-radius: 70% 30% 70% 30%;
+    opacity: 0.85;
+    animation: petal-fall linear forwards;
+  }
+  @keyframes petal-fall {
+    0%   { transform: translateY(0) rotate(0); }
+    100% { transform: translateY(110vh) rotate(540deg); opacity: 0; }
+  }
+
+  /* Power-up drops */
+  .powerup {
+    position: absolute;
+    z-index: 72;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--l1);
+    border: 2px solid var(--blue);
+    border-radius: 50%;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(37, 99, 235, 0.4);
+    font-size: 22px;
+    transform: translate(-50%, -50%);
+    animation: powerup-bob 1.4s ease-in-out infinite;
+    pointer-events: none;
+    line-height: 1;
+  }
+  .powerup.shield { border-color: var(--blue);   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(37, 99, 235, 0.5); }
+  .powerup.slowmo { border-color: var(--purple); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(139, 92, 246, 0.5); }
+  .powerup.xp     { border-color: var(--yellow); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(245, 158, 11, 0.6); }
+  @keyframes powerup-bob {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50%      { transform: translate(-50%, -50%) translateY(-8px); }
+  }
+  .powerup.collected { animation: powerup-grab 280ms ease-out forwards; }
+  @keyframes powerup-grab {
+    0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+  }
+
+  .powerup-hud {
+    display: flex; gap: 6px;
+  }
+  .powerup-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 14px;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--tmd);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .powerup-chip.shield { border-color: var(--blue);   color: var(--blue); }
+  .powerup-chip.slowmo { border-color: var(--purple); color: var(--purple); }
+  .powerup-chip.xp     { border-color: var(--yellow); color: var(--orange); }
+  .powerup-chip .ico { font-size: 13px; }
+
+  /* Player shield aura when shield power-up is active */
+  .player.shielded::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 3px solid rgba(37, 99, 235, 0.65);
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.55), inset 0 0 14px rgba(37, 99, 235, 0.4);
+    pointer-events: none;
+    animation: shield-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes shield-pulse {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50%      { opacity: 1; transform: scale(1.06); }
+  }
+
+  /* Boss intro cutscene */
+  .boss-cutscene {
+    position: fixed; inset: 0;
+    z-index: 400;
+    pointer-events: none;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.0), rgba(15, 23, 42, 0.85) 70%);
+    animation: boss-veil 1.5s ease-out forwards;
+  }
+  @keyframes boss-veil {
+    0%   { opacity: 0; }
+    20%  { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .boss-cutscene .boss-portrait {
+    font-size: 180px;
+    line-height: 1;
+    filter: drop-shadow(0 0 40px rgba(220, 38, 38, 0.8));
+    animation: boss-zoom 1.5s ease-out forwards;
+  }
+  @keyframes boss-zoom {
+    0%   { transform: scale(0.3) rotate(-30deg); opacity: 0; }
+    30%  { transform: scale(1.2) rotate(0); opacity: 1; }
+    80%  { transform: scale(1.0) rotate(0); opacity: 1; }
+    100% { transform: scale(0.9) rotate(0); opacity: 0; }
+  }
+  .boss-cutscene .boss-name {
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-size: 56px;
+    color: #fee2e2;
+    letter-spacing: 4px;
+    margin-top: 8px;
+    text-shadow: 0 4px 20px rgba(220, 38, 38, 0.8);
+    animation: boss-name-rise 1.5s ease-out forwards;
+  }
+  @keyframes boss-name-rise {
+    0%   { transform: translateY(40px); opacity: 0; }
+    30%  { transform: translateY(0); opacity: 1; }
+    80%  { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-10px); opacity: 0; }
+  }
+  .boss-cutscene .boss-subtitle {
+    color: #fde68a;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: boss-name-rise 1.5s 0.1s ease-out forwards;
+  }
+  .boss-cutscene .boss-flavor {
+    color: #fde68a;
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 14px;
+    max-width: 520px;
+    text-align: center;
+    line-height: 1.5;
+    opacity: 0;
+    animation: boss-name-rise 1.5s 0.2s ease-out forwards;
+  }
+
+  /* Achievement toast */
+  .achievement-toast {
+    position: fixed;
+    top: 90px; right: 20px;
+    z-index: 250;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 10px 16px 10px 12px;
+    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.35);
+    display: flex; align-items: center; gap: 10px;
+    min-width: 240px;
+    animation: ach-slide 4.5s ease-out forwards;
+  }
+  @keyframes ach-slide {
+    0%   { transform: translateX(120%); opacity: 0; }
+    8%   { transform: translateX(0);    opacity: 1; }
+    88%  { transform: translateX(0);    opacity: 1; }
+    100% { transform: translateX(120%); opacity: 0; }
+  }
+  .achievement-toast .ach-icon { font-size: 28px; line-height: 1; }
+  .achievement-toast .ach-meta { display: flex; flex-direction: column; line-height: 1.2; }
+  .achievement-toast .ach-eyebrow {
+    font-size: 9px; font-weight: 800; color: #92400e;
+    text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  .achievement-toast .ach-title {
+    font-size: 14px; font-weight: 800; color: #78350f;
+    margin-top: 1px;
+  }
+  .achievement-toast .ach-desc {
+    font-size: 11px; color: #92400e; margin-top: 2px;
+  }
+
+  /* Achievement viewer (intro modal) */
+  .ach-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+    margin-top: 10px;
+    max-height: 280px; overflow-y: auto;
+    text-align: left;
+  }
+  .ach-card {
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex; align-items: center; gap: 8px;
+    text-align: left;
+  }
+  .ach-card.locked { opacity: 0.45; }
+  .ach-card .ach-card-ico { font-size: 22px; min-width: 24px; line-height: 1; }
+  .ach-card .ach-card-meta { line-height: 1.2; }
+  .ach-card .ach-card-title { font-size: 12px; font-weight: 800; color: var(--thi); }
+  .ach-card .ach-card-desc { font-size: 10px; color: var(--tmd); margin-top: 2px; }
+  .ach-card.unlocked { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+  .ach-card.unlocked .ach-card-title { color: #78350f; }
+
+  /* English-translation reveal on kill */
+  .english-reveal {
+    position: absolute;
+    z-index: 76;
+    pointer-events: none;
+    background: rgba(15, 23, 42, 0.88);
+    color: #fef9c3;
+    padding: 5px 13px;
+    border-radius: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    border: 1px solid rgba(254, 240, 138, 0.45);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.4);
+    animation: english-rise 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @keyframes english-rise {
+    0%   { opacity: 0; transform: translate(-50%, -50%) translateY(0)  scale(0.7); }
+    18%  { opacity: 1; transform: translate(-50%, -50%) translateY(-14px) scale(1.05); }
+    35%  { opacity: 1; transform: translate(-50%, -50%) translateY(-22px) scale(1); }
+    80%  { opacity: 1; transform: translate(-50%, -50%) translateY(-44px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-72px) scale(0.95); }
+  }
+
+  /* Audio toggle button */
+  .audio-toggle {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.15s;
+    color: var(--tmd);
+  }
+  .audio-toggle:hover { background: var(--l3); border-color: var(--bdhi); }
+  .audio-toggle.muted { color: var(--tlo); opacity: 0.7; }
+
+  /* Sprite asset rendering — replaces emoji when img exists */
+  .sprite-img {
+    display: block;
+    object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+    filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.18));
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .player .sprite-img { animation: breathe-img 2.6s ease-in-out infinite; }
+  @keyframes breathe-img {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
+  }
 </style>
 </head>
 <body>
@@ -969,10 +1397,18 @@
   </div>
   <div class="hud-center">한글 BATTLE</div>
   <div class="hud-right">
+    <div class="powerup-hud" id="powerupHud"></div>
+    <div class="special-meter" id="specialMeter" title="Special move 필살기 — Tab to chant 한글 when charged">
+      <span class="sm-label">필살</span>
+      <span class="special-pip"></span>
+      <span class="special-pip"></span>
+      <span class="special-pip"></span>
+    </div>
     <div class="stat" style="text-align: right;">
       <span class="stat-label">Combo</span>
       <span class="stat-value combo zero" id="hudCombo">×1</span>
     </div>
+    <button class="audio-toggle" id="btnAudio" title="Toggle Korean pronunciation audio">🔊</button>
     <button class="menu-btn" id="btnMenu">⏸ Pause</button>
   </div>
 </header>
@@ -986,7 +1422,7 @@
 <footer class="typing-strip">
   <span class="hint">▶ Type</span>
   <span class="live" id="liveOut"></span><span class="ime-cursor"></span>
-  <span class="hint">Type the Korean word on a monster to lock on · Esc releases (or pauses if not locked) · ` pauses</span>
+  <span class="hint">Type the Korean word on a monster · Esc releases / pauses · ` pauses · <strong>Tab</strong> chant 한글 to unleash 필살기</span>
 </footer>
 
 <input class="shield" id="shield" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -995,7 +1431,7 @@
   <div class="modal-card">
     <div class="badge">⚔️ Battle Mode</div>
     <h1>한글 전투</h1>
-    <p class="subtitle">Defeat the invading 한글 demons by typing the Korean word floating above each one. Each correct keystroke fires a projectile. Wrong keys break your combo. Survive as long as you can.</p>
+    <p class="subtitle">Defeat the invading 한글 demons by typing the Korean word floating above each one. The first jamo teleports you to the demon — every correct keystroke after that is a sword strike. Build combo, charge 필살기, and unleash the Hwarang spirit.</p>
     <div class="stat-grid">
       <div><div class="k">High Score</div><div class="v" id="introHigh">0</div></div>
       <div><div class="k">Best Wave</div><div class="v" id="introBest">0</div></div>
@@ -1003,8 +1439,21 @@
     <div id="practiceCarry" class="practice-carry" style="display:none;"></div>
     <div class="actions">
       <button class="primary" id="btnStart">Start Battle</button>
+      <button id="btnAchievements">🏆 Achievements</button>
       <button id="btnReplayStory">Replay story</button>
       <button id="btnBack">← Back to practice</button>
+    </div>
+  </div>
+</div>
+
+<div id="achievementsModal" class="modal-veil" style="display:none;">
+  <div class="modal-card">
+    <div class="badge">🏆 Hall of Renown</div>
+    <h1>업적 — Achievements</h1>
+    <p class="subtitle">Track your milestones across all battles. Unlocked deeds carry over forever.</p>
+    <div id="achGrid" class="ach-grid"></div>
+    <div class="actions">
+      <button class="primary" id="btnAchClose">Close</button>
     </div>
   </div>
 </div>
@@ -1619,20 +2068,39 @@ function playerForLevel(lv) {
   return pick;
 }
 
+// Sprite asset map. If a file exists in sprites/, we render <img>; on error
+// (file missing or 404), the inline onerror swaps it for the emoji fallback.
+function spriteHtml(file, emoji, sizePx) {
+  if (!file) return emoji;
+  const px = sizePx || 72;
+  return `<img class="sprite-img" src="sprites/${file}.png" alt="" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${emoji}'">`;
+}
+
 function renderPlayerSprite(lv) {
   const sp = playerForLevel(lv);
+  // Always use the Hwarang sprite (with emoji equip indicator) so progression
+  // still feels visible without spinning up 30 separate sprite files.
   const equipHtml = sp.equip ? `<span class="player-equip">${sp.equip}</span>` : '';
-  PLAYER_EL.innerHTML = `<span class="player-main">${sp.emoji}</span>${equipHtml}`;
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml('player_hwarang', sp.emoji, 88)}</span>${equipHtml}`;
 }
+
+const TIER_SPRITE_FILES = {
+  1: 'dokkaebi',
+  2: 'gumiho',
+  3: 'dueokshini',
+  4: 'jeoseung_saja',
+  5: 'cheonyeo_gwisin'
+};
+function tierSpriteFile(tier) { return TIER_SPRITE_FILES[tier] || null; }
 
 // Strict tier-per-level: one monster type per stage so the player learns
 // the new behavior before it gets mixed up. Brief 1-level overlap on transition
 // (last level of a tier sprinkles a small preview of the next tier).
 function tierForLevel(lv) {
-  if (lv <= 3)  return 1;
-  if (lv <= 6)  return 2;
-  if (lv <= 9)  return 3;
-  if (lv <= 13) return 4;
+  if (lv <= 4)  return 1;
+  if (lv <= 8)  return 2;
+  if (lv <= 13) return 3;
+  if (lv <= 18) return 4;
   return 5;
 }
 function firstKeystrokeForWord(word) {
@@ -1655,8 +2123,8 @@ function pickWordForLevel(lv, blockedFirstJamos) {
   const tier = tierForLevel(lv);
   // On the final level of a tier, 30% chance to spawn the next tier as a "scout"
   let chosen = tier;
-  const previewLevels = { 3: 2, 6: 3, 9: 4, 13: 5 };
-  if (previewLevels[lv] && Math.random() < 0.3) chosen = previewLevels[lv];
+  const previewLevels = { 4: 2, 8: 3, 13: 4, 18: 5 };
+  if (previewLevels[lv] && Math.random() < 0.25) chosen = previewLevels[lv];
   const pool = VOCAB['tier' + chosen] || VOCAB.tier1;
   const word = pickAvailableWord(pool, blocked);
   if (!word) return null;
@@ -1666,12 +2134,12 @@ function pickWordForLevel(lv, blockedFirstJamos) {
 // Movement archetype per tier. The user sees a different monster sprite AND a
 // different flight pattern, so each new enemy class teaches itself by example.
 const TIER_BEHAVIORS = {
-  1:    { speedMul: 0.85, motion: 'straight' },  // crawler — slow, straight down
-  2:    { speedMul: 1.10, motion: 'straight' },  // sprite — faster, still straight
-  3:    { speedMul: 1.10, motion: 'zigzag'   },  // predator — sinusoidal sweep
-  4:    { speedMul: 0.95, motion: 'dive'     },  // demon — accelerates as it falls
-  5:    { speedMul: 1.20, motion: 'tracker'  },  // specter — drifts toward the player
-  boss: { speedMul: 0.55, motion: 'teleport' }   // boss — pause, jump, repeat
+  1:    { speedMul: 0.80, motion: 'straight' },  // 도깨비 — slow, straight down
+  2:    { speedMul: 0.95, motion: 'straight' },  // 구미호 — faster, still straight
+  3:    { speedMul: 0.95, motion: 'zigzag'   },  // 두억시니 — sinusoidal sweep, gentler intro
+  4:    { speedMul: 0.90, motion: 'dive'     },  // 저승사자 — accelerates as it falls
+  5:    { speedMul: 1.05, motion: 'tracker'  },  // 처녀귀신 — drifts toward the player
+  boss: { speedMul: 0.55, motion: 'teleport' }   // 한글왕 — pause, jump, repeat
 };
 function behaviorForTier(t) { return TIER_BEHAVIORS[t] || TIER_BEHAVIORS[1]; }
 
@@ -2016,10 +2484,22 @@ const state = {
   combo: 0, bestCombo: 0,
   startedAt: 0,
   ime: new HangulIME(),
-  monsters: [], projectiles: [],
+  monsters: [],
   lockId: null, lockExpectedKs: [], lockPosKs: 0,
   spawnTimer: 0, spawnInterval: 1400,
-  bossActive: false, bossNextLevel: 5
+  bossActive: false, bossNextLevel: 5,
+  // Ninja melee state
+  playerTeleported: false,
+  // 필살기 (special move) state — combo charges into screen-clear attack
+  specialCharges: 0,        // 0..3
+  // Power-up state
+  activePowerups: { shield: 0, slowmo: 0, xp: 0 },  // ms remaining (xp = double-XP timer)
+  powerups: [],             // dropped pickups in stage
+  // Achievement / wave bookkeeping
+  unlockedAchievements: null,  // lazily loaded from localStorage
+  perfectWave: true,        // reset to true at the start of each level
+  lastWaveLevel: 1,
+  wordKills: {}
 };
 
 function getHighScore() { try { return Number(localStorage.getItem(HIGH_KEY)) || 0; } catch (e) { return 0; } }
@@ -2046,13 +2526,14 @@ function spawnMonster(forceBoss) {
   const tier = word.tier;
   const sprites = TIER_SPRITES[tier] || TIER_SPRITES[1];
   const sprite = sprites[Math.floor(Math.random() * sprites.length)];
+  const spriteFile = tierSpriteFile(tier);
   const id = ++monsterId;
   const ks = wordToKeystrokes(word.ko);
   const beh = behaviorForTier(tier);
-  const baseSpeed = (14 + state.level * 1.4 + (Number(tier) || 1) * 1.5) * beh.speedMul;
+  const baseSpeed = (12 + state.level * 0.9 + (Number(tier) || 1) * 1.0) * beh.speedMul;
   const startX = Math.random() * (window.innerWidth - 200) + 100;
   const monster = {
-    id, sprite, word: word.ko, en: word.en, tier,
+    id, sprite, spriteFile, word: word.ko, en: word.en, tier,
     ks, hp: ks.length, maxHp: ks.length,
     speed: baseSpeed,
     motion: beh.motion,
@@ -2076,14 +2557,17 @@ function spawnBoss() {
   state.bossActive = true;
   const word = pickAvailableWord(VOCAB.boss, activeFirstJamos());
   if (!word) { state.bossActive = false; return null; }
-  const sprite = TIER_SPRITES.boss[Math.floor(Math.random() * TIER_SPRITES.boss.length)];
+  const profile = nextBossProfile();
+  const sprite = profile.emoji;
+  const spriteFile = profile.sprite;
   const id = ++monsterId;
   const ks = wordToKeystrokes(word.ko);
   const beh = behaviorForTier('boss');
   const baseSpeed = (8 + state.level * 0.6) * beh.speedMul;
   const startX = window.innerWidth / 2;
   const monster = {
-    id, sprite, word: word.ko, en: word.en, tier: 'boss',
+    id, sprite, spriteFile, name: profile.name,
+    word: word.ko, en: word.en, tier: 'boss',
     ks, hp: ks.length, maxHp: ks.length,
     speed: baseSpeed,
     motion: beh.motion,
@@ -2094,6 +2578,8 @@ function spawnBoss() {
     tpT: 0, tpHoldUntil: 1400,
     isBoss: true, el: null
   };
+  // Cutscene first, then build the on-stage element so the boss appears with the music
+  playBossCutscene(profile);
   buildMonsterEl(monster);
   state.monsters.push(monster);
 }
@@ -2103,7 +2589,18 @@ function buildMonsterEl(m) {
   el.className = 'monster' + ' tier-' + (m.tier === 'boss' ? '5 boss' : m.tier);
   const sprite = document.createElement('span');
   sprite.className = 'sprite';
-  sprite.textContent = m.sprite;
+  // Per-tier image size (matches existing CSS font-size scale)
+  const sizePx = m.tier === 'boss' ? 130
+    : m.tier === 5 ? 100
+    : m.tier === 4 ? 86
+    : m.tier === 3 ? 76
+    : m.tier === 2 ? 66
+    : 56;
+  if (m.spriteFile) {
+    sprite.innerHTML = spriteHtml(m.spriteFile, m.sprite, sizePx);
+  } else {
+    sprite.textContent = m.sprite;
+  }
   el.appendChild(sprite);
 
   const wordBubble = document.createElement('div');
@@ -2147,6 +2644,8 @@ function killMonster(m, byPlayer) {
       flashCenterText('❤ +1 LIFE');
       tone({ freq: 880, type:'sine', dur:0.16, gain:0.06, slide:1320 });
     }
+    // Active 2× XP power-up
+    if (state.activePowerups && state.activePowerups.xp > 0) xp = xp * 2;
     state.score += sc;
     state.xp += xp;
     state.kills++;
@@ -2156,11 +2655,18 @@ function killMonster(m, byPlayer) {
       state.wordKills[m.word] = (state.wordKills[m.word] || 0) + 1;
     } catch (e) {}
     floatScorePop(m.x, m.y, '+' + sc + (isCrit ? ' ✨' : ''));
+    // English-translation reveal — closes the learning loop. Suppressed during
+    // 필살기 so 6+ kills don't dogpile the screen with overlapping translations.
+    if (!state.specialMoveBurst) floatEnglishReveal(m.x, m.y, m.en);
     sfxKill();
+    if (state.kills === 1) unlockAchievement('first_kill');
     if (m.isBoss) {
       state.bossActive = false;
       state.bossNextLevel = state.level + 5;
+      unlockAchievement('first_boss');
     }
+    // Power-up drops on kill (boss + crit drop more often)
+    maybeDropPowerup(m.x, m.y + 24, isCrit);
     maybeLevelUp();
     updateHud();
   }
@@ -2173,6 +2679,9 @@ function killMonster(m, byPlayer) {
     state.ime.reset();
     LIVE_EL.textContent = '';
   }
+  // Chain window: stay on offense briefly so a quick follow-up keystroke
+  // teleports straight to the next monster instead of a return-trip flash.
+  teleportPlayerHome();
 }
 
 function maybeLevelUp() {
@@ -2192,7 +2701,17 @@ function onLevelUp() {
   const sp = playerForLevel(state.level);
   renderPlayerSprite(state.level);
   flashCenterText('Lv. ' + state.level + ' · ' + sp.label);
-  state.spawnInterval = Math.max(700, 2200 - state.level * 80);
+  state.spawnInterval = Math.max(900, 2300 - state.level * 70);
+  // Perfect-wave check (no missed key in the wave that just ended)
+  if (state.perfectWave && state.level - state.lastWaveLevel >= 1) {
+    unlockAchievement('perfect_wave');
+  }
+  state.perfectWave = true;
+  state.lastWaveLevel = state.level;
+  // Level-milestone achievements
+  if (state.level >= 5  && state.lives === 3) unlockAchievement('no_damage_lv5');
+  if (state.level >= 10) unlockAchievement('reach_lv10');
+  if (state.level >= 20) unlockAchievement('reach_lv20');
 }
 
 function flashCenterText(txt) {
@@ -2230,66 +2749,579 @@ function floatScorePop(x, y, text) {
   setTimeout(() => el.remove(), 900);
 }
 
-// Projectile evolves with player level — more spectacular at higher tiers
-function projectileForLevel(lv) {
-  if (lv >= 25) return { glyph: '🐉', size: 36, color: '#dc2626', trail: 'rgba(220,38,38,0.55)' };
-  if (lv >= 20) return { glyph: '⚔️', size: 30, color: '#f59e0b', trail: 'rgba(245,158,11,0.55)' };
-  if (lv >= 16) return { glyph: '🏹', size: 28, color: '#7c3aed', trail: 'rgba(124,58,237,0.5)' };
-  if (lv >= 13) return { glyph: '⭐', size: 26, color: '#eab308', trail: 'rgba(234,179,8,0.5)' };
-  if (lv >= 10) return { glyph: '🔥', size: 24, color: '#ea580c', trail: 'rgba(234,88,12,0.5)' };
-  if (lv >= 7)  return { glyph: '⚡', size: 22, color: '#0ea5e9', trail: 'rgba(14,165,233,0.45)' };
-  if (lv >= 4)  return { glyph: '›',  size: 26, color: '#06b6d4', trail: 'rgba(6,182,212,0.4)', font: true };
-  return null; // tier 1: small dot (existing CSS)
+// English translation flies up from the kill point so the player learns the
+// word's meaning. Suppressed during 필살기 mass-kills (would clutter the screen).
+function floatEnglishReveal(x, y, en) {
+  if (!en) return;
+  const el = document.createElement('div');
+  el.className = 'english-reveal';
+  el.textContent = en;
+  el.style.left = x + 'px';
+  // Sit above the score-pop's path so they don't overlap visually.
+  el.style.top = (y - 18) + 'px';
+  STAGE.appendChild(el);
+  setTimeout(() => el.remove(), 1320);
 }
 
-function fireProjectile(toX, toY) {
-  const playerRect = PLAYER_EL.getBoundingClientRect();
-  const stageRect = STAGE.getBoundingClientRect();
-  const startX = (playerRect.left + playerRect.width / 2) - stageRect.left;
-  const startY = (playerRect.top + playerRect.height / 2)  - stageRect.top;
-  const proj = projectileForLevel(state.level);
+// ─── Korean TTS (Web Speech API) ───────────────────────────────────────────
+const AUDIO_KEY = 'hangul-battle-audio-v1';
+let _koreanVoice = undefined;     // undefined = unprobed, false = probed/none, Voice = found
+let _ttsSupported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
 
-  const p = document.createElement('div');
-  if (proj) {
-    p.className = 'projectile glyph';
-    p.style.fontSize = proj.size + 'px';
-    p.style.color = proj.color;
-    p.style.fontWeight = '900';
-    p.textContent = proj.glyph;
-  } else {
-    p.className = 'projectile';
-  }
-  p.style.left = startX + 'px';
-  p.style.top  = startY + 'px';
-  STAGE.appendChild(p);
+function audioEnabled() {
+  try {
+    const v = localStorage.getItem(AUDIO_KEY);
+    return v === null ? true : v === '1';      // default on
+  } catch (e) { return true; }
+}
+function setAudioEnabled(on) {
+  try { localStorage.setItem(AUDIO_KEY, on ? '1' : '0'); } catch (e) {}
+}
 
-  const start = performance.now();
-  const dur = 220;
-  let lastTrail = 0;
-  function step(t) {
-    const k = Math.min(1, (t - start) / dur);
-    const x = startX + (toX - startX) * k;
-    const y = startY + (toY - startY) * k;
-    p.style.left = x + 'px';
-    p.style.top  = y + 'px';
-    // Trail particles for higher-tier projectiles
-    if (proj && proj.trail && t - lastTrail > 28 && k < 0.95) {
-      lastTrail = t;
-      const tp = document.createElement('div');
-      tp.className = 'trail-particle';
-      tp.style.left = x + 'px';
-      tp.style.top  = y + 'px';
-      tp.style.background = proj.trail;
-      STAGE.appendChild(tp);
-      setTimeout(() => tp.remove(), 300);
+function findKoreanVoice() {
+  if (_koreanVoice !== undefined) return _koreanVoice;
+  if (!_ttsSupported) { _koreanVoice = false; return false; }
+  const voices = speechSynthesis.getVoices() || [];
+  const pick = voices.find(v => /^ko[-_]?KR$/i.test(v.lang)) ||
+               voices.find(v => /korean/i.test(v.name)) ||
+               voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ko')) ||
+               null;
+  _koreanVoice = pick || false;
+  return _koreanVoice;
+}
+
+function speakKoreanWord(text) {
+  if (!_ttsSupported || !audioEnabled() || !text) return;
+  const voice = findKoreanVoice();
+  if (!voice) return;                          // no Korean voice on this system
+  // Rate scales with level: 1.0 (lv1) → ~2.0 (lv40+). Keeps audio pace
+  // matched to gameplay tempo so it never feels laggy at high levels.
+  const rate = Math.min(2.0, 1.0 + (state.level || 1) * 0.025);
+  const u = new SpeechSynthesisUtterance(text);
+  u.voice = voice;
+  u.lang  = voice.lang || 'ko-KR';
+  u.rate  = rate;
+  u.pitch = 1.0;
+  u.volume = 0.7;     // sit just under chiptune SFX volume
+  speechSynthesis.speak(u);
+}
+
+function cancelAllSpeech() {
+  if (_ttsSupported) speechSynthesis.cancel();
+}
+
+function renderAudioToggle() {
+  const btn = document.getElementById('btnAudio');
+  if (!btn) return;
+  const on = audioEnabled();
+  btn.textContent = on ? '🔊' : '🔇';
+  btn.classList.toggle('muted', !on);
+  btn.title = on ? 'Korean pronunciation: ON (click to mute)'
+                 : 'Korean pronunciation: OFF (click to enable)';
+}
+
+function toggleAudio() {
+  const next = !audioEnabled();
+  setAudioEnabled(next);
+  if (!next) cancelAllSpeech();
+  renderAudioToggle();
+}
+
+if (_ttsSupported) {
+  // Voices may load async on Chrome; refresh cache when the list arrives.
+  speechSynthesis.addEventListener('voiceschanged', () => { _koreanVoice = undefined; findKoreanVoice(); });
+  // Trigger an initial probe so getVoices() is populated before first lock.
+  findKoreanVoice();
+}
+
+// ── Ninja teleport + sword melee ──────────────────────────────────────────
+// Player position state. baseX/baseY = stage-relative center-bottom anchor.
+// When teleported, we override left/top with explicit pixels.
+function spawnSmokePuff(x, y) {
+  const el = document.createElement('div');
+  el.className = 'smoke-puff';
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  STAGE.appendChild(el);
+  setTimeout(() => el.remove(), 440);
+}
+function spawnSlashFx(x, y, isCrit) {
+  const el = document.createElement('div');
+  el.className = 'slash-fx' + (isCrit ? ' crit' : '');
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  // Stylized white-cyan slash arc (two crossing crescents)
+  const angle = -20 + Math.random() * 40;
+  el.innerHTML = `
+    <svg viewBox="0 0 100 100" style="transform: rotate(${angle}deg)">
+      <defs>
+        <linearGradient id="slgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="40%" stop-color="#ffffff" stop-opacity="1"/>
+          <stop offset="60%" stop-color="#bae6fd" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M 12 78 Q 50 20 90 14" stroke="url(#slgrad)" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M 18 86 Q 56 30 92 22" stroke="rgba(255,255,255,0.55)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>`;
+  STAGE.appendChild(el);
+  setTimeout(() => el.remove(), 260);
+}
+
+let _playerHomePending = null;
+function teleportPlayerTo(x, y) {
+  // Smoke at current position (departure puff)
+  const r = PLAYER_EL.getBoundingClientRect();
+  const sr = STAGE.getBoundingClientRect();
+  const fromX = (r.left + r.width / 2) - sr.left;
+  const fromY = (r.top + r.height / 2)  - sr.top;
+  spawnSmokePuff(fromX, fromY);
+  // Move + arrival animation. Inline styles override the .player breathe rules.
+  PLAYER_EL.classList.remove('teleporting','arriving');
+  void PLAYER_EL.offsetWidth;
+  // Side-step right of monster sprite so the slash visually crosses the demon
+  const targetX = x + 60;
+  const targetY = y + 24;
+  PLAYER_EL.style.bottom = 'auto';
+  PLAYER_EL.style.left = targetX + 'px';
+  PLAYER_EL.style.top  = targetY + 'px';
+  PLAYER_EL.style.transform = 'translate(-50%, -50%)';
+  PLAYER_EL.style.animation = 'none';   // disable the bottom-anchored breathe while teleported
+  PLAYER_EL.classList.add('arriving');
+  setTimeout(() => spawnSmokePuff(targetX, targetY), 30);
+  state.playerTeleported = true;
+  if (_playerHomePending) { clearTimeout(_playerHomePending); _playerHomePending = null; }
+}
+
+function teleportPlayerHome(immediate) {
+  const doIt = () => {
+    if (state.lockId != null) return; // re-locked before timer fired
+    if (state.playerTeleported) {
+      const r = PLAYER_EL.getBoundingClientRect();
+      const sr = STAGE.getBoundingClientRect();
+      spawnSmokePuff((r.left + r.width / 2) - sr.left, (r.top + r.height / 2) - sr.top);
     }
-    if (k < 1) requestAnimationFrame(step); else p.remove();
+    PLAYER_EL.classList.remove('arriving','swinging','teleporting');
+    PLAYER_EL.style.bottom = '';
+    PLAYER_EL.style.top  = '';
+    PLAYER_EL.style.left = '';
+    PLAYER_EL.style.transform = '';
+    PLAYER_EL.style.animation = '';
+    state.playerTeleported = false;
+    _playerHomePending = null;
+  };
+  if (immediate) { doIt(); return; }
+  if (_playerHomePending) clearTimeout(_playerHomePending);
+  // Brief chain window: if user starts a new lock, teleportPlayerTo cancels this.
+  _playerHomePending = setTimeout(doIt, 500);
+}
+
+function swingSword(monster) {
+  // Slash visual on the monster sprite center
+  const sx = monster.x;
+  const sy = monster.y + 28;
+  spawnSlashFx(sx, sy, false);
+  PLAYER_EL.classList.remove('swinging');
+  void PLAYER_EL.offsetWidth;
+  PLAYER_EL.classList.add('swinging');
+  if (monster.el) {
+    monster.el.classList.remove('struck');
+    void monster.el.offsetWidth;
+    monster.el.classList.add('struck');
+    setTimeout(() => monster.el && monster.el.classList.remove('struck'), 220);
   }
-  requestAnimationFrame(step);
+}
+
+// ─── 필살기 (Special Move) ─────────────────────────────────────────────────
+const SPECIAL_TRIGGERS = ['한글', '필살'];   // either word triggers
+const SPECIAL_COMBO_PER_CHARGE = 25;
+const SPECIAL_MAX_CHARGES = 3;
+const CHANT_DURATION_MS = 2000;
+const SPECIAL_HINT_KEY  = 'hangul-battle-special-hint-seen-v1';
+
+const SPECIAL_METER_EL = () => document.getElementById('specialMeter');
+const POWERUP_HUD_EL   = () => document.getElementById('powerupHud');
+
+let _chantState = null; // { ime, deadline, raf, bannerEl, fillEl, progressEl }
+
+function renderSpecialMeter() {
+  const meter = SPECIAL_METER_EL(); if (!meter) return;
+  const pips = meter.querySelectorAll('.special-pip');
+  const charges = state.specialCharges || 0;
+  pips.forEach((p, i) => {
+    p.classList.toggle('charged', i < charges);
+  });
+  meter.classList.toggle('full', charges >= SPECIAL_MAX_CHARGES);
+}
+
+function gainSpecialChargeFromCombo() {
+  // Award one charge each time combo crosses a multiple of SPECIAL_COMBO_PER_CHARGE.
+  if (!state.combo || state.combo % SPECIAL_COMBO_PER_CHARGE !== 0) return;
+  if ((state.specialCharges || 0) >= SPECIAL_MAX_CHARGES) return;
+  state.specialCharges = (state.specialCharges || 0) + 1;
+  renderSpecialMeter();
+  tone({ freq: 760, type:'triangle', dur:0.18, gain:0.05, slide: 1320 });
+  if (!hasSeenSpecialHint() && state.specialCharges === 1) {
+    setSpecialHintSeen();
+    flashCenterText('필살기 ready · Tab to chant 한글');
+  }
+}
+
+function hasSeenSpecialHint() {
+  try { return localStorage.getItem(SPECIAL_HINT_KEY) === '1'; } catch (e) { return false; }
+}
+function setSpecialHintSeen() {
+  try { localStorage.setItem(SPECIAL_HINT_KEY, '1'); } catch (e) {}
+}
+
+function chantActive() { return _chantState != null; }
+
+function startChantMode() {
+  if (chantActive()) {
+    // Already chanting — refresh the timer.
+    _chantState.deadline = performance.now() + CHANT_DURATION_MS;
+    return;
+  }
+  if ((state.specialCharges || 0) <= 0) {
+    flashCenterText('필살기 not ready');
+    sfxMiss();
+    return;
+  }
+  if (state.lockId != null) {
+    // Don't allow chant while attacking — would steal keystrokes from typing.
+    sfxMiss();
+    return;
+  }
+  const banner = document.createElement('div');
+  banner.className = 'chant-banner';
+  banner.innerHTML = `
+    <div>Chant <span class="ko" id="chantHint">한글</span> · <span class="typed-progress" id="chantTyped"></span></div>
+    <div class="chant-timer-bar"><div class="chant-timer-fill" id="chantTimerFill"></div></div>`;
+  document.body.appendChild(banner);
+  tone({ freq: 280, type:'sawtooth', dur:0.22, gain:0.05 });
+  _chantState = {
+    ime: new HangulIME(),
+    deadline: performance.now() + CHANT_DURATION_MS,
+    bannerEl: banner,
+    fillEl: banner.querySelector('#chantTimerFill'),
+    progressEl: banner.querySelector('#chantTyped'),
+    raf: 0
+  };
+  const tick = () => {
+    if (!_chantState) return;
+    const ms = _chantState.deadline - performance.now();
+    if (ms <= 0) { exitChantMode(false); return; }
+    if (_chantState.fillEl) {
+      _chantState.fillEl.style.transform = `scaleX(${ms / CHANT_DURATION_MS})`;
+    }
+    _chantState.raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function exitChantMode(success) {
+  if (!_chantState) return;
+  if (_chantState.raf) cancelAnimationFrame(_chantState.raf);
+  if (_chantState.bannerEl) _chantState.bannerEl.remove();
+  _chantState = null;
+  if (!success) sfxMiss();
+}
+
+function feedChantKey(rawKey, isShift) {
+  if (!_chantState) return false;
+  const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
+  const jamo = KEYMAP[lookupKey];
+  if (!jamo) {
+    // Non-jamo (likely number/punct) breaks the chant.
+    exitChantMode(false);
+    return true;
+  }
+  _chantState.ime.type(jamo);
+  const display = _chantState.ime.display;
+  if (_chantState.progressEl) _chantState.progressEl.textContent = display;
+  // Soft tick
+  tone({ freq: 1100, type:'sine', dur:0.02, gain:0.025 });
+  for (const trig of SPECIAL_TRIGGERS) {
+    if (display.endsWith(trig)) {
+      // Trigger!
+      exitChantMode(true);
+      triggerSpecialMove();
+      return true;
+    }
+  }
+  // Cap chant buffer length so it can't infinitely accumulate.
+  if (display.length > 8) {
+    exitChantMode(false);
+  }
+  return true;
+}
+
+function triggerSpecialMove() {
+  if ((state.specialCharges || 0) <= 0) return;
+  state.specialCharges -= 1;
+  renderSpecialMeter();
+
+  // Visual: nuke flash + slash arcs + center kanji + cherry blossom shower
+  const flash = document.createElement('div');  flash.className = 'nuke-flash';   document.body.appendChild(flash);
+  const arc   = document.createElement('div');  arc.className   = 'nuke-arc';     document.body.appendChild(arc);
+  const kanji = document.createElement('div');  kanji.className = 'nuke-kanji';   kanji.textContent = '필살'; document.body.appendChild(kanji);
+  setTimeout(() => flash.remove(), 720);
+  setTimeout(() => arc.remove(),   480);
+  setTimeout(() => kanji.remove(), 920);
+  spawnSakura(40);
+
+  // Sound: dramatic stinger
+  noiseBurst({ dur:0.30, gain:0.08, freq:600 });
+  [880, 660, 440, 220].forEach((f, i) => setTimeout(() => tone({ freq:f, type:'triangle', dur:0.22, gain:0.07 }), i * 70));
+
+  // Effect: kill all non-boss; halve boss HP. Award scaled XP/score.
+  // Suppress per-word TTS + English reveal so 6+ overlapping cues don't
+  // turn the screen into a translation dogpile.
+  cancelAllSpeech();
+  state.specialMoveBurst = true;
+  const victims = state.monsters.slice();
+  let killed = 0;
+  victims.forEach(m => {
+    if (m.isBoss) {
+      const damage = Math.ceil(m.maxHp * 0.5);
+      m.hp = Math.max(0, m.hp - damage);
+      // Move boss lock-progress along too if we hold the lock
+      if (state.lockId === m.id) {
+        state.lockPosKs = Math.min(state.lockExpectedKs.length, state.lockPosKs + damage);
+      }
+      if (m.el) m.el.querySelector('.hp-fill').style.width = (m.hp / m.maxHp * 100) + '%';
+      if (m.hp <= 0) { killMonster(m, true); killed++; }
+    } else {
+      // count toward combo so the special doesn't break the streak
+      state.combo += 1;
+      if (state.combo > state.bestCombo) state.bestCombo = state.combo;
+      killMonster(m, true);
+      killed++;
+    }
+  });
+  if (killed > 0) {
+    flashCenterText(`필살 · ${killed} 처치!`);
+    unlockAchievement('first_special');
+    if (killed >= 6) unlockAchievement('special_combo');
+  }
+  state.specialMoveBurst = false;
+  updateHud();
+}
+
+function spawnSakura(count) {
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'sakura-petal';
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.animationDuration = (3.0 + Math.random() * 2.5) + 's';
+    p.style.animationDelay = (Math.random() * 0.4) + 's';
+    p.style.transform = `rotate(${Math.random() * 360}deg) scale(${0.7 + Math.random() * 0.9})`;
+    p.style.background = `radial-gradient(ellipse at 30% 30%, #fce7f3, ${Math.random() < 0.5 ? '#f9a8d4' : '#fbcfe8'} 60%, ${Math.random() < 0.5 ? '#ec4899' : '#db2777'})`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 6000);
+  }
+}
+
+// ─── Power-up drops ────────────────────────────────────────────────────────
+const POWERUP_DEFS = {
+  shield: { ico: '🛡️', label: 'SHIELD', durationMs: 0,    blocksHit: true },
+  slowmo: { ico: '⏳', label: 'SLOW',   durationMs: 5000, slowFactor: 0.55 },
+  xp:     { ico: '✨', label: '2× XP',  durationMs: 8000, xpMul: 2 }
+};
+const POWERUP_KINDS = ['shield','slowmo','xp'];
+
+function maybeDropPowerup(x, y, isCrit) {
+  const dropChance = isCrit ? 0.18 : 0.08;
+  if (Math.random() > dropChance) return;
+  const kind = POWERUP_KINDS[Math.floor(Math.random() * POWERUP_KINDS.length)];
+  const def = POWERUP_DEFS[kind];
+  const el = document.createElement('div');
+  el.className = 'powerup ' + kind;
+  el.textContent = def.ico;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  STAGE.appendChild(el);
+  const drop = { kind, el, expiresAt: performance.now() + 6000 };
+  state.powerups = state.powerups || [];
+  state.powerups.push(drop);
+  // Visible for ~900ms then auto-flies into the player so the user always
+  // benefits without fiddly proximity collection.
+  setTimeout(() => collectPowerup(drop), 900);
+}
+
+function collectPowerup(drop) {
+  if (!drop || drop.collected) return;
+  drop.collected = true;
+  drop.el.classList.add('collected');
+  setTimeout(() => drop.el.remove(), 280);
+  state.powerups = (state.powerups || []).filter(d => d !== drop);
+  applyPowerup(drop.kind);
+  tone({ freq: 1320, type:'sine', dur:0.10, gain:0.05, slide: 2200 });
+}
+
+function applyPowerup(kind) {
+  const def = POWERUP_DEFS[kind];
+  if (!def) return;
+  state.activePowerups = state.activePowerups || { shield: 0, slowmo: 0, xp: 0 };
+  if (kind === 'shield') {
+    state.activePowerups.shield = 1;  // count of hits blocked
+    PLAYER_EL.classList.add('shielded');
+  } else if (kind === 'slowmo') {
+    state.activePowerups.slowmo = Math.max(state.activePowerups.slowmo, def.durationMs);
+  } else if (kind === 'xp') {
+    state.activePowerups.xp = Math.max(state.activePowerups.xp, def.durationMs);
+  }
+  flashCenterText(def.label + (kind === 'shield' ? ' UP' : ''));
+  renderPowerupHud();
+}
+
+function tickPowerups(dt) {
+  if (!state.activePowerups) return;
+  if (state.activePowerups.slowmo > 0) state.activePowerups.slowmo = Math.max(0, state.activePowerups.slowmo - dt);
+  if (state.activePowerups.xp     > 0) state.activePowerups.xp     = Math.max(0, state.activePowerups.xp     - dt);
+  // expire dropped pickups after 6s
+  const now = performance.now();
+  state.powerups = (state.powerups || []).filter(d => {
+    if (d.collected) return false;
+    if (now > d.expiresAt) {
+      d.el.classList.add('collected');
+      setTimeout(() => d.el.remove(), 280);
+      return false;
+    }
+    return true;
+  });
+  if (state.activePowerups.slowmo === 0 && state.activePowerups.xp === 0 && !state.activePowerups.shield) {
+    if (POWERUP_HUD_EL().children.length > 0) renderPowerupHud();
+  } else {
+    renderPowerupHud();
+  }
+}
+
+function renderPowerupHud() {
+  const hud = POWERUP_HUD_EL(); if (!hud) return;
+  const a = state.activePowerups || {};
+  const chips = [];
+  if (a.shield) chips.push(`<span class="powerup-chip shield"><span class="ico">🛡️</span> SHIELD</span>`);
+  if (a.slowmo > 0) chips.push(`<span class="powerup-chip slowmo"><span class="ico">⏳</span> ${Math.ceil(a.slowmo/1000)}s</span>`);
+  if (a.xp > 0)     chips.push(`<span class="powerup-chip xp"><span class="ico">✨</span> 2×XP ${Math.ceil(a.xp/1000)}s</span>`);
+  hud.innerHTML = chips.join('');
+}
+
+// ─── Boss intro cutscene + named bosses ───────────────────────────────────
+const BOSS_PROFILES = [
+  { sprite: 'dragon_boss',     emoji: '🐉', name: '한글왕',         subtitle: 'Demon King of Hangul',     flavor: '"All who would speak my tongue, kneel."' },
+  { sprite: 'gumiho',          emoji: '🦊', name: '구미호 여왕',     subtitle: 'Queen of Nine Tails',      flavor: '"Your syllables taste like fear, little one."' },
+  { sprite: 'dokkaebi',        emoji: '👹', name: '도깨비 대장',     subtitle: 'Goblin Chieftain',         flavor: '"Hahaha! Type if you dare, mortal!"' },
+  { sprite: 'jeoseung_saja',   emoji: '🪦', name: '저승사자',        subtitle: 'Reaper of the Underworld', flavor: '"Your ledger… is incomplete."' },
+  { sprite: 'cheonyeo_gwisin', emoji: '👻', name: '처녀귀신',        subtitle: 'Maiden of Vengeance',      flavor: '"You forgot me. I have not forgotten you."' }
+];
+let _bossCycleIdx = 0;
+function nextBossProfile() {
+  const p = BOSS_PROFILES[_bossCycleIdx % BOSS_PROFILES.length];
+  _bossCycleIdx++;
+  return p;
+}
+
+function playBossCutscene(profile) {
+  const cs = document.createElement('div');
+  cs.className = 'boss-cutscene';
+  // Try sprite first, fall back to emoji
+  const spritePath = profile.sprite ? `sprites/${profile.sprite}.png` : null;
+  cs.innerHTML = `
+    <div class="boss-portrait">${spritePath
+      ? `<img class="sprite-img" src="${spritePath}" alt="" style="width:200px;height:200px;" onerror="this.outerHTML='${profile.emoji}'">`
+      : profile.emoji}</div>
+    <div class="boss-name">${profile.name}</div>
+    <div class="boss-subtitle">${profile.subtitle}</div>
+    <div class="boss-flavor">${profile.flavor}</div>`;
+  document.body.appendChild(cs);
+  setTimeout(() => cs.remove(), 1550);
+}
+
+// ─── Achievement system ───────────────────────────────────────────────────
+const ACH_KEY = 'hangul-battle-achievements-v1';
+const ACHIEVEMENTS = [
+  { id: 'first_kill',      ico: '🗡️', title: 'First Blood',          desc: 'Defeat your first demon.' },
+  { id: 'combo_25',        ico: '🔥', title: '25 Combo',              desc: 'Reach a 25× combo.' },
+  { id: 'combo_50',        ico: '⚡', title: '50 Combo',              desc: 'Reach a 50× combo.' },
+  { id: 'combo_100',       ico: '💥', title: '한글 Master · 100 Combo', desc: 'Reach a 100× combo.' },
+  { id: 'first_boss',      ico: '🐉', title: 'Boss Slayer',           desc: 'Defeat your first boss.' },
+  { id: 'first_special',   ico: '✨', title: '필살기 First Use',       desc: 'Unleash your special move.' },
+  { id: 'special_combo',   ico: '🌸', title: 'Sakura Storm',          desc: 'Clear 6+ demons with one 필살기.' },
+  { id: 'reach_lv10',      ico: '🥷', title: 'Hwarang Apprentice',    desc: 'Reach level 10.' },
+  { id: 'reach_lv20',      ico: '🐲', title: 'Hwarang Master',        desc: 'Reach level 20.' },
+  { id: 'perfect_wave',    ico: '🏯', title: 'Perfect Wave',          desc: 'Clear a level with no missed keystroke.' },
+  { id: 'no_damage_lv5',   ico: '🛡️', title: 'Untouchable',           desc: 'Reach level 5 without losing a life.' },
+  { id: 'shield_save',     ico: '✨', title: 'Saved by the Talisman',  desc: 'Block a hit with the shield power-up.' }
+];
+
+function loadAchievements() {
+  if (state.unlockedAchievements) return state.unlockedAchievements;
+  try {
+    const raw = localStorage.getItem(ACH_KEY);
+    state.unlockedAchievements = raw ? JSON.parse(raw) : {};
+  } catch (e) { state.unlockedAchievements = {}; }
+  return state.unlockedAchievements;
+}
+function saveAchievements() {
+  try { localStorage.setItem(ACH_KEY, JSON.stringify(state.unlockedAchievements || {})); } catch (e) {}
+}
+
+function unlockAchievement(id) {
+  const def = ACHIEVEMENTS.find(a => a.id === id);
+  if (!def) return;
+  const owned = loadAchievements();
+  if (owned[id]) return;
+  owned[id] = { unlockedAt: new Date().toISOString() };
+  saveAchievements();
+  showAchievementToast(def);
+}
+
+function showAchievementToast(def) {
+  const el = document.createElement('div');
+  el.className = 'achievement-toast';
+  el.innerHTML = `
+    <div class="ach-icon">${def.ico}</div>
+    <div class="ach-meta">
+      <div class="ach-eyebrow">Achievement</div>
+      <div class="ach-title">${def.title}</div>
+      <div class="ach-desc">${def.desc}</div>
+    </div>`;
+  document.body.appendChild(el);
+  // Fanfare
+  [880, 1320, 1760].forEach((f, i) => setTimeout(() => tone({ freq:f, type:'triangle', dur:0.16, gain:0.05 }), i * 80));
+  setTimeout(() => el.remove(), 4600);
+}
+
+function renderAchievementGrid() {
+  const grid = document.getElementById('achGrid'); if (!grid) return;
+  const owned = loadAchievements();
+  grid.innerHTML = ACHIEVEMENTS.map(a => {
+    const has = !!owned[a.id];
+    return `<div class="ach-card ${has ? 'unlocked' : 'locked'}">
+      <div class="ach-card-ico">${has ? a.ico : '🔒'}</div>
+      <div class="ach-card-meta">
+        <div class="ach-card-title">${a.title}</div>
+        <div class="ach-card-desc">${a.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function damagePlayer() {
+  // Shield power-up consumes the hit instead.
+  if (state.activePowerups && state.activePowerups.shield) {
+    state.activePowerups.shield = 0;
+    PLAYER_EL.classList.remove('shielded');
+    flashCenterText('SHIELDED');
+    tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.06, slide: 660 });
+    unlockAchievement('shield_save');
+    renderPowerupHud();
+    return;
+  }
   state.lives--;
+  state.perfectWave = false;
   PLAYER_EL.classList.remove('hit');
   void PLAYER_EL.offsetWidth;
   PLAYER_EL.classList.add('hit');
@@ -2300,6 +3332,7 @@ function damagePlayer() {
 
 function gameOver() {
   state.running = false;
+  cancelAllSpeech();
   sfxGameOver();
   const high = getHighScore();
   const newHigh = state.score > high;
@@ -2370,6 +3403,10 @@ function handleKey(rawKey, isShift) {
     state.lockPosKs = 0;
     state.ime.reset();
     target.el.classList.add('locked');
+    teleportPlayerTo(target.x, target.y);
+    // Pronunciation cue — fires on lock so the user hears the word as they
+    // engage it. Speech rate scales with state.level; overlapping is fine.
+    speakKoreanWord(target.word);
   }
   const m = state.monsters.find(x => x.id === state.lockId);
   if (!m) { state.lockId = null; return; }
@@ -2406,11 +3443,15 @@ function advanceLock(m) {
   // Repaint each syllable canvas based on the new lock position. No more "disappearing" syllables.
   if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
   LIVE_EL.textContent = state.ime.display;
-  fireProjectile(m.x, m.y + 30);
+  swingSword(m);
   sfxShoot();
   if (state.combo === 5 || state.combo === 10 || state.combo === 25 || state.combo === 50 || state.combo === 100) {
     flashCenterText(state.combo + '× combo');
   }
+  if (state.combo === 25)  unlockAchievement('combo_25');
+  if (state.combo === 50)  unlockAchievement('combo_50');
+  if (state.combo === 100) unlockAchievement('combo_100');
+  gainSpecialChargeFromCombo();
   if (state.lockPosKs >= state.lockExpectedKs.length) {
     killMonster(m, true);
   }
@@ -2420,6 +3461,8 @@ function advanceLock(m) {
 function breakCombo() {
   const wasCombo = state.combo;
   if (state.combo > 0) { state.combo = 0; updateHud(); }
+  // Wrong key in this wave — perfect-wave achievement is no longer possible.
+  state.perfectWave = false;
   // Visceral break feedback when losing a meaningful combo
   if (wasCombo >= 10) {
     flashCenterText('COMBO BROKEN');
@@ -2438,6 +3481,7 @@ function escapeLock() {
   state.lockExpectedKs = [];
   state.ime.reset();
   LIVE_EL.textContent = '';
+  teleportPlayerHome(true);
 }
 
 document.addEventListener('keydown', (e) => {
@@ -2460,7 +3504,8 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'Escape') {
     if (state.running) {
-      // If currently locked on a monster, release; otherwise pause.
+      // If chanting, cancel the chant. Otherwise release lock or pause.
+      if (chantActive()) { e.preventDefault(); exitChantMode(false); return; }
       if (state.lockId != null) escapeLock();
       else togglePause();
     }
@@ -2468,7 +3513,19 @@ document.addEventListener('keydown', (e) => {
   }
   // ` (backtick) toggles pause as a non-typing alternative to the Pause button
   if (e.key === '`') { if (state.running) togglePause(); return; }
+  // Tab — enter chant mode for 필살기 (special move).
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    if (state.running && !state.paused) startChantMode();
+    return;
+  }
   // Note: P/p are intentionally NOT bound — they're typing keys (Shift+P → ㅖ in Dubeolsik)
+  // Chant mode intercepts typing first.
+  if (chantActive()) {
+    if (e.key === ' ') { e.preventDefault(); return; }
+    if (e.key && e.key.length === 1) { e.preventDefault(); feedChantKey(e.key, e.shiftKey); }
+    return;
+  }
   if (e.key === ' ') { e.preventDefault(); handleKey(' ', false); return; }
   if (e.key && e.key.length === 1) { e.preventDefault(); handleKey(e.key, e.shiftKey); }
 });
@@ -2485,6 +3542,10 @@ function loop(t) {
   lastT = t;
 
   if (!state.paused) {
+    // Decay power-up timers + drop expirations
+    tickPowerups(dt);
+    // Slow-mo applies only to MONSTER motion, not the spawner / HUD / typing.
+    const slowMul = (state.activePowerups && state.activePowerups.slowmo > 0) ? 0.55 : 1.0;
     state.spawnTimer += dt;
     const cap = state.level >= 13 ? 6 : state.level >= 7 ? 5 : state.level >= 4 ? 4 : 3;
     if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap) {
@@ -2496,7 +3557,7 @@ function loop(t) {
     const stageRect = STAGE.getBoundingClientRect();
     const playerY = (playerRect.top + playerRect.height / 2) - stageRect.top;
 
-    const dts = dt / 1000;
+    const dts = (dt / 1000) * slowMul;
     for (const m of state.monsters) {
       // Per-tier flight pattern
       if (m.motion === 'zigzag') {
@@ -2504,7 +3565,7 @@ function loop(t) {
         m.zigT += dts;
         m.x = m.originX + Math.sin(m.zigT * m.zigFreq) * m.zigAmp;
       } else if (m.motion === 'dive') {
-        m.diveSpeed += 30 * dts;       // gravity-like accel
+        m.diveSpeed += 16 * dts;       // gentler gravity-like accel (was 30)
         m.y += m.diveSpeed * dts;
       } else if (m.motion === 'tracker') {
         m.y += m.speed * dts;
@@ -2542,6 +3603,7 @@ function loop(t) {
         if (state.lockId === m.id) {
           state.lockId = null; state.lockPosKs = 0; state.lockExpectedKs = [];
           state.ime.reset(); LIVE_EL.textContent = '';
+          teleportPlayerHome(true);
         }
       }
     }
@@ -2654,18 +3716,39 @@ function doStartGame() {
   state.spawnTimer = 0; state.spawnInterval = 1400;
   state.bossActive = false; state.bossNextLevel = 5;
   state.lockId = null; state.ime.reset();
+  // Reset ninja state
+  teleportPlayerHome(true);
+  // Reset 필살기 + power-ups
+  state.specialCharges = 0;
+  state.specialMoveBurst = false;
+  cancelAllSpeech();
+  state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
+  PLAYER_EL.classList.remove('shielded');
+  (state.powerups || []).forEach(p => p.el && p.el.remove());
+  state.powerups = [];
+  state.kills = 0;
+  state.bestCombo = 0;
+  state.lastWaveLevel = 1;
   renderPlayerSprite(1);
   LIVE_EL.textContent = '';
   document.getElementById('introModal').style.display = 'none';
   document.getElementById('gameOverModal').style.display = 'none';
   updateHud();
+  if (typeof renderSpecialMeter === 'function') renderSpecialMeter();
+  if (typeof renderPowerupHud === 'function') renderPowerupHud();
   lastT = 0;
   requestAnimationFrame(loop);
   ac().resume && ac().resume();
 }
 
 function togglePause() {
+  // Mid-chant pause would orphan the chant RAF (it polls performance.now and
+  // would silently expire while paused), so always cancel chant on pause.
+  if (chantActive()) exitChantMode(false);
   state.paused = !state.paused;
+  // Stop any in-flight Korean pronunciation when pausing — voices keep
+  // talking past pause otherwise, which feels broken.
+  if (state.paused) cancelAllSpeech();
   document.getElementById('pauseOverlay').style.display = state.paused ? 'flex' : 'none';
   document.getElementById('btnMenu').textContent = state.paused ? '▶ Resume' : '⏸ Pause';
 }
@@ -2677,11 +3760,25 @@ document.getElementById('btnReplayStory').addEventListener('click', () => {
   showStory();
 });
 document.getElementById('btnEditProfile').addEventListener('click', openProfileModal);
+document.getElementById('btnAchievements').addEventListener('click', () => {
+  renderAchievementGrid();
+  document.getElementById('achievementsModal').style.display = 'flex';
+});
+document.getElementById('btnAchClose').addEventListener('click', () => {
+  document.getElementById('achievementsModal').style.display = 'none';
+});
+document.getElementById('achievementsModal').addEventListener('click', (e) => {
+  if (e.target.id === 'achievementsModal') {
+    document.getElementById('achievementsModal').style.display = 'none';
+  }
+});
 document.getElementById('storyDialog').addEventListener('click', advanceStory);
 document.getElementById('btnRetry').addEventListener('click', startGame);
 document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html');
 document.getElementById('btnBack').addEventListener('click', () => location.href = 'index.html');
 document.getElementById('btnMenu').addEventListener('click', () => state.running && togglePause());
+document.getElementById('btnAudio').addEventListener('click', toggleAudio);
+renderAudioToggle();
 
 document.getElementById('introHigh').textContent = getHighScore().toLocaleString();
 document.getElementById('introBest').textContent = getHighScore() ? Math.floor(getHighScore() / 200) : 0;
