@@ -433,11 +433,17 @@
     pointer-events: none;
   }
   .monster .sprite {
+    /* block-level so the inner <img> doesn't sit on the text baseline and
+       overflow above the monster's top edge — that overflow was being
+       clipped by .stage's overflow:hidden whenever a monster spawned near
+       the top of the play area, leaving sprites looking decapitated. */
+    display: block;
     font-size: 56px;
     line-height: 1;
     filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.15));
     animation: bob 1.8s ease-in-out infinite;
   }
+  .monster .sprite .sprite-img { display: block; }
   @keyframes bob {
     0%, 100% { transform: translateY(0) rotate(-2deg); }
     50%      { transform: translateY(-5px) rotate(2deg); }
