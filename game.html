@@ -1720,6 +1720,64 @@
   .audio-toggle:hover { background: var(--l3); border-color: var(--bdhi); }
   .audio-toggle.muted { color: var(--tlo); opacity: 0.7; }
 
+  /* Recall-mode monster — first syllable visible, rest blank.
+     Player reads the English meaning and recalls the Korean spelling.
+     If they hesitate, syllables fade in one at a time as a hint. */
+  .monster .word.recall {
+    border-color: var(--purple);
+    background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+  }
+  .monster .word.recall::before { border-bottom-color: var(--purple); }
+  .monster.locked .word.recall {
+    border-color: var(--orange);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+  }
+  .recall-en {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 0.04em;
+    text-align: center;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .recall-badge {
+    position: absolute;
+    top: -10px; right: -8px;
+    background: var(--purple);
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .syl-hidden {
+    display: inline-block;
+    min-width: 22px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--tlo);
+    line-height: 1;
+    vertical-align: bottom;
+    margin: 0 2px 8px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--tlo);
+  }
+  .syl-fade-in {
+    animation: syl-fade 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes syl-fade {
+    0%   { opacity: 0; transform: scale(0.5) translateY(-6px); filter: blur(2px); }
+    100% { opacity: 1; transform: scale(1) translateY(0);    filter: blur(0); }
+  }
+
   /* Heart-pickup monster — distinct golden glow so the player notices it */
   .monster.heart .sprite {
     font-size: 56px;
@@ -2263,6 +2321,13 @@ function repaintWordRow(syllables, lockPos) {
       continue;
     }
     if (!syl.cached) continue;
+    // Recall mode: player has typed into this hidden syllable's range —
+    // reveal it on demand so they can see their progress.
+    if (syl.hidden && lockPos > syl.kStart && syl.placeholderEl && syl.cached.canvas) {
+      syl.placeholderEl.parentNode.replaceChild(syl.cached.canvas, syl.placeholderEl);
+      syl.placeholderEl = null;
+      syl.hidden = false;
+    }
     paintSyllable(syl.cached, {
       initial: positionsStateAt(syl.iPos, lockPos),
       medial:  positionsStateAt(syl.mPos, lockPos),
@@ -3111,10 +3176,15 @@ function spawnMonster(forceBoss) {
   const beh = behaviorForTier(tier);
   const baseSpeed = (12 + state.level * 0.9 + (Number(tier) || 1) * 1.0) * beh.speedMul;
   const startX = Math.random() * (window.innerWidth - 200) + 100;
+  // Recall mode: from lv 12 on, ~30% of multi-syllable words spawn with the
+  // remaining syllables hidden — player reads English and recalls Korean.
+  // These move slightly slower so the recall has time to surface.
+  const syllableCount = (word.ko.match(/[가-힣]/g) || []).length;
+  const recall = state.level >= 12 && syllableCount >= 2 && Math.random() < 0.30;
   const monster = {
     id, sprite, spriteFile, word: word.ko, en: word.en, tier,
     ks, hp: ks.length, maxHp: ks.length,
-    speed: baseSpeed,
+    speed: recall ? baseSpeed * 0.75 : baseSpeed,
     motion: beh.motion,
     x: startX,
     originX: startX,
@@ -3125,7 +3195,9 @@ function spawnMonster(forceBoss) {
     zigFreq: 1.6 + Math.random() * 1.2,
     diveSpeed: baseSpeed,
     tpT: 0, tpHoldUntil: 600,
-    isBoss: false, el: null
+    isBoss: false, recall, el: null,
+    // First reveal in 3.5s, subsequent reveals every 2.2s
+    recallNextRevealAt: recall ? performance.now() + 3500 : 0
   };
   buildMonsterEl(monster);
   state.monsters.push(monster);
@@ -3189,6 +3261,35 @@ function buildMonsterEl(m) {
   wordBubble.className = 'word';
   const fontPx = m.tier === 'boss' ? 22 : 28;
   const built = buildWordRow(m.word, fontPx);
+
+  // Recall mode: hide all syllables after the first; show English up top.
+  // The player reads the English, recalls the Korean spelling, and types it.
+  // Hidden syllables fade in one at a time on a timer (set in spawnMonster).
+  if (m.recall) {
+    wordBubble.classList.add('recall');
+    const enLabel = document.createElement('div');
+    enLabel.className = 'recall-en';
+    enLabel.textContent = m.en || '';
+    wordBubble.appendChild(enLabel);
+    const badge = document.createElement('span');
+    badge.className = 'recall-badge';
+    badge.textContent = 'recall';
+    wordBubble.appendChild(badge);
+    let firstHangulSeen = false;
+    for (const syl of built.syllables) {
+      if (syl.isSpace) continue;
+      if (!firstHangulSeen) { firstHangulSeen = true; continue; }
+      // Replace this syllable's canvas with a placeholder _
+      syl.hidden = true;
+      if (syl.cached && syl.cached.canvas && syl.cached.canvas.parentNode) {
+        const ph = document.createElement('span');
+        ph.className = 'syl-hidden';
+        ph.textContent = '_';
+        syl.cached.canvas.parentNode.replaceChild(ph, syl.cached.canvas);
+        syl.placeholderEl = ph;
+      }
+    }
+  }
   wordBubble.appendChild(built.wrapper);
   el.appendChild(wordBubble);
   m.syllables = built.syllables;
@@ -4102,6 +4203,34 @@ function tickPowerups(dt) {
   }
 }
 
+// Recall mode: progressively fade in hidden syllables as a hint. Stops once
+// the monster is locked (player has committed) so reveals don't make it free.
+function tickRecallReveals(now) {
+  for (const m of state.monsters) {
+    if (!m.recall || !m.recallNextRevealAt) continue;
+    if (state.lockId === m.id) continue;       // freeze hints once engaged
+    if (now < m.recallNextRevealAt) continue;
+    const next = m.syllables && m.syllables.find(s => s.hidden);
+    if (!next) { m.recallNextRevealAt = 0; continue; }
+    next.hidden = false;
+    if (next.placeholderEl && next.cached && next.cached.canvas) {
+      // Restore the canvas in the placeholder's slot, repaint, fade in.
+      next.placeholderEl.parentNode.replaceChild(next.cached.canvas, next.placeholderEl);
+      next.placeholderEl = null;
+      paintSyllable(next.cached, {
+        initial: positionsStateAt(next.iPos, state.lockId === m.id ? state.lockPosKs : 0),
+        medial:  positionsStateAt(next.mPos, state.lockId === m.id ? state.lockPosKs : 0),
+        final:   next.fPos.length ? positionsStateAt(next.fPos, state.lockId === m.id ? state.lockPosKs : 0) : 'pending'
+      });
+      next.cached.canvas.classList.remove('syl-fade-in');
+      void next.cached.canvas.offsetWidth;
+      next.cached.canvas.classList.add('syl-fade-in');
+      tone({ freq: 920, type:'sine', dur:0.06, gain:0.025 });
+    }
+    m.recallNextRevealAt = now + 2200;          // next hint in 2.2s
+  }
+}
+
 function renderPowerupHud() {
   const hud = POWERUP_HUD_EL(); if (!hud) return;
   const a = state.activePowerups || {};
@@ -4492,6 +4621,8 @@ function loop(t) {
   if (!state.paused && !state.specialMoveActive) {
     // Decay power-up timers + drop expirations
     tickPowerups(dt);
+    // Progressive recall hints (fade hidden syllables in over time)
+    tickRecallReveals(t);
     // Slow-mo applies only to MONSTER motion, not the spawner / HUD / typing.
     const slowMul = (state.activePowerups && state.activePowerups.slowmo > 0) ? 0.55 : 1.0;
     // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
