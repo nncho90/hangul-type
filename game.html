@@ -26,15 +26,19 @@
     -webkit-user-select: none;
   }
 
-  /* Soft gradient backdrop with floating accent blobs */
+  /* Soft gradient backdrop — base layer. Theme classes on body recolor it. */
   .backdrop {
     position: fixed; inset: 0;
-    background:
-      radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.07), transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.06), transparent 50%),
-      radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.05), transparent 50%),
-      var(--bg);
+    background: var(--bg);
     z-index: 0;
+    transition: background 1.6s ease;
+  }
+  .backdrop::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center bottom;
+    transition: opacity 1.2s ease;
   }
   .backdrop::after {
     content: '';
@@ -48,30 +52,252 @@
     background-size: 100% 100%;
     animation: drift 30s linear infinite;
   }
-  @keyframes drift {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-20px); }
+
+  /* ── Korean-coded level themes ────────────────────────────────────────── */
+  /* Each level band evokes a different setting in Korean folklore. The
+     gradient is on .backdrop; foreground decoration (silhouette) is on
+     .backdrop::before; particle drift on ::after stays universal. */
+
+  /* lv 1-4 — 마을 (Village): cherry-blossom dawn, hanok rooftops */
+  body.theme-village .backdrop {
+    background: linear-gradient(180deg, #fff1f7 0%, #fde2e9 30%, #fbcfe8 60%, #f9a8d4 100%);
+  }
+  body.theme-village .backdrop::before {
+    background:
+      /* Hanok rooftop silhouette */
+      linear-gradient(180deg, transparent 78%, rgba(120, 53, 15, 0.55) 78%, rgba(75, 32, 9, 0.85) 100%),
+      /* Sun */
+      radial-gradient(circle 80px at 50% 30%, rgba(255, 230, 200, 0.5), transparent 65%);
+    /* Subtle hanok ridges using repeating gradient (curved roof feel) */
+    box-shadow: inset 0 -90px 60px rgba(75, 32, 9, 0.15);
   }
 
-  /* HUD */
+  /* lv 5-8 — 대숲 (Bamboo Forest): jade green, vertical bamboo, mist */
+  body.theme-forest .backdrop {
+    background: linear-gradient(180deg, #d1fae5 0%, #6ee7b7 30%, #10b981 70%, #047857 100%);
+  }
+  body.theme-forest .backdrop::before {
+    background:
+      /* Vertical bamboo stripes — semi-transparent green columns */
+      repeating-linear-gradient(90deg,
+        transparent 0px, transparent 80px,
+        rgba(6, 78, 59, 0.18) 80px, rgba(6, 78, 59, 0.18) 92px,
+        transparent 92px, transparent 100px),
+      /* Mist near bottom */
+      linear-gradient(180deg, transparent 60%, rgba(255, 255, 255, 0.35) 100%);
+  }
+
+  /* lv 9-13 — 산사 (Mountain Shrine): indigo dusk, peaks, paper lanterns */
+  body.theme-shrine .backdrop {
+    background: linear-gradient(180deg, #1e1b4b 0%, #4338ca 25%, #7c3aed 60%, #c026d3 100%);
+  }
+  body.theme-shrine .backdrop::before {
+    background:
+      /* Mountain ridges (jagged) */
+      linear-gradient(180deg, transparent 65%, rgba(15, 23, 42, 0.7) 65%, rgba(15, 23, 42, 0.85) 80%, rgba(15, 23, 42, 0.95) 100%),
+      /* Distant moon */
+      radial-gradient(circle 60px at 80% 18%, rgba(254, 240, 138, 0.7), rgba(254, 240, 138, 0) 70%);
+    clip-path: polygon(
+      0% 100%, 0% 70%, 8% 60%, 14% 68%, 22% 55%, 30% 65%, 38% 50%,
+      46% 62%, 54% 52%, 62% 64%, 70% 55%, 78% 66%, 86% 58%, 94% 62%,
+      100% 70%, 100% 100%);
+  }
+
+  /* lv 14-18 — 사찰 (Buddhist Temple): red/gold 단청 dancheong, painted eaves */
+  body.theme-temple .backdrop {
+    background: linear-gradient(180deg, #7c2d12 0%, #b91c1c 25%, #dc2626 55%, #f59e0b 100%);
+  }
+  body.theme-temple .backdrop::before {
+    background:
+      /* Pagoda silhouette */
+      linear-gradient(180deg, transparent 70%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.6) 100%),
+      /* Dancheong stripes — alternating red/teal/yellow at top */
+      repeating-linear-gradient(0deg,
+        transparent 0px, transparent 6px,
+        rgba(254, 240, 138, 0.18) 6px, rgba(254, 240, 138, 0.18) 9px,
+        transparent 9px, transparent 18px,
+        rgba(20, 184, 166, 0.22) 18px, rgba(20, 184, 166, 0.22) 21px,
+        transparent 21px, transparent 30px);
+  }
+
+  /* lv 19-22 — 궁궐 (Royal Palace): regal blue/jade, Gyeongbokgung */
+  body.theme-palace .backdrop {
+    background: linear-gradient(180deg, #0c4a6e 0%, #0369a1 30%, #0891b2 65%, #06b6d4 100%);
+  }
+  body.theme-palace .backdrop::before {
+    background:
+      /* Palace silhouette — multi-tier */
+      linear-gradient(180deg, transparent 60%, rgba(7, 50, 70, 0.7) 60%, rgba(7, 50, 70, 0.85) 100%),
+      /* Lantern dots */
+      radial-gradient(circle 5px at 22% 78%, rgba(254, 240, 138, 0.95), transparent),
+      radial-gradient(circle 5px at 38% 76%, rgba(254, 240, 138, 0.95), transparent),
+      radial-gradient(circle 5px at 50% 75%, rgba(254, 240, 138, 0.95), transparent),
+      radial-gradient(circle 5px at 62% 76%, rgba(254, 240, 138, 0.95), transparent),
+      radial-gradient(circle 5px at 78% 78%, rgba(254, 240, 138, 0.95), transparent);
+  }
+
+  /* lv 23+ — 별나라 (Cosmos): deep night, constellations, nebula */
+  body.theme-cosmos .backdrop {
+    background: radial-gradient(ellipse at 50% 30%, #312e81 0%, #1e1b4b 40%, #0f0c29 80%, #000 100%);
+  }
+  body.theme-cosmos .backdrop::before {
+    background:
+      /* Bright stars */
+      radial-gradient(circle 1.5px at 12% 18%, rgba(255,255,255,1), transparent 70%),
+      radial-gradient(circle 1.5px at 28% 32%, rgba(255,255,255,1), transparent 70%),
+      radial-gradient(circle 2px at 41% 14%, rgba(254, 240, 138, 1), transparent 60%),
+      radial-gradient(circle 1.5px at 56% 24%, rgba(255,255,255,1), transparent 70%),
+      radial-gradient(circle 1.5px at 72% 18%, rgba(255,255,255,1), transparent 70%),
+      radial-gradient(circle 2px at 84% 38%, rgba(254, 240, 138, 1), transparent 60%),
+      radial-gradient(circle 1.5px at 18% 56%, rgba(255,255,255,1), transparent 70%),
+      radial-gradient(circle 1.5px at 36% 64%, rgba(255,255,255,1), transparent 70%),
+      radial-gradient(circle 1.5px at 60% 58%, rgba(255,255,255,1), transparent 70%),
+      radial-gradient(circle 1.5px at 88% 70%, rgba(255,255,255,1), transparent 70%),
+      /* Nebula */
+      radial-gradient(ellipse 240px 180px at 30% 70%, rgba(139, 92, 246, 0.25), transparent 65%),
+      radial-gradient(ellipse 200px 140px at 75% 45%, rgba(236, 72, 153, 0.2), transparent 65%);
+  }
+
+  /* Act-break overlay (chapter transition card) */
+  .act-break {
+    position: fixed; inset: 0;
+    z-index: 450;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95));
+    animation: act-fade 0.5s ease forwards;
+    cursor: pointer;
+    padding: 28px;
+  }
+  @keyframes act-fade {
+    0%   { opacity: 0; backdrop-filter: blur(0); }
+    100% { opacity: 1; backdrop-filter: blur(8px); }
+  }
+  .act-break .act-card {
+    text-align: center;
+    max-width: 580px;
+    animation: act-slide 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes act-slide {
+    0%   { opacity: 0; transform: translateY(40px) scale(0.85); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .act-break .act-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fde68a;
+    text-transform: uppercase;
+    letter-spacing: 0.4em;
+    margin-bottom: 16px;
+  }
+  .act-break .act-title {
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-size: 88px;
+    color: #fef9c3;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    margin-bottom: 12px;
+    text-shadow: 0 4px 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(220, 38, 38, 0.4);
+  }
+  .act-break .act-subtitle {
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-size: 24px;
+    color: #fef3c7;
+    letter-spacing: 0.04em;
+    margin-bottom: 18px;
+  }
+  .act-break .act-flavor {
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-size: 15px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-bottom: 26px;
+    max-width: 480px;
+    margin-left: auto; margin-right: auto;
+  }
+  .act-break .act-prompt {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    animation: prompt-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes prompt-pulse {
+    0%, 100% { opacity: 0.45; }
+    50%      { opacity: 1; }
+  }
+  /* World scrolls DOWNWARD past the still character — selling the illusion
+     that the player is walking forward into the scene. The pattern repeats
+     so the loop is seamless. */
+  @keyframes drift {
+    0%   { transform: translateY(-100%); }
+    100% { transform: translateY(0); }
+  }
+  .backdrop::after {
+    background-repeat: repeat;
+    background-size: 400px 400px;
+    /* Override the static slow drift with a faster scroll */
+    animation: drift 8s linear infinite !important;
+    height: 200%;
+    top: -100%;
+  }
+
+  /* HUD — pinned to bottom on desktop so monsters get the full vertical
+     fall distance; mobile keeps it at top (override below) because the
+     on-screen keyboard already occupies the bottom of the viewport. */
   .hud {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    bottom: 0; left: 0; right: 0;
     z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px;
     background: var(--l1);
-    border-bottom: 1px solid var(--bd);
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    border-top: 1px solid var(--bd);
+    box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.04);
   }
   .hud-left, .hud-right { display: flex; align-items: center; gap: 18px; }
+  /* HUD center now hosts the typing readout (replaces the old "한글 BATTLE"
+     title and the bottom typing strip — single bar instead of two). */
   .hud-center {
-    font-family: 'Black Han Sans', sans-serif;
+    flex: 1;
+    margin: 0 24px;
+    height: 36px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 18px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    font-family: 'Noto Sans KR', 'Inter', sans-serif;
+    min-width: 240px;
+    overflow: hidden;
+  }
+  .hud-center .type-prompt {
+    font-size: 12px;
+    color: var(--tlo);
+    font-weight: 700;
+  }
+  .hud-center .live {
     font-size: 22px;
-    color: var(--thi);
-    letter-spacing: 0.04em;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: 1px;
+    line-height: 1;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hud-center .ime-cursor {
+    display: inline-block;
+    width: 2px; height: 22px;
+    background: var(--blue);
+    vertical-align: middle;
+    animation: blink 0.9s steps(2) infinite;
   }
   .stat {
     display: flex; flex-direction: column;
@@ -116,10 +342,10 @@
   }
   .menu-btn:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
 
-  /* XP bar */
+  /* XP bar — sits just above the HUD on desktop. */
   .xpbar {
     position: fixed;
-    top: 64px; left: 0; right: 0;
+    bottom: 68px; left: 0; right: 0;
     height: 4px;
     background: var(--l3);
     z-index: 99;
@@ -133,10 +359,11 @@
     transition: width 0.3s;
   }
 
-  /* Stage */
+  /* Stage — fills the viewport below the single HUD bar. Typing strip is
+     gone; the typing display lives inside .hud-center now. */
   .stage {
     position: fixed;
-    inset: 68px 0 88px 0;
+    inset: 68px 0 0 0;
     z-index: 50;
     overflow: hidden;
   }
@@ -151,7 +378,7 @@
     line-height: 1;
     z-index: 60;
     filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.15));
-    animation: breathe 2.6s ease-in-out infinite;
+    animation: breathe 0.7s ease-in-out infinite;
     transition: filter 0.4s, transform 0.2s;
     display: inline-flex;
     align-items: flex-end;
@@ -170,9 +397,15 @@
     0%, 100% { transform: rotate(-12deg) translateY(0); }
     50%      { transform: rotate(-8deg) translateY(-3px); }
   }
+  /* Walking-in-place — Pokémon-style. The world scrolls; the character is
+     animated to look like they're stepping forward. 4-step cycle so the legs
+     "alternate" via the rocking motion. */
   @keyframes breathe {
-    0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
-    50%      { transform: translateX(-50%) translateY(-6px) scale(1.02); }
+    0%   { transform: translateX(-50%) translateY(0)    rotate(-1.5deg); }
+    25%  { transform: translateX(-49%) translateY(-3px) rotate(0deg); }
+    50%  { transform: translateX(-50%) translateY(0)    rotate(1.5deg); }
+    75%  { transform: translateX(-51%) translateY(-3px) rotate(0deg); }
+    100% { transform: translateX(-50%) translateY(0)    rotate(-1.5deg); }
   }
   .player.hit { animation: shake 0.4s; filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.6)); }
   @keyframes shake {
@@ -327,6 +560,40 @@
   }
   .monster.boss .hp-bar { width: 280px; height: 8px; }
 
+  /* Ranged projectile (lv 9+ — mage/ninja/dragon era when player abandons melee) */
+  .projectile {
+    position: absolute;
+    width: 12px; height: 12px;
+    background: var(--blue);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.7);
+    z-index: 55;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+  .projectile.glyph {
+    width: auto; height: auto;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    line-height: 1;
+    font-weight: 900;
+    filter: drop-shadow(0 0 10px currentColor);
+  }
+  .trail-particle {
+    position: absolute;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    z-index: 54;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: trail-fade 320ms ease-out forwards;
+  }
+  @keyframes trail-fade {
+    0%   { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0;    transform: translate(-50%, -50%) scale(0.3); }
+  }
+
   /* ── Ninja teleport + sword melee ── */
   .player.teleporting { animation: tp-out 0.10s ease-in forwards; }
   .player.arriving    { animation: tp-in 0.16s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -440,45 +707,8 @@
     100% { opacity: 0; transform: translateX(-50%) scale(1); }
   }
 
-  /* Typing strip */
-  .typing-strip {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 100;
-    background: var(--l1);
-    border-top: 1px solid var(--bd);
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    min-height: 60px;
-    font-family: var(--korean);
-    box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.04);
-  }
-  .typing-strip .live {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--blue);
-    min-width: 40px;
-    letter-spacing: 1px;
-  }
-  .typing-strip .ime-cursor {
-    display: inline-block;
-    width: 2px; height: 26px;
-    background: var(--blue);
-    vertical-align: middle;
-    margin-left: 4px;
-    animation: blink 0.9s steps(2) infinite;
-  }
+  /* Cursor blink — used by the in-HUD typing display */
   @keyframes blink { 50% { opacity: 0; } }
-  .typing-strip .hint {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: var(--tlo);
-    letter-spacing: 0.04em;
-    font-weight: 500;
-  }
 
   /* Modals */
   .modal-veil {
@@ -585,19 +815,6 @@
     color: white;
   }
   .modal-card button.primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: white; }
-
-  .practice-carry {
-    margin-top: 14px;
-    padding: 10px 14px;
-    background: linear-gradient(135deg, #ecfdf5, #f0f9ff);
-    border: 1px solid #6ee7b7;
-    border-radius: 10px;
-    font-size: 13px;
-    color: var(--tmd);
-    display: flex; align-items: center; gap: 8px; justify-content: center;
-  }
-  .practice-carry .ico { font-size: 20px; }
-  .practice-carry strong { color: var(--green); }
 
   .new-high {
     display: inline-block;
@@ -706,7 +923,14 @@
      keyboard, and the keyboard pins to the bottom of the viewport. */
   .battle-kb { display: none; }
   @media (max-width: 720px) {
-    .hud { padding: 8px 10px; }
+    /* Mobile keeps HUD at the top — the on-screen keyboard already pins to the bottom. */
+    .hud {
+      top: 0; bottom: auto;
+      padding: 8px 10px;
+      border-top: none;
+      border-bottom: 1px solid var(--bd);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
     .hud-left, .hud-right { gap: 10px; }
     .hud-center { display: none; }
     .stat-label { font-size: 8px; }
@@ -714,17 +938,17 @@
     .stat-value.combo { min-width: 36px; font-size: 13px; }
     .lives { font-size: 14px; letter-spacing: 2px; }
     .menu-btn { padding: 6px 9px; font-size: 11px; }
-    .xpbar { top: 50px; }
-    .stage { inset: 54px 0 calc(48px + 224px + env(safe-area-inset-bottom)) 0; }
-    .typing-strip {
-      bottom: calc(224px + env(safe-area-inset-bottom));
-      padding: 8px 14px;
-      min-height: 40px;
-      gap: 8px;
+    .xpbar { top: 50px; bottom: auto; }
+    .stage { inset: 54px 0 calc(224px + env(safe-area-inset-bottom)) 0; }
+    .hud-center {
+      margin: 0 8px;
+      height: 30px;
+      padding: 0 10px;
+      min-width: 100px;
+      gap: 6px;
     }
-    .typing-strip .live { font-size: 20px; min-width: 24px; }
-    .typing-strip .ime-cursor { height: 20px; }
-    .typing-strip .hint:last-child { display: none; }
+    .hud-center .live { font-size: 16px; letter-spacing: 0; }
+    .hud-center .ime-cursor { height: 16px; }
     .player { font-size: 56px; bottom: 4%; }
     .player .player-main { font-size: 56px; }
     .player .player-equip { font-size: 24px; }
@@ -745,7 +969,8 @@
     .modal-card .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .modal-card .stat-grid .v { font-size: 18px; }
     .modal-card .actions button { padding: 10px 14px; font-size: 13px; }
-    .battle-lb-row { grid-template-columns: 28px 22px 1fr 44px 70px; padding: 6px 10px; font-size: 12px; }
+    .battle-lb-row { grid-template-columns: 40px 22px 1fr 44px 70px; padding: 6px 10px; font-size: 12px; }
+    .battle-lb-list { max-height: 260px; }
 
     /* Battle on-screen keyboard */
     .battle-kb {
@@ -884,10 +1109,12 @@
   .battle-lb-header .title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tmd); }
   .battle-lb-header .meta { font-size: 11px; color: var(--tlo); font-family: 'JetBrains Mono', monospace; }
   .battle-lb-header .meta strong { color: var(--thi); }
-  .battle-lb-list { display: flex; flex-direction: column; }
-  .battle-lb-row { display: grid; grid-template-columns: 32px 24px 1fr 52px 92px; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; }
+  .battle-lb-list { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; }
+  .battle-lb-row { display: grid; grid-template-columns: 44px 24px 1fr 52px 92px; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; }
   .battle-lb-row:last-child { border-bottom: none; }
-  .battle-lb-row.you { background: rgba(37,99,235,0.06); font-weight: 600; }
+  .battle-lb-row.you { background: rgba(37,99,235,0.06); font-weight: 600; cursor: pointer; }
+  .battle-lb-row.you.below { border-top: 2px solid var(--bdhi); background: rgba(37,99,235,0.10); }
+  .battle-lb-empty { padding: 18px 14px; text-align: center; font-size: 12px; color: var(--tlo); }
   .battle-lb-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
   .battle-lb-row .n { color: var(--thi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .battle-lb-row .lv { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--blue); text-align: right; white-space: nowrap; }
@@ -1130,6 +1357,133 @@
     100% { transform: translateY(110vh) rotate(540deg); opacity: 0; }
   }
 
+  /* ── Capcom-vs-Marvel style cinematic 필살기 ──
+     Time-freeze backdrop + sequential light-speed strikes. Layered above the
+     stage but below the english-reveal popup. */
+  .special-freeze {
+    position: fixed; inset: 0;
+    z-index: 290;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(15,23,42,0) 0%, rgba(15,23,42,0.55) 80%);
+    backdrop-filter: saturate(1.4) brightness(0.85) hue-rotate(-12deg);
+    -webkit-backdrop-filter: saturate(1.4) brightness(0.85) hue-rotate(-12deg);
+    animation: freeze-in 180ms ease-out forwards;
+  }
+  .special-freeze.exit { animation: freeze-out 320ms ease-in forwards; }
+  @keyframes freeze-in  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes freeze-out { from { opacity: 1; } to { opacity: 0; } }
+
+  .special-hyperbg {
+    position: fixed; inset: 0;
+    z-index: 295;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(
+        105deg,
+        rgba(244, 114, 182, 0.18) 0 18px,
+        rgba(99, 102, 241, 0.18) 18px 36px,
+        rgba(15, 23, 42, 0.0)    36px 72px
+      ),
+      radial-gradient(ellipse at 50% 60%, rgba(236, 72, 153, 0.30), transparent 60%);
+    mix-blend-mode: screen;
+    animation: hyperbg-slide 1.2s linear infinite;
+  }
+  .special-hyperbg.exit { animation: hyperbg-fade 320ms ease-in forwards; }
+  @keyframes hyperbg-slide {
+    from { background-position: 0 0, 0 0; }
+    to   { background-position: -240px 0, 0 0; }
+  }
+  @keyframes hyperbg-fade { to { opacity: 0; } }
+
+  .special-trail {
+    position: fixed;
+    z-index: 315;
+    pointer-events: none;
+    height: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(254, 240, 138, 0.95) 30%, rgba(254, 249, 195, 1) 60%, rgba(255,255,255,0) 100%);
+    filter: blur(0.5px);
+    box-shadow: 0 0 14px rgba(254, 240, 138, 0.85), 0 0 28px rgba(244, 114, 182, 0.5);
+    transform-origin: 0 50%;
+  }
+  .special-trail.zip { animation: trail-zip 220ms ease-out forwards; }
+  @keyframes trail-zip {
+    0%   { opacity: 0; transform: rotate(var(--ang, 0deg)) scaleX(0.05); }
+    35%  { opacity: 1; transform: rotate(var(--ang, 0deg)) scaleX(1); }
+    100% { opacity: 0; transform: rotate(var(--ang, 0deg)) scaleX(1); }
+  }
+
+  .special-slash {
+    position: fixed;
+    z-index: 316;
+    pointer-events: none;
+    width: 0; height: 0;
+  }
+  .special-slash::before, .special-slash::after {
+    content: '';
+    position: absolute;
+    left: -90px; top: -3px;
+    width: 180px; height: 6px;
+    background: linear-gradient(90deg, transparent, white 40%, white 60%, transparent);
+    box-shadow: 0 0 18px white, 0 0 36px rgba(254, 240, 138, 0.9);
+    transform: rotate(28deg) scaleX(0.2);
+    opacity: 0;
+    animation: slash-flash 280ms ease-out forwards;
+  }
+  .special-slash::after  {
+    transform: rotate(-28deg) scaleX(0.2);
+    animation-delay: 60ms;
+  }
+  @keyframes slash-flash {
+    0%   { opacity: 0; }
+    35%  { opacity: 1; transform: rotate(var(--rot, 28deg)) scaleX(1); }
+    100% { opacity: 0; transform: rotate(var(--rot, 28deg)) scaleX(1.05); }
+  }
+
+  .special-final-flash {
+    position: fixed; inset: 0;
+    z-index: 330;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 60%, rgba(255,255,255,1) 0%, rgba(254, 240, 138, 0.85) 25%, rgba(244, 114, 182, 0.45) 50%, rgba(15, 23, 42, 0) 80%);
+    animation: final-flash 380ms ease-out forwards;
+  }
+  @keyframes final-flash {
+    0%   { opacity: 0; transform: scale(0.5); }
+    20%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.4); }
+  }
+
+  .nuke-kanji.special-kanji {
+    font-size: 200px;
+    letter-spacing: 18px;
+    text-shadow: 0 0 36px rgba(220, 38, 38, 0.85), 0 0 80px rgba(244, 114, 182, 0.7), 0 12px 32px rgba(15, 23, 42, 0.55);
+  }
+
+  /* Hold-Tab fast-fall mode — desktop-only difficulty boost for early levels. */
+  .fast-fall-badge {
+    position: fixed;
+    top: 16px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 9998;
+    background: linear-gradient(135deg, #dc2626, #f59e0b);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.5);
+    pointer-events: none;
+    display: none;
+    animation: fast-fall-pulse 0.55s ease-in-out infinite alternate;
+  }
+  body.fast-fall .fast-fall-badge { display: inline-block; }
+  @keyframes fast-fall-pulse {
+    from { transform: translateX(-50%) scale(1); }
+    to   { transform: translateX(-50%) scale(1.06); }
+  }
+  @media (max-width: 720px) { .fast-fall-badge { display: none !important; } }
+
   /* Power-up drops */
   .powerup {
     position: absolute;
@@ -1315,34 +1669,36 @@
   .ach-card.unlocked { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
   .ach-card.unlocked .ach-card-title { color: #78350f; }
 
-  /* English-translation reveal on kill */
+  /* English-translation reveal on kill — closes the learning loop.
+     Attached to <body> (not .stage) so .stage's overflow:hidden can't clip it
+     when the kill happens near the top of the play area. */
   .english-reveal {
-    position: absolute;
-    z-index: 76;
+    position: fixed;
+    z-index: 9999;
     pointer-events: none;
-    background: rgba(15, 23, 42, 0.88);
-    color: #fef9c3;
-    padding: 5px 13px;
-    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.92);
+    color: #fef08a;
+    padding: 7px 16px;
+    border-radius: 16px;
     font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     white-space: nowrap;
     transform: translate(-50%, -50%);
-    border: 1px solid rgba(254, 240, 138, 0.45);
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.4);
-    animation: english-rise 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    max-width: 320px;
+    border: 1px solid rgba(254, 240, 138, 0.55);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.45);
+    animation: english-rise 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    max-width: min(360px, 92vw);
     overflow: hidden;
     text-overflow: ellipsis;
   }
   @keyframes english-rise {
-    0%   { opacity: 0; transform: translate(-50%, -50%) translateY(0)  scale(0.7); }
-    18%  { opacity: 1; transform: translate(-50%, -50%) translateY(-14px) scale(1.05); }
-    35%  { opacity: 1; transform: translate(-50%, -50%) translateY(-22px) scale(1); }
-    80%  { opacity: 1; transform: translate(-50%, -50%) translateY(-44px) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-72px) scale(0.95); }
+    0%   { opacity: 0; transform: translate(-50%, -50%) translateY(0)    scale(0.6); }
+    14%  { opacity: 1; transform: translate(-50%, -50%) translateY(-18px) scale(1.10); }
+    28%  { opacity: 1; transform: translate(-50%, -50%) translateY(-28px) scale(1); }
+    78%  { opacity: 1; transform: translate(-50%, -50%) translateY(-52px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-84px) scale(0.95); }
   }
 
   /* Audio toggle button */
@@ -1360,6 +1716,52 @@
   .audio-toggle:hover { background: var(--l3); border-color: var(--bdhi); }
   .audio-toggle.muted { color: var(--tlo); opacity: 0.7; }
 
+  /* Heart-pickup monster — distinct golden glow so the player notices it */
+  .monster.heart .sprite {
+    font-size: 56px;
+    filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 8px rgba(254, 240, 138, 0.9));
+    animation: heart-pulse 0.95s ease-in-out infinite;
+  }
+  @keyframes heart-pulse {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-6px) scale(1.12); }
+  }
+  .monster.heart .word {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  }
+  .monster.heart .word::before { border-bottom-color: #f59e0b; }
+  .monster.heart .hp-bar { display: none; }    /* one-and-done — no need for HP */
+  .monster.heart::after {
+    content: '+1 ❤';
+    position: absolute;
+    bottom: -22px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #f59e0b, #dc2626);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+    pointer-events: none;
+  }
+
+  /* Reduced motion: respect user preference. Combat is still playable —
+     we just neutralize all the bobbing, breathing, sakura, etc. so users
+     with vestibular sensitivity don't get motion-sick. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   /* Sprite asset rendering — replaces emoji when img exists */
   .sprite-img {
     display: block;
@@ -1369,11 +1771,44 @@
     user-select: none;
     -webkit-user-drag: none;
   }
-  .player .sprite-img { animation: breathe-img 2.6s ease-in-out infinite; }
-  @keyframes breathe-img {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.04); }
+  /* Player breathes — gentle vertical lift + scale, slight tilt for character */
+  .player .sprite-img {
+    animation: sprite-breathe-player 2.4s ease-in-out infinite;
+    transform-origin: 50% 80%;
   }
+  @keyframes sprite-breathe-player {
+    0%, 100% { transform: translateY(0)    scale(1)    rotate(-1deg); }
+    50%      { transform: translateY(-4px) scale(1.04) rotate(1deg); }
+  }
+  /* Monsters breathe — different timing/amplitude per tier so a screen full
+     of demons doesn't look mechanically synchronized. Animation-delay is
+     randomized per monster via inline style at spawn. */
+  .monster .sprite-img {
+    animation: sprite-breathe-monster 1.8s ease-in-out infinite;
+    transform-origin: 50% 90%;
+  }
+  @keyframes sprite-breathe-monster {
+    0%, 100% { transform: translateY(0)    scale(1)    rotate(-3deg); }
+    25%      { transform: translateY(-5px) scale(1.03) rotate(2deg); }
+    50%      { transform: translateY(-7px) scale(1.05) rotate(-2deg); }
+    75%      { transform: translateY(-4px) scale(1.02) rotate(3deg); }
+  }
+  .monster.tier-1 .sprite-img { animation-duration: 1.6s; }
+  .monster.tier-2 .sprite-img { animation-duration: 1.8s; }
+  .monster.tier-3 .sprite-img { animation-duration: 2.0s; }
+  .monster.tier-4 .sprite-img { animation-duration: 2.2s; }
+  .monster.tier-5 .sprite-img { animation-duration: 1.5s; }
+  .monster.boss .sprite-img {
+    animation: sprite-breathe-boss 1.4s ease-in-out infinite;
+    transform-origin: 50% 90%;
+  }
+  @keyframes sprite-breathe-boss {
+    0%, 100% { transform: translateY(0)    scale(1)    rotate(-2deg); }
+    50%      { transform: translateY(-10px) scale(1.06) rotate(2deg); }
+  }
+  /* When the parent .sprite span has its bob animation, kill it so we don't
+     double-animate (the new breathe-img on the img is richer + per-tier). */
+  .monster .sprite { animation: none; }
 </style>
 </head>
 <body>
@@ -1395,12 +1830,14 @@
       <span class="stat-value lives" id="hudLives">♥♥♥</span>
     </div>
   </div>
-  <div class="hud-center">한글 BATTLE</div>
+  <div class="hud-center" title="Type the Korean word on a monster · Esc releases · type 한글 for 필살기">
+    <span class="type-prompt">▶</span>
+    <span class="live" id="liveOut"></span><span class="ime-cursor"></span>
+  </div>
   <div class="hud-right">
     <div class="powerup-hud" id="powerupHud"></div>
-    <div class="special-meter" id="specialMeter" title="Special move 필살기 — Tab to chant 한글 when charged">
+    <div class="special-meter" id="specialMeter" title="Special move 필살기 — type 한글 anytime when a pip is charged">
       <span class="sm-label">필살</span>
-      <span class="special-pip"></span>
       <span class="special-pip"></span>
       <span class="special-pip"></span>
     </div>
@@ -1419,24 +1856,17 @@
   <div class="player" id="player">🥷</div>
 </div>
 
-<footer class="typing-strip">
-  <span class="hint">▶ Type</span>
-  <span class="live" id="liveOut"></span><span class="ime-cursor"></span>
-  <span class="hint">Type the Korean word on a monster · Esc releases / pauses · ` pauses · <strong>Tab</strong> chant 한글 to unleash 필살기</span>
-</footer>
-
-<input class="shield" id="shield" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<input class="shield" id="shield" tabindex="-1" aria-hidden="true" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
 <div id="introModal" class="modal-veil">
   <div class="modal-card">
     <div class="badge">⚔️ Battle Mode</div>
     <h1>한글 전투</h1>
-    <p class="subtitle">Defeat the invading 한글 demons by typing the Korean word floating above each one. The first jamo teleports you to the demon — every correct keystroke after that is a sword strike. Build combo, charge 필살기, and unleash the Hwarang spirit.</p>
+    <p class="subtitle">Defeat the invading 한글 demons by typing the Korean word floating above each one. Early levels: teleport-strike with the Hwarang sword. Higher levels evolve into magic, ninja stars, and dragon fire. Build combo, type 한글 to unleash 필살기.</p>
     <div class="stat-grid">
       <div><div class="k">High Score</div><div class="v" id="introHigh">0</div></div>
       <div><div class="k">Best Wave</div><div class="v" id="introBest">0</div></div>
     </div>
-    <div id="practiceCarry" class="practice-carry" style="display:none;"></div>
     <div class="actions">
       <button class="primary" id="btnStart">Start Battle</button>
       <button id="btnAchievements">🏆 Achievements</button>
@@ -1523,6 +1953,10 @@
 </div>
 
 <div class="battle-kb" id="battleKb" aria-hidden="true"></div>
+
+<!-- Extra vocab loaded synchronously so window.BATTLE_VOCAB is ready when the
+     main script merges it into VOCAB. Falls back gracefully if the file 404s. -->
+<script src="vocab.js"></script>
 
 <script>
 'use strict';
@@ -2015,6 +2449,39 @@ const VOCAB = {
   ]
 };
 
+// Merge vocab.js entries into the right tier by syllable count.
+// Tiers 1-5 map directly to syllable count (1 syllable -> tier1, 2 -> tier2, ...).
+// Words >5 syllables clamp to tier5. Duplicates are skipped.
+(function mergeBattleVocab() {
+  const extras = (window && Array.isArray(window.BATTLE_VOCAB)) ? window.BATTLE_VOCAB : [];
+  if (!extras.length) return;
+  const seen = new Set();
+  for (let t = 1; t <= 5; t++) {
+    for (const w of (VOCAB['tier' + t] || [])) seen.add(w.ko);
+  }
+  function syllableCount(s) {
+    let n = 0;
+    for (const ch of String(s)) {
+      const code = ch.charCodeAt(0);
+      if (code >= 0xAC00 && code <= 0xD7A3) n++;
+    }
+    return n || 1;
+  }
+  let added = 0;
+  for (const w of extras) {
+    if (!w || !w.ko || !w.en) continue;
+    if (seen.has(w.ko)) continue;
+    seen.add(w.ko);
+    const tier = Math.min(5, Math.max(1, syllableCount(w.ko)));
+    const target = VOCAB['tier' + tier];
+    if (target) {
+      target.push({ ko: w.ko, en: w.en, topikLevel: w.topikLevel || 1 });
+      added++;
+    }
+  }
+  if (added && window.console) console.log('[battle] +' + added + ' words from vocab.js');
+})();
+
 // Make vocab queryable by topik level for the practice app
 window.HangulBattleVocab = VOCAB;
 
@@ -2069,11 +2536,15 @@ function playerForLevel(lv) {
 }
 
 // Sprite asset map. If a file exists in sprites/, we render <img>; on error
-// (file missing or 404), the inline onerror swaps it for the emoji fallback.
+// (file missing or 404), an inline onerror swaps it for the emoji fallback.
+// Inputs are sanitized so a future untrusted source can't inject JS via the
+// onerror attribute (today's callers all pass trusted constants).
 function spriteHtml(file, emoji, sizePx) {
-  if (!file) return emoji;
-  const px = sizePx || 72;
-  return `<img class="sprite-img" src="sprites/${file}.png" alt="" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${emoji}'">`;
+  if (!file) return escapeHtml(emoji);
+  const safeFile = String(file).replace(/[^a-z0-9_]/gi, '');
+  const safeEmoji = String(emoji || '').replace(/['"\\<>&]/g, '');
+  const px = Math.max(16, Math.min(512, Number(sizePx) || 72));
+  return `<img class="sprite-img" src="sprites/${safeFile}.png" alt="" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${safeEmoji}'">`;
 }
 
 function renderPlayerSprite(lv) {
@@ -2149,8 +2620,25 @@ function behaviorForTier(t) { return TIER_BEHAVIORS[t] || TIER_BEHAVIORS[1]; }
 
 let audioCtx = null;
 function ac() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+
+// Browser autoplay policy: an AudioContext created outside a user gesture starts
+// in 'suspended' state. Scheduling oscillators against a suspended context queues
+// them silently; once the context eventually resumes, the entire backlog can fire
+// with seconds-to-minutes of delay. Fix: resume on first user gesture, and skip
+// scheduling while suspended so we never accumulate a backlog.
+function unlockAudio() {
+  const c = ac();
+  if (c && c.state === 'suspended') {
+    const p = c.resume();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  }
+}
+['pointerdown', 'keydown', 'touchstart'].forEach(ev => {
+  window.addEventListener(ev, unlockAudio, { passive: true, capture: true });
+});
+
 function tone({ freq, type='sine', dur=0.06, gain=0.04, slide=null }) {
-  const c = ac(); if (!c) return;
+  const c = ac(); if (!c || c.state !== 'running') return;
   const t0 = c.currentTime;
   const o = c.createOscillator(); const g = c.createGain();
   o.type = type;
@@ -2162,7 +2650,7 @@ function tone({ freq, type='sine', dur=0.06, gain=0.04, slide=null }) {
   o.start(t0); o.stop(t0 + dur + 0.02);
 }
 function noiseBurst({ dur=0.08, gain=0.05, freq=1200 }) {
-  const c = ac(); if (!c) return;
+  const c = ac(); if (!c || c.state !== 'running') return;
   const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
@@ -2206,7 +2694,21 @@ const SUPABASE_ANON_KEY = 'sb_publishable_xKJO3LJAlU1qkEigRBvTRg_wTlwFVjP';
 
 // ── Player identity (shared with main app via localStorage) ──
 function getProgress() {
-  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; } catch (e) { return {}; }
+  // Sanitize on load — localStorage is user-writable, so any string we later
+  // interpolate into innerHTML or render in the leaderboard must be capped
+  // and type-checked here. Belt-and-suspenders alongside escapeHtml at sinks.
+  try {
+    const raw = JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {};
+    const out = {};
+    if (typeof raw.playerId === 'string' && raw.playerId.length <= 64) out.playerId = raw.playerId;
+    if (typeof raw.xp === 'number' && Number.isFinite(raw.xp) && raw.xp >= 0) out.xp = raw.xp;
+    if (raw.profile && typeof raw.profile === 'object') {
+      const name = (typeof raw.profile.name === 'string' ? raw.profile.name : '').slice(0, 24).trim();
+      const cc   = (typeof raw.profile.countryCode === 'string' ? raw.profile.countryCode : '').slice(0, 2).toUpperCase();
+      out.profile = { name: name || 'Player', countryCode: cc || 'US' };
+    }
+    return out;
+  } catch (e) { return {}; }
 }
 const COUNTRY_BY_TZ = {
   'Asia/Seoul':'KR','Asia/Tokyo':'JP','Asia/Shanghai':'CN','Asia/Singapore':'SG',
@@ -2255,174 +2757,193 @@ function generatePlayerId() {
   });
 }
 
-const BATTLE_LB_KEY = 'hangul-battle-leaderboard-v1';
-const FAKE_BATTLE_NAMES = ['민수','지은','Alex','Maya','Rin','Yui','Hugo','Sora','Felix','Priya','Kenji','Lena','Otto','Iris','Ana','Theo','Mei','Diego','Arjun','Wei'];
-const FAKE_BATTLE_FLAGS = ['🇰🇷','🇺🇸','🇯🇵','🇨🇳','🇬🇧','🇫🇷','🇩🇪','🇧🇷','🇮🇳','🇦🇺','🇸🇬','🇨🇦','🇪🇸','🇮🇹','🇳🇱','🇸🇪'];
-let _fakeBattleLb = null;
+// ── Battle leaderboard: Supabase-backed ──
+// Schema: supabase/migrations/0002_battle.sql
+// Top-100 sorted by (level desc, points desc, submitted_at asc). One row per player.
+// Server-side caps + 5s rate limit + GREATEST(level, points) prevent regressions.
 
-function battlePointsToLevel(points) {
-  const pts = Math.max(0, Number(points) || 0);
-  return Math.max(1, Math.min(99, Math.floor(pts / 10000) + 1));
+const BATTLE_RATE_LIMIT_KEY = 'hangul-battle-last-submit-v1';
+
+let _battleLbCache = null;
+let _battleLbCacheAt = 0;
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[<>&"']/g, c => (
+    { '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c]
+  ));
 }
 
-function compareBattleEntries(a, b) {
-  return (Number(b.level) || 0) - (Number(a.level) || 0)
-    || (Number(b.points) || 0) - (Number(a.points) || 0)
-    || String(a.name || '').localeCompare(String(b.name || ''));
-}
+function clampLevel(n)  { n = Math.round(Number(n) || 1); return Math.max(1, Math.min(99, n)); }
+function clampPoints(n) { n = Math.round(Number(n) || 0); return Math.max(0, Math.min(1500000, n)); }
 
-function normalizeBattleEntry(r) {
-  const countryCode = (r.countryCode || r.country || 'US').toString().slice(0, 2).toUpperCase();
-  const points = Math.max(0, Number(r.points ?? r.score ?? r.all_time_xp ?? 0) || 0);
-  const level = Math.max(1, Math.min(99, Number(r.level) || battlePointsToLevel(points)));
-  return {
-    playerId: r.playerId || null,
-    name: r.name || 'Player',
-    countryCode,
-    flag: r.flag || flagEmoji(countryCode),
-    level,
-    points,
-    isUser: !!r.isUser
-  };
-}
-
-function loadBattleLeaderboard() {
+async function logBattleAttempt(level, points) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  const pid = (progress && progress.playerId) || null;
+  if (!pid) return;
   try {
-    const raw = localStorage.getItem(BATTLE_LB_KEY);
-    const rows = raw ? JSON.parse(raw) : [];
-    return Array.isArray(rows) ? rows.map(normalizeBattleEntry) : [];
-  } catch (e) { return []; }
-}
-
-function saveBattleLeaderboard(rows) {
-  try {
-    localStorage.setItem(BATTLE_LB_KEY, JSON.stringify(rows.slice(0, 120)));
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/log_battle_attempt`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_id: pid, p_level: clampLevel(level), p_points: clampPoints(points) })
+    });
   } catch (e) {}
 }
 
-function recordBattleResult(entry) {
-  const normalized = normalizeBattleEntry(entry);
-  const existing = loadBattleLeaderboard().filter(r => !normalized.playerId || r.playerId !== normalized.playerId);
-  existing.push({ ...normalized, updatedAt: new Date().toISOString() });
-  existing.sort(compareBattleEntries);
-  saveBattleLeaderboard(existing);
-}
-
-function updateBattleLeaderboardIdentity(playerId, name, countryCode) {
-  if (!playerId) return;
-  const rows = loadBattleLeaderboard().map(r => {
-    if (r.playerId !== playerId) return r;
-    return {
-      ...r,
-      name,
-      countryCode,
-      flag: flagEmoji(countryCode)
-    };
-  });
-  saveBattleLeaderboard(rows);
-}
-
-function ensureFakeBattleLb() {
-  if (_fakeBattleLb) return _fakeBattleLb;
-  let s = 0x9e3779b9;
-  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
-  const list = [];
-  for (let i = 0; i < 120; i++) {
-    const baseName = FAKE_BATTLE_NAMES[Math.floor(rnd() * FAKE_BATTLE_NAMES.length)];
-    const suffix = rnd() < 0.45 ? '' : '_' + Math.floor(rnd() * 99);
-    const countryCode = ['KR','US','JP','CN','GB','FR','DE','BR','IN','AU','SG','CA'][Math.floor(rnd() * 12)];
-    const level = 1 + Math.floor(rnd() * 20);
-    const points = Math.round(level * 10000 + rnd() * 9000 + rnd() * 4000);
-    list.push({
-      name: baseName + suffix,
-      countryCode,
-      flag: flagEmoji(countryCode),
-      level,
-      points
+async function submitBattleScore(level, points) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  const pid = (progress && progress.playerId) || null;
+  if (!pid) return;
+  // Client-side rate limit (server enforces too).
+  try {
+    const last = Number(localStorage.getItem(BATTLE_RATE_LIMIT_KEY) || 0);
+    if (Date.now() - last < 5000) return;
+    localStorage.setItem(BATTLE_RATE_LIMIT_KEY, String(Date.now()));
+  } catch (e) {}
+  const name = (progress.profile && progress.profile.name) || 'Player';
+  const country = (progress.profile && progress.profile.countryCode) || detectCountry();
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_battle_score`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_id: pid,
+        p_name: String(name).slice(0, 24),
+        p_country: String(country).slice(0, 2).toUpperCase(),
+        p_level: clampLevel(level),
+        p_points: clampPoints(points)
+      })
     });
-  }
-  list.sort(compareBattleEntries);
-  _fakeBattleLb = list;
-  return list;
+    _battleLbCache = null;
+  } catch (e) {}
 }
 
-function mergeBattleLeaderboard(rows, userRow) {
-  const merged = [];
-  const bestByPlayerId = new Map();
-  for (const row of rows.concat(userRow ? [userRow] : [])) {
-    const entry = normalizeBattleEntry(row);
-    if (entry.playerId) {
-      const prev = bestByPlayerId.get(entry.playerId);
-      if (!prev || compareBattleEntries(entry, prev) < 0) bestByPlayerId.set(entry.playerId, entry);
-    } else {
-      merged.push(entry);
-    }
-  }
-  for (const entry of bestByPlayerId.values()) merged.push(entry);
-  merged.sort(compareBattleEntries);
-  if (userRow && userRow.playerId) {
-    const idx = merged.findIndex(r => r.playerId === userRow.playerId);
-    if (idx >= 0) merged[idx].isUser = true;
-  }
-  return merged;
+async function updateBattleProfile(name, countryCode) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  const pid = (progress && progress.playerId) || null;
+  if (!pid) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_battle_profile`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_id: pid,
+        p_name: String(name || 'Player').slice(0, 24),
+        p_country: String(countryCode || 'US').slice(0, 2).toUpperCase()
+      })
+    });
+    _battleLbCache = null;
+  } catch (e) {}
 }
 
-function pickLeaderboardWindow(merged, userIdx) {
-  const total = merged.length;
-  const rows = [];
-  const topCount = 3;
-  for (let i = 0; i < topCount && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
-  if (userIdx <= 5) {
-    for (let i = topCount; i < 6 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
-  } else if (userIdx > 0) {
-    rows.push({ isEllipsis: true });
-    if (userIdx - 2 >= 0) rows.push({ rank: userIdx - 1, ...merged[userIdx - 2] });
-    rows.push({ rank: userIdx, ...merged[userIdx - 1] });
-    if (userIdx < total) rows.push({ rank: userIdx + 1, ...merged[userIdx] });
-  }
-  return rows;
+async function fetchBattleLeaderboard(force) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  const now = Date.now();
+  if (!force && _battleLbCache && now - _battleLbCacheAt < 30000) return _battleLbCache;
+  const pid = (progress && progress.playerId) || null;
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+  const jsonHeaders = { ...headers, 'Content-Type': 'application/json' };
+  try {
+    const [rowsRes, statsRes, rankRes] = await Promise.all([
+      fetch(
+        `${SUPABASE_URL}/rest/v1/battle_scores?select=name,country,level,points,submitted_at&flagged=eq.false&order=level.desc,points.desc,submitted_at.asc&limit=100`,
+        { headers }
+      ),
+      fetch(`${SUPABASE_URL}/rest/v1/rpc/get_battle_stats`, {
+        method: 'POST', headers: jsonHeaders, body: '{}'
+      }),
+      pid
+        ? fetch(`${SUPABASE_URL}/rest/v1/rpc/get_battle_rank`, {
+            method: 'POST', headers: jsonHeaders, body: JSON.stringify({ p_id: pid })
+          })
+        : Promise.resolve(null)
+    ]);
+    if (!rowsRes.ok) return null;
+    const rows  = await rowsRes.json();
+    const stats = statsRes && statsRes.ok ? await statsRes.json() : [];
+    const rank  = rankRes  && rankRes.ok  ? await rankRes.json()  : [];
+    _battleLbCache = {
+      rows: Array.isArray(rows) ? rows : [],
+      stats: (Array.isArray(stats) && stats[0]) || { unique_players: 0, total_attempts: 0, ranked_players: 0 },
+      rank:  (Array.isArray(rank)  && rank[0])  || null
+    };
+    _battleLbCacheAt = now;
+    return _battleLbCache;
+  } catch (e) { return null; }
 }
 
-function buildBattleLeaderboardHtml(rows, userIdx, total) {
-  const headerNote = 'sorted by level, then points';
-  return `<div class="battle-lb-header">
-    <span class="title">Battle ranking</span>
-    <span class="meta">You: <strong>#${userIdx}</strong> of ${total.toLocaleString()} · ${headerNote}</span>
-  </div>
-  <div class="battle-lb-list">
-    ${rows.map(r => {
-      if (r.isEllipsis) return '<div class="battle-lb-row ellipsis">⋯</div>';
-      const cls = r.isUser ? 'battle-lb-row you' : 'battle-lb-row';
-      return `<div class="${cls}"${r.isUser ? ' data-edit-profile="1"' : ''}>
-        <span class="r">#${r.rank}</span>
-        <span>${r.flag}</span>
-        <span class="n">${r.name}</span>
-        <span class="lv">Lv.${r.level}</span>
-        <span class="pts">${r.points.toLocaleString()}</span>
-      </div>`;
-    }).join('')}
-  </div>`;
-}
-
-function renderBattleLeaderboard() {
-  progress = getProgress();
-  const userName = (progress.profile && progress.profile.name) || 'Player';
-  const userCountry = (progress.profile && progress.profile.countryCode) || detectCountry();
-  const userRow = {
-    playerId: progress.playerId || null,
-    name: userName,
-    countryCode: userCountry,
-    flag: flagEmoji(userCountry),
-    level: state.level,
-    points: state.score,
-    isUser: true
-  };
+async function renderBattleLeaderboard() {
   const container = document.getElementById('battleLbContainer');
   if (!container) return;
-  const merged = mergeBattleLeaderboard(ensureFakeBattleLb().concat(loadBattleLeaderboard()), userRow);
-  const userIdx = Math.max(1, merged.findIndex(r => r.isUser) + 1);
-  const rows = pickLeaderboardWindow(merged, userIdx);
-  container.innerHTML = buildBattleLeaderboardHtml(rows, userIdx, merged.length);
+  progress = getProgress();
+  const data = await fetchBattleLeaderboard();
+  if (!data) {
+    container.innerHTML = '<div class="battle-lb-loading">Could not load rankings. Try again later.</div>';
+    return;
+  }
+  const { rows, stats, rank } = data;
+  const total = stats.ranked_players || rows.length || 0;
+  const totalPlayers = stats.unique_players || 0;
+  const myRank = rank && rank.rank > 0 ? rank.rank : 0;
+  const headerMeta = myRank > 0
+    ? `You: <strong>#${myRank.toLocaleString()}</strong>`
+    : `<strong>Top 100</strong> to enter`;
+  const playersBlurb = totalPlayers > 0
+    ? `${totalPlayers.toLocaleString()} player${totalPlayers === 1 ? '' : 's'} battled`
+    : 'Be the first to battle';
+
+  let listHtml = '';
+  if (rows.length === 0) {
+    listHtml = '<div class="battle-lb-empty">Be the first to enter the leaderboard.</div>';
+  } else {
+    listHtml = rows.map((r, i) => {
+      const rankN = i + 1;
+      const isUser = myRank > 0 && rankN === myRank;
+      const cls = isUser ? 'battle-lb-row you' : 'battle-lb-row';
+      const flag = flagEmoji(r.country || 'US');
+      const safeName = escapeHtml(r.name || 'Player');
+      return `<div class="${cls}"${isUser ? ' data-edit-profile="1"' : ''}>
+        <span class="r">#${rankN}</span>
+        <span>${flag}</span>
+        <span class="n">${safeName}</span>
+        <span class="lv">Lv.${r.level}</span>
+        <span class="pts">${(Number(r.points) || 0).toLocaleString()}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // If user has a rank but it's outside top 100, pin them at the bottom.
+  let pinHtml = '';
+  if (myRank > 100) {
+    const userName = (progress.profile && progress.profile.name) || 'Player';
+    const userCountry = (progress.profile && progress.profile.countryCode) || detectCountry();
+    pinHtml = `<div class="battle-lb-row you below" data-edit-profile="1">
+      <span class="r">#${myRank.toLocaleString()}</span>
+      <span>${flagEmoji(userCountry)}</span>
+      <span class="n">${escapeHtml(userName)}</span>
+      <span class="lv">Lv.${state.level}</span>
+      <span class="pts">${(state.score || 0).toLocaleString()}</span>
+    </div>`;
+  }
+
+  container.innerHTML = `<div class="battle-lb-header">
+      <span class="title">Top ${Math.min(100, rows.length || 100)} · ${total.toLocaleString()} ranked</span>
+      <span class="meta">${headerMeta} · ${playersBlurb}</span>
+    </div>
+    <div class="battle-lb-list">${listHtml}</div>
+    ${pinHtml}`;
+
   container.querySelectorAll('[data-edit-profile]').forEach(el => {
     el.addEventListener('click', openProfileModal);
   });
@@ -2465,8 +2986,10 @@ function openProfileModal() {
     const newCC = countrySelect.value || detectCountry();
     progress.profile = { name: newName, countryCode: newCC };
     saveProgress(progress);
-    updateBattleLeaderboardIdentity(progress.playerId || null, newName, newCC);
-    renderBattleLeaderboard();
+    // No-op server-side if the player isn't on the leaderboard yet.
+    updateBattleProfile(newName, newCC).finally(() => {
+      renderBattleLeaderboard();
+    });
     close();
   };
   modal.onclick = onBackdrop;
@@ -2517,10 +3040,54 @@ function scoreForKill(tier, comboBonus) {
 }
 
 let monsterId = 0;
+// Heart-pickup monster — spawns very rarely, drops +1 life when typed.
+// Limited to one on screen at a time, only when the player has lost a life.
+const HEART_WORDS = [
+  { ko: '심',   en: 'heart' },
+  { ko: '빛',   en: 'light' },
+  { ko: '별',   en: 'star' },
+  { ko: '꿈',   en: 'dream' },
+  { ko: '사랑', en: 'love' },
+  { ko: '생명', en: 'life' }
+];
+const HEART_SPAWN_CHANCE = 0.018;   // ~1.8% per spawn slot (very rare)
+
+function maybeSpawnHeart() {
+  if (state.lives >= 3) return false;
+  if (state.monsters.some(m => m.isHeart)) return false;     // one at a time
+  if (Math.random() > HEART_SPAWN_CHANCE) return false;
+  const w = HEART_WORDS[Math.floor(Math.random() * HEART_WORDS.length)];
+  // Avoid first-jamo collisions with active monsters so the player can lock it
+  const blocked = activeFirstJamos();
+  const ks0 = wordToKeystrokes(w.ko)[0];
+  if (blocked.has(ks0)) return false;
+  const id = ++monsterId;
+  const ks = wordToKeystrokes(w.ko);
+  const startX = Math.random() * (window.innerWidth - 200) + 100;
+  const monster = {
+    id, sprite: '❤️', spriteFile: null, word: w.ko, en: w.en, tier: 1,
+    ks, hp: ks.length, maxHp: ks.length,
+    speed: 8,                  // very slow — generous capture window
+    motion: 'straight',
+    x: startX, originX: startX, y: -100,
+    zigT: 0, zigAmp: 0, zigFreq: 0,
+    diveSpeed: 8,
+    tpT: 0, tpHoldUntil: 600,
+    isBoss: false, isHeart: true, el: null
+  };
+  buildMonsterEl(monster);
+  if (monster.el) monster.el.classList.add('heart');
+  state.monsters.push(monster);
+  flashCenterText('❤ Heart approaching');
+  tone({ freq: 1320, type:'triangle', dur:0.22, gain:0.05, slide: 1760 });
+  return true;
+}
+
 function spawnMonster(forceBoss) {
   if (forceBoss || (state.level >= state.bossNextLevel && !state.bossActive && state.kills > 0 && Math.random() < 0.3)) {
     return spawnBoss();
   }
+  if (maybeSpawnHeart()) return;
   const word = pickWordForLevel(state.level, activeFirstJamos());
   if (!word) return null;
   const tier = word.tier;
@@ -2598,6 +3165,9 @@ function buildMonsterEl(m) {
     : 56;
   if (m.spriteFile) {
     sprite.innerHTML = spriteHtml(m.spriteFile, m.sprite, sizePx);
+    // Randomize per-monster phase so a wave of demons doesn't bob in lockstep.
+    const img = sprite.querySelector('.sprite-img');
+    if (img) img.style.animationDelay = (-Math.random() * 2).toFixed(2) + 's';
   } else {
     sprite.textContent = m.sprite;
   }
@@ -2639,10 +3209,14 @@ function killMonster(m, byPlayer) {
       flashCenterText('CRIT! ×3');
       particleBurst(m.x, m.y + 30, 18);
     }
-    if (state.lives < 3 && Math.random() < 0.012) {
+    // Heart pickup: only granted when killing a heart monster (m.isHeart),
+    // not as a passive drop. Heart monsters spawn very rarely as their own
+    // entity and must be typed to capture.
+    if (m.isHeart && state.lives < 3) {
       state.lives++;
       flashCenterText('❤ +1 LIFE');
-      tone({ freq: 880, type:'sine', dur:0.16, gain:0.06, slide:1320 });
+      tone({ freq: 880, type:'sine', dur:0.20, gain:0.07, slide:1480 });
+      tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.05, slide:1760 });
     }
     // Active 2× XP power-up
     if (state.activePowerups && state.activePowerups.xp > 0) xp = xp * 2;
@@ -2658,6 +3232,9 @@ function killMonster(m, byPlayer) {
     // English-translation reveal — closes the learning loop. Suppressed during
     // 필살기 so 6+ kills don't dogpile the screen with overlapping translations.
     if (!state.specialMoveBurst) floatEnglishReveal(m.x, m.y, m.en);
+    // Pronunciation cue — fires AFTER the player completed typing the word so
+    // the audio confirms what they just produced. Suppressed during 필살.
+    if (!state.specialMoveBurst) speakKoreanWord(m.word);
     sfxKill();
     if (state.kills === 1) unlockAchievement('first_kill');
     if (m.isBoss) {
@@ -2693,6 +3270,96 @@ function maybeLevelUp() {
   XP_FILL.style.width = Math.min(100, (state.xp / xpThresholdForLevel(state.level)) * 100) + '%';
 }
 
+// ─── Korean-coded level themes ────────────────────────────────────────────
+function themeForLevel(lv) {
+  if (lv <= 4)  return 'village';
+  if (lv <= 8)  return 'forest';
+  if (lv <= 13) return 'shrine';
+  if (lv <= 18) return 'temple';
+  if (lv <= 22) return 'palace';
+  return 'cosmos';
+}
+const ALL_THEMES = ['village','forest','shrine','temple','palace','cosmos'];
+function applyTheme(theme) {
+  const body = document.body;
+  ALL_THEMES.forEach(t => body.classList.remove('theme-' + t));
+  body.classList.add('theme-' + theme);
+}
+
+// ─── Story acts (level-milestone narrative beats) ─────────────────────────
+const LEVEL_ACTS = {
+  5: {
+    chapter: 'Chapter 2',
+    title: '바람',
+    subtitle: 'The Bamboo Forest',
+    flavor: 'The village is safe — but at the treeline, the air bends. Spirits of the bamboo grove stir, and they remember every word the demons stole.'
+  },
+  9: {
+    chapter: 'Chapter 3',
+    title: '산',
+    subtitle: 'The Mountain Shrine',
+    flavor: 'You climb past the last lantern. A 산신령 watches in silence from the ridge, and the words come faster now — zigzagging like wind through pine.'
+  },
+  14: {
+    chapter: 'Chapter 4',
+    title: '단청',
+    subtitle: 'Temple of Painted Eaves',
+    flavor: 'Inside the sanctuary, 단청 patterns burn red and gold. The 저승사자 rises through them. Type fast — even the dead can read here.'
+  },
+  19: {
+    chapter: 'Chapter 5',
+    title: '궁궐',
+    subtitle: 'The Royal Palace',
+    flavor: 'Gyeongbokgung lies broken. Lanterns flicker on the ruined courtyard. Royal guards have fallen. Only one path remains, and it climbs.'
+  },
+  23: {
+    chapter: 'Final Chapter',
+    title: '별',
+    subtitle: 'Cosmos · 한글왕 awaits',
+    flavor: 'The seal breaks the sky open. You stand among constellations, the keyboard glowing in your hands. One Demon King left. One language to save.'
+  }
+};
+
+function showActBreak(act) {
+  const wasPaused = state.paused;
+  state.paused = true;
+  cancelAllSpeech();
+  const overlay = document.createElement('div');
+  overlay.className = 'act-break';
+  overlay.innerHTML = `
+    <div class="act-card">
+      <div class="act-eyebrow">${escapeHtml(act.chapter)}</div>
+      <div class="act-title">${escapeHtml(act.title)}</div>
+      <div class="act-subtitle">${escapeHtml(act.subtitle)}</div>
+      <div class="act-flavor">${escapeHtml(act.flavor)}</div>
+      <div class="act-prompt">click or press space to continue</div>
+    </div>`;
+  document.body.appendChild(overlay);
+  // Stinger sound — soft gong
+  tone({ freq: 196, type: 'triangle', dur: 0.6, gain: 0.07 });
+  tone({ freq: 261, type: 'triangle', dur: 0.7, gain: 0.05 });
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    overlay.style.transition = 'opacity 0.3s';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 320);
+    state.paused = wasPaused;
+    document.removeEventListener('keydown', onKey, true);
+  };
+  const onKey = (e) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+      e.preventDefault(); e.stopPropagation();
+      close();
+    }
+  };
+  document.addEventListener('keydown', onKey, true);
+  overlay.addEventListener('click', close);
+  // Auto-dismiss after 6s so the player isn't stuck
+  setTimeout(close, 6000);
+}
+
 function onLevelUp() {
   sfxLevelUp();
   PLAYER_EL.classList.remove('levelup');
@@ -2702,6 +3369,13 @@ function onLevelUp() {
   renderPlayerSprite(state.level);
   flashCenterText('Lv. ' + state.level + ' · ' + sp.label);
   state.spawnInterval = Math.max(900, 2300 - state.level * 70);
+  // Theme transition — applies on each level so the band-boundary level
+  // smoothly fades into the new gradient.
+  applyTheme(themeForLevel(state.level));
+  // Story act break at chapter milestones
+  if (LEVEL_ACTS[state.level]) {
+    setTimeout(() => showActBreak(LEVEL_ACTS[state.level]), 500);
+  }
   // Perfect-wave check (no missed key in the wave that just ended)
   if (state.perfectWave && state.level - state.lastWaveLevel >= 1) {
     unlockAchievement('perfect_wave');
@@ -2751,16 +3425,22 @@ function floatScorePop(x, y, text) {
 
 // English translation flies up from the kill point so the player learns the
 // word's meaning. Suppressed during 필살기 mass-kills (would clutter the screen).
+// Mounted on <body> with position:fixed so .stage's overflow:hidden can't clip
+// the rise animation when the kill happens near the top of the play area.
 function floatEnglishReveal(x, y, en) {
   if (!en) return;
   const el = document.createElement('div');
   el.className = 'english-reveal';
   el.textContent = en;
+  // Stage spans inset:0 0 160 0, so stage-relative (x,y) == viewport (x,y).
+  // Clamp y so the reveal stays on-screen even after the -84px rise.
+  const minY = 90;
+  const maxY = window.innerHeight - 180;
+  const safeY = Math.max(minY, Math.min(maxY, y - 24));
   el.style.left = x + 'px';
-  // Sit above the score-pop's path so they don't overlap visually.
-  el.style.top = (y - 18) + 'px';
-  STAGE.appendChild(el);
-  setTimeout(() => el.remove(), 1320);
+  el.style.top  = safeY + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1620);
 }
 
 // ─── Korean TTS (Web Speech API) ───────────────────────────────────────────
@@ -2869,11 +3549,24 @@ function spawnSlashFx(x, y, isCrit) {
   setTimeout(() => el.remove(), 260);
 }
 
+// Stage geometry is read on every teleport (1-3× per kill) and on every loop
+// frame for the collision threshold. Cache it and invalidate on resize so
+// we don't force a layout flush from each call.
+let _stageRectCache = null;
+function getStageRect() {
+  if (_stageRectCache) return _stageRectCache;
+  _stageRectCache = STAGE.getBoundingClientRect();
+  return _stageRectCache;
+}
+function invalidateStageRect() { _stageRectCache = null; }
+window.addEventListener('resize', invalidateStageRect, { passive: true });
+window.addEventListener('orientationchange', invalidateStageRect, { passive: true });
+
 let _playerHomePending = null;
 function teleportPlayerTo(x, y) {
   // Smoke at current position (departure puff)
   const r = PLAYER_EL.getBoundingClientRect();
-  const sr = STAGE.getBoundingClientRect();
+  const sr = getStageRect();
   const fromX = (r.left + r.width / 2) - sr.left;
   const fromY = (r.top + r.height / 2)  - sr.top;
   spawnSmokePuff(fromX, fromY);
@@ -2899,7 +3592,7 @@ function teleportPlayerHome(immediate) {
     if (state.lockId != null) return; // re-locked before timer fired
     if (state.playerTeleported) {
       const r = PLAYER_EL.getBoundingClientRect();
-      const sr = STAGE.getBoundingClientRect();
+      const sr = getStageRect();
       spawnSmokePuff((r.left + r.width / 2) - sr.left, (r.top + r.height / 2) - sr.top);
     }
     PLAYER_EL.classList.remove('arriving','swinging','teleporting');
@@ -2915,6 +3608,71 @@ function teleportPlayerHome(immediate) {
   if (_playerHomePending) clearTimeout(_playerHomePending);
   // Brief chain window: if user starts a new lock, teleportPlayerTo cancels this.
   _playerHomePending = setTimeout(doIt, 500);
+}
+
+// ─── Combat style + ranged projectiles (lv 9+ era) ───────────────────────
+// Player levels 1-8 are sword/shield era → teleport-melee.
+// Levels 9-12 are mage era (wand/scroll). 13-15 ninja (throwing stars).
+// 16-19 royalty (sceptre). 20+ dragon/cosmic. All ranged: stay home + fire.
+function combatStyle(lv) { return lv <= 8 ? 'melee' : 'ranged'; }
+
+function projectileForLevel(lv) {
+  if (lv >= 22) return { glyph: '🐉', size: 36, color: '#dc2626', trail: 'rgba(220,38,38,0.55)' };
+  if (lv >= 19) return { glyph: '👑', size: 32, color: '#0891b2', trail: 'rgba(8,145,178,0.5)' };
+  if (lv >= 16) return { glyph: '💎', size: 28, color: '#06b6d4', trail: 'rgba(6,182,212,0.5)' };
+  if (lv >= 13) return { glyph: '🎯', size: 26, color: '#eab308', trail: 'rgba(234,179,8,0.55)' };
+  if (lv >= 11) return { glyph: '✨', size: 24, color: '#7c3aed', trail: 'rgba(124,58,237,0.55)' };
+  return { glyph: '🌟', size: 22, color: '#0ea5e9', trail: 'rgba(14,165,233,0.5)' };
+}
+
+function fireProjectileAt(monster) {
+  const playerRect = PLAYER_EL.getBoundingClientRect();
+  const sr = getStageRect();
+  const startX = (playerRect.left + playerRect.width / 2) - sr.left;
+  const startY = (playerRect.top  + playerRect.height / 4) - sr.top;
+  const proj = projectileForLevel(state.level);
+  const p = document.createElement('div');
+  p.className = 'projectile glyph';
+  p.style.fontSize = proj.size + 'px';
+  p.style.color = proj.color;
+  p.textContent = proj.glyph;
+  p.style.left = startX + 'px';
+  p.style.top  = startY + 'px';
+  STAGE.appendChild(p);
+  const toX = monster.x;
+  const toY = monster.y + 24;
+  const start = performance.now();
+  const dur = 200;
+  let lastTrail = 0;
+  function step(t) {
+    const k = Math.min(1, (t - start) / dur);
+    const x = startX + (toX - startX) * k;
+    const y = startY + (toY - startY) * k;
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+    if (proj.trail && t - lastTrail > 26 && k < 0.95) {
+      lastTrail = t;
+      const tp = document.createElement('div');
+      tp.className = 'trail-particle';
+      tp.style.left = x + 'px';
+      tp.style.top  = y + 'px';
+      tp.style.background = proj.trail;
+      STAGE.appendChild(tp);
+      setTimeout(() => tp.remove(), 320);
+    }
+    if (k < 1) {
+      requestAnimationFrame(step);
+    } else {
+      p.remove();
+      if (monster.el) {
+        monster.el.classList.remove('struck');
+        void monster.el.offsetWidth;
+        monster.el.classList.add('struck');
+        setTimeout(() => monster.el && monster.el.classList.remove('struck'), 220);
+      }
+    }
+  }
+  requestAnimationFrame(step);
 }
 
 function swingSword(monster) {
@@ -2935,8 +3693,8 @@ function swingSword(monster) {
 
 // ─── 필살기 (Special Move) ─────────────────────────────────────────────────
 const SPECIAL_TRIGGERS = ['한글', '필살'];   // either word triggers
-const SPECIAL_COMBO_PER_CHARGE = 25;
-const SPECIAL_MAX_CHARGES = 3;
+const SPECIAL_COMBO_PER_CHARGE = 60;          // was 25 — much harder to recharge
+const SPECIAL_MAX_CHARGES = 2;                // was 3
 const CHANT_DURATION_MS = 2000;
 const SPECIAL_HINT_KEY  = 'hangul-battle-special-hint-seen-v1';
 
@@ -2964,8 +3722,41 @@ function gainSpecialChargeFromCombo() {
   tone({ freq: 760, type:'triangle', dur:0.18, gain:0.05, slide: 1320 });
   if (!hasSeenSpecialHint() && state.specialCharges === 1) {
     setSpecialHintSeen();
-    flashCenterText('필살기 ready · Tab to chant 한글');
+    flashCenterText('필살기 ready · type 한글 to unleash');
   }
+}
+
+// Always-on parallel IME — feeds every Hangul jamo the user types (correct
+// or wrong, locked or unlocked). When the buffer ends with 한글 or 필살 AND
+// the player has at least one charge, 필살 fires immediately. No Tab gating.
+// 1.5-second idle reset keeps stale jamos from accumulating across pauses.
+let _specialBufferIdleTimer = null;
+const SPECIAL_BUFFER_IDLE_MS = 1500;
+function feedSpecialBuffer(jamo) {
+  if (!state.specialIme) state.specialIme = new HangulIME();
+  state.specialIme.type(jamo);
+  if (state.specialIme.display.length > 8) state.specialIme.reset();
+  if (_specialBufferIdleTimer) clearTimeout(_specialBufferIdleTimer);
+  _specialBufferIdleTimer = setTimeout(() => {
+    if (state.specialIme) state.specialIme.reset();
+    _specialBufferIdleTimer = null;
+  }, SPECIAL_BUFFER_IDLE_MS);
+  if ((state.specialCharges || 0) > 0) {
+    const display = state.specialIme.display;
+    for (const trig of SPECIAL_TRIGGERS) {
+      if (display.endsWith(trig)) {
+        state.specialIme.reset();
+        if (_specialBufferIdleTimer) { clearTimeout(_specialBufferIdleTimer); _specialBufferIdleTimer = null; }
+        triggerSpecialMove();
+        return true;       // signal to caller: skip normal lock-advance for this keystroke
+      }
+    }
+  }
+  return false;
+}
+function resetSpecialBuffer() {
+  if (state.specialIme) state.specialIme.reset();
+  if (_specialBufferIdleTimer) { clearTimeout(_specialBufferIdleTimer); _specialBufferIdleTimer = null; }
 }
 
 function hasSeenSpecialHint() {
@@ -3057,57 +3848,158 @@ function feedChantKey(rawKey, isShift) {
   return true;
 }
 
-function triggerSpecialMove() {
+// Capcom-vs-Marvel style cinematic 필살기:
+//   1. Time freezes (main loop gated on state.specialMoveActive)
+//   2. Hyper backdrop + center kanji slam
+//   3. Player teleports to each victim sequentially with a slash + speed trail
+//   4. Final flash, sakura shower, time resumes
+function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function _drawSpecialTrail(toX, toY) {
+  const stageRect = (typeof getStageRect === 'function') ? getStageRect() : null;
+  const baseY = stageRect ? stageRect.top + stageRect.height * 0.92 : (window.innerHeight - 200);
+  const fromX = window.innerWidth / 2;
+  const fromY = baseY;
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const trail = document.createElement('div');
+  trail.className = 'special-trail';
+  trail.style.left  = fromX + 'px';
+  trail.style.top   = fromY + 'px';
+  trail.style.width = dist + 'px';
+  trail.style.setProperty('--ang', angle + 'deg');
+  document.body.appendChild(trail);
+  // Force reflow then add the animation class so each strike re-runs the keyframes.
+  void trail.offsetWidth;
+  trail.classList.add('zip');
+  setTimeout(() => trail.remove(), 260);
+}
+
+async function triggerSpecialMove() {
   if ((state.specialCharges || 0) <= 0) return;
+  if (state.specialMoveActive) return;  // ignore re-entry while cinematic plays
   state.specialCharges -= 1;
   renderSpecialMeter();
 
-  // Visual: nuke flash + slash arcs + center kanji + cherry blossom shower
-  const flash = document.createElement('div');  flash.className = 'nuke-flash';   document.body.appendChild(flash);
-  const arc   = document.createElement('div');  arc.className   = 'nuke-arc';     document.body.appendChild(arc);
-  const kanji = document.createElement('div');  kanji.className = 'nuke-kanji';   kanji.textContent = '필살'; document.body.appendChild(kanji);
-  setTimeout(() => flash.remove(), 720);
-  setTimeout(() => arc.remove(),   480);
-  setTimeout(() => kanji.remove(), 920);
-  spawnSakura(40);
-
-  // Sound: dramatic stinger
-  noiseBurst({ dur:0.30, gain:0.08, freq:600 });
-  [880, 660, 440, 220].forEach((f, i) => setTimeout(() => tone({ freq:f, type:'triangle', dur:0.22, gain:0.07 }), i * 70));
-
-  // Effect: kill all non-boss; halve boss HP. Award scaled XP/score.
-  // Suppress per-word TTS + English reveal so 6+ overlapping cues don't
-  // turn the screen into a translation dogpile.
+  state.specialMoveActive = true;   // gates main loop -> time freeze
+  state.specialMoveBurst  = true;   // suppresses per-kill TTS + english-reveal dogpile
   cancelAllSpeech();
-  state.specialMoveBurst = true;
+  setFastFall(false);               // any held Tab is dropped while the cinematic plays
+
   const victims = state.monsters.slice();
+
+  // Backdrop + flash stack
+  const freeze = document.createElement('div'); freeze.className = 'special-freeze'; document.body.appendChild(freeze);
+  const hyper  = document.createElement('div'); hyper.className  = 'special-hyperbg'; document.body.appendChild(hyper);
+  const flash  = document.createElement('div'); flash.className  = 'nuke-flash';      document.body.appendChild(flash);
+  const arc    = document.createElement('div'); arc.className    = 'nuke-arc';        document.body.appendChild(arc);
+  const kanji  = document.createElement('div'); kanji.className  = 'nuke-kanji special-kanji'; kanji.textContent = '필살'; document.body.appendChild(kanji);
+  spawnSakura(36);
+
+  // Stinger
+  noiseBurst({ dur: 0.40, gain: 0.10, freq: 400 });
+  [110, 220, 440, 660, 880].forEach((f, i) => setTimeout(() => tone({ freq: f, type: 'triangle', dur: 0.18, gain: 0.07 }), i * 60));
+
+  // Phase 1: hold the freeze so the kanji can slam in
+  await _sleep(220);
+
+  // Phase 2: light-speed sequential strikes
+  const strikeCount = victims.length;
   let killed = 0;
-  victims.forEach(m => {
+  // Pace: snappy when many monsters, breathier when only 1-2
+  const stepMs = Math.max(70, Math.min(140, 800 / Math.max(1, strikeCount)));
+
+  for (let i = 0; i < strikeCount; i++) {
+    const m = victims[i];
+    if (!m || !m.el || !m.el.parentNode) continue;
+
+    teleportPlayerTo(m.x, m.y);
+    _drawSpecialTrail(m.x, m.y);
+
+    const slash = document.createElement('div');
+    slash.className = 'special-slash';
+    slash.style.left = m.x + 'px';
+    slash.style.top  = m.y + 'px';
+    document.body.appendChild(slash);
+    setTimeout(() => slash.remove(), 320);
+
+    tone({ freq: 1200 + (i * 50), type: 'sine', dur: 0.06, gain: 0.05, slide: 1900 });
+
     if (m.isBoss) {
       const damage = Math.ceil(m.maxHp * 0.5);
       m.hp = Math.max(0, m.hp - damage);
-      // Move boss lock-progress along too if we hold the lock
       if (state.lockId === m.id) {
         state.lockPosKs = Math.min(state.lockExpectedKs.length, state.lockPosKs + damage);
       }
-      if (m.el) m.el.querySelector('.hp-fill').style.width = (m.hp / m.maxHp * 100) + '%';
+      if (m.el) {
+        const fill = m.el.querySelector('.hp-fill');
+        if (fill) fill.style.width = (m.hp / m.maxHp * 100) + '%';
+      }
       if (m.hp <= 0) { killMonster(m, true); killed++; }
     } else {
-      // count toward combo so the special doesn't break the streak
       state.combo += 1;
       if (state.combo > state.bestCombo) state.bestCombo = state.combo;
       killMonster(m, true);
       killed++;
     }
-  });
+
+    await _sleep(stepMs);
+  }
+
+  // Phase 3: final flash + bass thump
+  const finalFlash = document.createElement('div');
+  finalFlash.className = 'special-final-flash';
+  document.body.appendChild(finalFlash);
+  setTimeout(() => finalFlash.remove(), 420);
+  noiseBurst({ dur: 0.20, gain: 0.10, freq: 220 });
+
+  await _sleep(180);
+
+  teleportPlayerHome(false);
+
+  // Phase 4: cleanup overlays + resume play
+  freeze.classList.add('exit');
+  hyper.classList.add('exit');
+  setTimeout(() => freeze.remove(),  360);
+  setTimeout(() => hyper.remove(),   360);
+  setTimeout(() => flash.remove(),   720);
+  setTimeout(() => arc.remove(),     480);
+  setTimeout(() => kanji.remove(),  1100);
+
   if (killed > 0) {
     flashCenterText(`필살 · ${killed} 처치!`);
     unlockAchievement('first_special');
     if (killed >= 6) unlockAchievement('special_combo');
   }
-  state.specialMoveBurst = false;
+
+  state.specialMoveActive = false;
+  state.specialMoveBurst  = false;
   updateHud();
 }
+
+// ── Hold-Tab fast-fall (desktop only) ──
+// Power users find early levels too slow. While Tab is held the falling
+// monsters move at 2x — the spawner / typing / scoring run at normal speed.
+let _fastFallActive = false;
+function setFastFall(on) {
+  on = !!on;
+  if (_fastFallActive === on) return;
+  _fastFallActive = on;
+  document.body.classList.toggle('fast-fall', on);
+}
+(function buildFastFallBadge() {
+  if (document.querySelector('.fast-fall-badge')) return;
+  const el = document.createElement('div');
+  el.className = 'fast-fall-badge';
+  el.textContent = '⏬ FAST-FALL · hold Tab';
+  document.body.appendChild(el);
+})();
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'Tab') setFastFall(false);
+});
+window.addEventListener('blur', () => setFastFall(false));
 
 function spawnSakura(count) {
   for (let i = 0; i < count; i++) {
@@ -3226,15 +4118,26 @@ function nextBossProfile() {
 function playBossCutscene(profile) {
   const cs = document.createElement('div');
   cs.className = 'boss-cutscene';
-  // Try sprite first, fall back to emoji
-  const spritePath = profile.sprite ? `sprites/${profile.sprite}.png` : null;
+  // BOSS_PROFILES is hardcoded today, but escape every interpolation so a
+  // future migration of profile data to a feed/CMS doesn't open an XSS sink.
+  const spriteFile = String(profile.sprite || '').replace(/[^a-z0-9_]/gi, '');
+  const emoji = escapeHtml(profile.emoji);
+  const name = escapeHtml(profile.name);
+  const subtitle = escapeHtml(profile.subtitle);
+  const flavor = escapeHtml(profile.flavor);
+  const portrait = spriteFile
+    ? `<img class="sprite-img" src="sprites/${spriteFile}.png" alt="" style="width:200px;height:200px;">`
+    : emoji;
   cs.innerHTML = `
-    <div class="boss-portrait">${spritePath
-      ? `<img class="sprite-img" src="${spritePath}" alt="" style="width:200px;height:200px;" onerror="this.outerHTML='${profile.emoji}'">`
-      : profile.emoji}</div>
-    <div class="boss-name">${profile.name}</div>
-    <div class="boss-subtitle">${profile.subtitle}</div>
-    <div class="boss-flavor">${profile.flavor}</div>`;
+    <div class="boss-portrait" data-emoji="${emoji}">${portrait}</div>
+    <div class="boss-name">${name}</div>
+    <div class="boss-subtitle">${subtitle}</div>
+    <div class="boss-flavor">${flavor}</div>`;
+  // Replace inline onerror=… (attribute-injection prone) with a safe handler.
+  const img = cs.querySelector('.sprite-img');
+  if (img) img.addEventListener('error', () => {
+    img.outerHTML = profile.emoji;     // textContent of a sibling, NOT an attribute
+  }, { once: true });
   document.body.appendChild(cs);
   setTimeout(() => cs.remove(), 1550);
 }
@@ -3343,15 +4246,14 @@ function gameOver() {
   document.getElementById('overCombo').textContent = state.bestCombo;
   document.getElementById('newHighSign').style.display = newHigh ? 'block' : 'none';
   progress = getProgress();
-  recordBattleResult({
-    playerId: progress.playerId || null,
-    name: (progress.profile && progress.profile.name) || 'Player',
-    countryCode: (progress.profile && progress.profile.countryCode) || detectCountry(),
-    level: state.level,
-    points: state.score,
-    isUser: true
-  });
+  // Analytics: every game-over counts as an attempt (separate from the leaderboard).
+  logBattleAttempt(state.level, state.score);
   document.getElementById('gameOverModal').style.display = 'flex';
+  // Submit, then render. submitBattleScore invalidates the cache so render fetches fresh.
+  submitBattleScore(state.level, state.score).finally(() => {
+    renderBattleLeaderboard();
+  });
+  // Optimistic first paint while the network round-trip lands.
   renderBattleLeaderboard();
   // Sync XP back to main app
   try {
@@ -3397,16 +4299,23 @@ function handleKey(rawKey, isShift) {
   if (!state.running || state.paused) return;
   if (state.lockId == null) {
     const target = findTargetForChar(rawKey, isShift);
-    if (!target) { sfxMiss(); return; }
+    if (!target) {
+      // No monster matched. Still feed the 필살 buffer — this is the easiest
+      // way to type 한글 (no monster's first jamo is ㅎ at that moment).
+      const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
+      const jamo = rawKey === ' ' ? null : KEYMAP[lookupKey];
+      if (jamo && feedSpecialBuffer(jamo)) return;
+      sfxMiss();
+      return;
+    }
     state.lockId = target.id;
     state.lockExpectedKs = target.ks.slice();
     state.lockPosKs = 0;
     state.ime.reset();
     target.el.classList.add('locked');
-    teleportPlayerTo(target.x, target.y);
-    // Pronunciation cue — fires on lock so the user hears the word as they
-    // engage it. Speech rate scales with state.level; overlapping is fine.
-    speakKoreanWord(target.word);
+    // Top-down Pokémon framing: the player walks in place at the bottom of
+    // the stage and the world scrolls past. We don't teleport on lock —
+    // slash and projectile effects spawn at the monster either way.
   }
   const m = state.monsters.find(x => x.id === state.lockId);
   if (!m) { state.lockId = null; return; }
@@ -3425,6 +4334,10 @@ function handleKey(rawKey, isShift) {
   const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
   const jamo = KEYMAP[lookupKey];
   if (!jamo) return;
+  // Feed every Hangul jamo into the always-on 필살 buffer. If it just
+  // completed the trigger phrase AND charges are available, 필살 fires
+  // and we short-circuit the lock-advance for this keystroke.
+  if (feedSpecialBuffer(jamo)) return;
   if (jamo === expected) {
     state.ime.type(jamo);
     advanceLock(m);
@@ -3443,7 +4356,11 @@ function advanceLock(m) {
   // Repaint each syllable canvas based on the new lock position. No more "disappearing" syllables.
   if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
   LIVE_EL.textContent = state.ime.display;
-  swingSword(m);
+  if (combatStyle(state.level) === 'melee') {
+    swingSword(m);
+  } else {
+    fireProjectileAt(m);
+  }
   sfxShoot();
   if (state.combo === 5 || state.combo === 10 || state.combo === 25 || state.combo === 50 || state.combo === 100) {
     flashCenterText(state.combo + '× combo');
@@ -3487,7 +4404,9 @@ function escapeLock() {
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const activeEl = document.activeElement;
-  if (activeEl && activeEl.closest && activeEl.closest('input, textarea, select, .profile-modal')) {
+  // The hidden `.shield` input is intentionally focused to absorb stray clicks.
+  // Don't treat it like a real text field — only bail for actual editable fields.
+  if (activeEl && activeEl.closest && activeEl.closest('input:not(.shield), textarea, select, .profile-modal')) {
     return;
   }
 
@@ -3504,31 +4423,48 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'Escape') {
     if (state.running) {
-      // If chanting, cancel the chant. Otherwise release lock or pause.
-      if (chantActive()) { e.preventDefault(); exitChantMode(false); return; }
       if (state.lockId != null) escapeLock();
       else togglePause();
     }
     return;
   }
-  // ` (backtick) toggles pause as a non-typing alternative to the Pause button
-  if (e.key === '`') { if (state.running) togglePause(); return; }
-  // Tab — enter chant mode for 필살기 (special move).
+  // Backspace clears whatever the player has been typing — releases the lock
+  // and resets the 필살 buffer. Doesn't pause (use Esc for that). preventDefault
+  // stops the browser from interpreting it as "go back".
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    if (state.running && !state.paused) {
+      if (state.lockId != null) escapeLock();
+      resetSpecialBuffer();
+    }
+    return;
+  }
+  // ` (backtick) toggles pause — use e.code so it works regardless of OS layout
+  if (e.code === 'Backquote') { if (state.running) togglePause(); return; }
+  // Tab is non-typing; just swallow it so it doesn't shift browser focus.
   if (e.key === 'Tab') {
     e.preventDefault();
-    if (state.running && !state.paused) startChantMode();
+    if (state.running && !state.paused && !state.specialMoveActive) setFastFall(true);
     return;
   }
-  // Note: P/p are intentionally NOT bound — they're typing keys (Shift+P → ㅖ in Dubeolsik)
-  // Chant mode intercepts typing first.
-  if (chantActive()) {
-    if (e.key === ' ') { e.preventDefault(); return; }
-    if (e.key && e.key.length === 1) { e.preventDefault(); feedChantKey(e.key, e.shiftKey); }
-    return;
-  }
-  if (e.key === ' ') { e.preventDefault(); handleKey(' ', false); return; }
-  if (e.key && e.key.length === 1) { e.preventDefault(); handleKey(e.key, e.shiftKey); }
+
+  // Use e.code (physical key on QWERTY) instead of e.key so the game
+  // accepts input even when the OS is in Korean IME mode (where e.key
+  // would be a composed Hangul character like 한 instead of the QWERTY 'g').
+  if (e.code === 'Space') { e.preventDefault(); handleKey(' ', false); return; }
+  const ch = codeToChar(e.code, e.shiftKey);
+  if (ch) { e.preventDefault(); handleKey(ch, e.shiftKey); }
 });
+
+function codeToChar(code, isShift) {
+  if (!code) return '';
+  if (code.startsWith('Key')) {
+    const c = code.slice(3);
+    return isShift ? c : c.toLowerCase();   // KEYMAP has both upper + lower
+  }
+  if (code.startsWith('Digit')) return code.slice(5);
+  return '';
+}
 
 // ============================================================
 // Main loop
@@ -3541,11 +4477,13 @@ function loop(t) {
   const dt = Math.min(50, t - lastT);
   lastT = t;
 
-  if (!state.paused) {
+  if (!state.paused && !state.specialMoveActive) {
     // Decay power-up timers + drop expirations
     tickPowerups(dt);
     // Slow-mo applies only to MONSTER motion, not the spawner / HUD / typing.
     const slowMul = (state.activePowerups && state.activePowerups.slowmo > 0) ? 0.55 : 1.0;
+    // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
+    const fastMul = _fastFallActive ? 2.0 : 1.0;
     state.spawnTimer += dt;
     const cap = state.level >= 13 ? 6 : state.level >= 7 ? 5 : state.level >= 4 ? 4 : 3;
     if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap) {
@@ -3553,11 +4491,17 @@ function loop(t) {
       spawnMonster();
     }
 
-    const playerRect = PLAYER_EL.getBoundingClientRect();
-    const stageRect = STAGE.getBoundingClientRect();
-    const playerY = (playerRect.top + playerRect.height / 2) - stageRect.top;
+    // Collision threshold uses the player's HOME position (bottom of stage),
+    // not the live PLAYER_EL position. The teleport-melee mechanic moves the
+    // sprite up to the monster, but the player's "hit volume" must stay at the
+    // bottom — otherwise other falling monsters would collide with the
+    // teleported player and trigger damagePlayer on every frame, draining
+    // lives in 2-3 keystrokes (the original "leaderboard pops up after 3 keys"
+    // bug). Stage-relative so it scales with viewport.
+    const stageRect = getStageRect();
+    const baseY = stageRect.height * 0.92;
 
-    const dts = (dt / 1000) * slowMul;
+    const dts = (dt / 1000) * slowMul * fastMul;
     for (const m of state.monsters) {
       // Per-tier flight pattern
       if (m.motion === 'zigzag') {
@@ -3595,7 +4539,7 @@ function loop(t) {
       if (m.x > maxX) m.x = maxX;
       m.el.style.top = m.y + 'px';
       m.el.style.left = m.x + 'px';
-      if (m.y > playerY - 50) {
+      if (m.y > baseY - 50) {
         damagePlayer();
         m.el.classList.add('dying');
         setTimeout(() => m.el.remove(), 550);
@@ -3721,6 +4665,7 @@ function doStartGame() {
   // Reset 필살기 + power-ups
   state.specialCharges = 0;
   state.specialMoveBurst = false;
+  resetSpecialBuffer();
   cancelAllSpeech();
   state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
   PLAYER_EL.classList.remove('shielded');
@@ -3730,6 +4675,7 @@ function doStartGame() {
   state.bestCombo = 0;
   state.lastWaveLevel = 1;
   renderPlayerSprite(1);
+  applyTheme(themeForLevel(1));    // open with the village backdrop
   LIVE_EL.textContent = '';
   document.getElementById('introModal').style.display = 'none';
   document.getElementById('gameOverModal').style.display = 'none';
@@ -3742,13 +4688,13 @@ function doStartGame() {
 }
 
 function togglePause() {
-  // Mid-chant pause would orphan the chant RAF (it polls performance.now and
-  // would silently expire while paused), so always cancel chant on pause.
-  if (chantActive()) exitChantMode(false);
   state.paused = !state.paused;
-  // Stop any in-flight Korean pronunciation when pausing — voices keep
-  // talking past pause otherwise, which feels broken.
-  if (state.paused) cancelAllSpeech();
+  if (state.paused) {
+    // Stop any in-flight Korean pronunciation + reset 필살 buffer so a
+    // pause-then-resume doesn't leave half-typed jamos lingering.
+    cancelAllSpeech();
+    resetSpecialBuffer();
+  }
   document.getElementById('pauseOverlay').style.display = state.paused ? 'flex' : 'none';
   document.getElementById('btnMenu').textContent = state.paused ? '▶ Resume' : '⏸ Pause';
 }
@@ -3783,28 +4729,6 @@ renderAudioToggle();
 document.getElementById('introHigh').textContent = getHighScore().toLocaleString();
 document.getElementById('introBest').textContent = getHighScore() ? Math.floor(getHighScore() / 200) : 0;
 
-// Show "carrying from practice" chip if practice progress exists
-try {
-  const raw = localStorage.getItem(PROGRESS_KEY);
-  if (raw) {
-    const prog = JSON.parse(raw);
-    const xp = Number(prog.xp) || 0;
-    if (xp > 0) {
-      // Compute level from xp using same curve as practice (50*n*(n+1) cumulative-per-level)
-      let lvl = 1, acc = 0;
-      while (true) {
-        const need = 50 * lvl * (lvl + 1);
-        if (xp < acc + need) break;
-        acc += need; lvl++;
-        if (lvl > 99) break;
-      }
-      const sp = playerForLevel(lvl);
-      const chip = document.getElementById('practiceCarry');
-      chip.style.display = 'flex';
-      chip.innerHTML = `<span class="ico">${sp.emoji}</span> Carrying <strong>Lv.${lvl} ${sp.label}</strong> from practice`;
-    }
-  }
-} catch (e) {}
 // Mobile on-screen keyboard. Renders the same QWERTY-to-Hangul guide that
 // index.html uses but with tap handlers wired to handleKey, so phones can
 // play the battle without a physical keyboard. Hidden on desktop (>720px)

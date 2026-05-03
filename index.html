@@ -87,11 +87,6 @@
   /* Hide legacy stubs unconditionally; they exist only so render calls don't throw */
   .legacy-stub, [hidden].legacy-stub { display: none !important; }
 
-  /* Profile chip + Records button only matter during the speed-test flow */
-  #profileChip, #btnRecords { display: none !important; }
-  body.in-sprint #profileChip,
-  body.in-sprint #btnRecords { display: inline-flex !important; }
-
   /* Per-jamo accuracy modal */
   .jamo-modal {
     position: fixed; inset: 0;
@@ -486,11 +481,6 @@
     background: white; color: var(--thi);
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
-  .mode-toggle button.on.league {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #78350f;
-  }
-
   .panel-buttons { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
 
   /* Practice grid — content visually centered, sidebar pinned right (off-balance, like an add-on) */
@@ -679,12 +669,6 @@
     border-radius: 2px;
     background: var(--orange);
   }
-  .card-head-controls .records-btn {
-    margin: 0;
-    padding: 7px 10px;
-    font-size: 14px;
-    line-height: 1;
-  }
   /* Compact mode-toggle inside the practice card */
   .card-head-controls .mode-toggle button {
     padding: 5px 10px;
@@ -694,46 +678,6 @@
     .card-head { flex-direction: column; align-items: stretch; }
     .card-head-controls { justify-content: flex-start; }
   }
-
-  /* League panel */
-  .league-panel {
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 16px;
-  }
-  .league-panel-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .league-panel-header .league-meta {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-weight: 700; font-size: 14px;
-  }
-  .league-panel-header .league-meta .icon { font-size: 22px; }
-  .league-panel-header .countdown {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px; color: var(--tmd);
-  }
-  .bracket-list {
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .bracket-row {
-    display: grid;
-    grid-template-columns: 36px 1.6fr 1fr 1fr 1fr;
-    align-items: center; gap: 8px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: var(--l2);
-    font-size: 12px;
-  }
-  .bracket-row.you { background: #dbeafe; border: 1px solid #93c5fd; }
-  .bracket-row.promo-zone { background: #fef9c3; }
-  .bracket-row.demo-zone { background: #fee2e2; }
-  .bracket-row .rank-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
-  .bracket-row .player { display: inline-flex; align-items: center; gap: 6px; }
-  .bracket-row .row-flag { font-size: 14px; }
 
   /* Practice card */
   .target {
@@ -754,30 +698,82 @@
   }
   .target .romanization:empty { display: none; }
 
-  /* Avatar blob — neutral identity chip; tier reads through emoji + label */
+  /* Training ground — the same Hwarang character who fights in Battle Mode,
+     shown here training between rounds. Mirrors the level/tier of game.html so
+     practice and battle feel like one continuous progression. */
   .card-head-left { display: flex; align-items: center; gap: 14px; }
-  .avatar-blob {
-    display: inline-flex;
+  .training-ground {
+    position: relative;
+    display: flex; flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px;
-    background: var(--l2);
+    padding: 14px 10px 10px;
+    background: linear-gradient(180deg, #fef3c7 0%, #fde68a 50%, #d4a373 100%);
     border: 1px solid var(--bd);
-    border-radius: 12px;
-    transition: transform 0.18s;
-    cursor: default;
+    border-radius: 14px;
+    margin-bottom: 14px;
     user-select: none;
+    overflow: hidden;
+    cursor: pointer;
   }
-  .avatar-blob.bump { transform: scale(1.10); }
-  .avatar-blob .avatar-emoji {
-    font-size: 18px;
-    line-height: 1;
+  .training-ground::before {
+    content: ''; position: absolute;
+    left: 0; right: 0; bottom: 36px;
+    height: 1px;
+    background: rgba(120, 53, 15, 0.22);
   }
-  .avatar-blob .avatar-tier {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--tmd);
-    line-height: 1;
+  .training-ground::after {
+    content: '🏮'; position: absolute;
+    top: 4px; right: 8px;
+    font-size: 14px; opacity: 0.8;
+  }
+  .training-ground .tg-hero {
+    position: relative;
+    width: 96px; height: 96px;
+    display: flex; align-items: flex-end; justify-content: center;
+    animation: tg-idle 2.6s ease-in-out infinite;
+    z-index: 1;
+  }
+  .training-ground .tg-hero img {
+    width: 88px; height: 88px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.25));
+  }
+  .training-ground .tg-equip {
+    position: absolute;
+    right: -2px; bottom: 4px;
+    font-size: 22px;
+    filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.3));
+  }
+  .training-ground .tg-meta {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1px; z-index: 1;
+  }
+  .training-ground .tg-tier {
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    color: #78350f;
+    letter-spacing: 0.04em;
+    text-align: center;
+    line-height: 1.1;
+  }
+  .training-ground .tg-level {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #92400e;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .training-ground.bump .tg-hero { animation: tg-bump 0.34s ease-out; }
+  @keyframes tg-idle {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+  }
+  @keyframes tg-bump {
+    0%   { transform: translateY(0)  scale(1); }
+    35%  { transform: translateY(-7px) scale(1.07); }
+    100% { transform: translateY(0)  scale(1); }
   }
 
   .target .word {
@@ -1281,25 +1277,6 @@
     margin-top: 20px;
   }
 
-  .league-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px;
-    border-radius: 16px;
-    background: var(--l2);
-    border: 1px solid var(--bd);
-    font-size: 11px; font-weight: 700;
-    cursor: default;
-  }
-  .league-badge .league-icon { font-size: 14px; }
-  .league-badge[data-tier="bronze"]   { background: #fdf4e7; border-color: #cd7f32; color: #8a4f1c; }
-  .league-badge[data-tier="silver"]   { background: #f1f5f9; border-color: #94a3b8; color: #475569; }
-  .league-badge[data-tier="gold"]     { background: #fef9c3; border-color: #f59e0b; color: #92400e; }
-  .league-badge[data-tier="diamond"]  { background: #ecfeff; border-color: #06b6d4; color: #155e75; }
-  .league-badge[data-tier="master"]   {
-    background: linear-gradient(135deg, #fce7f3, #ede9fe, #dbeafe);
-    border-color: #8b5cf6; color: #5b21b6;
-  }
-
   /* Streak flame tiers */
   #streak { display: inline-flex; align-items: center; gap: 4px; }
   #streak .streak-flame { font-size: 16px; transition: all 0.3s; filter: grayscale(0.6); }
@@ -1318,56 +1295,6 @@
   @keyframes flicker {
     0%, 100% { transform: scale(1) rotate(-2deg); }
     50% { transform: scale(1.08) rotate(2deg); }
-  }
-
-  /* Records panel */
-  .records-btn {
-    background: var(--l1); border: 1px solid var(--bd);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 12px; font-weight: 600;
-    color: var(--tmd);
-    cursor: pointer;
-    margin: 0 0 14px;
-  }
-  .records-btn:hover { border-color: var(--bdhi); color: var(--thi); }
-  .records-panel {
-    background: var(--l1); border: 1px solid var(--bd);
-    border-radius: 12px; padding: 18px;
-    margin-bottom: 16px;
-  }
-  .records-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
-  .records-tab {
-    padding: 6px 14px; border-radius: 16px;
-    font-size: 11px; font-weight: 600;
-    background: var(--l2); border: 1px solid var(--bd);
-    color: var(--tmd); cursor: pointer;
-  }
-  .records-tab.on { background: var(--blue); color: white; border-color: var(--blue); }
-  .records-list { display: flex; flex-direction: column; gap: 6px; }
-  .record-row {
-    display: grid;
-    grid-template-columns: 32px 1.6fr 1fr 0.8fr 1.4fr 1fr;
-    align-items: center; gap: 10px;
-    padding: 8px 12px;
-    background: var(--l2);
-    border: 1px solid var(--bd);
-    border-radius: 8px;
-    font-size: 12px;
-  }
-  .record-row .player { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--thi); }
-  .record-row .row-flag { font-size: 16px; line-height: 1; }
-  .record-row.best {
-    border: 2px solid var(--yellow);
-    background: #fffbeb;
-  }
-  .record-row .rank { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--tmd); }
-  .record-row .wpm  { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--blue); }
-  .record-row .acc  { font-family: 'JetBrains Mono', monospace; color: var(--tmd); }
-  .record-row .topic { color: var(--tmd); }
-  .record-row .ago  { font-size: 11px; color: var(--tlo); text-align: right; }
-  .records-empty {
-    text-align: center; padding: 24px; color: var(--tlo); font-size: 13px;
   }
 
   /* Daily quest */
@@ -1584,224 +1511,12 @@
     .recap-wpm { font-size: 52px; }
   }
 
-  /* Sprint mode */
-  /* Sprint bar — fixed banner pinned to the very top of the viewport.
-     Always visible the moment Speed Test starts, regardless of scroll. */
-  .sprint-bar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 200;
-    display: flex; align-items: center; gap: 18px;
-    padding: 14px 24px;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border-bottom: 1px solid #f59e0b;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.18);
-    font-size: 13px; color: #78350f;
-    font-weight: 600;
-    animation: sprintBarSlideIn 0.28s ease-out;
-  }
-  @keyframes sprintBarSlideIn {
-    from { transform: translateY(-100%); opacity: 0; }
-    to   { transform: translateY(0); opacity: 1; }
-  }
-  /* Push the page content down so the fixed banner doesn't cover the topbar */
-  body.in-sprint { padding-top: 56px; }
-  .sprint-bar .sprint-time {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 16px;
-    font-weight: 700;
-    color: #92400e;
-  }
-  .sprint-bar .sprint-stat {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: #92400e;
-  }
-  .sprint-bar .sprint-stat strong {
-    font-size: 14px;
-    color: #78350f;
-  }
-  .sprint-exit {
-    margin-left: auto;
-  }
-
-  /* Sprint result — centered modal overlay so it never hides below the fold */
-  .sprint-result {
-    position: fixed;
-    inset: 0;
-    z-index: 9600;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    text-align: center;
-    animation: fadeIn 0.25s ease;
-  }
-  .sprint-result > * { max-width: 580px; }
-  .sprint-result .result-card {
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 16px;
-    padding: 28px 32px;
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
-    width: 100%;
-    max-width: 580px;
-    max-height: 88vh;
-    overflow-y: auto;
-  }
-  .sprint-result h3 {
-    margin: 0 0 18px;
-    font-size: 20px;
-    color: var(--thi);
-  }
-  .sprint-result .result-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  .sprint-result .rk {
-    font-size: 11px; color: var(--tlo);
-    text-transform: uppercase; letter-spacing: 0.5px;
-    font-weight: 600;
-  }
-  .sprint-result .rv {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 26px; font-weight: 700; color: var(--blue);
-    margin-top: 4px;
-  }
-  .sprint-result .result-best {
-    font-size: 13px; color: var(--tmd);
-    margin-bottom: 16px;
-    min-height: 18px;
-  }
-  .sprint-result .result-best.new-best {
-    color: var(--green); font-weight: 700;
-  }
-  .sprint-result .result-actions {
-    display: flex; gap: 8px; justify-content: center;
-  }
-
-  /* Leaderboard inside sprint result */
-  .leaderboard {
-    margin: 18px 0 8px;
-    text-align: left;
-  }
-  .leaderboard .lb-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
-    font-size: 11px; font-weight: 700;
-    color: var(--tmd);
-    text-transform: uppercase; letter-spacing: 0.08em;
-  }
-  .leaderboard .lb-meta { font-weight: 500; color: var(--tlo); }
-  .leaderboard .lb-meta strong {
-    color: var(--blue);
-    font-family: 'JetBrains Mono', monospace;
-  }
-  .leaderboard .lb-list {
-    max-height: 240px;
-    overflow-y: auto;
-    border: 1px solid var(--bd);
-    border-radius: 10px;
-    background: var(--l1);
-  }
-  .leaderboard .lb-row {
-    display: grid;
-    grid-template-columns: 44px 22px 1fr auto;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 14px;
-    font-size: 12px;
-    border-bottom: 1px solid var(--bd);
-  }
-  .leaderboard .lb-row:last-child { border-bottom: 0; }
-  .leaderboard .lb-row.lb-ellipsis {
-    display: flex; justify-content: center;
-    color: var(--tlo);
-    padding: 4px 0;
-    letter-spacing: 6px;
-  }
-  .leaderboard .lb-rank {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 11px;
-    color: var(--tlo);
-  }
-  .leaderboard .lb-flag { font-size: 14px; line-height: 1; }
-  .leaderboard .lb-name {
-    color: var(--thi);
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: left;
-  }
-  .leaderboard .lb-wpm {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    color: var(--thi);
-  }
-  .leaderboard .lb-row.you {
-    background: linear-gradient(90deg, rgba(37, 99, 235, 0.12), transparent);
-    border-left: 3px solid var(--blue);
-    cursor: pointer;
-  }
-  .leaderboard .lb-row.you:hover { background: linear-gradient(90deg, rgba(37, 99, 235, 0.20), transparent); }
-  .leaderboard .lb-row.you .lb-rank { color: var(--blue); }
-  .leaderboard .lb-row.you .lb-name { color: var(--blue); font-weight: 700; }
-  .leaderboard .lb-row.you .lb-name::after {
-    content: ' (you · click to edit)';
-    color: var(--tlo);
-    font-weight: 500;
-    font-size: 11px;
-  }
-  .leaderboard .lb-edit-hint {
-    margin-top: 6px;
-    font-size: 10px;
-    color: var(--tlo);
-    text-align: center;
-  }
   @media (max-width: 600px) {
     .wrap { padding: 12px 10px 24px; }
     header { padding-bottom: 12px; }
     .practice-card { padding: 16px 12px; }
-    .sprint-result { padding: 12px; }
-    .sprint-result .result-card {
-      padding: 18px 14px;
-      max-height: 92vh;
-      border-radius: 14px;
-    }
-    .sprint-result h3 { font-size: 18px; margin-bottom: 14px; }
     .recap-wpm { font-size: 46px; }
     .recap-wpm .unit { font-size: 15px; }
-    .sprint-result .result-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .sprint-result .rv { font-size: 20px; }
-    .leaderboard .lb-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
-    }
-    .leaderboard .lb-list { max-height: 260px; }
-    .leaderboard .lb-row {
-      grid-template-columns: 34px 20px minmax(0, 1fr) 42px;
-      gap: 6px;
-      padding: 8px 10px;
-      font-size: 11px;
-    }
-    .leaderboard .lb-rank { font-size: 10px; }
-    .leaderboard .lb-flag { font-size: 13px; }
-    .leaderboard .lb-wpm { font-size: 11px; }
-    .leaderboard .lb-row.you .lb-name::after { display: block; font-size: 10px; }
-    .leaderboard .lb-edit-hint { font-size: 9px; line-height: 1.35; }
-    .sprint-bar {
-      flex-wrap: wrap;
-      gap: 8px 12px;
-      padding: 10px 12px;
-    }
-    .sprint-exit { margin-left: 0; }
   }
   .btn {
     background: var(--l1);
@@ -1860,10 +1575,6 @@
         <span class="profile-name">Player</span>
         <span class="profile-edit">✏️</span>
       </button>
-      <button id="btnSprint" class="battle-link sprint-link" title="60-second speed test">
-        <span class="battle-icon">⚡</span>
-        <span class="battle-text">Speed Test</span>
-      </button>
       <a id="battleLink" href="game.html" class="battle-link" title="Battle Mode — type Korean to defeat 한글 demons">
         <span class="battle-icon" id="battleIcon">⚔️</span>
         <span class="battle-text" id="battleText">Battle</span>
@@ -1895,7 +1606,6 @@
   <span id="done" hidden>0/0</span>
   <div id="dailyQuest" class="legacy-stub" hidden></div>
   <div id="modeToggle" class="legacy-stub" hidden></div>
-  <div id="recordsPanel" class="records-panel" style="display:none;"></div>
   <div id="fxLayer" class="fx-layer"></div>
   <div id="comboChip" class="combo-chip" style="display:none;"></div>
   <div id="celebrationOverlay" class="celebration-overlay" style="display:none;"></div>
@@ -1909,11 +1619,16 @@
       <div class="practice-grid">
         <aside class="practice-side" id="practiceSide" aria-label="Vocabulary list">
           <div class="side-head">
-            <div class="avatar-blob" id="avatarBlob" title="Your typing rank">
-              <span class="avatar-emoji" id="avatarEmoji">🥚</span>
-              <span class="avatar-tier" id="avatarTier">Nameless</span>
+            <div class="training-ground" id="trainingGround" title="Your battle hero, training. Click ⚔️ Battle to fight." onclick="(document.getElementById('battleLink')||{}).click&&document.getElementById('battleLink').click()">
+              <div class="tg-hero">
+                <img id="tgHeroImg" src="sprites/player_hwarang.png" alt="Battle hero" onerror="this.outerHTML='&lt;span style=&quot;font-size:64px&quot;&gt;🥷&lt;/span&gt;'" />
+                <span class="tg-equip" id="tgEquip"></span>
+              </div>
+              <div class="tg-meta">
+                <span class="tg-tier" id="tgTier">무명 Nameless</span>
+                <span class="tg-level" id="tgLevel">LV.1</span>
+              </div>
             </div>
-            <button class="icon-btn" id="btnRecords" title="Sprint records">📊</button>
           </div>
 
           <div class="topics" id="topics"></div>
@@ -1964,30 +1679,6 @@
       <button id="btnAdaptive" class="legacy-stub" hidden></button>
       <button id="btnSkip" class="legacy-stub" hidden></button>
 
-      <div class="sprint-bar" id="sprintBar" style="display:none;">
-        <span class="sprint-time">⏱ <span id="sprintTime">60</span>s</span>
-        <span class="sprint-stat">Words <strong id="sprintWords">0</strong></span>
-        <span class="sprint-stat">Chars <strong id="sprintChars">0</strong></span>
-        <span class="sprint-stat">WPM <strong id="sprintWpm">0</strong></span>
-        <button class="btn sprint-exit" id="btnSprintExit">Exit sprint</button>
-      </div>
-
-      <div class="sprint-result" id="sprintResult" style="display:none;">
-        <div class="result-card">
-          <h3>⚡ Sprint complete</h3>
-          <div class="result-grid">
-            <div><div class="rk">Words</div><div class="rv" id="resWords">0</div></div>
-            <div><div class="rk">Chars</div><div class="rv" id="resChars">0</div></div>
-            <div><div class="rk">Raw WPM</div><div class="rv" id="resWpm">0</div></div>
-            <div><div class="rk">Accuracy</div><div class="rv" id="resAcc">0%</div></div>
-          </div>
-          <div class="result-best" id="resBest"></div>
-          <div class="result-actions">
-            <button class="btn primary" id="btnSprintAgain">Run again</button>
-            <button class="btn" id="btnSprintBack">Back to practice</button>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- Per-jamo accuracy heatmap — collapsed by default -->
@@ -2503,9 +2194,7 @@ const STATS_KEY = 'hangul-type-stats-v1';
 const PROGRESS_KEY = 'hangul-type-progress-v1';
 
 // ============================================================
-// Supabase backend config — paste your values after creating a project.
-// App degrades gracefully when empty: leaderboard shows seeded fake data,
-// all practice/sprint features work fully offline.
+// Supabase backend config
 // ============================================================
 const SUPABASE_URL      = 'https://yugrqnocdrfvpmkrddya.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_xKJO3LJAlU1qkEigRBvTRg_wTlwFVjP';
@@ -2581,26 +2270,21 @@ function flagEmoji(cc) {
 const DEFAULT_PROGRESS = {
   streakDays: [],
   bestWPM: 0,
-  bestSprintWPM: 0,
   topicCompleted: {},
   // v2 gamification
   xp: 0,
   level: 1,
-  sprintHistory: [],
   comboBest: 0,
   dailyQuest: { date: null, type: null, target: 0, value: 0, claimed: false },
   streakFreezes: 1,
   lastFreezeGrantWeek: null,
-  leagueTier: 'bronze',
   profile: { name: 'Player', countryCode: null }, // null means auto-detect on load
   // v4: SRS, mastery, mode, online identity
   playerId: null,                          // UUIDv4, generated on first launch
-  mode: 'practice',                        // 'practice' | 'league'
   wordSrs: {},                             // { [koWord]: { ease, interval, dueAt, reps, lapses, lastRated } }
   topicMastery: {},                        // { [topicId]: { level: 1..5, lastDecayCheck: isoString, lastPracticedAt: isoString } }
   pendingXp: { weekly: 0, allTime: 0 },    // batched, drained by submit-xp
   weekIso: null,                           // current week key (used to roll over local pendingXp)
-  league: { tier: 'bronze', bracketKey: null, position: null, lastSyncAt: null },
   titles: []                               // earned permanent titles, never lost
 };
 
@@ -2612,31 +2296,24 @@ function loadProgress() {
       // Sanity-clamp absurdly-high WPM values that got polluted by the
       // pre-fix first-keystroke spike (saw 12000 in the wild).
       const safeBestWPM = Math.min(Number(p.bestWPM) || 0, 220);
-      const safeBestSprintWPM = Math.min(Number(p.bestSprintWPM) || 0, 220);
       return {
         streakDays: Array.isArray(p.streakDays) ? p.streakDays : [],
         bestWPM: safeBestWPM,
-        bestSprintWPM: safeBestSprintWPM,
         topicCompleted: p.topicCompleted && typeof p.topicCompleted === 'object' ? p.topicCompleted : {},
         xp: Number(p.xp) || 0,
         level: Number(p.level) || 1,
-        sprintHistory: Array.isArray(p.sprintHistory) ? p.sprintHistory : [],
         comboBest: Number(p.comboBest) || 0,
         dailyQuest: (p.dailyQuest && typeof p.dailyQuest === 'object') ? p.dailyQuest : { date: null, type: null, target: 0, value: 0, claimed: false },
         streakFreezes: Number.isFinite(p.streakFreezes) ? p.streakFreezes : 1,
         lastFreezeGrantWeek: p.lastFreezeGrantWeek || null,
-        // Backfill league tier from bestSprintWPM so v1 users don't see a phantom promotion on first post-upgrade sprint
-        leagueTier: p.leagueTier || 'bronze',
         profile: (p.profile && typeof p.profile === 'object')
           ? { name: p.profile.name || 'Player', countryCode: p.profile.countryCode || detectCountry() }
           : { name: 'Player', countryCode: detectCountry() },
         playerId: p.playerId || generatePlayerId(),
-        mode: (p.mode === 'league' || p.mode === 'practice') ? p.mode : 'practice',
         wordSrs: (p.wordSrs && typeof p.wordSrs === 'object') ? p.wordSrs : {},
         topicMastery: (p.topicMastery && typeof p.topicMastery === 'object') ? p.topicMastery : {},
         pendingXp: (p.pendingXp && typeof p.pendingXp === 'object') ? p.pendingXp : { weekly: 0, allTime: 0 },
         weekIso: p.weekIso || null,
-        league: (p.league && typeof p.league === 'object') ? p.league : { tier: 'bronze', bracketKey: null, position: null, lastSyncAt: null },
         titles: Array.isArray(p.titles) ? p.titles : []
       };
     }
@@ -3101,7 +2778,6 @@ function comboTier(c) {
 function bumpCombo() {
   state.combo++;
   if (state.combo > state.comboMax) state.comboMax = state.combo;
-  if (state.sprintMode && state.combo > state.sprintComboHigh) state.sprintComboHigh = state.combo;
   const tier = comboTier(state.combo);
   if (state.combo >= COMBO_THRESHOLDS[0]) {
     showComboChip(state.combo, tier);
@@ -3252,15 +2928,6 @@ function openProfileModal() {
     progress.profile = { name: newName, countryCode: newCC };
     saveProgress(progress);
     renderProfileChip();
-    renderRecords();
-    const sprintResultEl = document.getElementById('sprintResult');
-    if (sprintResultEl && sprintResultEl.style.display !== 'none') {
-      const lb = sprintResultEl.querySelector('.leaderboard');
-      if (lb) lb.outerHTML = renderLeaderboard(activeSprintLeaderboardWpm);
-      sprintResultEl.querySelectorAll('[data-edit-profile]').forEach(el => {
-        el.addEventListener('click', () => openProfileModal());
-      });
-    }
     close();
   });
   document.getElementById('profileNameInput').focus();
@@ -3269,61 +2936,6 @@ function openProfileModal() {
 
 // ── Streak freeze logic ──
 // ── Daily quest ──
-// ── Records panel ──
-let recordsTab = 'today';
-let _onlineCache = { week: null, all: null, fetchedAt: 0 };
-
-async function renderRecords() {
-  const el = document.getElementById('recordsPanel');
-  if (!el) return;
-
-  const today = dayKey(new Date());
-  const monthPrefix = today.slice(0, 7);
-  const localHistory = progress.sprintHistory || [];
-
-  const tabsHtml = `<div class="records-tabs">
-    <button class="records-tab ${recordsTab==='today'?'on':''}" data-tab="today">Today</button>
-    <button class="records-tab ${recordsTab==='all'?'on':''}" data-tab="all">All time top 10</button>
-  </div>`;
-
-  let listHtml = '';
-
-  {
-    // Local sprint history (only Today + All-time top 10)
-    let rows = [];
-    if (recordsTab === 'today') rows = localHistory.filter(r => r.date.startsWith(today));
-    else rows = [...localHistory];
-    rows.sort((a, b) => b.wpm - a.wpm);
-    if (recordsTab === 'all') rows = rows.slice(0, 10);
-    const bestWpm = localHistory.reduce((m, r) => Math.max(m, r.wpm), 0);
-
-    if (rows.length === 0) {
-      listHtml = `<div class="records-empty">No sprints yet, try one to get on the board!</div>`;
-    } else {
-      const flag = flagEmoji((progress.profile && progress.profile.countryCode) || 'US');
-      const playerName = (progress.profile && progress.profile.name) || 'Player';
-      listHtml = '<div class="records-list">' + rows.map((r, i) => {
-        const ago = relTime(r.date);
-        const isBest = r.wpm === bestWpm && bestWpm > 0;
-        const rowFlag = r.countryCode ? flagEmoji(r.countryCode) : flag;
-        const rowName = r.playerName || playerName;
-        return `<div class="record-row ${isBest ? 'best' : ''}">
-          <span class="rank">${isBest ? '👑' : '#' + (i+1)}</span>
-          <span class="player"><span class="row-flag">${rowFlag}</span> ${escapeHtml(rowName)}</span>
-          <span class="wpm">${r.wpm} WPM</span>
-          <span class="acc">${r.accuracy}%</span>
-          <span class="topic">${escapeHtml(r.topic || '—')}</span>
-          <span class="ago">${ago}</span>
-        </div>`;
-      }).join('') + '</div>';
-    }
-  }
-
-  el.innerHTML = tabsHtml + listHtml;
-  el.querySelectorAll('.records-tab').forEach(btn => {
-    btn.addEventListener('click', () => { recordsTab = btn.dataset.tab; renderRecords(); });
-  });
-}
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
@@ -3345,49 +2957,6 @@ function relTime(iso) {
 }
 
 // ── Celebration overlay ──
-// ============================================================
-// Supabase backend: identity, XP submission queue, leaderboard fetch
-// ============================================================
-
-// ── Supabase backend: leaderboard fetch + sprint score submission ──
-let _lbCache = null, _lbCacheAt = 0;
-
-async function fetchOnlineLeaderboard() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
-  const now = Date.now();
-  if (_lbCache && now - _lbCacheAt < 60000) return _lbCache;
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/players?select=name,country,all_time_xp&order=all_time_xp.desc&limit=250&flagged=eq.false`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
-    );
-    if (!res.ok) return null;
-    const rows = await res.json();
-    _lbCache = rows.map(r => ({ name: r.name || 'Player', flag: flagEmoji(r.country || 'US'), wpm: r.all_time_xp || 0 }));
-    _lbCacheAt = now;
-    return _lbCache;
-  } catch (e) { return null; }
-}
-
-async function submitSprintScore(bestWpm) {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !bestWpm) return;
-  const pid = progress.playerId;
-  if (!pid) return;
-  const name = (progress.profile && progress.profile.name) || 'Player';
-  const country = (progress.profile && progress.profile.countryCode) || detectCountry();
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_sprint_score`, {
-      method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ p_id: pid, p_name: name, p_country: country, p_wpm: bestWpm })
-    });
-    _lbCache = null; // invalidate so next fetch reflects the new score
-  } catch (e) {}
-}
 
 const state = {
   wordIdx: 0,
@@ -3406,20 +2975,10 @@ const state = {
   audioOn: lsBool(AUDIO_KEY, true),
   romanizeOn: lsBool(ROMAN_KEY, false),
   srsOn: lsBool('hangul-type-srs-v1', true),
-  // Sprint mode
-  sprintMode: false,
-  sprintEndsAt: 0,
-  sprintTimer: null,
-  sprintWords: 0,
-  sprintChars: 0,
-  sprintHits: 0,
-  sprintTotal: 0,
   // Gamification
   combo: 0,
   comboMax: 0,
-  comboHideTimer: null,
-  sprintXpEarned: 0,
-  sprintComboHigh: 0
+  comboHideTimer: null
 };
 
 function saveAudio() { lsBoolSet(AUDIO_KEY, state.audioOn); }
@@ -3460,279 +3019,83 @@ function renderRomanization(koWord) {
 }
 
 // ============================================================
-// .io-style avatar blob — tier emerges from total SRS-mastered words.
-// No XP system: tier is purely a function of memorized vocabulary.
+// Training ground — same Hwarang character who fights in Battle Mode, rendered
+// here to make the practice/battle progression feel continuous. Tier mirrors
+// the PLAYER_SPRITES table in game.html (also identical to BATTLE_SPRITES below
+// but with the equip emoji preserved).
 // ============================================================
-const AVATAR_TIERS = [
-  { min: 0,   emoji: '🥚', name: 'Nameless',   tier: 1 },
-  { min: 1,   emoji: '👶', name: 'Babe',       tier: 1 },
-  { min: 10,  emoji: '🧒', name: 'Apprentice', tier: 2 },
-  { min: 30,  emoji: '🧑‍🎓', name: 'Student',    tier: 3 },
-  { min: 80,  emoji: '🥷', name: 'Adept',      tier: 4 },
-  { min: 200, emoji: '🐉', name: 'Master',     tier: 5 }
+const PRACTICE_HERO_SPRITES = [
+  { lv: 1,  emoji: '🥚', label: '무명 Nameless',          equip: '' },
+  { lv: 2,  emoji: '👶', label: '아기 Babe',              equip: '' },
+  { lv: 3,  emoji: '🧒', label: '도제 Apprentice',        equip: '🪨' },
+  { lv: 4,  emoji: '🧑', label: '학생 Student',           equip: '📓' },
+  { lv: 5,  emoji: '🧑‍🎓', label: '졸업생 Graduate',       equip: '🪙' },
+  { lv: 6,  emoji: '🥷', label: '견습생 Trainee',         equip: '🗡️' },
+  { lv: 7,  emoji: '🧝', label: '검사 Swordsman',         equip: '⚔️' },
+  { lv: 8,  emoji: '🧝‍♂️', label: '기사 Knight',          equip: '🛡️' },
+  { lv: 9,  emoji: '🧙', label: '도사 Mage',              equip: '🪄' },
+  { lv: 10, emoji: '🧙‍♂️', label: '대마법사 Archmage',     equip: '📜' },
+  { lv: 11, emoji: '🦸', label: '영웅 Hero',              equip: '🌟' },
+  { lv: 12, emoji: '🦸‍♀️', label: '챔피언 Champion',      equip: '🏆' },
+  { lv: 13, emoji: '🥷', label: '닌자 Ninja',             equip: '🎯' },
+  { lv: 14, emoji: '🧑‍🚀', label: '우주인 Cosmonaut',     equip: '🚀' },
+  { lv: 15, emoji: '🧚‍♀️', label: '요정 Fairy',           equip: '✨' },
+  { lv: 16, emoji: '🤴', label: '왕자 Prince',            equip: '👑' },
+  { lv: 17, emoji: '👸', label: '공주 Princess',          equip: '💎' },
+  { lv: 18, emoji: '🧜‍♂️', label: '인어왕 Merlord',        equip: '🔱' },
+  { lv: 19, emoji: '🧞', label: '정령 Spirit',            equip: '🌀' },
+  { lv: 20, emoji: '🐉', label: '용왕 Dragon Lord',       equip: '🔥' },
+  { lv: 21, emoji: '🦄', label: '일각수 Unicorn',         equip: '🌈' },
+  { lv: 22, emoji: '🐲', label: '용족 Drake',             equip: '🪽' },
+  { lv: 23, emoji: '⚔️', label: '전쟁신 War God',         equip: '💥' },
+  { lv: 24, emoji: '✨', label: '별 Star',                equip: '🌠' },
+  { lv: 25, emoji: '🌟', label: '신선 Immortal',          equip: '🌌' },
+  { lv: 26, emoji: '🌌', label: '우주 Cosmos',            equip: '🪐' },
+  { lv: 27, emoji: '☀️', label: '태양 Sun',               equip: '🔆' },
+  { lv: 28, emoji: '🪐', label: '행성 Planet',            equip: '🛸' },
+  { lv: 29, emoji: '🌠', label: '유성 Comet',             equip: '💫' },
+  { lv: 30, emoji: '🔱', label: '신왕 God-King',          equip: '⚡' }
 ];
-function totalMasteredAll() {
-  return masteredCountForLevel(1) + masteredCountForLevel(2);
+
+function practiceHeroForXp(xp) {
+  // Same XP curve as game.html: 50 * n * (n+1) cumulative-per-level.
+  let lvl = 1, acc = 0;
+  while (lvl < 99) {
+    const need = 50 * lvl * (lvl + 1);
+    if (xp < acc + need) break;
+    acc += need; lvl++;
+  }
+  let pick = PRACTICE_HERO_SPRITES[0];
+  for (const p of PRACTICE_HERO_SPRITES) if (lvl >= p.lv) pick = p;
+  return { lvl, label: pick.label, equip: pick.equip, emoji: pick.emoji };
 }
-function avatarTierFor(n) {
-  let pick = AVATAR_TIERS[0];
-  for (const t of AVATAR_TIERS) if (n >= t.min) pick = t;
-  return pick;
-}
-function renderAvatarBlob(opts) {
-  const el = document.getElementById('avatarBlob');
+
+function renderTrainingGround(opts) {
+  const el = document.getElementById('trainingGround');
   if (!el) return;
-  const n = totalMasteredAll();
-  const t = avatarTierFor(n);
-  const emojiEl = document.getElementById('avatarEmoji');
-  const tierEl = document.getElementById('avatarTier');
-  if (emojiEl) emojiEl.textContent = t.emoji;
-  if (tierEl) tierEl.textContent = `${t.name} · ${n}`;
-  el.className = 'avatar-blob tier-' + t.tier;
+  const xp = Number(progress.xp || 0);
+  const hero = practiceHeroForXp(xp);
+  const tierEl  = document.getElementById('tgTier');
+  const levelEl = document.getElementById('tgLevel');
+  const equipEl = document.getElementById('tgEquip');
+  if (tierEl)  tierEl.textContent  = hero.label;
+  if (levelEl) levelEl.textContent = 'LV.' + hero.lvl;
+  if (equipEl) equipEl.textContent = hero.equip;
   if (opts && opts.bump) {
+    el.classList.remove('bump');
+    void el.offsetWidth;       // restart animation
     el.classList.add('bump');
-    setTimeout(() => el.classList.remove('bump'), 220);
+    setTimeout(() => el.classList.remove('bump'), 360);
   }
 }
 
+// Backwards-compat shim — the old renderAvatarBlob name is referenced by
+// streak/word-complete code paths. Keep the same callable, route to the new
+// training ground render so all existing call sites keep working unchanged.
+function renderAvatarBlob(opts) { renderTrainingGround(opts); }
 
-// ============================================================
-// Sprint mode (60-second speed test)
-// ============================================================
-
-function startSprint() {
-  if (state.activeWords.length === 0) return;
-  document.body.classList.add('in-sprint');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  state.sprintMode = true;
-  state.sprintEndsAt = Date.now() + 60000;
-  state.sprintWords = 0;
-  state.sprintChars = 0;
-  state.sprintHits = 0;
-  state.sprintTotal = 0;
-  state.sprintXpEarned = 0;
-  state.sprintComboHigh = 0;
-  // Reset session counters too so WPM calc starts fresh
-  state.startedAt = Date.now();
-  state.totalKeys = 0;
-  state.hitKeys = 0;
-  resetCombo();
-  document.getElementById('sprintBar').style.display = 'flex';
-  document.getElementById('sprintResult').style.display = 'none';
-  document.getElementById('btnSprint').style.display = 'none';
-  loadWord(Math.floor(Math.random() * state.activeWords.length));
-  updateSprintUI();
-  if (state.sprintTimer) clearInterval(state.sprintTimer);
-  state.sprintTimer = setInterval(() => {
-    const remaining = Math.max(0, state.sprintEndsAt - Date.now());
-    if (remaining <= 0) {
-      endSprint();
-    } else {
-      updateSprintUI();
-    }
-  }, 100);
-}
-
-function updateSprintUI() {
-  const remaining = Math.max(0, state.sprintEndsAt - Date.now());
-  document.getElementById('sprintTime').textContent = (remaining / 1000).toFixed(1);
-  document.getElementById('sprintWords').textContent = state.sprintWords;
-  document.getElementById('sprintChars').textContent = state.sprintChars;
-  const elapsedMin = (60000 - remaining) / 60000;
-  const wpm = elapsedMin > 0 ? Math.round((state.sprintChars / 5) / elapsedMin) : 0;
-  document.getElementById('sprintWpm').textContent = wpm;
-}
-
-// ============================================================
-// Fake leaderboard — seeded so the same standings appear across loads.
-// Real backend would replace this; for now it gives Speed Test a sense
-// of "where do I stand" without any infra dependency.
-// ============================================================
-const FAKE_LB_NAMES = [
-  '민수','지은','서영','다현','현우','하늘','지민','수아','동현','윤서','지호','예린','태민','채원','준호','시우','은우','하준','이안','민준',
-  'Alex','Maya','Jordan','Rin','Yui','Hugo','Sora','Mateo','Anya','Felix','Khaled','Sofia','Ana','Ling','Nikolai','Laila','Theo','Camille','Mei','Diego',
-  'Aiko','Liam','Olivia','Noah','Emma','Lucas','Mia','Eva','Tomás','Nora','Hassan','Priya','Arjun','Wei','Yuki','Mateja','Otto','Iris','Bram','Saskia',
-  'Anand','Léa','Bruno','Ines','Yusuf','Fatima','Mohammed','Aisha','Olu','Kenji','Hiro','Akira','Riku','Kira','Lena','Pavel','Olga','Stefan','Dimitri','Ivan',
-  'Pedro','Carlos','Lucia','Marco','Elena','Giulia','Antonio','Chiara','Dario','Beatrice','Henrik','Erika','Astrid','Ingrid','Magnus','Sigrid','Oskar','Linnea','Tove','Bjorn'
-];
-const FAKE_LB_FLAGS = ['🇰🇷','🇺🇸','🇯🇵','🇨🇳','🇪🇸','🇫🇷','🇩🇪','🇧🇷','🇮🇳','🇲🇽','🇮🇹','🇨🇦','🇬🇧','🇸🇪','🇳🇴','🇫🇮','🇩🇰','🇳🇱','🇧🇪','🇨🇭','🇦🇹','🇵🇱','🇨🇿','🇭🇺','🇷🇴','🇧🇬','🇬🇷','🇹🇷','🇵🇹','🇮🇪','🇿🇦','🇪🇬','🇸🇦','🇦🇪','🇮🇩','🇹🇭','🇻🇳','🇵🇭','🇲🇾','🇸🇬'];
-
-let FAKE_LB = null;
-function ensureFakeLeaderboard() {
-  if (FAKE_LB) return FAKE_LB;
-  let s = 0x9e3779b9; // deterministic seed → same standings every visit
-  const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
-  const list = [];
-  for (let i = 0; i < 250; i++) {
-    const baseName = FAKE_LB_NAMES[Math.floor(rnd() * FAKE_LB_NAMES.length)];
-    const num = Math.floor(rnd() * 999);
-    const name = baseName + (rnd() < 0.55 ? '' : '_' + num);
-    const flag = FAKE_LB_FLAGS[Math.floor(rnd() * FAKE_LB_FLAGS.length)];
-    let wpm;
-    const tier = rnd();
-    if (tier < 0.04)      wpm = 130 + Math.floor(rnd() * 70); // pros
-    else if (tier < 0.18) wpm = 90  + Math.floor(rnd() * 45); // strong
-    else if (tier < 0.50) wpm = 55  + Math.floor(rnd() * 40); // mid
-    else if (tier < 0.85) wpm = 25  + Math.floor(rnd() * 35); // learning
-    else                  wpm = 6   + Math.floor(rnd() * 22); // beginners
-    list.push({ name, flag, wpm });
-  }
-  list.sort((a, b) => b.wpm - a.wpm);
-  FAKE_LB = list;
-  return list;
-}
-
-function buildLeaderboardRows(list, userName, userFlag, userWpm) {
-  const merged = list.concat([{ name: userName, flag: userFlag, wpm: userWpm, isUser: true }]);
-  merged.sort((a, b) => b.wpm - a.wpm);
-  const userRank = merged.findIndex(x => x.isUser) + 1;
-  const total = merged.length;
-
-  const rows = [];
-  for (let i = 0; i < 3 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
-  if (userRank <= 5) {
-    for (let i = 3; i < 6 && i < total; i++) rows.push({ rank: i + 1, ...merged[i] });
-  } else {
-    rows.push({ isEllipsis: true });
-    rows.push({ rank: userRank - 1, ...merged[userRank - 2] });
-    rows.push({ rank: userRank,     ...merged[userRank - 1] });
-    if (userRank < total) rows.push({ rank: userRank + 1, ...merged[userRank] });
-  }
-
-  return `
-    <div class="lb-header">
-      <span>Global leaderboard</span>
-      <span class="lb-meta">You: <strong>#${userRank}</strong> of ${total.toLocaleString()}</span>
-    </div>
-    <div class="lb-list">
-      ${rows.map(r => {
-        if (r.isEllipsis) return '<div class="lb-row lb-ellipsis">⋯</div>';
-        const cls = r.isUser ? 'lb-row you' : 'lb-row';
-        return `<div class="${cls}"${r.isUser ? ' data-edit-profile="1"' : ''}>
-          <span class="lb-rank">#${r.rank}</span>
-          <span class="lb-flag">${r.flag}</span>
-          <span class="lb-name">${escapeHtml(r.name)}</span>
-          <span class="lb-wpm">${r.wpm}</span>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="lb-edit-hint">Click your row or the profile chip to change your name and flag.</div>
-  `;
-}
-
-let activeSprintLeaderboardWpm = 0;
-function renderLeaderboard(userWpm) {
-  activeSprintLeaderboardWpm = userWpm;
-  const fake = ensureFakeLeaderboard();
-  const userName = (progress.profile && progress.profile.name) || 'Player';
-  const userFlag = flagEmoji((progress.profile && progress.profile.countryCode) || detectCountry());
-
-  // Kick off async fetch — updates the container in place when data arrives
-  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-    setTimeout(async () => {
-      const online = await fetchOnlineLeaderboard();
-      if (!online) return;
-      const el = document.getElementById('lbLive');
-      if (!el) return;
-      el.innerHTML = buildLeaderboardRows(online, userName, userFlag, userWpm);
-      el.querySelectorAll('[data-edit-profile]').forEach(e => {
-        e.addEventListener('click', () => openProfileModal());
-      });
-    }, 0);
-  }
-
-  return `<div class="leaderboard" id="lbLive">${buildLeaderboardRows(fake, userName, userFlag, userWpm)}</div>`;
-}
-
-function endSprint() {
-  if (!state.sprintMode) return;
-  if (state.sprintTimer) {
-    clearInterval(state.sprintTimer);
-    state.sprintTimer = null;
-  }
-  state.sprintMode = false;
-  document.getElementById('sprintBar').style.display = 'none';
-  const wpm = Math.round((state.sprintChars / 5));
-  const acc = state.sprintTotal ? Math.round((state.sprintHits / state.sprintTotal) * 100) : 100;
-
-  // History write
-  const previousBest = progress.bestSprintWPM || 0;
-  const isNewBest = wpm > previousBest;
-  if (isNewBest) progress.bestSprintWPM = wpm;
-  progress.sprintHistory.push({
-    date: new Date().toISOString(),
-    wpm, accuracy: acc,
-    words: state.sprintWords,
-    topic: state.activeTopic,
-    playerName: (progress.profile && progress.profile.name) || 'Player',
-    countryCode: (progress.profile && progress.profile.countryCode) || detectCountry()
-  });
-  if (progress.sprintHistory.length > 500) progress.sprintHistory = progress.sprintHistory.slice(-500);
-  saveProgress(progress);
-  submitSprintScore(progress.bestSprintWPM || wpm);
-
-  const deltaLine = isNewBest && previousBest > 0
-    ? `<span class="recap-best-pill">🎉 New personal best!</span>`
-    : (previousBest > 0
-        ? `<span class="recap-delta">${wpm > previousBest ? '+' : ''}${wpm - previousBest} vs your best (${previousBest} → ${wpm}, ${previousBest > 0 ? Math.round(((wpm - previousBest) / previousBest) * 100) : 0}%)</span>`
-        : `<span class="recap-delta">First sprint logged. Your benchmark is set.</span>`);
-
-  const sprintResultEl = document.getElementById('sprintResult');
-  sprintResultEl.innerHTML = `
-    <div class="result-card">
-      <h3>⚡ Sprint complete</h3>
-      <div class="recap-wpm">${wpm}<span class="unit">WPM</span></div>
-      <div class="recap-delta-line">${deltaLine}</div>
-      <div class="recap-grid">
-        <div><div class="rk">Words</div><div class="rv">${state.sprintWords}</div></div>
-        <div><div class="rk">Accuracy</div><div class="rv">${acc}%</div></div>
-        <div><div class="rk">Combo high</div><div class="rv">${state.sprintComboHigh}</div></div>
-      </div>
-      ${renderLeaderboard(wpm)}
-      <div class="result-actions">
-        <button class="btn primary" id="btnSprintAgain">Run again</button>
-        <button class="btn" id="btnSprintBack">Back to practice</button>
-      </div>
-    </div>
-  `;
-  // User-row click-to-edit profile
-  sprintResultEl.querySelectorAll('[data-edit-profile]').forEach(el => {
-    el.addEventListener('click', () => openProfileModal());
-  });
-  sprintResultEl.style.display = 'flex';
-  document.getElementById('btnSprintAgain').addEventListener('click', () => {
-    sprintResultEl.style.display = 'none';
-    startSprint();
-  });
-  document.getElementById('btnSprintBack').addEventListener('click', exitSprint);
-
-  renderRecords();
-  setDiag('ok', '<span class="label">Sprint over.</span> Run again or back to practice.');
-}
-
-function exitSprint() {
-  document.body.classList.remove('in-sprint');
-  if (state.sprintTimer) clearInterval(state.sprintTimer);
-  state.sprintTimer = null;
-  state.sprintMode = false;
-  document.getElementById('sprintBar').style.display = 'none';
-  document.getElementById('sprintResult').style.display = 'none';
-  document.getElementById('btnSprint').style.display = '';
-  state.startedAt = null;
-  state.totalKeys = 0;
-  state.hitKeys = 0;
-  loadWord(0);
-}
 
 function pickNextWordIdx(currentIdx) {
-  if (state.sprintMode) {
-    if (state.activeWords.length <= 1) return 0;
-    let next;
-    do {
-      next = Math.floor(Math.random() * state.activeWords.length);
-    } while (next === currentIdx);
-    return next;
-  }
   // Auto-flow: words always come from the highest-gap incomplete category at
   // the active TOPIK level. Once a subcategory is full, we automatically move
   // to the next-incomplete one — no manual chip-clicking required.
@@ -4573,15 +3936,8 @@ function afterCorrectKeystroke() {
       confettiBurst(wordEl, 8);
       playWordDing();
       renderStreak();
-      if (state.sprintMode) {
-        state.sprintWords++;
-        state.sprintChars += [...target].filter(c => c !== ' ').length;
-        updateSprintUI();
-        setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 200);
-      } else {
-        setDiag('ok', `<span class="label">Nice.</span> <span class="ko">${target}</span> done.`);
-        setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 700);
-      }
+      setDiag('ok', `<span class="label">Nice.</span> <span class="ko">${target}</span> done.`);
+      setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 700);
       updateStats();
     } else {
       setDiag('err', `<span class="label">Almost.</span> Expected <span class="ko">${target}</span>, got <span class="ko">${displayed}</span>. Try again.`);
@@ -4607,12 +3963,10 @@ function handleKeystroke(rawKey, isShift) {
       state.posKs++;
       state.ime.commitBuffer();
       state.ime.committed += ' ';
-      if (state.sprintMode) { state.sprintHits++; state.sprintTotal++; }
       bumpCombo();
       afterCorrectKeystroke();
       return true;
     }
-    if (state.sprintMode) state.sprintTotal++;
     resetCombo();
     setDiag('err', `<span class="label">Hold.</span> Space is not expected here. Type the next jamo.`);
     flashJamoErr();
@@ -4640,14 +3994,12 @@ function handleKeystroke(rawKey, isShift) {
     state.ime.type(jamo);
     flashKey(rawKey);
     recordKeystroke(expected, jamo);
-    if (state.sprintMode) { state.sprintHits++; state.sprintTotal++; }
     bumpCombo();
     afterCorrectKeystroke();
     return true;
   }
 
   // Mistake
-  if (state.sprintMode) state.sprintTotal++;
   resetCombo();
   recordKeystroke(expected, jamo);
   setDiag('err', explainError(expected, jamo));
@@ -4687,7 +4039,7 @@ function attachInput() {
     if (window.innerWidth < 700) return;
     // Don't refocus if the user clicked an interactive control (buttons, pills, modals)
     const t = e.target;
-    if (t && t.closest && t.closest('button, input, select, .topic-pill, .records-tab, .profile-modal, .celebration-overlay')) return;
+    if (t && t.closest && t.closest('button, input, select, .topic-pill, .profile-modal, .celebration-overlay')) return;
     focusShield();
   });
   document.addEventListener('touchstart', (e) => {
@@ -4697,7 +4049,7 @@ function attachInput() {
     // so we never need to grab focus on touch.
     if (window.innerWidth < 700) return;
     const t = e.target;
-    if (t && t.closest && t.closest('button, input, select, .topic-pill, .records-tab, .profile-modal, .celebration-overlay')) return;
+    if (t && t.closest && t.closest('button, input, select, .topic-pill, .profile-modal, .celebration-overlay')) return;
     focusShield();
   });
 
@@ -4853,20 +4205,9 @@ function boot() {
   renderProfileChip();
   renderBattleChip();
   renderStreak();
-  renderRecords();
   updateStats();
   document.getElementById('profileChip').addEventListener('click', openProfileModal);
 
-  // Records panel toggle
-  const recordsBtn = document.getElementById('btnRecords');
-  const recordsPanel = document.getElementById('recordsPanel');
-  if (recordsBtn && recordsPanel) {
-    recordsBtn.addEventListener('click', () => {
-      const open = recordsPanel.style.display !== 'none';
-      recordsPanel.style.display = open ? 'none' : 'block';
-      if (!open) renderRecords();
-    });
-  }
   // (per-jamo accuracy is now an always-visible section under the practice card)
 
   // Mobile chrome: keep the Korean keyboard guide visible and move secondary surfaces
@@ -4876,7 +4217,7 @@ function boot() {
   const practiceSide = document.getElementById('practiceSide');
   const mobileVocabBtn = document.getElementById('mobileVocabBtn');
   const drawerScrim = document.getElementById('drawerScrim');
-  const mobileMenuItems = ['btnSprint', 'battleLink', 'btnRecords', 'settingsWrap']
+  const mobileMenuItems = ['battleLink', 'settingsWrap']
     .map(id => document.getElementById(id) || (id === 'settingsWrap' ? document.querySelector('.settings-wrap') : null))
     .filter(Boolean)
     .map(el => ({ el, parent: el.parentElement, next: el.nextSibling }));
@@ -4938,8 +4279,6 @@ function boot() {
   });
 
   document.getElementById('btnSkip').addEventListener('click', () => loadWord(pickNextWordIdx(state.wordIdx)));
-  document.getElementById('btnSprint').addEventListener('click', startSprint);
-  document.getElementById('btnSprintExit').addEventListener('click', exitSprint);
   const btnAudio = document.getElementById('btnAudio');
   function syncAudioBtn() {
     btnAudio.textContent = `${state.audioOn ? '🔊' : '🔇'} Audio: ${state.audioOn ? 'ON' : 'OFF'}`;
@@ -4982,7 +4321,7 @@ function boot() {
   }
   document.getElementById('btnReset').addEventListener('click', () => {
     closeMobileMenu();
-    if (!confirm('Reset everything? This clears per-jamo history, streak, XP, level, leaderboard, daily quest, and topic completion.')) return;
+    if (!confirm('Reset everything? This clears per-jamo history, streak, XP, level, daily quest, and topic completion.')) return;
     stats = { perJamo: {}, history: [] };
     saveStats(stats);
     progress = JSON.parse(JSON.stringify(DEFAULT_PROGRESS));
@@ -4998,7 +4337,6 @@ function boot() {
     renderRecent();
     buildTopicsPicker();
     renderStreak();
-    renderRecords();
     updateStats();
     loadWord(0);
   });
