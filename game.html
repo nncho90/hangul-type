@@ -3993,7 +3993,7 @@ async function triggerSpecialMove() {
 
 // ── Hold-Tab fast-fall (desktop only) ──
 // Power users find early levels too slow. While Tab is held the falling
-// monsters move at 2x — the spawner / typing / scoring run at normal speed.
+// monsters move at 4x — the spawner / typing / scoring run at normal speed.
 let _fastFallActive = false;
 function setFastFall(on) {
   on = !!on;
@@ -4495,7 +4495,7 @@ function loop(t) {
     // Slow-mo applies only to MONSTER motion, not the spawner / HUD / typing.
     const slowMul = (state.activePowerups && state.activePowerups.slowmo > 0) ? 0.55 : 1.0;
     // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
-    const fastMul = _fastFallActive ? 2.0 : 1.0;
+    const fastMul = _fastFallActive ? 4.0 : 1.0;
     state.spawnTimer += dt;
     const cap = state.level >= 13 ? 6 : state.level >= 7 ? 5 : state.level >= 4 ? 4 : 3;
     if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap) {
