@@ -1,5 +1,5 @@
-// vocab.js — Korean→English vocabulary for Hangul Type Battle Mode.
-// Loaded synchronously by game.html before the main script. Edit freely.
+// vocab.js — shared Korean→English vocabulary for Hangul Type practice + battle.
+// Loaded synchronously before each page's main inline script. Edit freely.
 window.BATTLE_VOCAB = [
 
   // ── People & Relationships ──────────────────────────────────────────
@@ -1102,4 +1102,3 @@ window.BATTLE_VOCAB = [
   { ko: '빈곤', en: 'poverty', topikLevel: 2 },
 
 ];
-

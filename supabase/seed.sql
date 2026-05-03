@@ -1,0 +1,2 @@
+-- Local seed file intentionally left empty.
+-- Migrations create the schema used by the app.

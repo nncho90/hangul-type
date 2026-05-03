@@ -359,11 +359,11 @@
     transition: width 0.3s;
   }
 
-  /* Stage — fills the viewport below the single HUD bar. Typing strip is
-     gone; the typing display lives inside .hud-center now. */
+  /* Stage — fills the desktop viewport. The HUD is at the bottom on desktop,
+     so no top inset; mobile overrides this because its HUD is at the top. */
   .stage {
     position: fixed;
-    inset: 68px 0 0 0;
+    inset: 0 0 0 0;
     z-index: 50;
     overflow: hidden;
   }
@@ -915,6 +915,10 @@
     font-size: 13px;
     color: var(--tlo, #94a3b8);
     letter-spacing: 0.04em;
+  }
+  .pause-overlay .pause-back-btn {
+    margin-top: 4px;
+    text-decoration: none;
   }
 
   /* On-screen tappable keyboard — mobile only.
@@ -1939,6 +1943,7 @@
 <div id="pauseOverlay" class="pause-overlay" style="display:none;">
   <div class="pause-title">PAUSED</div>
   <div class="pause-hint">press Esc to resume</div>
+  <a class="menu-btn pause-back-btn" href="index.html">← Back to practice</a>
 </div>
 
 <div id="storyDialog" class="story-dialog" style="display:none;">
@@ -3040,6 +3045,13 @@ function scoreForKill(tier, comboBonus) {
 }
 
 let monsterId = 0;
+
+function monsterSpawnY(tier) {
+  // Stage clips overflow, so negative spawn positions make large sprites look
+  // like they are being cut by an invisible top bar.
+  return tier === 'boss' ? 18 : 16;
+}
+
 // Heart-pickup monster — spawns very rarely, drops +1 life when typed.
 // Limited to one on screen at a time, only when the player has lost a life.
 const HEART_WORDS = [
@@ -3069,7 +3081,7 @@ function maybeSpawnHeart() {
     ks, hp: ks.length, maxHp: ks.length,
     speed: 8,                  // very slow — generous capture window
     motion: 'straight',
-    x: startX, originX: startX, y: -100,
+    x: startX, originX: startX, y: monsterSpawnY(1),
     zigT: 0, zigAmp: 0, zigFreq: 0,
     diveSpeed: 8,
     tpT: 0, tpHoldUntil: 600,
@@ -3106,7 +3118,7 @@ function spawnMonster(forceBoss) {
     motion: beh.motion,
     x: startX,
     originX: startX,
-    y: -100,
+    y: monsterSpawnY(tier),
     // Per-motion state
     zigT: Math.random() * Math.PI * 2,
     zigAmp: 90 + Math.random() * 50,
@@ -3139,7 +3151,7 @@ function spawnBoss() {
     speed: baseSpeed,
     motion: beh.motion,
     x: startX, originX: startX,
-    y: -140,
+    y: monsterSpawnY('boss'),
     zigT: 0, zigAmp: 0, zigFreq: 0,
     diveSpeed: baseSpeed,
     tpT: 0, tpHoldUntil: 1400,

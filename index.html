@@ -1711,6 +1711,7 @@
 
 <input type="text" class="input-shield" id="shield" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
+<script src="vocab.js"></script>
 <script>
 'use strict';
 
@@ -2169,6 +2170,34 @@ const TOPICS = [
     { ko: '회사에 가야 해서 일찍 일어나요', en: 'I have to go to work so I wake up early' }
   ]}
 ];
+
+// Merge the shared 1000-word deck into Practice without duplicating the
+// hand-curated starter topics above. Battle Mode reads the same file directly.
+function addSharedVocabTopics() {
+  const shared = (window && Array.isArray(window.BATTLE_VOCAB)) ? window.BATTLE_VOCAB : [];
+  if (!shared.length) return;
+  const seen = new Set();
+  for (const t of TOPICS) {
+    for (const w of t.words) if (w && w.ko) seen.add(w.ko);
+  }
+  const buckets = {
+    1: { id: 'shared_topik1', name: 'Core 1000 · TOPIK 1', topikLevel: 1, words: [] },
+    2: { id: 'shared_topik2', name: 'Core 1000 · TOPIK 2', topikLevel: 2, words: [] }
+  };
+  for (const raw of shared) {
+    if (!raw || typeof raw.ko !== 'string' || typeof raw.en !== 'string') continue;
+    const ko = raw.ko.trim();
+    const en = raw.en.trim();
+    if (!ko || !en || seen.has(ko)) continue;
+    seen.add(ko);
+    const level = Number(raw.topikLevel) === 2 ? 2 : 1;
+    buckets[level].words.push({ ko, en });
+  }
+  for (const level of [1, 2]) {
+    if (buckets[level].words.length) TOPICS.push(buckets[level]);
+  }
+}
+addSharedVocabTopics();
 
 // "All" topic = flatten + shuffle
 function buildAllWords() {
@@ -3717,7 +3746,8 @@ function activeLevel() {
 const TOPIC_ICONS = {
   basics: '👋', family: '👨‍👩‍👧', food: '🍙', time: '⏰', numbers: '🔢',
   verbs: '🏃', places: '🏠', feelings: '💗', sentences: '💬',
-  t2_verbs: '⚙️', t2_adj: '🌟', t2_nouns: '📚', t2_phrases: '🗣️', t2_sentences: '📜'
+  t2_verbs: '⚙️', t2_adj: '🌟', t2_nouns: '📚', t2_phrases: '🗣️', t2_sentences: '📜',
+  shared_topik1: '🧩', shared_topik2: '🧠'
 };
 
 function buildTopicsPicker() {

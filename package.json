@@ -1,5 +1,13 @@
 {
+  "scripts": {
+    "supabase:start": "supabase start",
+    "supabase:start:no-functions": "supabase start -x edge-runtime",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:reset": "supabase db reset"
+  },
   "devDependencies": {
-    "playwright": "^1.59.1"
+    "playwright": "^1.59.1",
+    "supabase": "^2.98.0"
   }
 }
