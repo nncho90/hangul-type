@@ -3098,7 +3098,11 @@ const state = {
   unlockedAchievements: null,  // lazily loaded from localStorage
   perfectWave: true,        // reset to true at the start of each level
   lastWaveLevel: 1,
-  wordKills: {}
+  wordKills: {},
+  // Within-level spaced repetition: words spawned this level are tracked
+  // here, then re-spawned as recall-mode monsters once we're past the
+  // halfway point of the level's XP threshold.
+  levelWordHistory: []
 };
 
 function getHighScore() { try { return Number(localStorage.getItem(HIGH_KEY)) || 0; } catch (e) { return 0; } }
@@ -3171,9 +3175,35 @@ function spawnMonster(forceBoss) {
     return spawnBoss();
   }
   if (maybeSpawnHeart()) return;
-  const word = pickWordForLevel(state.level, activeFirstJamos());
-  if (!word) return null;
-  const tier = word.tier;
+  // Within-level spaced repetition: past the halfway point of the level,
+  // ~50% of new spawns are RECALL versions of words the player already saw
+  // earlier in this same level (English shown, Korean syllables hidden).
+  // Multi-syllable only — single-syllable recall is too trivial.
+  const blockedJamos = activeFirstJamos();
+  const xpProgress = state.xp / xpThresholdForLevel(state.level);
+  const history = state.levelWordHistory || (state.levelWordHistory = []);
+  const recallCandidates = history.filter(w => {
+    const sylCount = (w.ko.match(/[가-힣]/g) || []).length;
+    if (sylCount < 2) return false;
+    const ks0 = wordToKeystrokes(w.ko)[0];
+    if (blockedJamos.has(ks0)) return false;
+    if (state.monsters.some(m => m.word === w.ko)) return false;
+    return true;
+  });
+  let word, tier, recall = false;
+  if (xpProgress > 0.5 && recallCandidates.length > 0 && Math.random() < 0.5) {
+    word = recallCandidates[Math.floor(Math.random() * recallCandidates.length)];
+    tier = word.tier;
+    recall = true;
+  } else {
+    word = pickWordForLevel(state.level, blockedJamos);
+    if (!word) return null;
+    tier = word.tier;
+  }
+  // Track in history (so it can come back later as recall this level)
+  if (!history.some(w => w.ko === word.ko)) {
+    history.push({ ko: word.ko, en: word.en, tier });
+  }
   const sprites = TIER_SPRITES[tier] || TIER_SPRITES[1];
   const sprite = sprites[Math.floor(Math.random() * sprites.length)];
   const spriteFile = tierSpriteFile(tier);
@@ -3182,11 +3212,6 @@ function spawnMonster(forceBoss) {
   const beh = behaviorForTier(tier);
   const baseSpeed = (12 + state.level * 0.9 + (Number(tier) || 1) * 1.0) * beh.speedMul;
   const startX = Math.random() * (window.innerWidth - 200) + 100;
-  // Recall mode: from lv 12 on, ~30% of multi-syllable words spawn with the
-  // remaining syllables hidden — player reads English and recalls Korean.
-  // These move slightly slower so the recall has time to surface.
-  const syllableCount = (word.ko.match(/[가-힣]/g) || []).length;
-  const recall = state.level >= 12 && syllableCount >= 2 && Math.random() < 0.30;
   const monster = {
     id, sprite, spriteFile, word: word.ko, en: word.en, tier,
     ks, hp: ks.length, maxHp: ks.length,
@@ -3501,6 +3526,9 @@ function onLevelUp() {
   }
   state.perfectWave = true;
   state.lastWaveLevel = state.level;
+  // Fresh recall pool for the new level — words from the previous level no
+  // longer count, the player gets a clean recognition→recall arc per level.
+  state.levelWordHistory = [];
   // Level-milestone achievements
   if (state.level >= 5  && state.lives === 3) unlockAchievement('no_damage_lv5');
   if (state.level >= 10) unlockAchievement('reach_lv10');
@@ -4823,6 +4851,7 @@ function doStartGame() {
   state.kills = 0;
   state.bestCombo = 0;
   state.lastWaveLevel = 1;
+  state.levelWordHistory = [];
   renderPlayerSprite(1);
   applyTheme(themeForLevel(1));    // open with the village backdrop
   LIVE_EL.textContent = '';
