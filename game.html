@@ -1156,6 +1156,32 @@
   .battle-lb-row .pts { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); text-align: right; white-space: nowrap; }
   .battle-lb-row.ellipsis { justify-content: center; color: var(--tlo); font-size: 16px; letter-spacing: 4px; grid-template-columns: 1fr; text-align: center; }
   .battle-lb-loading { padding: 14px; text-align: center; font-size: 12px; color: var(--tlo); }
+  .battle-lb-stale {
+    padding: 8px 14px;
+    font-size: 11px;
+    color: #92400e;
+    background: #fef3c7;
+    border-bottom: 1px solid #fde68a;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .bmc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 8px 14px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    color: var(--tmd);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .bmc-link:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
   .profile-modal {
     position: fixed;
     inset: 0;
@@ -1974,6 +2000,9 @@
       <button class="primary" id="btnStart">Start Battle</button>
       <button id="btnAchievements">🏆 Achievements</button>
       <button id="btnBack">← Back to practice</button>
+    </div>
+    <div style="text-align:center; margin-top:14px;">
+      <a class="bmc-link" href="https://buymeacoffee.com/typehangeul" target="_blank" rel="noopener" data-event-name="bmc-click">☕ Buy me a coffee — keep Type Hangeul free</a>
     </div>
   </div>
 </div>
@@ -2931,9 +2960,77 @@ function generatePlayerId() {
 // Server-side caps + 5s rate limit + GREATEST(level, points) prevent regressions.
 
 const BATTLE_RATE_LIMIT_KEY = 'hangul-battle-last-submit-v1';
+// localStorage cache key for the leaderboard snapshot. Schema: { rows, stats, rank, cachedAt }.
+// Versioned so future schema changes can invalidate without breaking older clients.
+// Documented as the contract that a future service-worker offline mode will inherit.
+const BATTLE_LB_CACHE_KEY = 'hangul-battle-lb-cache-v1';
+// Queue of submits that failed because the network was down. Flushed on next load.
+const BATTLE_SUBMIT_QUEUE_KEY = 'hangul-battle-submit-queue-v1';
 
 let _battleLbCache = null;
 let _battleLbCacheAt = 0;
+
+function _readLbCache() {
+  try {
+    const raw = localStorage.getItem(BATTLE_LB_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.rows)) return null;
+    return parsed;
+  } catch (e) { return null; }
+}
+function _writeLbCache(payload) {
+  try {
+    localStorage.setItem(BATTLE_LB_CACHE_KEY, JSON.stringify({
+      rows: payload.rows || [],
+      stats: payload.stats || {},
+      rank: payload.rank || null,
+      cachedAt: Date.now()
+    }));
+  } catch (e) {}
+}
+function _enqueueSubmit(payload) {
+  try {
+    const raw = localStorage.getItem(BATTLE_SUBMIT_QUEUE_KEY);
+    const queue = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(queue)) return;
+    queue.push({ ...payload, queuedAt: Date.now() });
+    // Cap queue depth so a long offline streak doesn't bloat localStorage.
+    while (queue.length > 20) queue.shift();
+    localStorage.setItem(BATTLE_SUBMIT_QUEUE_KEY, JSON.stringify(queue));
+  } catch (e) {}
+}
+async function flushBattleSubmitQueue() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  let queue;
+  try {
+    const raw = localStorage.getItem(BATTLE_SUBMIT_QUEUE_KEY);
+    queue = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(queue) || queue.length === 0) return;
+  } catch (e) { return; }
+  const remaining = [];
+  for (const item of queue) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_battle_score`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(item.body)
+      });
+      if (!res.ok) remaining.push(item);
+    } catch (e) {
+      remaining.push(item);
+    }
+  }
+  try {
+    if (remaining.length === 0) localStorage.removeItem(BATTLE_SUBMIT_QUEUE_KEY);
+    else localStorage.setItem(BATTLE_SUBMIT_QUEUE_KEY, JSON.stringify(remaining));
+  } catch (e) {}
+  if (remaining.length === 0) _battleLbCache = null;
+}
 
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[<>&"']/g, c => (
@@ -2973,24 +3070,30 @@ async function submitBattleScore(level, points) {
   } catch (e) {}
   const name = (progress.profile && progress.profile.name) || 'Player';
   const country = (progress.profile && progress.profile.countryCode) || detectCountry();
+  const body = {
+    p_id: pid,
+    p_name: String(name).slice(0, 24),
+    p_country: String(country).slice(0, 2).toUpperCase(),
+    p_level: clampLevel(level),
+    p_points: clampPoints(points)
+  };
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_battle_score`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_battle_score`, {
       method: 'POST',
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        p_id: pid,
-        p_name: String(name).slice(0, 24),
-        p_country: String(country).slice(0, 2).toUpperCase(),
-        p_level: clampLevel(level),
-        p_points: clampPoints(points)
-      })
+      body: JSON.stringify(body)
     });
+    // Network reached the server but server rejected — don't requeue (would loop forever).
+    // Network errors (offline, DNS, timeout) hit the catch block and DO get queued for next load.
+    if (!res.ok && res.status >= 500) _enqueueSubmit({ body });
     _battleLbCache = null;
-  } catch (e) {}
+  } catch (e) {
+    _enqueueSubmit({ body });
+  }
 }
 
 async function updateBattleProfile(name, countryCode) {
@@ -3037,18 +3140,25 @@ async function fetchBattleLeaderboard(force) {
           })
         : Promise.resolve(null)
     ]);
-    if (!rowsRes.ok) return null;
+    if (!rowsRes.ok) throw new Error('rows-not-ok');
     const rows  = await rowsRes.json();
     const stats = statsRes && statsRes.ok ? await statsRes.json() : [];
     const rank  = rankRes  && rankRes.ok  ? await rankRes.json()  : [];
     _battleLbCache = {
       rows: Array.isArray(rows) ? rows : [],
       stats: (Array.isArray(stats) && stats[0]) || { unique_players: 0, total_attempts: 0, ranked_players: 0 },
-      rank:  (Array.isArray(rank)  && rank[0])  || null
+      rank:  (Array.isArray(rank)  && rank[0])  || null,
+      stale: false
     };
     _battleLbCacheAt = now;
+    _writeLbCache(_battleLbCache);
     return _battleLbCache;
-  } catch (e) { return null; }
+  } catch (e) {
+    // Network failure or non-OK response: fall back to last-good snapshot in localStorage.
+    const cached = _readLbCache();
+    if (cached) return { ...cached, stale: true };
+    return null;
+  }
 }
 
 async function renderBattleLeaderboard(containerId) {
@@ -3105,7 +3215,14 @@ async function renderBattleLeaderboard(containerId) {
     </div>`;
   }
 
-  container.innerHTML = `<div class="battle-lb-header">
+  // When the live fetch failed and we're rendering from a stale snapshot,
+  // tell the user so the empty/old data doesn't read as authoritative.
+  let staleHtml = '';
+  if (data.stale) {
+    const minsAgo = Math.max(1, Math.round((Date.now() - (data.cachedAt || Date.now())) / 60000));
+    staleHtml = `<div class="battle-lb-stale">Showing cached rankings · ${minsAgo} min ago · network offline</div>`;
+  }
+  container.innerHTML = `${staleHtml}<div class="battle-lb-header">
       <span class="title">Top ${Math.min(100, rows.length || 100)} · ${total.toLocaleString()} ranked</span>
       <span class="meta">${headerMeta} · ${playersBlurb}</span>
     </div>
@@ -4982,7 +5099,9 @@ document.getElementById('storySkip').addEventListener('click', (e) => {
   e.stopPropagation();    // don't bubble to the story-dialog click-to-advance
   closeStory();
 });
-// Surface the leaderboard on the intro modal as well as game-over.
+// Drain any queued submits left over from a prior offline session, then
+// surface the leaderboard on the intro modal as well as game-over.
+flushBattleSubmitQueue();
 renderBattleLeaderboard('battleLbIntroContainer');
 document.getElementById('btnAchievements').addEventListener('click', () => {
   renderAchievementGrid();

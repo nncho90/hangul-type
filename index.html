@@ -1597,6 +1597,43 @@
     font-size: 11px; color: var(--thi);
   }
 
+  .site-footer {
+    margin: 28px auto 32px;
+    max-width: 720px;
+    padding: 0 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .site-footer-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--tlo);
+  }
+  .site-footer-meta a { color: var(--tmd); text-decoration: none; }
+  .site-footer-meta a:hover { color: var(--blue); }
+  .site-footer-meta span[aria-hidden="true"] { color: var(--bd); }
+  .bmc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    color: var(--tmd);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .bmc-link:hover { background: var(--l2); border-color: var(--bdhi); color: var(--thi); }
+
   /* Hidden input (mobile keyboard fallback) */
   .input-shield {
     position: fixed;
@@ -1750,6 +1787,17 @@
   <div class="help">
     Press <kbd>Esc</kbd> to skip · <kbd>Tab</kbd> to peek at next word · Type with QWERTY, no IME needed.
   </div>
+
+  <footer class="site-footer">
+    <a class="bmc-link" href="https://buymeacoffee.com/typehangeul" target="_blank" rel="noopener" data-event-name="bmc-click">☕ Buy me a coffee — keep Type Hangeul free</a>
+    <div class="site-footer-meta">
+      <a href="game.html">⚔️ Battle Mode</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/nncho90/hangul-type" target="_blank" rel="noopener">GitHub</a>
+      <span aria-hidden="true">·</span>
+      <span>© Type Hangeul</span>
+    </div>
+  </footer>
 
   <!-- Recent attempts list moved out of the main flow but kept; rendered into the
        jamo modal so the JS render call still has a target. -->
