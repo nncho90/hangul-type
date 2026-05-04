@@ -2125,6 +2125,62 @@ const TOPICS = [
     { ko: '슬픔', en: 'sadness' },
     { ko: '미안해', en: 'sorry (casual)' }
   ], topikLevel: 1 },
+  { id: 'body', name: 'Body', words: [
+    { ko: '머리', en: 'head' },
+    { ko: '얼굴', en: 'face' },
+    { ko: '눈', en: 'eye' },
+    { ko: '코', en: 'nose' },
+    { ko: '입', en: 'mouth' },
+    { ko: '귀', en: 'ear' },
+    { ko: '손', en: 'hand' },
+    { ko: '발', en: 'foot' },
+    { ko: '팔', en: 'arm' },
+    { ko: '다리', en: 'leg' },
+    { ko: '몸', en: 'body' },
+    { ko: '배', en: 'stomach' }
+  ], topikLevel: 1 },
+  { id: 'animals', name: 'Animals', words: [
+    { ko: '개', en: 'dog' },
+    { ko: '고양이', en: 'cat' },
+    { ko: '새', en: 'bird' },
+    { ko: '물고기', en: 'fish' },
+    { ko: '닭', en: 'chicken' },
+    { ko: '소', en: 'cow' },
+    { ko: '돼지', en: 'pig' },
+    { ko: '말', en: 'horse' },
+    { ko: '호랑이', en: 'tiger' },
+    { ko: '곰', en: 'bear' },
+    { ko: '토끼', en: 'rabbit' },
+    { ko: '쥐', en: 'mouse' }
+  ], topikLevel: 1 },
+  { id: 'transportation', name: 'Transportation', words: [
+    { ko: '차', en: 'car' },
+    { ko: '버스', en: 'bus' },
+    { ko: '지하철', en: 'subway' },
+    { ko: '기차', en: 'train' },
+    { ko: '비행기', en: 'airplane' },
+    { ko: '자전거', en: 'bicycle' },
+    { ko: '택시', en: 'taxi' },
+    { ko: '배', en: 'ship' },
+    { ko: '오토바이', en: 'motorcycle' },
+    { ko: '신호등', en: 'traffic light' },
+    { ko: '길', en: 'road' },
+    { ko: '주차장', en: 'parking lot' }
+  ], topikLevel: 1 },
+  { id: 'weather', name: 'Weather', words: [
+    { ko: '날씨', en: 'weather' },
+    { ko: '비', en: 'rain' },
+    { ko: '눈', en: 'snow' },
+    { ko: '바람', en: 'wind' },
+    { ko: '구름', en: 'cloud' },
+    { ko: '해', en: 'sun' },
+    { ko: '하늘', en: 'sky' },
+    { ko: '덥다', en: 'to be hot' },
+    { ko: '춥다', en: 'to be cold' },
+    { ko: '맑다', en: 'to be clear' },
+    { ko: '흐리다', en: 'to be cloudy' },
+    { ko: '따뜻하다', en: 'to be warm' }
+  ], topikLevel: 1 },
   { id: 'sentences', name: 'Sentences', words: [
     { ko: '안녕하세요', en: 'Hello (formal)' },
     { ko: '만나서 반가워요', en: 'Nice to meet you' },
@@ -2223,28 +2279,61 @@ const TOPICS = [
 
 // Merge the shared 1000-word deck into Practice without duplicating the
 // hand-curated starter topics above. Battle Mode reads the same file directly.
+// Classify each vocab.js entry into one of the existing themed sub-topics by
+// keyword matching on the English translation, then by Korean form (다-ending
+// gives away verbs/adjectives). Anything that doesn't match a clear theme falls
+// into 'basics' (TOPIK 1) or 't2_nouns' (TOPIK 2). No more "Core 1000" mega
+// bucket — words spread across all the themed chips so every sub-cat grows.
 function addSharedVocabTopics() {
   const shared = (window && Array.isArray(window.BATTLE_VOCAB)) ? window.BATTLE_VOCAB : [];
   if (!shared.length) return;
+  const byId = {};
   const seen = new Set();
   for (const t of TOPICS) {
+    byId[t.id] = t;
     for (const w of t.words) if (w && w.ko) seen.add(w.ko);
   }
-  const buckets = {
-    1: { id: 'shared_topik1', name: 'Core 1000 · TOPIK 1', topikLevel: 1, words: [] },
-    2: { id: 'shared_topik2', name: 'Core 1000 · TOPIK 2', topikLevel: 2, words: [] }
-  };
+
+  const RULES = [
+    ['family',         /\b(mom|dad|mother|father|brother|sister|aunt|uncle|grandmother|grandfather|grandparent|grandma|grandpa|parent|parents|son|daughter|husband|wife|baby|family|cousin|niece|nephew|infant|spouse|sibling|relative|in-law|fiance|firstborn|elder)\b/i],
+    ['body',           /\b(body|head|hair|face|forehead|cheek|chin|jaw|eye|eyes|eyebrow|eyelash|nose|nostril|mouth|lip|lips|teeth|tooth|tongue|ear|ears|neck|throat|shoulder|shoulders|arm|arms|elbow|wrist|hand|hands|finger|fingers|thumb|nail|nails|chest|breast|stomach|belly|waist|hip|back|spine|leg|legs|knee|ankle|foot|feet|toe|toes|skin|bone|bones|muscle|blood|heart|brain|lung|liver|kidney|voice|breath|sweat|tear|tears)\b/i],
+    ['animals',        /\b(animal|dog|puppy|cat|kitten|bird|chicken|duck|goose|sparrow|eagle|owl|parrot|fish|shark|whale|dolphin|tuna|salmon|cow|pig|sheep|goat|horse|donkey|rabbit|mouse|rat|hamster|squirrel|deer|tiger|lion|bear|fox|wolf|elephant|giraffe|monkey|gorilla|frog|turtle|snake|lizard|crocodile|alligator|insect|bug|ant|bee|butterfly|spider|mosquito|fly|cockroach|worm|crab|shrimp|lobster|octopus|squid|jellyfish|seal|penguin|kangaroo|koala|panda)\b/i],
+    ['transportation', /\b(car|bus|subway|train|airplane|plane|airport|station|bicycle|bike|motorcycle|scooter|truck|taxi|cab|boat|ship|ferry|helicopter|tram|trolley|wheel|tire|driver|driving|steering|engine|fuel|gasoline|gas|petrol|brake|seatbelt|traffic|highway|road|street|lane|crosswalk|sidewalk|tunnel|bridge|parking|garage|harbor|port|terminal|gate|platform|ticket|fare|transit|commute|transport|transportation|vehicle)\b/i],
+    ['weather',        /\b(weather|rain|raining|snow|snowing|wind|windy|cloud|cloudy|sun|sunny|sunshine|sunlight|sky|storm|stormy|thunder|lightning|fog|foggy|mist|misty|chilly|freezing|hail|frost|breeze|humid|humidity|temperature|climate|forecast|rainbow|drought|flood|typhoon|hurricane|tornado|earthquake)\b/i],
+    ['food',           /\b(rice|kimchi|soup|stew|meat|fish|vegetable|fruit|water|tea|coffee|milk|juice|bread|cake|noodle|noodles|ramen|chicken|beef|pork|seafood|sauce|menu|chopstick|chopsticks|spoon|fork|knife|recipe|ingredient|dessert|fridge|refrigerator|kitchen|stove|oven|cook|cooking|cooked|eat|eating|drink|drinking|taste|delicious|hungry|thirsty|snack|sweet|sour|spicy|salty|bitter|appetite|breakfast|lunch|dinner|food|meal|restaurant|cafe|bakery|alcohol|beer|wine|soju|makgeolli|soda|sushi|salad|pizza|burger|sandwich|dish|cuisine|flavor|spice|garlic|onion|pepper|tomato|potato|cabbage|carrot|spinach|apple|banana|orange|grape|strawberry|watermelon|pear|peach|cherry|lemon|melon|berry|nut|egg|cheese|butter|honey|jam|chocolate|candy|cookie|biscuit|pastry|donut|kimbap|bibimbap|tteokbokki|jjajangmyeon|samgyeopsal|tofu|seaweed|sesame|mushroom|seasoning)\b/i],
+    ['time',           /\b(today|yesterday|tomorrow|morning|afternoon|evening|night|hour|minute|second|day|week|month|year|time|now|soon|later|early|late|weekend|holiday|holidays|season|spring|summer|fall|autumn|winter|monday|tuesday|wednesday|thursday|friday|saturday|sunday|january|february|march|april|may|june|july|august|september|october|november|december|date|calendar|noon|midnight|always|never|often|sometimes|recent|future|past|present|moment|while|recently|tonight|midweek|midyear|decade|century|era|period|birthday|anniversary)\b/i],
+    ['numbers',        /^(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|half|double|triple|quarter)$/i],
+    ['numbers',        /^[\d,]+$/],
+    ['numbers',        /\b(number|count|quantity|how many|how much|several|few|many|each|every|both|none)\b/i],
+    ['places',         /\b(school|hospital|bank|library|park|store|market|restaurant|station|airport|hotel|room|house|home|office|company|building|city|country|road|street|highway|bridge|river|mountain|sea|ocean|beach|forest|farm|countryside|village|district|neighborhood|location|address|abroad|nation|capital|town|hometown|department|gym|theater|cinema|museum|gallery|temple|church|cathedral|university|college|harbor|port|subway|playground|zoo|aquarium|cafe|bakery|bookstore|pharmacy|clinic|dentist|salon|barber|spa|stadium|arena|terminal|platform|sidewalk|alley|garden|yard|court|plaza|square|center|hall|kitchen|bathroom|bedroom|garage|basement|attic|roof|window|door|gate|fence|stairs|elevator|escalator|hallway|corridor|lobby|mall|shop|workplace|factory|laboratory)\b/i],
+    ['feelings',       /\b(happy|sad|angry|scared|tired|nervous|excited|surprised|glad|worried|disappointed|lonely|jealous|proud|confused|ashamed|calm|annoyed|bored|hate|miss|hope|wish|joy|grief|relief|stress|anxious|cheerful|amused|delighted|miserable|emotion|mood|feel|feeling|fun|interesting|boring|comfortable|uncomfortable|funny|moved|touched|grateful|thankful|guilty|regret|envy|envious|hopeful|hopeless|frustrated|hurt|painful|peace|peaceful|relaxed|content|satisfied|fulfilled|empty|hollow|love|like|dislike|fear|afraid|brave|courageous|shy|timid|gloomy|optimistic|pessimistic|cranky|grumpy|moody|happiness|sadness|anger|joy)\b/i]
+  ];
+
+  const ENDS_DA  = (ko) => /다$/.test(ko);
+  // Whitelist of state-of-being adjectives commonly tested on TOPIK 2 — the
+  // 다-ending Korean words whose English is a single descriptive adjective
+  // belong with TOPIK 2 adjectives, the rest are action verbs.
+  const ADJ_EN = /^(busy|tired|expensive|cheap|hot|cold|warm|cool|fast|slow|big|small|tall|short|long|high|low|new|old|young|good|bad|easy|hard|difficult|quiet|loud|noisy|clean|dirty|safe|dangerous|important|necessary|useful|useless|nice|kind|mean|smart|stupid|beautiful|ugly|pretty|handsome|bright|dark|heavy|light|strong|weak|rich|poor|healthy|sick|fresh|stale|sharp|dull|wet|dry|smooth|rough|soft|tough|thick|thin|wide|narrow|deep|shallow|sweet|sour|salty|spicy|bitter|fancy|simple|plain|special|ordinary|popular|famous|familiar|strange|usual|unusual|free|empty|full|alike|different|similar|same|certain|sure|unsure|complete|incomplete|perfect|imperfect|correct|wrong|true|false|real|fake|actual|virtual|peaceful|relaxed|tense|delicious|comfortable|uncomfortable|polite|rude|honest|generous|selfish|brave|cowardly|loyal|fair|cruel|gentle|wild|tame|fierce|mild|crowded|spacious|tight|loose|firm|fragile|stable|unstable|wise|silly|foolish|crazy|sane|mature|childish|charming|attractive|gross|disgusting|cute|adorable)$/i;
+
+  function classify(entry) {
+    const en = (entry.en || '').toLowerCase().trim();
+    for (const [bucket, rule] of RULES) if (rule.test(en)) return bucket;
+    if (ENDS_DA(entry.ko)) {
+      if (entry.topikLevel === 2) return ADJ_EN.test(en) ? 't2_adj' : 't2_verbs';
+      return 'verbs';
+    }
+    return entry.topikLevel === 2 ? 't2_nouns' : 'basics';
+  }
+
   for (const raw of shared) {
     if (!raw || typeof raw.ko !== 'string' || typeof raw.en !== 'string') continue;
     const ko = raw.ko.trim();
     const en = raw.en.trim();
     if (!ko || !en || seen.has(ko)) continue;
     seen.add(ko);
-    const level = Number(raw.topikLevel) === 2 ? 2 : 1;
-    buckets[level].words.push({ ko, en });
-  }
-  for (const level of [1, 2]) {
-    if (buckets[level].words.length) TOPICS.push(buckets[level]);
+    const bucket = classify({ ko, en, topikLevel: Number(raw.topikLevel) === 2 ? 2 : 1 });
+    const target = byId[bucket];
+    if (target) target.words.push({ ko, en });
   }
 }
 addSharedVocabTopics();
@@ -3868,8 +3957,8 @@ function activeLevel() {
 const TOPIC_ICONS = {
   basics: '👋', family: '👨‍👩‍👧', food: '🍙', time: '⏰', numbers: '🔢',
   verbs: '🏃', places: '🏠', feelings: '💗', sentences: '💬',
-  t2_verbs: '⚙️', t2_adj: '🌟', t2_nouns: '📚', t2_phrases: '🗣️', t2_sentences: '📜',
-  shared_topik1: '🧩', shared_topik2: '🧠'
+  body: '🫀', animals: '🐶', transportation: '🚌', weather: '☀️',
+  t2_verbs: '⚙️', t2_adj: '🌟', t2_nouns: '📚', t2_phrases: '🗣️', t2_sentences: '📜'
 };
 
 function buildTopicsPicker() {
