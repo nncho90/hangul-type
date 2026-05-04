@@ -457,6 +457,15 @@
     will-change: transform, top;
     pointer-events: none;
   }
+  /* Soft fade on appear so a fresh wave doesn't pop in jarringly. Opacity-only
+     so it doesn't fight the inline translateX(-50%) the JS sets per monster. */
+  .monster {
+    animation: monster-fade-in 0.45s ease-out backwards;
+  }
+  @keyframes monster-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
   .monster .sprite {
     /* block-level so the inner <img> doesn't sit on the text baseline and
        overflow above the monster's top edge — that overflow was being
