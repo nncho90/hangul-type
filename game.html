@@ -473,15 +473,42 @@
     0%, 100% { transform: translateY(0) rotate(-2deg); }
     50%      { transform: translateY(-5px) rotate(2deg); }
   }
-  .monster.tier-1 .sprite { font-size: var(--tier1-font, 44px); }
-  .monster.tier-2 .sprite { font-size: var(--tier2-font, 54px); }
-  .monster.tier-3 .sprite { font-size: var(--tier3-font, 62px); }
-  .monster.tier-4 .sprite { font-size: var(--tier4-font, 72px); }
-  .monster.tier-5 .sprite { font-size: var(--tier5-font, 84px); }
+  /* Tier-progressive size + aura: lower tiers feel light and small, higher
+     tiers feel heavy and dangerous via drop-shadow strength + colored aura.
+     Sprite art is the same 7 PNGs today; the visual progression here gives
+     the existing roster a clearer "this is a stronger demon" read. */
+  .monster.tier-1 .sprite {
+    font-size: var(--tier1-font, 44px);
+    filter: drop-shadow(0 4px 6px rgba(15, 23, 42, 0.18));
+  }
+  .monster.tier-2 .sprite {
+    font-size: var(--tier2-font, 54px);
+    filter: drop-shadow(0 5px 8px rgba(15, 23, 42, 0.22));
+  }
+  .monster.tier-3 .sprite {
+    font-size: var(--tier3-font, 62px);
+    filter:
+      drop-shadow(0 7px 10px rgba(15, 23, 42, 0.25))
+      drop-shadow(0 0 8px rgba(245, 158, 11, 0.18));
+  }
+  .monster.tier-4 .sprite {
+    font-size: var(--tier4-font, 72px);
+    filter:
+      drop-shadow(0 9px 14px rgba(15, 23, 42, 0.30))
+      drop-shadow(0 0 14px rgba(139, 92, 246, 0.32));
+  }
+  .monster.tier-5 .sprite {
+    font-size: var(--tier5-font, 84px);
+    filter:
+      drop-shadow(0 11px 18px rgba(15, 23, 42, 0.34))
+      drop-shadow(0 0 22px rgba(239, 68, 68, 0.38));
+  }
   .monster.boss .sprite {
     font-size: 110px;
     animation: bossbob 1.4s ease-in-out infinite;
-    filter: drop-shadow(0 10px 20px rgba(239, 68, 68, 0.3));
+    filter:
+      drop-shadow(0 14px 24px rgba(15, 23, 42, 0.38))
+      drop-shadow(0 0 32px rgba(239, 68, 68, 0.55));
   }
   @keyframes bossbob {
     0%, 100% { transform: translateY(0) scale(1); }
@@ -1902,28 +1929,36 @@
   /* Monsters breathe — different timing/amplitude per tier so a screen full
      of demons doesn't look mechanically synchronized. Animation-delay is
      randomized per monster via inline style at spawn. */
+  /* Walk-forward cycle: 4-step pattern — left foot lift, plant, right foot lift, plant.
+     Subtle horizontal sway (±3-4px) plus alternating rotation gives the "shmuck stepping
+     toward you" feel instead of the prior "floating sticker" hover. The vertical bob
+     stays so the rhythm reads from across the screen even at small sizes. */
   .monster .sprite-img {
-    animation: sprite-breathe-monster 1.8s ease-in-out infinite;
-    transform-origin: 50% 90%;
+    animation: sprite-walk-monster 1.8s ease-in-out infinite;
+    transform-origin: 50% 95%;
   }
-  @keyframes sprite-breathe-monster {
-    0%, 100% { transform: translateY(0)    scale(1)    rotate(-3deg); }
-    25%      { transform: translateY(-5px) scale(1.03) rotate(2deg); }
-    50%      { transform: translateY(-7px) scale(1.05) rotate(-2deg); }
-    75%      { transform: translateY(-4px) scale(1.02) rotate(3deg); }
+  @keyframes sprite-walk-monster {
+    0%, 100% { transform: translate(-3px, 0)    scale(1)    rotate(-5deg); }
+    25%      { transform: translate(2px, -5px) scale(1.04) rotate(3deg); }
+    50%      { transform: translate(3px, 0)    scale(1)    rotate(-3deg); }
+    75%      { transform: translate(-2px, -5px) scale(1.04) rotate(5deg); }
   }
-  .monster.tier-1 .sprite-img { animation-duration: var(--tier1-anim, 1.6s); }
-  .monster.tier-2 .sprite-img { animation-duration: var(--tier2-anim, 1.8s); }
-  .monster.tier-3 .sprite-img { animation-duration: var(--tier3-anim, 2.0s); }
-  .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 2.2s); }
-  .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.5s); }
+  .monster.tier-1 .sprite-img { animation-duration: var(--tier1-anim, 0.95s); }
+  .monster.tier-2 .sprite-img { animation-duration: var(--tier2-anim, 1.10s); }
+  .monster.tier-3 .sprite-img { animation-duration: var(--tier3-anim, 1.25s); }
+  .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 1.45s); }
+  .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.10s); }
   .monster.boss .sprite-img {
-    animation: sprite-breathe-boss 1.4s ease-in-out infinite;
-    transform-origin: 50% 90%;
+    animation: sprite-walk-boss 1.6s ease-in-out infinite;
+    transform-origin: 50% 95%;
   }
-  @keyframes sprite-breathe-boss {
-    0%, 100% { transform: translateY(0)    scale(1)    rotate(-2deg); }
-    50%      { transform: translateY(-10px) scale(1.06) rotate(2deg); }
+  /* Boss step: heavier, slower, bigger sway. The +/-2deg roll keeps presence
+     without making them look like they're tipping over. */
+  @keyframes sprite-walk-boss {
+    0%, 100% { transform: translate(-4px, 0)    scale(1)    rotate(-2deg); }
+    25%      { transform: translate(2px, -9px)  scale(1.06) rotate(2deg); }
+    50%      { transform: translate(4px, 0)     scale(1.02) rotate(-1deg); }
+    75%      { transform: translate(-2px, -9px) scale(1.06) rotate(1deg); }
   }
   /* When the parent .sprite span has its bob animation, kill it so we don't
      double-animate (the new breathe-img on the img is richer + per-tier). */
