@@ -1,4 +1,4 @@
-// vocab.js — shared Korean→English vocabulary for Hangul Type practice + battle.
+// vocab.js — shared Korean→English vocabulary for Hangeul Typing practice + battle.
 // Loaded synchronously before each page's main inline script. Edit freely.
 window.BATTLE_VOCAB = [
 
