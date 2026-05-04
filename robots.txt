@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://hangul-type.vercel.app/sitemap.xml
+Sitemap: https://typehangeul.com/sitemap.xml
