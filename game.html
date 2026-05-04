@@ -448,11 +448,11 @@
     0%, 100% { transform: translateY(0) rotate(-2deg); }
     50%      { transform: translateY(-5px) rotate(2deg); }
   }
-  .monster.tier-1 .sprite { font-size: 44px; }
-  .monster.tier-2 .sprite { font-size: 54px; }
-  .monster.tier-3 .sprite { font-size: 62px; }
-  .monster.tier-4 .sprite { font-size: 72px; }
-  .monster.tier-5 .sprite { font-size: 84px; }
+  .monster.tier-1 .sprite { font-size: var(--tier1-font, 44px); }
+  .monster.tier-2 .sprite { font-size: var(--tier2-font, 54px); }
+  .monster.tier-3 .sprite { font-size: var(--tier3-font, 62px); }
+  .monster.tier-4 .sprite { font-size: var(--tier4-font, 72px); }
+  .monster.tier-5 .sprite { font-size: var(--tier5-font, 84px); }
   .monster.boss .sprite {
     font-size: 110px;
     animation: bossbob 1.4s ease-in-out infinite;
@@ -1861,11 +1861,11 @@
     50%      { transform: translateY(-7px) scale(1.05) rotate(-2deg); }
     75%      { transform: translateY(-4px) scale(1.02) rotate(3deg); }
   }
-  .monster.tier-1 .sprite-img { animation-duration: 1.6s; }
-  .monster.tier-2 .sprite-img { animation-duration: 1.8s; }
-  .monster.tier-3 .sprite-img { animation-duration: 2.0s; }
-  .monster.tier-4 .sprite-img { animation-duration: 2.2s; }
-  .monster.tier-5 .sprite-img { animation-duration: 1.5s; }
+  .monster.tier-1 .sprite-img { animation-duration: var(--tier1-anim, 1.6s); }
+  .monster.tier-2 .sprite-img { animation-duration: var(--tier2-anim, 1.8s); }
+  .monster.tier-3 .sprite-img { animation-duration: var(--tier3-anim, 2.0s); }
+  .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 2.2s); }
+  .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.5s); }
   .monster.boss .sprite-img {
     animation: sprite-breathe-boss 1.4s ease-in-out infinite;
     transform-origin: 50% 90%;
@@ -1935,10 +1935,19 @@
       <div><div class="k">High Score</div><div class="v" id="introHigh">0</div></div>
       <div><div class="k">Best Wave</div><div class="v" id="introBest">0</div></div>
     </div>
+    <div class="battle-lb-toolbar">
+      <div>
+        <div class="title">Battle ranking</div>
+        <div class="meta">Top players this season.</div>
+      </div>
+      <button class="menu-btn" id="btnEditProfileIntro">Edit profile</button>
+    </div>
+    <div id="battleLbIntroContainer" class="battle-lb">
+      <div class="battle-lb-loading">Loading battle rankings…</div>
+    </div>
     <div class="actions">
       <button class="primary" id="btnStart">Start Battle</button>
       <button id="btnAchievements">🏆 Achievements</button>
-      <button id="btnReplayStory">Replay story</button>
       <button id="btnBack">← Back to practice</button>
     </div>
   </div>
@@ -2016,7 +2025,7 @@
     <div class="story-text" id="storyText"></div>
     <div class="story-meta">
       <span class="story-prompt" id="storyPrompt">▼</span>
-      <span class="story-skip" id="storySkip">Esc to skip</span>
+      <button class="story-skip" id="storySkip" type="button">Skip · Esc</button>
     </div>
   </div>
 </div>
@@ -2644,10 +2653,10 @@ function tierSpriteFile(tier) { return TIER_SPRITE_FILES[tier] || null; }
 // the new behavior before it gets mixed up. Brief 1-level overlap on transition
 // (last level of a tier sprinkles a small preview of the next tier).
 function tierForLevel(lv) {
-  if (lv <= 4)  return 1;
-  if (lv <= 8)  return 2;
-  if (lv <= 13) return 3;
-  if (lv <= 18) return 4;
+  if (lv < ADMIN.levelTiers.tier2Start)  return 1;
+  if (lv < ADMIN.levelTiers.tier3Start)  return 2;
+  if (lv < ADMIN.levelTiers.tier4Start)  return 3;
+  if (lv < ADMIN.levelTiers.tier5Start)  return 4;
   return 5;
 }
 function firstKeystrokeForWord(word) {
@@ -2678,15 +2687,73 @@ function pickWordForLevel(lv, blockedFirstJamos) {
   return { ...word, tier: chosen };
 }
 
+// === ADMIN OVERRIDES (synced with admin.html) ===
+const ADMIN_DEFAULTS = {
+  tier: {
+    "1":    { speedMul: 0.80, motion: "straight", fontPx: 44, animS: 1.6 },
+    "2":    { speedMul: 0.95, motion: "straight", fontPx: 54, animS: 1.8 },
+    "3":    { speedMul: 0.95, motion: "zigzag",   fontPx: 62, animS: 2.0 },
+    "4":    { speedMul: 0.90, motion: "dive",     fontPx: 72, animS: 2.2 },
+    "5":    { speedMul: 1.05, motion: "tracker",  fontPx: 84, animS: 1.5 },
+    "boss": { speedMul: 0.55, motion: "teleport", fontPx: 96, animS: 2.5 }
+  },
+  levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19 },
+  pace: {
+    baseSpeedBase: 12, baseSpeedLevelMul: 0.9, baseSpeedTierMul: 1.0,
+    spawnIntervalFloor: 900, spawnIntervalStart: 2300, spawnIntervalLevelStep: 70,
+    initialSpawnMs: 1400
+  },
+  combat: {
+    specialComboPerCharge: 60, specialMaxCharges: 2,
+    chantDurationMs: 2000, specialBufferIdleMs: 1500,
+    heartSpawnChance: 0.018
+  },
+  spawnCap: { early: 3, mid: 4, late: 5, endgame: 6 },
+  player: { lives: 3 }
+};
+function loadAdminOverrides() {
+  try {
+    const raw = localStorage.getItem('hangul-admin-overrides-v1');
+    if (!raw) return JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+    const parsed = JSON.parse(raw);
+    const merged = JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+    for (const k of Object.keys(parsed)) {
+      const v = parsed[k];
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        if (k === 'tier') {
+          for (const t of Object.keys(v)) {
+            merged.tier[t] = { ...(merged.tier[t] || {}), ...v[t] };
+          }
+        } else {
+          merged[k] = { ...(merged[k] || {}), ...v };
+        }
+      } else {
+        merged[k] = v;
+      }
+    }
+    return merged;
+  } catch (e) {
+    console.warn('admin overrides parse failed', e);
+    return JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+  }
+}
+const ADMIN = loadAdminOverrides();
+// Apply tier CSS variables (font-size + animation duration per tier)
+for (const t of ['1','2','3','4','5']) {
+  document.documentElement.style.setProperty(`--tier${t}-font`, ADMIN.tier[t].fontPx + 'px');
+  document.documentElement.style.setProperty(`--tier${t}-anim`, ADMIN.tier[t].animS + 's');
+}
+// === END ADMIN OVERRIDES ===
+
 // Movement archetype per tier. The user sees a different monster sprite AND a
 // different flight pattern, so each new enemy class teaches itself by example.
 const TIER_BEHAVIORS = {
-  1:    { speedMul: 0.80, motion: 'straight' },  // 도깨비 — slow, straight down
-  2:    { speedMul: 0.95, motion: 'straight' },  // 구미호 — faster, still straight
-  3:    { speedMul: 0.95, motion: 'zigzag'   },  // 두억시니 — sinusoidal sweep, gentler intro
-  4:    { speedMul: 0.90, motion: 'dive'     },  // 저승사자 — accelerates as it falls
-  5:    { speedMul: 1.05, motion: 'tracker'  },  // 처녀귀신 — drifts toward the player
-  boss: { speedMul: 0.55, motion: 'teleport' }   // 한글왕 — pause, jump, repeat
+  1:    { speedMul: ADMIN.tier['1'].speedMul, motion: ADMIN.tier['1'].motion },  // 도깨비 — slow, straight down
+  2:    { speedMul: ADMIN.tier['2'].speedMul, motion: ADMIN.tier['2'].motion },  // 구미호 — faster, still straight
+  3:    { speedMul: ADMIN.tier['3'].speedMul, motion: ADMIN.tier['3'].motion },  // 두억시니 — sinusoidal sweep, gentler intro
+  4:    { speedMul: ADMIN.tier['4'].speedMul, motion: ADMIN.tier['4'].motion },  // 저승사자 — accelerates as it falls
+  5:    { speedMul: ADMIN.tier['5'].speedMul, motion: ADMIN.tier['5'].motion },  // 처녀귀신 — drifts toward the player
+  boss: { speedMul: ADMIN.tier['boss'].speedMul, motion: ADMIN.tier['boss'].motion }   // 한글왕 — pause, jump, repeat
 };
 function behaviorForTier(t) { return TIER_BEHAVIORS[t] || TIER_BEHAVIORS[1]; }
 
@@ -2959,8 +3026,8 @@ async function fetchBattleLeaderboard(force) {
   } catch (e) { return null; }
 }
 
-async function renderBattleLeaderboard() {
-  const container = document.getElementById('battleLbContainer');
+async function renderBattleLeaderboard(containerId) {
+  const container = document.getElementById(containerId || 'battleLbContainer');
   if (!container) return;
   progress = getProgress();
   const data = await fetchBattleLeaderboard();
@@ -3064,7 +3131,8 @@ function openProfileModal() {
     saveProgress(progress);
     // No-op server-side if the player isn't on the leaderboard yet.
     updateBattleProfile(newName, newCC).finally(() => {
-      renderBattleLeaderboard();
+      renderBattleLeaderboard();                       // game-over modal
+      renderBattleLeaderboard('battleLbIntroContainer'); // intro modal
     });
     close();
   };
@@ -3079,13 +3147,13 @@ function openProfileModal() {
 
 const state = {
   running: false, paused: false,
-  lives: 3, level: 1, xp: 0, score: 0, kills: 0,
+  lives: ADMIN.player.lives, level: 1, xp: 0, score: 0, kills: 0,
   combo: 0, bestCombo: 0,
   startedAt: 0,
   ime: new HangulIME(),
   monsters: [],
   lockId: null, lockExpectedKs: [], lockPosKs: 0,
-  spawnTimer: 0, spawnInterval: 1400,
+  spawnTimer: 0, spawnInterval: ADMIN.pace.initialSpawnMs,
   bossActive: false, bossNextLevel: 5,
   // Ninja melee state
   playerTeleported: false,
@@ -3137,7 +3205,7 @@ const HEART_WORDS = [
   { ko: '사랑', en: 'love' },
   { ko: '생명', en: 'life' }
 ];
-const HEART_SPAWN_CHANCE = 0.018;   // ~1.8% per spawn slot (very rare)
+const HEART_SPAWN_CHANCE = ADMIN.combat.heartSpawnChance;   // ~1.8% per spawn slot (very rare)
 
 function maybeSpawnHeart() {
   if (state.lives >= 3) return false;
@@ -3210,7 +3278,7 @@ function spawnMonster(forceBoss) {
   const id = ++monsterId;
   const ks = wordToKeystrokes(word.ko);
   const beh = behaviorForTier(tier);
-  const baseSpeed = (12 + state.level * 0.9 + (Number(tier) || 1) * 1.0) * beh.speedMul;
+  const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(tier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul;
   const startX = Math.random() * (window.innerWidth - 200) + 100;
   const monster = {
     id, sprite, spriteFile, word: word.ko, en: word.en, tier,
@@ -3512,7 +3580,7 @@ function onLevelUp() {
   const sp = playerForLevel(state.level);
   renderPlayerSprite(state.level);
   flashCenterText('Lv. ' + state.level + ' · ' + sp.label);
-  state.spawnInterval = Math.max(900, 2300 - state.level * 70);
+  state.spawnInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - state.level * ADMIN.pace.spawnIntervalLevelStep);
   // Theme transition — applies on each level so the band-boundary level
   // smoothly fades into the new gradient.
   applyTheme(themeForLevel(state.level));
@@ -3840,9 +3908,9 @@ function swingSword(monster) {
 
 // ─── 필살기 (Special Move) ─────────────────────────────────────────────────
 const SPECIAL_TRIGGERS = ['한글', '필살'];   // either word triggers
-const SPECIAL_COMBO_PER_CHARGE = 60;          // was 25 — much harder to recharge
-const SPECIAL_MAX_CHARGES = 2;                // was 3
-const CHANT_DURATION_MS = 2000;
+const SPECIAL_COMBO_PER_CHARGE = ADMIN.combat.specialComboPerCharge;          // was 25 — much harder to recharge
+const SPECIAL_MAX_CHARGES = ADMIN.combat.specialMaxCharges;                // was 3
+const CHANT_DURATION_MS = ADMIN.combat.chantDurationMs;
 const SPECIAL_HINT_KEY  = 'hangul-battle-special-hint-seen-v1';
 
 const SPECIAL_METER_EL = () => document.getElementById('specialMeter');
@@ -3878,7 +3946,7 @@ function gainSpecialChargeFromCombo() {
 // the player has at least one charge, 필살 fires immediately. No Tab gating.
 // 1.5-second idle reset keeps stale jamos from accumulating across pauses.
 let _specialBufferIdleTimer = null;
-const SPECIAL_BUFFER_IDLE_MS = 1500;
+const SPECIAL_BUFFER_IDLE_MS = ADMIN.combat.specialBufferIdleMs;
 function feedSpecialBuffer(jamo) {
   if (!state.specialIme) state.specialIme = new HangulIME();
   state.specialIme.type(jamo);
@@ -4488,9 +4556,13 @@ function handleKey(rawKey, isShift) {
     state.lockPosKs = 0;
     state.ime.reset();
     target.el.classList.add('locked');
-    // Top-down Pokémon framing: the player walks in place at the bottom of
-    // the stage and the world scrolls past. We don't teleport on lock —
-    // slash and projectile effects spawn at the monster either way.
+    // Sword era (melee levels): teleport next to the locked monster so the
+    // slashes land in place. Ranged levels stay home and fire projectiles.
+    // killMonster + escapeLock both call teleportPlayerHome; the chain
+    // window in teleportPlayerHome auto-cancels on the next melee lock.
+    if (combatStyle(state.level) === 'melee') {
+      teleportPlayerTo(target.x, target.y);
+    }
   }
   const m = state.monsters.find(x => x.id === state.lockId);
   if (!m) { state.lockId = null; return; }
@@ -4662,7 +4734,7 @@ function loop(t) {
     // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
     const fastMul = _fastFallActive ? 4.0 : 1.0;
     state.spawnTimer += dt;
-    const cap = state.level >= 13 ? 6 : state.level >= 7 ? 5 : state.level >= 4 ? 4 : 3;
+    const cap = state.level >= 13 ? ADMIN.spawnCap.endgame : state.level >= 7 ? ADMIN.spawnCap.late : state.level >= 4 ? ADMIN.spawnCap.mid : ADMIN.spawnCap.early;
     if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap) {
       state.spawnTimer = 0;
       spawnMonster();
@@ -4804,12 +4876,7 @@ function advanceStory() {
 function closeStory() {
   document.getElementById('storyDialog').style.display = 'none';
   if (storyTyping) { clearInterval(storyTyping); storyTyping = null; }
-  try { localStorage.setItem(STORY_KEY, '1'); } catch (e) {}
   beginGameAfterStory();
-}
-
-function hasSeenStory() {
-  try { return localStorage.getItem(STORY_KEY) === '1'; } catch (e) { return false; }
 }
 
 function beginGameAfterStory() {
@@ -4818,23 +4885,21 @@ function beginGameAfterStory() {
 }
 
 function startGame() {
-  // Public entry point. Plays story first time, then starts the game.
-  if (!hasSeenStory()) {
-    document.getElementById('introModal').style.display = 'none';
-    showStory();
-  } else {
-    doStartGame();
-  }
+  // Always play the intro story so newcomers and returners share the same
+  // narrative ramp. The Esc / Skip button on the story dialog drops straight
+  // into the game for players who don't want to read it.
+  document.getElementById('introModal').style.display = 'none';
+  showStory();
 }
 
 function doStartGame() {
   state.running = true; state.paused = false;
-  state.lives = 3; state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
+  state.lives = ADMIN.player.lives; state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
   state.combo = 0; state.bestCombo = 0;
   state.startedAt = Date.now();
   state.monsters.forEach(m => m.el && m.el.remove());
   state.monsters = [];
-  state.spawnTimer = 0; state.spawnInterval = 1400;
+  state.spawnTimer = 0; state.spawnInterval = ADMIN.pace.initialSpawnMs;
   state.bossActive = false; state.bossNextLevel = 5;
   state.lockId = null; state.ime.reset();
   // Reset ninja state
@@ -4878,12 +4943,16 @@ function togglePause() {
 }
 
 document.getElementById('btnStart').addEventListener('click', startGame);
-document.getElementById('btnReplayStory').addEventListener('click', () => {
-  document.getElementById('introModal').style.display = 'none';
-  try { localStorage.removeItem(STORY_KEY); } catch (e) {}
-  showStory();
-});
 document.getElementById('btnEditProfile').addEventListener('click', openProfileModal);
+document.getElementById('btnEditProfileIntro').addEventListener('click', openProfileModal);
+// Skip button (Esc-equivalent) on the story dialog. The Esc key already
+// works via the global keydown handler — the button is for click discoverability.
+document.getElementById('storySkip').addEventListener('click', (e) => {
+  e.stopPropagation();    // don't bubble to the story-dialog click-to-advance
+  closeStory();
+});
+// Surface the leaderboard on the intro modal as well as game-over.
+renderBattleLeaderboard('battleLbIntroContainer');
 document.getElementById('btnAchievements').addEventListener('click', () => {
   renderAchievementGrid();
   document.getElementById('achievementsModal').style.display = 'flex';
