@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>한글 BATTLE — Hangul Type</title>
+<meta name="description" content="Type Korean words to defeat 한글 demons in Hangul Battle. Learn the 2-set 한글 keyboard while clearing waves, racking combos, and ranking on the global leaderboard.">
+<meta name="keywords" content="korean typing game, hangul game, 한글 타자 게임, learn korean typing, type korean to attack, korean keyboard game, hangul battle">
+<meta name="theme-color" content="#0f172a">
+<link rel="canonical" href="https://hangul-type.vercel.app/game.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="한글 BATTLE — Hangul Type">
+<meta property="og:description" content="A typing game that teaches the 한글 keyboard. Defeat 한글 demons by typing Korean words.">
+<meta property="og:url" content="https://hangul-type.vercel.app/game.html">
+<meta property="og:site_name" content="Hangul Type">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="한글 BATTLE — Hangul Type">
+<meta name="twitter:description" content="A typing game that teaches the 한글 keyboard. Defeat 한글 demons by typing Korean words.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Hangul Battle","url":"https://hangul-type.vercel.app/game.html","applicationCategory":"GameApplication","genre":"Educational","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Browser typing game where players defeat Korean 한글 demons by typing the Korean word floating above each one.","isPartOf":{"@type":"WebApplication","name":"Hangul Type","url":"https://hangul-type.vercel.app/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -496,10 +511,11 @@
     position: relative;
     transition: border-color 0.18s, box-shadow 0.18s;
     max-width: min(720px, calc(100vw - 64px));
+    white-space: nowrap;
   }
   .monster .word .word-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
     align-items: flex-end;
     justify-content: center;
@@ -1083,7 +1099,6 @@
   }
   @media (max-width: 400px) {
     .stage { inset: 54px 0 calc(46px + 200px + env(safe-area-inset-bottom)) 0; }
-    .typing-strip { bottom: calc(200px + env(safe-area-inset-bottom)); }
     .battle-kb .key { height: 40px; }
     .battle-kb .kb-row { gap: 3px; margin-bottom: 3px; }
     .battle-kb .key.kb-shift,
@@ -3282,7 +3297,13 @@ function spawnMonster(forceBoss) {
   const ks = wordToKeystrokes(word.ko);
   const beh = behaviorForTier(tier);
   const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(tier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul;
-  const startX = Math.random() * (window.innerWidth - 200) + 100;
+  // Reserve enough horizontal margin for the word bubble (max 720px wide,
+  // centered above the sprite) so it doesn't get clipped or wrap when the
+  // monster spawns near a screen edge. Falls back to a tighter margin on
+  // narrow viewports so we always have a valid range to spawn into.
+  const marginX = Math.min(380, Math.max(120, Math.floor(window.innerWidth * 0.28)));
+  const spawnRange = Math.max(80, window.innerWidth - marginX * 2);
+  const startX = Math.random() * spawnRange + marginX;
   const monster = {
     id, sprite, spriteFile, word: word.ko, en: word.en, tier,
     ks, hp: ks.length, maxHp: ks.length,
