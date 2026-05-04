@@ -1,0 +1,43 @@
+# Type Hangeul
+
+> Free Korean typing practice for English-speaking learners. Master the Korean alphabet (한글) by typing on a QWERTY keyboard, with per-jamo accuracy tracking, themed vocabulary, a 60-second WPM sprint, and a battle-game mode.
+
+Type Hangeul teaches the 2-set 한글 keyboard layout that South Korean computers use by default. Every key on a standard QWERTY corresponds to one Korean jamo (consonant or vowel), and Type Hangeul shows that mapping live as you type. Designed for learners with no prior Korean keyboard experience.
+
+The site uses the official Revised Romanization spelling "Hangeul" (한글) — the form adopted by South Korea since 2000.
+
+## Modes
+
+- [Practice mode](https://typehangeul.com/): SRS-driven typing practice with themed Korean vocabulary (TOPIK 1, TOPIK 2, basics — family, food, time, numbers, verbs, places, feelings, body, etc.). Per-jamo accuracy heatmap. 60-second WPM sprint test for benchmarking speed.
+- [Battle mode](https://typehangeul.com/game.html): Type-to-attack tower defense. Korean words appear above 한글 demons; type the word to defeat each demon. Tier progression with 5 monster tiers + boss. Global leaderboard.
+
+## What it teaches
+
+- The QWERTY → 한글 jamo mapping (the standard 2-set layout used in South Korea)
+- Hangeul composition: how individual consonants and vowels combine into syllable blocks (e.g. ㅎ + ㅏ + ㄴ = 한)
+- Korean vocabulary at the jamo, syllable, and word level
+- Korean typing speed (WPM) with per-jamo accuracy diagnostics
+
+## Audience
+
+English-speaking Korean-language learners. Designed especially for learners who:
+- Can read 한글 already but cannot yet type it
+- Are studying for TOPIK and want to type Korean for assignments, chat, or work
+- Want a free alternative to Korean-only typing tools (Hancom Taja, TadakTadak) that assume native fluency
+
+## Stack
+
+- Vanilla HTML/CSS/JS — no framework, no build step, single-file pages
+- Hosted on Vercel
+- Supabase backend for the global leaderboard
+
+## Source
+
+- GitHub: https://github.com/nncho90/hangul-type
+- Open source / free to use
+
+## Sitemap
+
+- [Practice mode](https://typehangeul.com/)
+- [Battle mode](https://typehangeul.com/game.html)
+- [sitemap.xml](https://typehangeul.com/sitemap.xml)
