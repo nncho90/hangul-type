@@ -227,7 +227,6 @@
     .kb-mobile-hint { display: none; }
     .btn { min-height: 36px; padding: 9px 14px; font-size: 13px; }
     .topic-pill { min-height: 36px; padding: 8px 14px; font-size: 12px; display: inline-flex; align-items: center; }
-    .kb-toggle button { min-height: 34px; }
     .topics { gap: 8px; }
     .controls { flex-wrap: wrap; }
     .drawer-scrim {
@@ -887,24 +886,9 @@
     border-radius: 12px;
     padding: 14px;
   }
-  .kb-toggle {
-    display: flex; gap: 6px; align-items: center;
+  .kb-legend-row {
+    display: flex; align-items: center; justify-content: flex-end;
     margin-bottom: 12px; font-size: 12px; color: var(--tmd);
-  }
-  .kb-toggle .pill {
-    display: inline-flex; gap: 4px;
-    background: var(--l1); border: 1px solid var(--bd);
-    border-radius: 20px;
-    padding: 3px 4px;
-  }
-  .kb-toggle button {
-    border: 0; background: transparent; padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 11px; font-weight: 600;
-    cursor: pointer; color: var(--tmd);
-  }
-  .kb-toggle button.on {
-    background: var(--blue); color: white;
   }
 
   .kb-row { display: flex; gap: 5px; justify-content: center; align-items: center; margin-bottom: 5px; }
@@ -978,14 +962,10 @@
       border-radius: 10px;
       overflow: hidden;
     }
-    .kb-toggle {
-      gap: 6px;
+    .kb-legend-row {
       margin-bottom: 10px;
-      flex-wrap: wrap;
     }
     .kb-legend { margin-left: 0; }
-    .kb-toggle .pill { padding: 2px; }
-    .kb-toggle button { padding: 4px 9px; font-size: 10px; }
     .kb-row {
       gap: 3px;
       margin-bottom: 3px;
@@ -1033,7 +1013,7 @@
       border-radius: 0;
       box-shadow: 0 -2px 14px rgba(15, 23, 42, 0.06);
     }
-    .kb-toggle { display: none; }
+    .kb-legend-row { display: none; }
     .kb-row { gap: 4px; margin-bottom: 4px; }
     .kb-row.r2, .kb-row.r3 { padding-left: 0; }
     .key {
@@ -1706,13 +1686,7 @@
           <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
 
           <div class="keyboard">
-            <div class="kb-toggle">
-              <span>Show:</span>
-              <span class="pill">
-                <button data-mode="hangul">한글</button>
-                <button data-mode="qwerty">QWERTY</button>
-                <button class="on" data-mode="both">Both</button>
-              </span>
+            <div class="kb-legend-row">
               <span class="kb-legend" title="Keys highlighted in orange require Shift">
                 <span class="kb-legend-swatch"></span> Shift
               </span>
@@ -2774,18 +2748,7 @@ const KB_LAYOUT = [
 ];
 
 function buildKeyboard() {
-  const kb = document.getElementById('kb');
-  kb.innerHTML = '';
-  let displayMode = 'both';
-  document.querySelectorAll('.kb-toggle button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.kb-toggle button').forEach(b => b.classList.remove('on'));
-      btn.classList.add('on');
-      displayMode = btn.dataset.mode;
-      buildKeyboardKeys(displayMode);
-    });
-  });
-  buildKeyboardKeys(displayMode);
+  buildKeyboardKeys('both');
 }
 
 function buildKeyboardKeys(mode) {
