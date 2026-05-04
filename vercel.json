@@ -3,6 +3,30 @@
   "redirects": [
     {
       "source": "/",
+      "has": [{ "type": "host", "value": "learnhangeul.com" }],
+      "destination": "https://typehangeul.com/",
+      "permanent": true
+    },
+    {
+      "source": "/:path+",
+      "has": [{ "type": "host", "value": "learnhangeul.com" }],
+      "destination": "https://typehangeul.com/:path+",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.learnhangeul.com" }],
+      "destination": "https://typehangeul.com/",
+      "permanent": true
+    },
+    {
+      "source": "/:path+",
+      "has": [{ "type": "host", "value": "www.learnhangeul.com" }],
+      "destination": "https://typehangeul.com/:path+",
+      "permanent": true
+    },
+    {
+      "source": "/",
       "has": [{ "type": "host", "value": "hangul-type.vercel.app" }],
       "destination": "https://typehangeul.com/",
       "permanent": true
