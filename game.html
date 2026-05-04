@@ -245,9 +245,11 @@
     top: -100%;
   }
 
-  /* HUD — pinned to bottom on desktop so monsters get the full vertical
-     fall distance; mobile keeps it at top (override below) because the
-     on-screen keyboard already occupies the bottom of the viewport. */
+  /* Command Bar — the bottom strip on desktop holding stats (left), the
+     typing readout (center), and powerups + controls (right). Pinned to
+     bottom so monsters get the full vertical fall distance; mobile keeps
+     it at top (override below) because the on-screen keyboard already
+     occupies the bottom of the viewport. */
   .hud {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -255,34 +257,35 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 14px 22px;
     background: var(--l1);
     border-top: 1px solid var(--bd);
     box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.04);
   }
-  .hud-left, .hud-right { display: flex; align-items: center; gap: 18px; }
-  /* HUD center now hosts the typing readout (replaces the old "한글 BATTLE"
-     title and the bottom typing strip — single bar instead of two). */
+  .hud-left, .hud-right { display: flex; align-items: center; gap: 22px; }
+  /* Command Bar center — the typing readout. Sized as a fixed slot so the
+     stats and controls on either side get more presence; the typing field
+     itself is narrower than before but its text scales up for legibility. */
   .hud-center {
-    flex: 1;
+    flex: 0 0 360px;
     margin: 0 24px;
-    height: 36px;
-    display: flex; align-items: center; gap: 12px;
-    padding: 0 18px;
+    height: 44px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 20px;
     background: var(--l2);
     border: 1px solid var(--bd);
-    border-radius: 10px;
+    border-radius: 12px;
     font-family: 'Noto Sans KR', 'Inter', sans-serif;
-    min-width: 240px;
+    min-width: 0;
     overflow: hidden;
   }
   .hud-center .type-prompt {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--tlo);
     font-weight: 700;
   }
   .hud-center .live {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--blue);
     letter-spacing: 1px;
@@ -294,7 +297,7 @@
   }
   .hud-center .ime-cursor {
     display: inline-block;
-    width: 2px; height: 22px;
+    width: 2px; height: 24px;
     background: var(--blue);
     vertical-align: middle;
     animation: blink 0.9s steps(2) infinite;
@@ -304,7 +307,7 @@
     line-height: 1.1;
   }
   .stat-label {
-    font-size: 9px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--tlo);
@@ -312,18 +315,18 @@
   }
   .stat-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 17px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--thi);
-    margin-top: 2px;
+    margin-top: 3px;
   }
   .stat-value.level   { color: var(--blue); }
   .stat-value.score   { color: var(--green); }
-  .stat-value.combo   { color: var(--orange); min-width: 56px; text-align: right; }
+  .stat-value.combo   { color: var(--orange); min-width: 68px; text-align: right; }
   .stat-value.combo.zero { color: var(--tlo); }
   .lives {
-    font-size: 18px;
-    letter-spacing: 4px;
+    font-size: 22px;
+    letter-spacing: 5px;
     color: var(--red);
   }
   .lives .lost { color: var(--bd); }
@@ -332,9 +335,9 @@
     background: var(--l1);
     border: 1px solid var(--bd);
     border-radius: 8px;
-    padding: 7px 12px;
+    padding: 9px 14px;
     font: inherit;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--tmd);
     cursor: pointer;
@@ -342,10 +345,10 @@
   }
   .menu-btn:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
 
-  /* XP bar — sits just above the HUD on desktop. */
+  /* XP bar — sits just above the Command Bar on desktop. */
   .xpbar {
     position: fixed;
-    bottom: 68px; left: 0; right: 0;
+    bottom: 80px; left: 0; right: 0;
     height: 4px;
     background: var(--l3);
     z-index: 99;
@@ -1212,23 +1215,23 @@
 
   /* ── 필살기 (Special Move) HUD + effects ── */
   .special-meter {
-    display: flex; gap: 4px;
+    display: flex; gap: 5px;
     align-items: center;
-    padding: 4px 8px;
+    padding: 6px 10px;
     background: var(--l2);
     border: 1px solid var(--bd);
-    border-radius: 8px;
+    border-radius: 9px;
   }
   .special-meter .sm-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
     color: var(--tlo);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-right: 4px;
+    margin-right: 5px;
   }
   .special-pip {
-    width: 14px; height: 14px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     background: var(--l3);
     border: 1.5px solid var(--bd);
@@ -1253,7 +1256,7 @@
   /* Chant mode overlay */
   .chant-banner {
     position: fixed;
-    bottom: 90px; left: 50%;
+    bottom: 102px; left: 50%;
     transform: translateX(-50%);
     z-index: 350;
     background: linear-gradient(135deg, #dc2626, #f59e0b);
@@ -1716,8 +1719,8 @@
     background: var(--l1);
     border: 1px solid var(--bd);
     border-radius: 8px;
-    padding: 7px 10px;
-    font-size: 14px;
+    padding: 9px 12px;
+    font-size: 16px;
     cursor: pointer;
     line-height: 1;
     transition: all 0.15s;
