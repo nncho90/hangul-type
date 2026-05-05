@@ -158,6 +158,36 @@
       radial-gradient(circle 5px at 78% 78%, rgba(254, 240, 138, 0.95), transparent);
   }
 
+  /* ── New 7-tier image backgrounds (sprite-art match) ─────────────────── */
+  /* These override .backdrop::before with painted pixel-art scenes that
+     match the player + enemy sprite aesthetic. The gradient on .backdrop
+     itself stays as a tinted base in case the image fails to load. */
+  body.theme-village .backdrop::before,
+  body.theme-forest .backdrop::before,
+  body.theme-study .backdrop::before,
+  body.theme-courtyard .backdrop::before,
+  body.theme-camp .backdrop::before,
+  body.theme-battlefield .backdrop::before,
+  body.theme-palace .backdrop::before {
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    clip-path: none;
+    box-shadow: none;
+  }
+  body.theme-village .backdrop::before    { background-image: url('sprites/backgrounds/01-village.png');     }
+  body.theme-forest .backdrop::before     { background-image: url('sprites/backgrounds/02-forest.png');      }
+  body.theme-study .backdrop::before      { background-image: url('sprites/backgrounds/03-study.png');       }
+  body.theme-courtyard .backdrop::before  { background-image: url('sprites/backgrounds/04-courtyard.png');   }
+  body.theme-camp .backdrop::before       { background-image: url('sprites/backgrounds/05-camp.png');        }
+  body.theme-battlefield .backdrop::before{ background-image: url('sprites/backgrounds/06-battlefield.png'); }
+  body.theme-palace .backdrop::before     { background-image: url('sprites/backgrounds/07-palace.png');      }
+  /* Tinted gradient base (fallback if image missing). Each tier picks a
+     dominant tone matching the painted scene. */
+  body.theme-study .backdrop      { background: linear-gradient(180deg, #fef3c7 0%, #fde68a 60%, #fbbf24 100%); }
+  body.theme-courtyard .backdrop  { background: linear-gradient(180deg, #fce7f3 0%, #f9a8d4 50%, #c084fc 100%); }
+  body.theme-camp .backdrop       { background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
+  body.theme-battlefield .backdrop{ background: linear-gradient(180deg, #7c2d12 0%, #ea580c 50%, #1f2937 100%); }
   /* lv 23+ — 별나라 (Cosmos): deep night, constellations, nebula */
   body.theme-cosmos .backdrop {
     background: radial-gradient(ellipse at 50% 30%, #312e81 0%, #1e1b4b 40%, #0f0c29 80%, #000 100%);
@@ -660,6 +690,41 @@
   @keyframes trail-fade {
     0%   { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0;    transform: translate(-50%, -50%) scale(0.3); }
+  }
+
+  /* ── Spell-cast VFX (선비 scroll, 양반 brush, 대왕 scepter) ── */
+  /* AoE ring expands from the monster, then a Korean glyph flashes on impact.
+     Replaces the projectile-travel for tiers whose attackType === 'spell'. */
+  .spell-ring {
+    position: absolute;
+    width: 0; height: 0;
+    border-radius: 50%;
+    border: 3px solid var(--spell-c1, #3b82f6);
+    box-shadow: 0 0 20px var(--spell-c2, #60a5fa);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 80;
+    animation: spell-ring-expand 0.48s ease-out forwards;
+  }
+  @keyframes spell-ring-expand {
+    0%   { width: 0;   height: 0;   opacity: 1; border-width: 4px; }
+    60%  { width: 110px; height: 110px; opacity: 0.85; border-width: 3px; }
+    100% { width: 160px; height: 160px; opacity: 0; border-width: 1px; }
+  }
+  .spell-glyph {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 81;
+    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-size: 64px;
+    font-weight: 900;
+    animation: spell-glyph-pop 0.46s ease-out forwards;
+  }
+  @keyframes spell-glyph-pop {
+    0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    40%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
   }
 
   /* ── Ninja teleport + sword melee ── */
@@ -3656,16 +3721,21 @@ function maybeLevelUp() {
   XP_FILL.style.width = Math.min(100, (state.xp / xpThresholdForLevel(state.level)) * 100) + '%';
 }
 
-// ─── Korean-coded level themes ────────────────────────────────────────────
+// ─── Tier-band themes (aligned with the 7 player tiers) ──────────────────
+// Each player tier has a matching backdrop scene. Image backgrounds live in
+// sprites/backgrounds/0N-name.png; CSS overrides .backdrop::before with the
+// PNG so the existing gradient base stays as a tinted color floor.
 function themeForLevel(lv) {
-  if (lv <= 4)  return 'village';
-  if (lv <= 8)  return 'forest';
-  if (lv <= 13) return 'shrine';
-  if (lv <= 18) return 'temple';
-  if (lv <= 22) return 'palace';
-  return 'cosmos';
+  if (lv <= 4)  return 'village';     // tier 1 백의
+  if (lv <= 9)  return 'forest';      // tier 2 나무꾼
+  if (lv <= 15) return 'study';       // tier 3 선비
+  if (lv <= 22) return 'courtyard';   // tier 4 양반
+  if (lv <= 29) return 'camp';        // tier 5 무관
+  if (lv <= 39) return 'battlefield'; // tier 6 장군
+  return 'palace';                    // tier 7 대왕
 }
-const ALL_THEMES = ['village','forest','shrine','temple','palace','cosmos'];
+const ALL_THEMES = ['village','forest','study','courtyard','camp','battlefield','palace',
+                    /* legacy, removed but cleaned for safety: */ 'shrine','temple','cosmos'];
 function applyTheme(theme) {
   const body = document.body;
   ALL_THEMES.forEach(t => body.classList.remove('theme-' + t));
@@ -3999,19 +4069,61 @@ function teleportPlayerHome(immediate) {
   _playerHomePending = setTimeout(doIt, 500);
 }
 
-// ─── Combat style + ranged projectiles (lv 9+ era) ───────────────────────
-// Player levels 1-8 are sword/shield era → teleport-melee.
-// Levels 9-12 are mage era (wand/scroll). 13-15 ninja (throwing stars).
-// 16-19 royalty (sceptre). 20+ dragon/cosmic. All ranged: stay home + fire.
-function combatStyle(lv) { return lv <= 8 ? 'melee' : 'ranged'; }
+// ─── Combat style — driven by player tier's attackType ──────────────────
+// Each of the 7 player tiers has an attackType in PLAYER_SPRITES:
+//   melee  → teleport-strike (백의 fists, 나무꾼 axe, 무관 sword)
+//   ranged → projectile fired from home (장군 bow → arrow)
+//   spell  → AoE VFX cast directly on the monster, no projectile travel
+//            (선비 scroll-jamo, 양반 ink-splash, 대왕 ㅎ-lightning)
+function combatStyle(lv) {
+  return (playerForLevel(lv) && playerForLevel(lv).attackType) || 'melee';
+}
 
+// Per-tier projectile/spell visuals. Glyphs are pixel-friendly emojis;
+// future iteration can swap each to a dedicated sprite under sprites/projectiles/.
 function projectileForLevel(lv) {
-  if (lv >= 22) return { glyph: '🐉', size: 36, color: '#dc2626', trail: 'rgba(220,38,38,0.55)' };
-  if (lv >= 19) return { glyph: '👑', size: 32, color: '#0891b2', trail: 'rgba(8,145,178,0.5)' };
-  if (lv >= 16) return { glyph: '💎', size: 28, color: '#06b6d4', trail: 'rgba(6,182,212,0.5)' };
-  if (lv >= 13) return { glyph: '🎯', size: 26, color: '#eab308', trail: 'rgba(234,179,8,0.55)' };
-  if (lv >= 11) return { glyph: '✨', size: 24, color: '#7c3aed', trail: 'rgba(124,58,237,0.55)' };
-  return { glyph: '🌟', size: 22, color: '#0ea5e9', trail: 'rgba(14,165,233,0.5)' };
+  const tier = (playerForLevel(lv) && playerForLevel(lv).tier) || 1;
+  switch (tier) {
+    case 6: return { glyph: '🏹', size: 32, color: '#a16207', trail: 'rgba(161,98,7,0.55)' };  // 장군 arrow
+    case 7: return { glyph: 'ㅎ', size: 38, color: '#dc2626', trail: 'rgba(220,38,38,0.6)'  }; // 대왕 ㅎ-lightning (also a spell, but acts as visual)
+    default: return { glyph: '✨', size: 24, color: '#0ea5e9', trail: 'rgba(14,165,233,0.5)' };
+  }
+}
+
+// Spell casts: a colored ring expansion + impact flash directly on the monster.
+// No projectile travels. The damage timing matches melee/ranged so combat feel
+// stays consistent across the three attack types.
+function castSpellAt(monster) {
+  if (!monster || !monster.el) return;
+  const r = monster.el.getBoundingClientRect();
+  const sr = getStageRect();
+  const cx = (r.left + r.width / 2) - sr.left;
+  const cy = (r.top + r.height / 2) - sr.top;
+  // Tier-specific spell color (pulled from playerForLevel tier)
+  const tier = (playerForLevel(state.level) && playerForLevel(state.level).tier) || 3;
+  const palette = {
+    3: { c1: '#3b82f6', c2: '#60a5fa', glyph: '문' },  // 선비 scroll → blue jamo burn
+    4: { c1: '#1e1b4b', c2: '#7c3aed', glyph: '墨' },  // 양반 brush → ink splash
+    7: { c1: '#dc2626', c2: '#fbbf24', glyph: 'ㅎ' },  // 대왕 → red+gold royal strike
+  }[tier] || { c1: '#3b82f6', c2: '#60a5fa', glyph: '✨' };
+  // Expanding ring
+  const ring = document.createElement('div');
+  ring.className = 'spell-ring';
+  ring.style.left = cx + 'px';
+  ring.style.top  = cy + 'px';
+  ring.style.setProperty('--spell-c1', palette.c1);
+  ring.style.setProperty('--spell-c2', palette.c2);
+  STAGE.appendChild(ring);
+  // Impact glyph
+  const glyph = document.createElement('div');
+  glyph.className = 'spell-glyph';
+  glyph.style.left = cx + 'px';
+  glyph.style.top  = cy + 'px';
+  glyph.style.color = palette.c2;
+  glyph.style.textShadow = `0 0 18px ${palette.c1}, 0 0 6px ${palette.c2}`;
+  glyph.textContent = palette.glyph;
+  STAGE.appendChild(glyph);
+  setTimeout(() => { ring.remove(); glyph.remove(); }, 480);
 }
 
 function fireProjectileAt(monster) {
@@ -4777,11 +4889,10 @@ function advanceLock(m) {
   // Repaint each syllable canvas based on the new lock position. No more "disappearing" syllables.
   if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
   LIVE_EL.textContent = state.ime.display;
-  if (combatStyle(state.level) === 'melee') {
-    swingSword(m);
-  } else {
-    fireProjectileAt(m);
-  }
+  const style = combatStyle(state.level);
+  if (style === 'melee')      swingSword(m);
+  else if (style === 'spell') castSpellAt(m);
+  else                        fireProjectileAt(m);
   sfxShoot();
   if (state.combo === 5 || state.combo === 10 || state.combo === 25 || state.combo === 50 || state.combo === 100) {
     flashCenterText(state.combo + '× combo');
