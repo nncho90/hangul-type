@@ -2120,11 +2120,20 @@
     animation: sprite-walk-monster 1.8s ease-in-out infinite;
     transform-origin: 50% 95%;
   }
+  /* 8-key step cycle. Each step has windup → peak lift → plant → recoil,
+     producing a more natural "lift / shift / land / brace" walk feel than a
+     simple sinusoidal bob. Pairs with the .sprite-step opacity flicker so
+     the alternate pose lines up with the down-beat plant phases. */
   @keyframes sprite-walk-monster {
-    0%, 100% { transform: translate(-3px, 0)    scale(1)    rotate(-5deg); }
-    25%      { transform: translate(2px, -5px) scale(1.04) rotate(3deg); }
-    50%      { transform: translate(3px, 0)    scale(1)    rotate(-3deg); }
-    75%      { transform: translate(-2px, -5px) scale(1.04) rotate(5deg); }
+    0%   { transform: translate(-3px,  0)   scale(1)    rotate(-4deg); }
+    12%  { transform: translate(-1px, -2px) scale(1.01) rotate(-1deg); }
+    25%  { transform: translate( 2px, -6px) scale(1.04) rotate( 3deg); }
+    37%  { transform: translate( 3px, -3px) scale(1.02) rotate( 2deg); }
+    50%  { transform: translate( 3px,  0)   scale(1)    rotate(-2deg); }
+    62%  { transform: translate( 1px, -2px) scale(1.01) rotate(-3deg); }
+    75%  { transform: translate(-2px, -6px) scale(1.04) rotate( 4deg); }
+    87%  { transform: translate(-3px, -3px) scale(1.02) rotate( 2deg); }
+    100% { transform: translate(-3px,  0)   scale(1)    rotate(-4deg); }
   }
   .monster.tier-1 .sprite-img { animation-duration: var(--tier1-anim, 0.95s); }
   .monster.tier-2 .sprite-img { animation-duration: var(--tier2-anim, 1.10s); }
@@ -2138,10 +2147,15 @@
   /* Boss step: heavier, slower, bigger sway. The +/-2deg roll keeps presence
      without making them look like they're tipping over. */
   @keyframes sprite-walk-boss {
-    0%, 100% { transform: translate(-4px, 0)    scale(1)    rotate(-2deg); }
-    25%      { transform: translate(2px, -9px)  scale(1.06) rotate(2deg); }
-    50%      { transform: translate(4px, 0)     scale(1.02) rotate(-1deg); }
-    75%      { transform: translate(-2px, -9px) scale(1.06) rotate(1deg); }
+    0%   { transform: translate(-4px,  0)   scale(1)    rotate(-2deg); }
+    12%  { transform: translate(-2px, -3px) scale(1.02) rotate(-1deg); }
+    25%  { transform: translate( 2px, -10px) scale(1.06) rotate( 2deg); }
+    37%  { transform: translate( 4px, -5px) scale(1.04) rotate( 1deg); }
+    50%  { transform: translate( 4px,  0)   scale(1.02) rotate(-1deg); }
+    62%  { transform: translate( 2px, -3px) scale(1.03) rotate(-2deg); }
+    75%  { transform: translate(-2px, -10px) scale(1.06) rotate( 1deg); }
+    87%  { transform: translate(-4px, -5px) scale(1.04) rotate( 0deg); }
+    100% { transform: translate(-4px,  0)   scale(1)    rotate(-2deg); }
   }
   /* When the parent .sprite span has its bob animation, kill it so we don't
      double-animate (the new breathe-img on the img is richer + per-tier). */
