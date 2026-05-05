@@ -509,6 +509,23 @@
     animation: bob 1.8s ease-in-out infinite;
   }
   .monster .sprite .sprite-img { display: block; }
+  /* 2-frame walk cycle for enemies. The step-pose image is stacked over the
+     idle image and its opacity flickers on/off, producing the step. Pairs with
+     the existing sprite-walk-monster transform animation for a multi-cue feel. */
+  .monster .sprite { position: relative; }
+  .monster .sprite .sprite-step {
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: 50% 95%;
+    /* Layer two animations: keep the inherited transform-walk so step pose
+       shifts in sync with idle, AND alternate visibility for the 2-frame cycle. */
+    animation: sprite-walk-monster 1.8s ease-in-out infinite,
+               enemy-walk-step 0.7s steps(2, jump-none) infinite;
+  }
+  @keyframes enemy-walk-step {
+    0%, 49.9% { opacity: 0; }
+    50%, 100% { opacity: 1; }
+  }
   @keyframes bob {
     0%, 100% { transform: translateY(0) rotate(-2deg); }
     50%      { transform: translateY(-5px) rotate(2deg); }
@@ -2759,13 +2776,13 @@ const TIER_SPRITES = {
 // label, and an attack type that drives which combat VFX fires (melee teleport,
 // ranged projectile, or spell AoE). Cap is 대왕 — once you hit Lv.40 you stay.
 const PLAYER_SPRITES = [
-  { lv: 1,  tier: 1, emoji: '🥋', label: '백의 Commoner',     spriteBack: 'player/01-baegui-back',   spriteFront: 'player/01-baegui-front',   attackType: 'melee'  },
-  { lv: 5,  tier: 2, emoji: '🪓', label: '나무꾼 Woodcutter', spriteBack: 'player/02-namukkun-back', spriteFront: 'player/02-namukkun-front', attackType: 'melee'  },
-  { lv: 10, tier: 3, emoji: '📜', label: '선비 Scholar',      spriteBack: 'player/03-seonbi-back',   spriteFront: 'player/03-seonbi-front',   attackType: 'spell'  },
-  { lv: 16, tier: 4, emoji: '🖌️', label: '양반 Yangban',     spriteBack: 'player/04-yangban-back',  spriteFront: 'player/04-yangban-front',  attackType: 'spell'  },
-  { lv: 23, tier: 5, emoji: '⚔️', label: '무관 Officer',      spriteBack: 'player/05-mugwan-back',   spriteFront: 'player/05-mugwan-front',   attackType: 'melee'  },
-  { lv: 30, tier: 6, emoji: '🏹', label: '장군 General',      spriteBack: 'player/06-janggun-back',  spriteFront: 'player/06-janggun-front',  attackType: 'ranged' },
-  { lv: 40, tier: 7, emoji: '👑', label: '대왕 Great King',   spriteBack: 'player/07-daewang-back',  spriteFront: 'player/07-daewang-front',  attackType: 'spell'  }
+  { lv: 1,  tier: 1, emoji: '🥋', label: '백의 Commoner',     spriteBack: 'player/01-baegui-back',   spriteFront: 'player/01-baegui-front',   spriteStrike: 'player/01-baegui-back-strike',   attackType: 'melee'  },
+  { lv: 5,  tier: 2, emoji: '🪓', label: '나무꾼 Woodcutter', spriteBack: 'player/02-namukkun-back', spriteFront: 'player/02-namukkun-front', spriteStrike: 'player/02-namukkun-back-strike', attackType: 'melee'  },
+  { lv: 10, tier: 3, emoji: '📜', label: '선비 Scholar',      spriteBack: 'player/03-seonbi-back',   spriteFront: 'player/03-seonbi-front',   spriteStrike: 'player/03-seonbi-back-strike',   attackType: 'spell'  },
+  { lv: 16, tier: 4, emoji: '🖌️', label: '양반 Yangban',     spriteBack: 'player/04-yangban-back',  spriteFront: 'player/04-yangban-front',  spriteStrike: 'player/04-yangban-back-strike',  attackType: 'spell'  },
+  { lv: 23, tier: 5, emoji: '⚔️', label: '무관 Officer',      spriteBack: 'player/05-mugwan-back',   spriteFront: 'player/05-mugwan-front',   spriteStrike: 'player/05-mugwan-back-strike',   attackType: 'melee'  },
+  { lv: 30, tier: 6, emoji: '🏹', label: '장군 General',      spriteBack: 'player/06-janggun-back',  spriteFront: 'player/06-janggun-front',  spriteStrike: 'player/06-janggun-back-strike',  attackType: 'ranged' },
+  { lv: 40, tier: 7, emoji: '👑', label: '대왕 Great King',   spriteBack: 'player/07-daewang-back',  spriteFront: 'player/07-daewang-front',  spriteStrike: 'player/07-daewang-back-strike',  attackType: 'spell'  }
 ];
 
 function playerForLevel(lv) {
@@ -2795,6 +2812,28 @@ function renderPlayerSprite(lv) {
   // toward the descending enemies). The new tier sprites have the weapon baked
   // in, so no separate equip emoji is needed.
   PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 88)}</span>`;
+}
+
+// Briefly swap the player sprite to its strike pose for ~220ms, then back to
+// idle. Called from advanceLock() on every successful keystroke that triggers
+// an attack. Timer is tracked on state so chained typing keeps the strike pose
+// active across consecutive hits without flicker.
+function triggerStrikePose() {
+  const sp = playerForLevel(state.level);
+  if (!sp || !sp.spriteStrike) return;
+  const img = PLAYER_EL.querySelector('img.sprite-img');
+  if (!img) return;
+  const idleSrc   = `sprites/${sp.spriteBack}.png`;
+  const strikeSrc = `sprites/${sp.spriteStrike}.png`;
+  img.setAttribute('src', strikeSrc);
+  if (state._strikeTimer) clearTimeout(state._strikeTimer);
+  state._strikeTimer = setTimeout(() => {
+    // Only restore if we're still on the same tier — level-up will have
+    // already replaced the whole sprite block via renderPlayerSprite.
+    const nowImg = PLAYER_EL.querySelector('img.sprite-img');
+    if (nowImg) nowImg.setAttribute('src', idleSrc);
+    state._strikeTimer = null;
+  }, 220);
 }
 
 const TIER_SPRITE_FILES = {
@@ -3598,10 +3637,18 @@ function buildMonsterEl(m) {
     : m.tier === 2 ? 66
     : 56;
   if (m.spriteFile) {
-    sprite.innerHTML = spriteHtml(m.spriteFile, m.sprite, sizePx);
+    // Stack two sprite images: idle pose underneath, step pose on top.
+    // CSS animation alternates the step image's opacity, producing a 2-frame
+    // walk cycle without needing JS per-frame work.
+    const idleHtml = spriteHtml(m.spriteFile, m.sprite, sizePx);
+    const stepHtml = spriteHtml(m.spriteFile + '-step', m.sprite, sizePx)
+      .replace('class="sprite-img"', 'class="sprite-img sprite-step"');
+    sprite.innerHTML = idleHtml + stepHtml;
     // Randomize per-monster phase so a wave of demons doesn't bob in lockstep.
-    const img = sprite.querySelector('.sprite-img');
-    if (img) img.style.animationDelay = (-Math.random() * 2).toFixed(2) + 's';
+    const phase = (-Math.random() * 2).toFixed(2) + 's';
+    sprite.querySelectorAll('.sprite-img').forEach(img => {
+      img.style.animationDelay = phase;
+    });
   } else {
     sprite.textContent = m.sprite;
   }
@@ -3914,10 +3961,20 @@ function floatEnglishReveal(x, y, en) {
   setTimeout(() => el.remove(), 1620);
 }
 
-// ─── Korean TTS (Web Speech API) ───────────────────────────────────────────
+// ─── Korean TTS (pre-rendered audio with Web Speech API fallback) ─────────
+// Loads audio/manifest.json on boot. If a word has a pre-rendered MP3
+// (Nelson's Chatterbox-cloned voice), play that. Otherwise fall back to
+// the OS speechSynthesis voice so unrendered words still get pronunciation.
 const AUDIO_KEY = 'hangul-battle-audio-v1';
+let _audioMap = null;             // ko -> URL relative to game.html
+const _audioCache = new Map();    // ko -> HTMLAudioElement
 let _koreanVoice = undefined;     // undefined = unprobed, false = probed/none, Voice = found
 let _ttsSupported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+
+fetch('audio/manifest.json')
+  .then(r => r.ok ? r.json() : null)
+  .then(m => { _audioMap = m || {}; })
+  .catch(() => { _audioMap = {}; });
 
 function audioEnabled() {
   try {
@@ -3942,22 +3999,40 @@ function findKoreanVoice() {
 }
 
 function speakKoreanWord(text) {
-  if (!_ttsSupported || !audioEnabled() || !text) return;
-  const voice = findKoreanVoice();
-  if (!voice) return;                          // no Korean voice on this system
+  if (!audioEnabled() || !text) return;
   // Rate scales with level: 1.0 (lv1) → ~2.0 (lv40+). Keeps audio pace
   // matched to gameplay tempo so it never feels laggy at high levels.
   const rate = Math.min(2.0, 1.0 + (state.level || 1) * 0.025);
+
+  const url = _audioMap && _audioMap[text];
+  if (url) {
+    let a = _audioCache.get(text);
+    if (!a) { a = new Audio(url); a.preload = 'auto'; _audioCache.set(text, a); }
+    try {
+      a.currentTime = 0;
+      a.volume = 0.7;     // sit just under chiptune SFX volume
+      a.playbackRate = rate;
+      a.play().catch(() => {});
+      return;
+    } catch (e) { /* fall through to Web Speech API */ }
+  }
+
+  if (!_ttsSupported) return;
+  const voice = findKoreanVoice();
+  if (!voice) return;
   const u = new SpeechSynthesisUtterance(text);
   u.voice = voice;
   u.lang  = voice.lang || 'ko-KR';
   u.rate  = rate;
   u.pitch = 1.0;
-  u.volume = 0.7;     // sit just under chiptune SFX volume
+  u.volume = 0.7;
   speechSynthesis.speak(u);
 }
 
 function cancelAllSpeech() {
+  for (const a of _audioCache.values()) {
+    try { a.pause(); a.currentTime = 0; } catch (e) {}
+  }
   if (_ttsSupported) speechSynthesis.cancel();
 }
 
@@ -4902,6 +4977,7 @@ function advanceLock(m) {
   if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
   LIVE_EL.textContent = state.ime.display;
   const style = combatStyle(state.level);
+  triggerStrikePose();
   if (style === 'melee')      swingSword(m);
   else if (style === 'spell') castSpellAt(m);
   else                        fireProjectileAt(m);
