@@ -2677,39 +2677,18 @@ const TIER_SPRITES = {
   boss: ['🐉','🦠','👹','💀']
 };
 
-// 30 player tiers — start as a literal nobody, slow MapleStory-style growth.
-// Each level adds a small emoji "equipment" next to the sprite so progress feels tangible.
+// 7 player tiers mapped to Joseon-era Korean social hierarchy. Each tier has
+// a distinct sprite (back-view for combat, front-view for UI), a Korean+English
+// label, and an attack type that drives which combat VFX fires (melee teleport,
+// ranged projectile, or spell AoE). Cap is 대왕 — once you hit Lv.40 you stay.
 const PLAYER_SPRITES = [
-  { lv: 1,  emoji: '🥚', label: '무명 Nameless',          equip: '' },
-  { lv: 2,  emoji: '👶', label: '아기 Babe',              equip: '' },
-  { lv: 3,  emoji: '🧒', label: '도제 Apprentice',        equip: '🪨' },
-  { lv: 4,  emoji: '🧑', label: '학생 Student',           equip: '📓' },
-  { lv: 5,  emoji: '🧑‍🎓', label: '졸업생 Graduate',       equip: '🪙' },
-  { lv: 6,  emoji: '🥷', label: '견습생 Trainee',         equip: '🗡️' },
-  { lv: 7,  emoji: '🧝', label: '검사 Swordsman',         equip: '⚔️' },
-  { lv: 8,  emoji: '🧝‍♂️', label: '기사 Knight',          equip: '🛡️' },
-  { lv: 9,  emoji: '🧙', label: '도사 Mage',              equip: '🪄' },
-  { lv: 10, emoji: '🧙‍♂️', label: '대마법사 Archmage',     equip: '📜' },
-  { lv: 11, emoji: '🦸', label: '영웅 Hero',              equip: '🌟' },
-  { lv: 12, emoji: '🦸‍♀️', label: '챔피언 Champion',      equip: '🏆' },
-  { lv: 13, emoji: '🥷', label: '닌자 Ninja',             equip: '🎯' },
-  { lv: 14, emoji: '🧑‍🚀', label: '우주인 Cosmonaut',     equip: '🚀' },
-  { lv: 15, emoji: '🧚‍♀️', label: '요정 Fairy',           equip: '✨' },
-  { lv: 16, emoji: '🤴', label: '왕자 Prince',            equip: '👑' },
-  { lv: 17, emoji: '👸', label: '공주 Princess',          equip: '💎' },
-  { lv: 18, emoji: '🧜‍♂️', label: '인어왕 Merlord',        equip: '🔱' },
-  { lv: 19, emoji: '🧞', label: '정령 Spirit',            equip: '🌀' },
-  { lv: 20, emoji: '🐉', label: '용왕 Dragon Lord',       equip: '🔥' },
-  { lv: 21, emoji: '🦄', label: '일각수 Unicorn',         equip: '🌈' },
-  { lv: 22, emoji: '🐲', label: '용족 Drake',             equip: '🪽' },
-  { lv: 23, emoji: '⚔️', label: '전쟁신 War God',         equip: '💥' },
-  { lv: 24, emoji: '✨', label: '별 Star',                equip: '🌠' },
-  { lv: 25, emoji: '🌟', label: '신선 Immortal',          equip: '🌌' },
-  { lv: 26, emoji: '🌌', label: '우주 Cosmos',            equip: '🪐' },
-  { lv: 27, emoji: '☀️', label: '태양 Sun',               equip: '🔆' },
-  { lv: 28, emoji: '🪐', label: '행성 Planet',            equip: '🛸' },
-  { lv: 29, emoji: '🌠', label: '유성 Comet',             equip: '💫' },
-  { lv: 30, emoji: '🔱', label: '신왕 God-King',          equip: '⚡' }
+  { lv: 1,  tier: 1, emoji: '🥋', label: '백의 Commoner',     spriteBack: 'player/01-baegui-back',   spriteFront: 'player/01-baegui-front',   attackType: 'melee'  },
+  { lv: 5,  tier: 2, emoji: '🪓', label: '나무꾼 Woodcutter', spriteBack: 'player/02-namukkun-back', spriteFront: 'player/02-namukkun-front', attackType: 'melee'  },
+  { lv: 10, tier: 3, emoji: '📜', label: '선비 Scholar',      spriteBack: 'player/03-seonbi-back',   spriteFront: 'player/03-seonbi-front',   attackType: 'spell'  },
+  { lv: 16, tier: 4, emoji: '🖌️', label: '양반 Yangban',     spriteBack: 'player/04-yangban-back',  spriteFront: 'player/04-yangban-front',  attackType: 'spell'  },
+  { lv: 23, tier: 5, emoji: '⚔️', label: '무관 Officer',      spriteBack: 'player/05-mugwan-back',   spriteFront: 'player/05-mugwan-front',   attackType: 'melee'  },
+  { lv: 30, tier: 6, emoji: '🏹', label: '장군 General',      spriteBack: 'player/06-janggun-back',  spriteFront: 'player/06-janggun-front',  attackType: 'ranged' },
+  { lv: 40, tier: 7, emoji: '👑', label: '대왕 Great King',   spriteBack: 'player/07-daewang-back',  spriteFront: 'player/07-daewang-front',  attackType: 'spell'  }
 ];
 
 function playerForLevel(lv) {
@@ -2722,9 +2701,12 @@ function playerForLevel(lv) {
 // (file missing or 404), an inline onerror swaps it for the emoji fallback.
 // Inputs are sanitized so a future untrusted source can't inject JS via the
 // onerror attribute (today's callers all pass trusted constants).
+// Allow alphanumerics, underscores, dashes, and forward slashes for subdir
+// paths (e.g. "player/04-yangban-back"). Reject ".." for traversal safety.
 function spriteHtml(file, emoji, sizePx) {
   if (!file) return escapeHtml(emoji);
-  const safeFile = String(file).replace(/[^a-z0-9_]/gi, '');
+  let safeFile = String(file).replace(/[^a-z0-9_/\-]/gi, '');
+  if (safeFile.includes('..')) safeFile = '';
   const safeEmoji = String(emoji || '').replace(/['"\\<>&]/g, '');
   const px = Math.max(16, Math.min(512, Number(sizePx) || 72));
   return `<img class="sprite-img" src="sprites/${safeFile}.png" alt="" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${safeEmoji}'">`;
@@ -2732,18 +2714,18 @@ function spriteHtml(file, emoji, sizePx) {
 
 function renderPlayerSprite(lv) {
   const sp = playerForLevel(lv);
-  // Always use the Hwarang sprite (with emoji equip indicator) so progression
-  // still feels visible without spinning up 30 separate sprite files.
-  const equipHtml = sp.equip ? `<span class="player-equip">${sp.equip}</span>` : '';
-  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml('player_hwarang', sp.emoji, 88)}</span>${equipHtml}`;
+  // Battle stage uses the back-view sprite (Pokemon-style — player faces up
+  // toward the descending enemies). The new tier sprites have the weapon baked
+  // in, so no separate equip emoji is needed.
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 88)}</span>`;
 }
 
 const TIER_SPRITE_FILES = {
-  1: 'dokkaebi',
-  2: 'gumiho',
-  3: 'dueokshini',
-  4: 'jeoseung_saja',
-  5: 'cheonyeo_gwisin'
+  1: 'enemies/01-dokkaebi-mini',
+  2: 'enemies/02-gumiho-mini',
+  3: 'enemies/04-dueokshini',
+  4: 'enemies/06-jeoseung-saja',
+  5: 'enemies/03-cheonyeo-gwisin'
 };
 function tierSpriteFile(tier) { return TIER_SPRITE_FILES[tier] || null; }
 
@@ -4537,11 +4519,11 @@ function renderPowerupHud() {
 
 // ─── Boss intro cutscene + named bosses ───────────────────────────────────
 const BOSS_PROFILES = [
-  { sprite: 'dragon_boss',     emoji: '🐉', name: '한글왕',         subtitle: 'Demon King of Hangeul',     flavor: '"All who would speak my tongue, kneel."' },
-  { sprite: 'gumiho',          emoji: '🦊', name: '구미호 여왕',     subtitle: 'Queen of Nine Tails',      flavor: '"Your syllables taste like fear, little one."' },
-  { sprite: 'dokkaebi',        emoji: '👹', name: '도깨비 대장',     subtitle: 'Goblin Chieftain',         flavor: '"Hahaha! Type if you dare, mortal!"' },
-  { sprite: 'jeoseung_saja',   emoji: '🪦', name: '저승사자',        subtitle: 'Reaper of the Underworld', flavor: '"Your ledger… is incomplete."' },
-  { sprite: 'cheonyeo_gwisin', emoji: '👻', name: '처녀귀신',        subtitle: 'Maiden of Vengeance',      flavor: '"You forgot me. I have not forgotten you."' }
+  { sprite: 'enemies/08-hangeulwang',     emoji: '🐉', name: '한글왕',         subtitle: 'Demon King of Hangeul',     flavor: '"All who would speak my tongue, kneel."' },
+  { sprite: 'enemies/02-gumiho-mini',     emoji: '🦊', name: '구미호 여왕',     subtitle: 'Queen of Nine Tails',      flavor: '"Your syllables taste like fear, little one."' },
+  { sprite: 'enemies/05-dokkaebi-elder',  emoji: '👹', name: '도깨비 대장',     subtitle: 'Goblin Chieftain',         flavor: '"Hahaha! Type if you dare, mortal!"' },
+  { sprite: 'enemies/06-jeoseung-saja',   emoji: '🪦', name: '저승사자',        subtitle: 'Reaper of the Underworld', flavor: '"Your ledger… is incomplete."' },
+  { sprite: 'enemies/03-cheonyeo-gwisin', emoji: '👻', name: '처녀귀신',        subtitle: 'Maiden of Vengeance',      flavor: '"You forgot me. I have not forgotten you."' }
 ];
 let _bossCycleIdx = 0;
 function nextBossProfile() {

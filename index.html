@@ -1711,7 +1711,7 @@
           <div class="side-head">
             <div class="training-ground" id="trainingGround" title="Your battle hero, training. Click ⚔️ Battle to fight." onclick="(document.getElementById('battleLink')||{}).click&&document.getElementById('battleLink').click()">
               <div class="tg-hero">
-                <img id="tgHeroImg" src="sprites/player_hwarang.png" alt="Battle hero" onerror="this.outerHTML='&lt;span style=&quot;font-size:64px&quot;&gt;🥷&lt;/span&gt;'" />
+                <img id="tgHeroImg" src="sprites/player/01-baegui-front.png" alt="Battle hero" onerror="this.outerHTML='&lt;span style=&quot;font-size:64px&quot;&gt;🥋&lt;/span&gt;'" />
                 <span class="tg-equip" id="tgEquip"></span>
               </div>
               <div class="tg-meta">
@@ -3226,37 +3226,18 @@ function renderRomanization(koWord) {
 // the PLAYER_SPRITES table in game.html (also identical to BATTLE_SPRITES below
 // but with the equip emoji preserved).
 // ============================================================
+// 7 player tiers mapped to Joseon-era Korean social hierarchy. Mirrors
+// PLAYER_SPRITES in game.html so the practice ↔ battle progression feels
+// continuous. Each tier carries a front-view sprite (used in this training-
+// ground panel) — the back-view counterpart shows up in battle.
 const PRACTICE_HERO_SPRITES = [
-  { lv: 1,  emoji: '🥚', label: '무명 Nameless',          equip: '' },
-  { lv: 2,  emoji: '👶', label: '아기 Babe',              equip: '' },
-  { lv: 3,  emoji: '🧒', label: '도제 Apprentice',        equip: '🪨' },
-  { lv: 4,  emoji: '🧑', label: '학생 Student',           equip: '📓' },
-  { lv: 5,  emoji: '🧑‍🎓', label: '졸업생 Graduate',       equip: '🪙' },
-  { lv: 6,  emoji: '🥷', label: '견습생 Trainee',         equip: '🗡️' },
-  { lv: 7,  emoji: '🧝', label: '검사 Swordsman',         equip: '⚔️' },
-  { lv: 8,  emoji: '🧝‍♂️', label: '기사 Knight',          equip: '🛡️' },
-  { lv: 9,  emoji: '🧙', label: '도사 Mage',              equip: '🪄' },
-  { lv: 10, emoji: '🧙‍♂️', label: '대마법사 Archmage',     equip: '📜' },
-  { lv: 11, emoji: '🦸', label: '영웅 Hero',              equip: '🌟' },
-  { lv: 12, emoji: '🦸‍♀️', label: '챔피언 Champion',      equip: '🏆' },
-  { lv: 13, emoji: '🥷', label: '닌자 Ninja',             equip: '🎯' },
-  { lv: 14, emoji: '🧑‍🚀', label: '우주인 Cosmonaut',     equip: '🚀' },
-  { lv: 15, emoji: '🧚‍♀️', label: '요정 Fairy',           equip: '✨' },
-  { lv: 16, emoji: '🤴', label: '왕자 Prince',            equip: '👑' },
-  { lv: 17, emoji: '👸', label: '공주 Princess',          equip: '💎' },
-  { lv: 18, emoji: '🧜‍♂️', label: '인어왕 Merlord',        equip: '🔱' },
-  { lv: 19, emoji: '🧞', label: '정령 Spirit',            equip: '🌀' },
-  { lv: 20, emoji: '🐉', label: '용왕 Dragon Lord',       equip: '🔥' },
-  { lv: 21, emoji: '🦄', label: '일각수 Unicorn',         equip: '🌈' },
-  { lv: 22, emoji: '🐲', label: '용족 Drake',             equip: '🪽' },
-  { lv: 23, emoji: '⚔️', label: '전쟁신 War God',         equip: '💥' },
-  { lv: 24, emoji: '✨', label: '별 Star',                equip: '🌠' },
-  { lv: 25, emoji: '🌟', label: '신선 Immortal',          equip: '🌌' },
-  { lv: 26, emoji: '🌌', label: '우주 Cosmos',            equip: '🪐' },
-  { lv: 27, emoji: '☀️', label: '태양 Sun',               equip: '🔆' },
-  { lv: 28, emoji: '🪐', label: '행성 Planet',            equip: '🛸' },
-  { lv: 29, emoji: '🌠', label: '유성 Comet',             equip: '💫' },
-  { lv: 30, emoji: '🔱', label: '신왕 God-King',          equip: '⚡' }
+  { lv: 1,  tier: 1, label: '백의 Commoner',     equip: '',    spriteFront: 'player/01-baegui-front' },
+  { lv: 5,  tier: 2, label: '나무꾼 Woodcutter', equip: '🪓',  spriteFront: 'player/02-namukkun-front' },
+  { lv: 10, tier: 3, label: '선비 Scholar',      equip: '📜',  spriteFront: 'player/03-seonbi-front' },
+  { lv: 16, tier: 4, label: '양반 Yangban',     equip: '🖌️', spriteFront: 'player/04-yangban-front' },
+  { lv: 23, tier: 5, label: '무관 Officer',      equip: '⚔️',  spriteFront: 'player/05-mugwan-front' },
+  { lv: 30, tier: 6, label: '장군 General',      equip: '🏹',  spriteFront: 'player/06-janggun-front' },
+  { lv: 40, tier: 7, label: '대왕 Great King',   equip: '👑',  spriteFront: 'player/07-daewang-front' }
 ];
 
 function practiceHeroForXp(xp) {
@@ -3269,7 +3250,7 @@ function practiceHeroForXp(xp) {
   }
   let pick = PRACTICE_HERO_SPRITES[0];
   for (const p of PRACTICE_HERO_SPRITES) if (lvl >= p.lv) pick = p;
-  return { lvl, label: pick.label, equip: pick.equip, emoji: pick.emoji };
+  return { lvl, label: pick.label, equip: pick.equip, spriteFront: pick.spriteFront };
 }
 
 function renderTrainingGround(opts) {
@@ -3280,9 +3261,14 @@ function renderTrainingGround(opts) {
   const tierEl  = document.getElementById('tgTier');
   const levelEl = document.getElementById('tgLevel');
   const equipEl = document.getElementById('tgEquip');
+  const heroImg = document.getElementById('tgHeroImg');
   if (tierEl)  tierEl.textContent  = hero.label;
   if (levelEl) levelEl.textContent = 'LV.' + hero.lvl;
   if (equipEl) equipEl.textContent = hero.equip;
+  if (heroImg && hero.spriteFront) {
+    const newSrc = `sprites/${hero.spriteFront}.png`;
+    if (heroImg.getAttribute('src') !== newSrc) heroImg.setAttribute('src', newSrc);
+  }
   if (opts && opts.bump) {
     el.classList.remove('bump');
     void el.offsetWidth;       // restart animation
