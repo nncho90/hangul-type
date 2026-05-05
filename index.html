@@ -292,13 +292,13 @@
   }
   .topic-pill {
     background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 16px;
+    border: 2px solid var(--bdhi);
+    border-radius: 3px;
     padding: 5px 12px;
-    font-size: 11px; font-weight: 600;
-    color: var(--tmd);
+    font-size: 11px; font-weight: 700;
+    color: var(--thi);
     cursor: pointer;
-    transition: all 0.12s;
+    transition: background 0.08s, border-color 0.08s;
   }
   .topic-pill:hover { border-color: var(--bdhi); color: var(--thi); }
   .topic-pill.on {
@@ -780,9 +780,10 @@
     align-items: center;
     gap: 6px;
     padding: 14px 10px 10px;
-    background: linear-gradient(180deg, #fef3c7 0%, #fde68a 50%, #d4a373 100%);
-    border: 1px solid var(--bd);
-    border-radius: 14px;
+    background: linear-gradient(180deg, #fde68a 0%, #fde68a 65%, #d4a373 65%, #d4a373 100%);
+    border: 2px solid var(--thi);
+    border-radius: 4px;
+    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.18);
     margin-bottom: 14px;
     user-select: none;
     overflow: hidden;
