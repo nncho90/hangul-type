@@ -696,6 +696,21 @@
     font-weight: 900;
     filter: drop-shadow(0 0 10px currentColor);
   }
+  /* Pixel-art sprite projectile (장군 arrow). Rotated to point at the target;
+     the angle is set inline via --proj-angle. The arrow PNG is drawn pointing
+     right, so the angle from start→target maps directly to rotation. */
+  .projectile.pixel {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    transform: translate(-50%, -50%) rotate(var(--proj-angle, 0deg));
+    filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.4));
+  }
+  .projectile.pixel .sprite-img {
+    image-rendering: pixelated;
+    width: 100%; height: 100%;
+    display: block;
+  }
   .trail-particle {
     position: absolute;
     width: 7px; height: 7px;
@@ -743,6 +758,26 @@
     0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
     40%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+  }
+  /* Pixel-art VFX sprite overlay for spell casts. Replaces the prior CSS-only
+     glyph with a real PNG (jamo-burn / ink-splash / royal-lightning). */
+  .spell-vfx {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 82;
+    animation: spell-vfx-pop 0.5s ease-out forwards;
+    will-change: transform, opacity;
+  }
+  .spell-vfx .sprite-img {
+    image-rendering: pixelated;
+    width: 128px; height: 128px;
+    display: block;
+  }
+  @keyframes spell-vfx-pop {
+    0%   { transform: translate(-50%, -50%) scale(0.5) rotate(-6deg); opacity: 0; }
+    35%  { transform: translate(-50%, -50%) scale(1.15) rotate(0deg);  opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.45) rotate(4deg); opacity: 0; }
   }
 
   /* ── Ninja teleport + sword melee ── */
@@ -4166,51 +4201,51 @@ function combatStyle(lv) {
   return (playerForLevel(lv) && playerForLevel(lv).attackType) || 'melee';
 }
 
-// Per-tier projectile/spell visuals. Glyphs are pixel-friendly emojis;
-// future iteration can swap each to a dedicated sprite under sprites/projectiles/.
+// Per-tier projectile visuals. Tier 6 (장군) is the only ranged tier, so it
+// gets the dedicated arrow PNG. Other tiers fall back to a glyph (used only
+// if their attackType is ever flipped to ranged).
 function projectileForLevel(lv) {
   const tier = (playerForLevel(lv) && playerForLevel(lv).tier) || 1;
   switch (tier) {
-    case 6: return { glyph: '🏹', size: 32, color: '#a16207', trail: 'rgba(161,98,7,0.55)' };  // 장군 arrow
-    case 7: return { glyph: 'ㅎ', size: 38, color: '#dc2626', trail: 'rgba(220,38,38,0.6)'  }; // 대왕 ㅎ-lightning (also a spell, but acts as visual)
-    default: return { glyph: '✨', size: 24, color: '#0ea5e9', trail: 'rgba(14,165,233,0.5)' };
+    case 6: return { sprite: 'vfx/arrow', size: 56, color: '#a16207', trail: 'rgba(161,98,7,0.55)', glyph: '🏹' };
+    case 7: return { sprite: 'vfx/royal-lightning', size: 56, color: '#dc2626', trail: 'rgba(220,38,38,0.6)', glyph: 'ㅎ' };
+    default: return { sprite: null, size: 24, color: '#0ea5e9', trail: 'rgba(14,165,233,0.5)', glyph: '✨' };
   }
 }
 
-// Spell casts: a colored ring expansion + impact flash directly on the monster.
-// No projectile travels. The damage timing matches melee/ranged so combat feel
-// stays consistent across the three attack types.
+// Spell casts: a colored ring expansion + tier-specific pixel-art VFX sprite
+// pops at the monster. No projectile travels. Damage timing matches melee/ranged
+// so combat feel stays consistent across the three attack types.
 function castSpellAt(monster) {
   if (!monster || !monster.el) return;
   const r = monster.el.getBoundingClientRect();
   const sr = getStageRect();
   const cx = (r.left + r.width / 2) - sr.left;
   const cy = (r.top + r.height / 2) - sr.top;
-  // Tier-specific spell color (pulled from playerForLevel tier)
   const tier = (playerForLevel(state.level) && playerForLevel(state.level).tier) || 3;
-  const palette = {
-    3: { c1: '#3b82f6', c2: '#60a5fa', glyph: '문' },  // 선비 scroll → blue jamo burn
-    4: { c1: '#1e1b4b', c2: '#7c3aed', glyph: '墨' },  // 양반 brush → ink splash
-    7: { c1: '#dc2626', c2: '#fbbf24', glyph: 'ㅎ' },  // 대왕 → red+gold royal strike
-  }[tier] || { c1: '#3b82f6', c2: '#60a5fa', glyph: '✨' };
-  // Expanding ring
+  // Tier-specific palette + dedicated pixel-art VFX sprite. Falls back to a
+  // Korean glyph if the sprite fails to load (e.g. asset missing in dev).
+  const config = {
+    3: { c1: '#3b82f6', c2: '#60a5fa', vfx: 'vfx/jamo-burn',       glyph: '문' },  // 선비 scroll → blue jamo burst
+    4: { c1: '#1e1b4b', c2: '#7c3aed', vfx: 'vfx/ink-splash',      glyph: '墨' },  // 양반 brush → ink splatter
+    7: { c1: '#dc2626', c2: '#fbbf24', vfx: 'vfx/royal-lightning', glyph: 'ㅎ' },  // 대왕 → royal lightning
+  }[tier] || { c1: '#3b82f6', c2: '#60a5fa', vfx: 'vfx/jamo-burn', glyph: '✨' };
+  // Expanding ring (tier-tinted)
   const ring = document.createElement('div');
   ring.className = 'spell-ring';
   ring.style.left = cx + 'px';
   ring.style.top  = cy + 'px';
-  ring.style.setProperty('--spell-c1', palette.c1);
-  ring.style.setProperty('--spell-c2', palette.c2);
+  ring.style.setProperty('--spell-c1', config.c1);
+  ring.style.setProperty('--spell-c2', config.c2);
   STAGE.appendChild(ring);
-  // Impact glyph
-  const glyph = document.createElement('div');
-  glyph.className = 'spell-glyph';
-  glyph.style.left = cx + 'px';
-  glyph.style.top  = cy + 'px';
-  glyph.style.color = palette.c2;
-  glyph.style.textShadow = `0 0 18px ${palette.c1}, 0 0 6px ${palette.c2}`;
-  glyph.textContent = palette.glyph;
-  STAGE.appendChild(glyph);
-  setTimeout(() => { ring.remove(); glyph.remove(); }, 480);
+  // Pixel-art VFX sprite overlay
+  const vfx = document.createElement('div');
+  vfx.className = 'spell-vfx';
+  vfx.style.left = cx + 'px';
+  vfx.style.top  = cy + 'px';
+  vfx.innerHTML = spriteHtml(config.vfx, config.glyph, 128);
+  STAGE.appendChild(vfx);
+  setTimeout(() => { ring.remove(); vfx.remove(); }, 520);
 }
 
 function fireProjectileAt(monster) {
@@ -4219,16 +4254,28 @@ function fireProjectileAt(monster) {
   const startX = (playerRect.left + playerRect.width / 2) - sr.left;
   const startY = (playerRect.top  + playerRect.height / 4) - sr.top;
   const proj = projectileForLevel(state.level);
+  const toX = monster.x;
+  const toY = monster.y + 24;
+  // Rotate sprite-style projectiles to point at the target. The arrow PNG is
+  // drawn pointing right (+X axis); rotate by the angle from start → target.
+  const dx = toX - startX, dy = toY - startY;
+  const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
   const p = document.createElement('div');
-  p.className = 'projectile glyph';
-  p.style.fontSize = proj.size + 'px';
-  p.style.color = proj.color;
-  p.textContent = proj.glyph;
+  if (proj.sprite) {
+    p.className = 'projectile pixel';
+    p.style.width = proj.size + 'px';
+    p.style.height = proj.size + 'px';
+    p.innerHTML = spriteHtml(proj.sprite, proj.glyph, proj.size);
+    p.style.setProperty('--proj-angle', angleDeg + 'deg');
+  } else {
+    p.className = 'projectile glyph';
+    p.style.fontSize = proj.size + 'px';
+    p.style.color = proj.color;
+    p.textContent = proj.glyph;
+  }
   p.style.left = startX + 'px';
   p.style.top  = startY + 'px';
   STAGE.appendChild(p);
-  const toX = monster.x;
-  const toY = monster.y + 24;
   const start = performance.now();
   const dur = 200;
   let lastTrail = 0;
