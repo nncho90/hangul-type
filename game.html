@@ -306,21 +306,22 @@
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 100;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     padding: 14px 22px;
     background: var(--l1);
     border-top: 1px solid var(--bd);
     box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.04);
   }
-  .hud-left, .hud-right { display: flex; align-items: center; gap: 22px; }
+  .hud-left { display: flex; align-items: center; gap: 22px; }
+  .hud-right { display: flex; align-items: center; gap: 22px; justify-content: flex-end; }
   /* Command Bar center — the typing readout. Sized as a fixed slot so the
      stats and controls on either side get more presence; the typing field
      itself is narrower than before but its text scales up for legibility. */
   .hud-center {
     flex: 0 0 360px;
-    margin: 0 24px;
+    margin: 0 auto;
     height: 44px;
     display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
@@ -535,33 +536,33 @@
      Sprite art is the same 7 PNGs today; the visual progression here gives
      the existing roster a clearer "this is a stronger demon" read. */
   .monster.tier-1 .sprite {
-    font-size: var(--tier1-font, 44px);
+    font-size: var(--tier1-font, 79px);
     filter: drop-shadow(0 4px 6px rgba(15, 23, 42, 0.18));
   }
   .monster.tier-2 .sprite {
-    font-size: var(--tier2-font, 54px);
+    font-size: var(--tier2-font, 97px);
     filter: drop-shadow(0 5px 8px rgba(15, 23, 42, 0.22));
   }
   .monster.tier-3 .sprite {
-    font-size: var(--tier3-font, 62px);
+    font-size: var(--tier3-font, 112px);
     filter:
       drop-shadow(0 7px 10px rgba(15, 23, 42, 0.25))
       drop-shadow(0 0 8px rgba(245, 158, 11, 0.18));
   }
   .monster.tier-4 .sprite {
-    font-size: var(--tier4-font, 72px);
+    font-size: var(--tier4-font, 130px);
     filter:
       drop-shadow(0 9px 14px rgba(15, 23, 42, 0.30))
       drop-shadow(0 0 14px rgba(139, 92, 246, 0.32));
   }
   .monster.tier-5 .sprite {
-    font-size: var(--tier5-font, 84px);
+    font-size: var(--tier5-font, 151px);
     filter:
       drop-shadow(0 11px 18px rgba(15, 23, 42, 0.34))
       drop-shadow(0 0 22px rgba(239, 68, 68, 0.38));
   }
   .monster.boss .sprite {
-    font-size: 110px;
+    font-size: 198px;
     animation: bossbob 1.4s ease-in-out infinite;
     filter:
       drop-shadow(0 14px 24px rgba(15, 23, 42, 0.38))
@@ -1114,6 +1115,50 @@
     margin-top: 4px;
     text-decoration: none;
   }
+  .pause-controls {
+    margin-top: 8px;
+    border: 2px solid var(--thi);
+    border-radius: 3px;
+    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.35);
+    background: var(--l1);
+    padding: 14px 20px;
+    min-width: 280px;
+  }
+  .pause-controls-title {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tlo);
+    margin-bottom: 10px;
+    text-align: left;
+  }
+  .pause-controls-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    row-gap: 7px;
+    column-gap: 12px;
+    align-items: center;
+  }
+  .pause-key {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--thi);
+    background: var(--l3);
+    border: 2px solid var(--thi);
+    border-radius: 3px;
+    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.25);
+    padding: 2px 7px;
+    white-space: nowrap;
+    justify-self: start;
+  }
+  .pause-key-desc {
+    font-size: 12px;
+    color: var(--tmd);
+    text-align: left;
+  }
 
   /* On-screen tappable keyboard — mobile only.
      Battle has no on-screen keyboard above the breakpoint; the desktop layout
@@ -1147,16 +1192,16 @@
     }
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
-    .player { font-size: 56px; bottom: 4%; }
-    .player .player-main { font-size: 56px; }
-    .player .player-equip { font-size: 24px; }
-    .monster .sprite { font-size: 44px; }
-    .monster.tier-1 .sprite { font-size: 36px; }
-    .monster.tier-2 .sprite { font-size: 44px; }
-    .monster.tier-3 .sprite { font-size: 50px; }
-    .monster.tier-4 .sprite { font-size: 56px; }
-    .monster.tier-5 .sprite { font-size: 64px; }
-    .monster.boss .sprite { font-size: 80px; }
+    .player { font-size: 101px; bottom: 4%; }
+    .player .player-main { font-size: 101px; }
+    .player .player-equip { font-size: 43px; }
+    .monster .sprite { font-size: 79px; }
+    .monster.tier-1 .sprite { font-size: 65px; }
+    .monster.tier-2 .sprite { font-size: 79px; }
+    .monster.tier-3 .sprite { font-size: 90px; }
+    .monster.tier-4 .sprite { font-size: 101px; }
+    .monster.tier-5 .sprite { font-size: 115px; }
+    .monster.boss .sprite { font-size: 144px; }
     .monster .word {
       padding: 6px 10px;
       max-width: calc(100vw - 32px);
@@ -2244,6 +2289,16 @@
   <div class="pause-title">PAUSED</div>
   <div class="pause-hint">press Esc to resume</div>
   <a class="menu-btn pause-back-btn" href="index.html">← Back to practice</a>
+  <div class="pause-controls">
+    <div class="pause-controls-title">조작법 / Controls</div>
+    <div class="pause-controls-list">
+      <span class="pause-key">TYPE</span><span class="pause-key-desc">type the Korean word above a monster to attack</span>
+      <span class="pause-key">TAB</span><span class="pause-key-desc">peek at the next word / fast-fall the current monster</span>
+      <span class="pause-key">ESC</span><span class="pause-key-desc">release current lock, or pause / resume</span>
+      <span class="pause-key">BACKSPACE</span><span class="pause-key-desc">delete last character if mistyped, release lock</span>
+      <span class="pause-key">한글</span><span class="pause-key-desc">type 한글 to charge and unleash 필살기 (special move)</span>
+    </div>
+  </div>
 </div>
 
 <div id="storyDialog" class="story-dialog" style="display:none;">
@@ -2846,7 +2901,7 @@ function renderPlayerSprite(lv) {
   // Battle stage uses the back-view sprite (Pokemon-style — player faces up
   // toward the descending enemies). The new tier sprites have the weapon baked
   // in, so no separate equip emoji is needed.
-  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 88)}</span>`;
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 158)}</span>`;
 }
 
 // Briefly swap the player sprite to its strike pose for ~220ms, then back to
@@ -2921,12 +2976,12 @@ function pickWordForLevel(lv, blockedFirstJamos) {
 // === ADMIN OVERRIDES (synced with admin.html) ===
 const ADMIN_DEFAULTS = {
   tier: {
-    "1":    { speedMul: 0.80, motion: "straight", fontPx: 44, animS: 1.6 },
-    "2":    { speedMul: 0.95, motion: "straight", fontPx: 54, animS: 1.8 },
-    "3":    { speedMul: 0.95, motion: "zigzag",   fontPx: 62, animS: 2.0 },
-    "4":    { speedMul: 0.90, motion: "dive",     fontPx: 72, animS: 2.2 },
-    "5":    { speedMul: 1.05, motion: "tracker",  fontPx: 84, animS: 1.5 },
-    "boss": { speedMul: 0.55, motion: "teleport", fontPx: 96, animS: 2.5 }
+    "1":    { speedMul: 0.80, motion: "straight", fontPx: 79,  animS: 1.6 },
+    "2":    { speedMul: 0.95, motion: "straight", fontPx: 97,  animS: 1.8 },
+    "3":    { speedMul: 0.95, motion: "zigzag",   fontPx: 112, animS: 2.0 },
+    "4":    { speedMul: 0.90, motion: "dive",     fontPx: 130, animS: 2.2 },
+    "5":    { speedMul: 1.05, motion: "tracker",  fontPx: 151, animS: 1.5 },
+    "boss": { speedMul: 0.55, motion: "teleport", fontPx: 173, animS: 2.5 }
   },
   levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19 },
   pace: {
@@ -3496,7 +3551,14 @@ function getHighScore() { try { return Number(localStorage.getItem(HIGH_KEY)) ||
 function setHighScore(n) { try { localStorage.setItem(HIGH_KEY, String(n)); } catch (e) {} }
 
 // Gentler curve at low levels: 60, 180, 360, 600, 900, 1260, 1680...
-function xpThresholdForLevel(lv) { return 30 * lv * (lv + 1); }
+// Levels 12+13 get a 30% discount — they sit at the deep end of tier 3
+// (3-syllable words) and the spawn cap jumps to endgame, so raw kill count
+// was disproportionately high vs. neighbouring levels.
+function xpThresholdForLevel(lv) {
+  const base = 30 * lv * (lv + 1);
+  if (lv === 12 || lv === 13) return Math.round(base * 0.70);
+  return base;
+}
 function xpForKill(tier) {
   const t = tier === 'boss' ? 200 : Number(tier) * 12 + 6;
   return Math.round(t * (1 + Math.log2(state.level + 1) * 0.2));
@@ -3665,12 +3727,12 @@ function buildMonsterEl(m) {
   const sprite = document.createElement('span');
   sprite.className = 'sprite';
   // Per-tier image size (matches existing CSS font-size scale)
-  const sizePx = m.tier === 'boss' ? 130
-    : m.tier === 5 ? 100
-    : m.tier === 4 ? 86
-    : m.tier === 3 ? 76
-    : m.tier === 2 ? 66
-    : 56;
+  const sizePx = m.tier === 'boss' ? 234
+    : m.tier === 5 ? 180
+    : m.tier === 4 ? 155
+    : m.tier === 3 ? 137
+    : m.tier === 2 ? 119
+    : 101;
   if (m.spriteFile) {
     // Stack two sprite images: idle pose underneath, step pose on top.
     // CSS animation alternates the step image's opacity, producing a 2-frame
@@ -5154,7 +5216,7 @@ function loop(t) {
     // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
     const fastMul = _fastFallActive ? 4.0 : 1.0;
     state.spawnTimer += dt;
-    const cap = state.level >= 13 ? ADMIN.spawnCap.endgame : state.level >= 7 ? ADMIN.spawnCap.late : state.level >= 4 ? ADMIN.spawnCap.mid : ADMIN.spawnCap.early;
+    const cap = state.level >= 15 ? ADMIN.spawnCap.endgame : state.level >= 7 ? ADMIN.spawnCap.late : state.level >= 4 ? ADMIN.spawnCap.mid : ADMIN.spawnCap.early;
     if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap) {
       state.spawnTimer = 0;
       spawnMonster();
