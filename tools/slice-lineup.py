@@ -17,10 +17,19 @@ Each character is then placed into a 256x256 transparent canvas, scaled to fit
 ~80% of vertical with a small ground shadow margin.
 """
 
+import io
 import sys
 from pathlib import Path
 from PIL import Image
 import numpy as np
+
+# rembg gives ML-based foreground segmentation (birefnet model).
+# Falls back to chroma-key flood-fill if rembg unavailable.
+try:
+    from rembg import remove as _rembg_remove, new_session as _rembg_new_session
+    _REMBG_AVAILABLE = True
+except ImportError:
+    _REMBG_AVAILABLE = False
 
 NAMES = ['baegui', 'namukkun', 'seonbi', 'yangban', 'mugwan', 'janggun', 'daewang']
 ENEMY_NAMES = ['dokkaebi-mini', 'gumiho-mini', 'cheonyeo-gwisin', 'dueokshini',
@@ -213,10 +222,22 @@ def main():
         bg_tolerance = int(sys.argv[sys.argv.index('--bg-tolerance') + 1])
     bg_threshold = 255 - bg_tolerance
 
-    img = Image.open(input_path).convert('RGB')
-    arr = np.array(img)
+    use_rembg = '--no-rembg' not in sys.argv and _REMBG_AVAILABLE
+    img_rgb = Image.open(input_path).convert('RGB')
+    arr = np.array(img_rgb)
     H, W = arr.shape[:2]
-    print(f"Loaded {input_path.name}: {W}×{H}, bg_threshold={bg_threshold}")
+    print(f"Loaded {input_path.name}: {W}×{H}, bg_threshold={bg_threshold}, rembg={use_rembg}")
+
+    # Run rembg ONCE on the whole lineup image. Birefnet gives clean foreground
+    # cutouts with proper alpha gradients on edges — far cleaner than the
+    # chroma-key + flood-fill heuristics that left halos on dark backgrounds.
+    cleaned_rgba = None
+    if use_rembg:
+        with open(input_path, 'rb') as f:
+            session = _rembg_new_session('birefnet-general')
+            out_bytes = _rembg_remove(f.read(), session=session)
+        cleaned_rgba = Image.open(io.BytesIO(out_bytes)).convert('RGBA')
+        print(f"  rembg/birefnet processed → {cleaned_rgba.size}")
 
     runs = find_character_columns(arr, bg_threshold)
     print(f"Detected {len(runs)} characters at columns: {runs}")
@@ -257,7 +278,11 @@ def main():
         y0 = max(0, y0 - margin)
         y1 = min(H, y1 + margin)
 
-        sprite_rgba = crop_with_transparency(img, (x0, y0, x1, y1), bg_threshold)
+        if cleaned_rgba is not None:
+            # rembg already produced clean alpha; just crop the box.
+            sprite_rgba = cleaned_rgba.crop((x0, y0, x1, y1))
+        else:
+            sprite_rgba = crop_with_transparency(img_rgb, (x0, y0, x1, y1), bg_threshold)
         canvas = fit_to_canvas(sprite_rgba)
 
         out_name = f"{i+1:02d}-{name}-{suffix}.png" if suffix != 'enemy' else f"{i+1:02d}-{name}.png"

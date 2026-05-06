@@ -3,3 +3,6 @@
 node_modules/
 *.local
 .vercel
+tools/.venv/
+sprite-concepts/lineups/_wait_*.png
+tmp/

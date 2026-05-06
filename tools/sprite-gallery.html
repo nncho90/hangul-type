@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Type Hangeul · Sprite Gallery</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #334155;
+    --bd: #475569;
+    --thi: #f1f5f9;
+    --tmd: #94a3b8;
+    --tlo: #64748b;
+    --accent: #3b82f6;
+    --good: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--thi);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    padding: 32px;
+    line-height: 1.4;
+  }
+  header { margin-bottom: 32px; max-width: 1400px; }
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .meta { color: var(--tmd); font-size: 14px; }
+  .toc {
+    margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .toc a {
+    padding: 6px 12px;
+    background: var(--panel);
+    border: 1px solid var(--bd);
+    border-radius: 4px;
+    color: var(--tmd);
+    font-size: 12px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .toc a:hover { background: var(--panel-2); color: var(--thi); }
+
+  section { max-width: 1400px; margin: 0 auto 48px; }
+  h2 {
+    font-size: 20px; font-weight: 700; margin-bottom: 4px;
+    border-left: 3px solid var(--accent); padding-left: 12px;
+  }
+  .section-meta { color: var(--tlo); font-size: 13px; margin-left: 15px; margin-bottom: 16px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .grid.wide { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card .img-wrap {
+    background: repeating-conic-gradient(#222 0% 25%, #2a2a2a 0% 50%) 50% / 16px 16px;
+    border-radius: 4px;
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .card.bg .img-wrap { aspect-ratio: 16 / 5; }
+  .card .img-wrap img {
+    image-rendering: pixelated;
+    max-width: 100%; max-height: 100%;
+    display: block;
+  }
+  .card .label {
+    font-size: 13px; font-weight: 700;
+    color: var(--thi);
+  }
+  .card .path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--tmd);
+    word-break: break-all;
+  }
+  .card .tier {
+    font-size: 10px; font-weight: 800;
+    padding: 2px 6px;
+    background: var(--panel-2);
+    border-radius: 3px;
+    color: var(--accent);
+    align-self: flex-start;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .card .pose {
+    font-size: 10px; color: var(--good); font-weight: 600;
+  }
+
+  /* Light bg variant for inspecting alpha quality */
+  body.light-bg { background: #fff; color: #0f172a; }
+  body.light-bg .card { background: #f8fafc; border-color: #e2e8f0; }
+  body.light-bg .card .img-wrap { background: repeating-conic-gradient(#e2e8f0 0% 25%, #f1f5f9 0% 50%) 50% / 16px 16px; }
+  body.light-bg .card .label { color: #0f172a; }
+  body.light-bg .card .path { color: #64748b; }
+  body.light-bg .card .tier { background: #e2e8f0; color: #2563eb; }
+  body.light-bg h1 { background: linear-gradient(135deg, #0f172a, #475569); -webkit-background-clip: text; }
+  body.light-bg .meta { color: #475569; }
+  body.light-bg .toc a { background: #f8fafc; border-color: #e2e8f0; color: #475569; }
+
+  .bg-toggle {
+    position: fixed; top: 24px; right: 24px;
+    padding: 8px 14px; background: var(--panel); border: 1px solid var(--bd);
+    border-radius: 4px; color: var(--thi); font-weight: 700; font-size: 12px;
+    cursor: pointer;
+  }
+
+  footer {
+    max-width: 1400px; margin: 48px auto 0;
+    color: var(--tlo); font-size: 12px; padding-top: 24px;
+    border-top: 1px solid var(--bd);
+  }
+</style>
+</head>
+<body>
+<button class="bg-toggle" onclick="document.body.classList.toggle('light-bg')">toggle bg</button>
+<header>
+  <h1>Type Hangeul · Sprite Gallery</h1>
+  <div class="meta">All sprites currently in production at typehangeul.com — 46 PNGs across 4 categories. Toggle background to inspect alpha quality on dark vs light.</div>
+  <nav class="toc">
+    <a href="#player-back">Player back-view (7)</a>
+    <a href="#player-strike">Player strike pose (7)</a>
+    <a href="#player-front">Player front-view (7)</a>
+    <a href="#enemies-idle">Enemies idle (8)</a>
+    <a href="#enemies-step">Enemies step pose (8)</a>
+    <a href="#backgrounds">Backgrounds (7)</a>
+    <a href="#vfx">VFX (4)</a>
+  </nav>
+</header>
+
+<section id="player-back">
+  <h2>Player back-view (combat sprite)</h2>
+  <div class="section-meta">Used in battle stage — Pokemon convention, player faces away up the screen toward descending enemies. 7-tier Korean Joseon-era hierarchy.</div>
+  <div class="grid">
+    <!-- PLAYER_BACK_GRID -->
+  </div>
+</section>
+
+<section id="player-strike">
+  <h2>Player strike pose (combat attack frame)</h2>
+  <div class="section-meta">Replaces the back-view sprite for ~220ms on every successful keystroke. Tier 1-2-5 swing weapon, 6 draws bow, 3-4-7 cast spell.</div>
+  <div class="grid">
+    <!-- PLAYER_STRIKE_GRID -->
+  </div>
+</section>
+
+<section id="player-front">
+  <h2>Player front-view (UI + practice mode)</h2>
+  <div class="section-meta">Shown in training-ground panel on practice page, future character-select, dialog modals.</div>
+  <div class="grid">
+    <!-- PLAYER_FRONT_GRID -->
+  </div>
+</section>
+
+<section id="enemies-idle">
+  <h2>Enemies — idle pose</h2>
+  <div class="section-meta">Korean folk-mythology demons. Front-facing with Pokemon-style ~10-15° high angle. 5 monster tiers + 2 boss variants + final boss.</div>
+  <div class="grid">
+    <!-- ENEMIES_IDLE_GRID -->
+  </div>
+</section>
+
+<section id="enemies-step">
+  <h2>Enemies — step pose (walk-cycle frame B)</h2>
+  <div class="section-meta">Alternates with idle every 350ms via CSS opacity-flicker. Currently a copy of idle (placeholder) — proper distinct step poses are a follow-up gen.</div>
+  <div class="grid">
+    <!-- ENEMIES_STEP_GRID -->
+  </div>
+</section>
+
+<section id="backgrounds">
+  <h2>Tier-band backgrounds</h2>
+  <div class="section-meta">One per tier, swapping at level-up. Pokemon-style ~10-15° high-angle perspective. Upper 60% kept empty so falling monsters read clearly.</div>
+  <div class="grid wide">
+    <!-- BACKGROUNDS_GRID -->
+  </div>
+</section>
+
+<section id="vfx">
+  <h2>VFX sprites</h2>
+  <div class="section-meta">Combat impact effects. Arrow flies in-flight (rotated to target angle); jamo-burn / ink-splash / royal-lightning pop on the monster for tiers 3 / 4 / 7 spell casts.</div>
+  <div class="grid">
+    <!-- VFX_GRID -->
+  </div>
+</section>
+
+<footer>
+  Generated from sprites/ tree. Live deploy: <a href="https://typehangeul.com" style="color: var(--accent);">typehangeul.com</a> · Repo: <a href="https://github.com/nncho90/hangul-type" style="color: var(--accent);">nncho90/hangul-type</a>
+</footer>
+
+<script>
+  // Auto-populate the grids from the manifest below so I don't repeat HTML.
+  const manifest = {
+    'PLAYER_BACK_GRID': [
+      ['Tier 1 백의 Commoner', 'sprites/player/01-baegui-back.png'],
+      ['Tier 2 나무꾼 Woodcutter', 'sprites/player/02-namukkun-back.png'],
+      ['Tier 3 선비 Scholar', 'sprites/player/03-seonbi-back.png'],
+      ['Tier 4 양반 Yangban', 'sprites/player/04-yangban-back.png'],
+      ['Tier 5 무관 Officer', 'sprites/player/05-mugwan-back.png'],
+      ['Tier 6 장군 General', 'sprites/player/06-janggun-back.png'],
+      ['Tier 7 대왕 Great King', 'sprites/player/07-daewang-back.png'],
+    ],
+    'PLAYER_STRIKE_GRID': [
+      ['Tier 1 백의 strike (fist)', 'sprites/player/01-baegui-back-strike.png'],
+      ['Tier 2 나무꾼 strike (axe)', 'sprites/player/02-namukkun-back-strike.png'],
+      ['Tier 3 선비 strike (scroll)', 'sprites/player/03-seonbi-back-strike.png'],
+      ['Tier 4 양반 strike (brush)', 'sprites/player/04-yangban-back-strike.png'],
+      ['Tier 5 무관 strike (sword)', 'sprites/player/05-mugwan-back-strike.png'],
+      ['Tier 6 장군 strike (bow)', 'sprites/player/06-janggun-back-strike.png'],
+      ['Tier 7 대왕 strike (scepter)', 'sprites/player/07-daewang-back-strike.png'],
+    ],
+    'PLAYER_FRONT_GRID': [
+      ['Tier 1 백의 Commoner', 'sprites/player/01-baegui-front.png'],
+      ['Tier 2 나무꾼 Woodcutter', 'sprites/player/02-namukkun-front.png'],
+      ['Tier 3 선비 Scholar', 'sprites/player/03-seonbi-front.png'],
+      ['Tier 4 양반 Yangban', 'sprites/player/04-yangban-front.png'],
+      ['Tier 5 무관 Officer', 'sprites/player/05-mugwan-front.png'],
+      ['Tier 6 장군 General', 'sprites/player/06-janggun-front.png'],
+      ['Tier 7 대왕 Great King', 'sprites/player/07-daewang-front.png'],
+    ],
+    'ENEMIES_IDLE_GRID': [
+      ['1 Dokkaebi mini', 'sprites/enemies/01-dokkaebi-mini.png'],
+      ['2 Gumiho fox', 'sprites/enemies/02-gumiho-mini.png'],
+      ['3 Cheonyeo gwisin (ghost)', 'sprites/enemies/03-cheonyeo-gwisin.png'],
+      ['4 Dueokshini (demon)', 'sprites/enemies/04-dueokshini.png'],
+      ['5 Dokkaebi elder', 'sprites/enemies/05-dokkaebi-elder.png'],
+      ['6 Jeoseung saja (reaper)', 'sprites/enemies/06-jeoseung-saja.png'],
+      ['7 Mudang (shaman)', 'sprites/enemies/07-mudang.png'],
+      ['8 Hangeulwang (boss)', 'sprites/enemies/08-hangeulwang.png'],
+    ],
+    'ENEMIES_STEP_GRID': [
+      ['1 Dokkaebi mini step', 'sprites/enemies/01-dokkaebi-mini-step.png'],
+      ['2 Gumiho fox step', 'sprites/enemies/02-gumiho-mini-step.png'],
+      ['3 Cheonyeo gwisin step', 'sprites/enemies/03-cheonyeo-gwisin-step.png'],
+      ['4 Dueokshini step', 'sprites/enemies/04-dueokshini-step.png'],
+      ['5 Dokkaebi elder step', 'sprites/enemies/05-dokkaebi-elder-step.png'],
+      ['6 Jeoseung saja step', 'sprites/enemies/06-jeoseung-saja-step.png'],
+      ['7 Mudang step', 'sprites/enemies/07-mudang-step.png'],
+      ['8 Hangeulwang step', 'sprites/enemies/08-hangeulwang-step.png'],
+    ],
+    'BACKGROUNDS_GRID': [
+      ['Tier 1 시골 마을 Village', 'sprites/backgrounds/01-village.png'],
+      ['Tier 2 산속 Forest', 'sprites/backgrounds/02-forest.png'],
+      ['Tier 3 서당 Study', 'sprites/backgrounds/03-study.png'],
+      ['Tier 4 양반가 Courtyard', 'sprites/backgrounds/04-courtyard.png'],
+      ['Tier 5 군영 Camp', 'sprites/backgrounds/05-camp.png'],
+      ['Tier 6 전장 Battlefield', 'sprites/backgrounds/06-battlefield.png'],
+      ['Tier 7 궁궐 Palace', 'sprites/backgrounds/07-palace.png'],
+    ],
+    'VFX_GRID': [
+      ['Arrow (장군 ranged)', 'sprites/vfx/arrow.png'],
+      ['Jamo-burn (선비 spell)', 'sprites/vfx/jamo-burn.png'],
+      ['Ink-splash (양반 spell)', 'sprites/vfx/ink-splash.png'],
+      ['Royal lightning (대왕 spell)', 'sprites/vfx/royal-lightning.png'],
+    ],
+  };
+  for (const [marker, items] of Object.entries(manifest)) {
+    const target = document.evaluate(`//div[@class='grid' or @class='grid wide'][following::*[contains(text(), '${marker}')] or comment()[contains(., '${marker}')]]`, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    // Simpler: find the comment marker
+    const allComments = document.evaluate('//comment()', document, null, XPathResult.ANY_TYPE, null);
+    let node;
+    while (node = allComments.iterateNext()) {
+      if (node.nodeValue.trim() === marker) {
+        const grid = node.parentElement;
+        for (const [label, path] of items) {
+          const isBg = path.includes('/backgrounds/');
+          const card = document.createElement('div');
+          card.className = 'card' + (isBg ? ' bg' : '');
+          card.innerHTML = `
+            <div class="img-wrap"><img src="${path}" alt="${label}" loading="lazy"></div>
+            <div class="label">${label}</div>
+            <div class="path">${path}</div>
+          `;
+          grid.appendChild(card);
+        }
+        break;
+      }
+    }
+  }
+</script>
+</body>
+</html>
