@@ -916,14 +916,10 @@
     margin-bottom: 12px; font-size: 12px; color: var(--tmd);
   }
 
-  /* Real-keyboard QWERTY stagger: row 2 starts 0.25 key right of row 1,
-     row 3 starts 0.75 key right of row 1. flex-start (not center) preserves
-     the stagger; the row is wrapped in a centering container so the whole
-     keyboard still sits in the middle of the card. */
+  /* Real-keyboard QWERTY stagger. The visible utility keys keep the practice
+     guide proportional to a physical keyboard while letter columns stay fixed. */
   .kb-rows, #kb { display: flex; flex-direction: column; align-items: flex-start; width: fit-content; }
   .kb-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
-  .kb-row.r2 { padding-left: 11px; }
-  .kb-row.r3 { padding-left: 33px; }
 
   .key {
     flex: 0 0 44px;
@@ -993,18 +989,29 @@
      padding-left aligns left hand with the A key (11px row-2 offset).
      fbar-sep width positions right-hand left edge under the J key. */
   .finger-bar {
-    display: flex; align-items: flex-end; justify-content: center;
+    display: flex; align-items: flex-end; justify-content: flex-start;
     margin-top: 14px;
+    padding-left: 180px;
+    box-sizing: border-box;
   }
   .fbar-hand {
     display: flex; align-items: flex-end; gap: 4px;
     background: var(--l3); border-radius: 10px; padding: 8px 10px 6px;
   }
-  .fbar-sep { width: 25px; flex-shrink: 0; }
+  .fbar-sep { width: 115px; flex-shrink: 0; }
 
   /* Shift / Enter special keys */
-  .key.kb-shift { flex: 0 0 68px; min-width: 68px; max-width: 68px; font-size: 9px; color: var(--tlo); }
-  .key.kb-enter { flex: 0 0 64px; min-width: 64px; max-width: 64px; font-size: 9px; color: var(--tlo); }
+  .key.kb-label .jamo {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tlo);
+  }
+  .key.kb-tab { flex: 0 0 58px; min-width: 58px; max-width: 58px; }
+  .key.kb-caps { flex: 0 0 74px; min-width: 74px; max-width: 74px; }
+  .key.kb-shift { flex: 0 0 80px; min-width: 80px; max-width: 80px; }
+  .key.kb-enter { flex: 0 0 72px; min-width: 72px; max-width: 72px; }
+  .key.kb-backslash { flex: 0 0 50px; min-width: 50px; max-width: 50px; }
   .fbar-f {
     width: 13px; border-radius: 7px 7px 4px 4px;
     background: var(--bdhi);
@@ -1033,8 +1040,13 @@
       margin-bottom: 3px;
       justify-content: center;
     }
-    .kb-row.r2 { padding-left: clamp(8px, 4vw, 16px); }
-    .kb-row.r3 { padding-left: clamp(18px, 9vw, 34px); }
+    .key.kb-edge-left,
+    .key.kb-edge-right {
+      display: none;
+    }
+    .finger-bar {
+      display: none;
+    }
     .key {
       flex: 0 1 32px;
       width: auto;
@@ -2949,9 +2961,24 @@ function recordKeystroke(expectedJamo, actualJamo) {
 // ============================================================
 
 const KB_LAYOUT = [
-  ['q','w','e','r','t','y','u','i','o','p','[',']'],
-  ['a','s','d','f','g','h','j','k','l',';',"'"],
-  ['z','x','c','v','b','n','m']
+  [
+    { label: 'Tab', key: 'tab', className: 'kb-tab kb-edge-left' },
+    'q','w','e','r','t','y','u','i','o','p','[',']',
+    { label: '\\', key: '\\', className: 'kb-backslash kb-edge-right' }
+  ],
+  [
+    { label: 'Caps Lock', key: 'capslock', className: 'kb-caps kb-edge-left' },
+    'a','s','d','f','g','h','j','k','l',';',"'",
+    { label: 'Enter ↵', key: 'enter', className: 'kb-enter kb-edge-right' }
+  ],
+  [
+    { label: 'Shift ⇧', key: 'lshift', className: 'kb-shift kb-edge-left f-pinky' },
+    'z','x','c','v','b','n','m',
+    { label: ',', key: ',', className: 'kb-edge-right f-middle' },
+    { label: '.', key: '.', className: 'kb-edge-right f-ring' },
+    { label: '/', key: '/', className: 'kb-edge-right f-pinky' },
+    { label: 'Shift ⇧', key: 'rshift', className: 'kb-shift kb-edge-right f-pinky' }
+  ]
 ];
 
 function buildKeyboard() {
@@ -2960,9 +2987,9 @@ function buildKeyboard() {
 
 function makeSpecialKey(label, dataKey, extraClass) {
   const key = document.createElement('div');
-  key.className = 'key ' + extraClass;
+  key.className = 'key kb-label ' + extraClass;
   key.dataset.key = dataKey;
-  key.innerHTML = `<div class="jamo" style="font-family:'Inter',system-ui;font-size:9px;color:var(--tlo)">${label}</div>`;
+  key.innerHTML = `<div class="jamo">${label}</div>`;
   return key;
 }
 
@@ -2973,7 +3000,12 @@ function buildKeyboardKeys(mode) {
     const rowEl = document.createElement('div');
     rowEl.className = 'kb-row r' + (idx + 1);
 
-    row.forEach(k => {
+    row.forEach(item => {
+      if (typeof item !== 'string') {
+        rowEl.appendChild(makeSpecialKey(item.label, item.key, item.className || ''));
+        return;
+      }
+      const k = item;
       const key = document.createElement('div');
       const finger = KEY_TO_FINGER[k];
       const fingerType = finger ? finger.replace(/^[lr]-/, '') : '';
@@ -2995,10 +3027,6 @@ function buildKeyboardKeys(mode) {
       key.innerHTML = html;
       rowEl.appendChild(key);
     });
-
-    // Right Shift after M (row 3), Enter after L (row 2)
-    if (idx === 2) rowEl.appendChild(makeSpecialKey('Shift ⇧', 'rshift', 'kb-shift f-pinky'));
-    if (idx === 1) rowEl.appendChild(makeSpecialKey('Enter ↵', 'enter', 'kb-enter'));
 
     kb.appendChild(rowEl);
   });
