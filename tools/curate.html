@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voice Curation</title>
+<style>
+  :root { --bg:#f0f4f8; --l1:#fff; --bd:#e2e8f0; --thi:#0f172a; --tmd:#475569; --green:#10b981; --red:#ef4444; --blue:#2563eb; }
+  * { box-sizing: border-box }
+  body { font: 14px/1.5 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--thi); margin: 0; padding: 32px; }
+  h1 { font-size: 22px; margin: 0 0 4px }
+  .sub { color: var(--tmd); margin: 0 0 16px }
+  .stats { color: var(--tmd); font-size: 12px; margin-bottom: 16px; font: 12px 'JetBrains Mono', monospace; }
+  .row { background: var(--l1); border: 1px solid var(--bd); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; max-width: 720px; transition: opacity .35s, transform .35s; }
+  .row.fading { opacity: 0; transform: translateX(40px); }
+  .ko { font-size: 22px; font-weight: 600; min-width: 140px }
+  audio { height: 32px; flex: 0 0 260px }
+  .btn { padding: 8px 14px; border: 1px solid var(--bd); background: var(--l1); border-radius: 8px; font: 600 13px 'Inter', system-ui; cursor: pointer; transition: .15s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.approve { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn.redo { background: var(--l1); color: var(--tmd); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  .empty { color: var(--tmd); padding: 24px; text-align: center; font-style: italic; max-width: 720px; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--thi); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .actions { background: var(--l1); border: 1px solid var(--bd); border-radius: 12px; padding: 12px 16px; max-width: 720px; margin-top: 16px; }
+  .actions a { color: var(--blue); text-decoration: none; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>🎙️ Voice curation</h1>
+  <p class="sub">Approve locks the word in. Redo regenerates with a new seed (~5–10s).</p>
+  <div class="stats" id="stats">Loading...</div>
+  <div id="list"></div>
+  <div class="actions">
+    <a href="/game.html" target="_blank">▶ Open game</a>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+const list  = document.getElementById('list');
+const stats = document.getElementById('stats');
+const toast = document.getElementById('toast');
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1500);
+}
+
+function setStats(d) {
+  stats.textContent = `${d.pending.length} pending · ${d.approved_count} approved · ${d.total} total`;
+}
+
+async function load() {
+  const r = await fetch('/api/pending');
+  const data = await r.json();
+  setStats(data);
+  list.innerHTML = '';
+  if (data.pending.length === 0) {
+    list.innerHTML = '<div class="empty">All caught up. 🎉</div>';
+    return;
+  }
+  for (const item of data.pending) list.appendChild(buildRow(item.ko, item.url));
+}
+
+function buildRow(ko, url) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `
+    <div class="ko">${ko}</div>
+    <audio controls src="/${url}?t=${Date.now()}"></audio>
+    <button class="btn approve">Approve</button>
+    <button class="btn redo">Redo</button>`;
+  const audio = row.querySelector('audio');
+  const approveBtn = row.querySelector('.approve');
+  const redoBtn = row.querySelector('.redo');
+
+  approveBtn.onclick = async () => {
+    approveBtn.disabled = true; redoBtn.disabled = true;
+    await fetch('/api/approve', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ko})});
+    row.classList.add('fading');
+    setTimeout(async () => {
+      row.remove();
+      const r = await fetch('/api/pending');
+      setStats(await r.json());
+    }, 350);
+  };
+
+  redoBtn.onclick = async () => {
+    approveBtn.disabled = true; redoBtn.disabled = true;
+    redoBtn.textContent = 'Redoing…';
+    try {
+      const r = await fetch('/api/redo', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ko})});
+      const data = await r.json();
+      audio.src = '/' + data.url + '?t=' + data.ts;
+      audio.load();
+      audio.play().catch(()=>{});
+      showToast(`Re-rendered ${ko}`);
+    } catch (e) {
+      showToast(`Error: ${e.message}`);
+    } finally {
+      redoBtn.textContent = 'Redo';
+      approveBtn.disabled = false; redoBtn.disabled = false;
+    }
+  };
+  return row;
+}
+
+load();
+</script>
+</body>
+</html>

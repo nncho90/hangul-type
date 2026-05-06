@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chatterbox Smoke Test — Nelson's Voice</title>
+<style>
+  :root { --bg:#f0f4f8; --l1:#fff; --bd:#e2e8f0; --thi:#0f172a; --tmd:#475569; --blue:#2563eb; --green:#10b981; --purple:#8b5cf6; --orange:#f97316; }
+  * { box-sizing: border-box }
+  body { font: 14px/1.5 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--thi); margin: 0; padding: 32px; }
+  h1 { font-size: 22px; margin: 0 0 4px }
+  .sub { color: var(--tmd); margin: 0 0 24px }
+  .ref { background: var(--l1); border:1px solid var(--bd); border-radius: 14px; padding: 16px; margin-bottom: 24px; max-width: 1320px; }
+  .ref h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--tmd); margin: 0 0 8px; }
+  table { background: var(--l1); border: 1px solid var(--bd); border-radius: 12px; padding: 16px; max-width: 1320px; width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--tmd); padding: 0 12px 8px; }
+  th.v2 { color: var(--blue); }
+  th.v3 { color: var(--green); }
+  th.def { color: var(--orange); }
+  td { padding: 6px 12px; vertical-align: middle; }
+  .ko { font-size: 22px; font-weight: 600; min-width: 120px; }
+  audio { height: 32px; width: 240px; }
+  .legend { color: var(--tmd); font-size: 12px; margin-top: 16px; max-width: 1320px; }
+  .legend code { background: var(--bd); padding: 1px 6px; border-radius: 4px; font: 11px 'JetBrains Mono', monospace; }
+  .legend .v2 { color: var(--blue); }
+  .legend .v3 { color: var(--green); }
+  .legend .def { color: var(--orange); }
+</style>
+</head>
+<body>
+  <h1>🎙️ Chatterbox smoke test — A/B/C/D</h1>
+  <p class="sub">v1 was glitchy. v2 tamed params. v3 uses the carrier-phrase trick. Default uses Chatterbox's stock Korean voice instead of yours.</p>
+
+  <div class="ref">
+    <h2>Your reference (12.5s)</h2>
+    <audio controls src="../tools/nelson_ref.wav"></audio>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Word</th>
+        <th>v1 (original)</th>
+        <th class="v2">v2 (tamed)</th>
+        <th class="v3">v3 (carrier+trim)</th>
+        <th class="def">Default voice</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="ko">안녕하세요</td><td><audio controls src="../audio/preview/annyeonghaseyo.wav"></audio></td><td><audio controls src="../audio/preview/v2/annyeonghaseyo.wav"></audio></td><td><audio controls src="../audio/preview/v3/annyeonghaseyo.wav"></audio></td><td><audio controls src="../audio/preview/default/annyeonghaseyo.wav"></audio></td></tr>
+      <tr><td class="ko">사과</td><td><audio controls src="../audio/preview/sagwa.wav"></audio></td><td><audio controls src="../audio/preview/v2/sagwa.wav"></audio></td><td><audio controls src="../audio/preview/v3/sagwa.wav"></audio></td><td><audio controls src="../audio/preview/default/sagwa.wav"></audio></td></tr>
+      <tr><td class="ko">학생</td><td><audio controls src="../audio/preview/haksaeng.wav"></audio></td><td><audio controls src="../audio/preview/v2/haksaeng.wav"></audio></td><td><audio controls src="../audio/preview/v3/haksaeng.wav"></audio></td><td><audio controls src="../audio/preview/default/haksaeng.wav"></audio></td></tr>
+      <tr><td class="ko">친구</td><td><audio controls src="../audio/preview/chingu.wav"></audio></td><td><audio controls src="../audio/preview/v2/chingu.wav"></audio></td><td><audio controls src="../audio/preview/v3/chingu.wav"></audio></td><td><audio controls src="../audio/preview/default/chingu.wav"></audio></td></tr>
+      <tr><td class="ko">책</td><td><audio controls src="../audio/preview/chaek.wav"></audio></td><td><audio controls src="../audio/preview/v2/chaek.wav"></audio></td><td><audio controls src="../audio/preview/v3/chaek.wav"></audio></td><td><audio controls src="../audio/preview/default/chaek.wav"></audio></td></tr>
+      <tr><td class="ko">꽃</td><td><audio controls src="../audio/preview/kkot.wav"></audio></td><td><audio controls src="../audio/preview/v2/kkot.wav"></audio></td><td><audio controls src="../audio/preview/v3/kkot.wav"></audio></td><td><audio controls src="../audio/preview/default/kkot.wav"></audio></td></tr>
+      <tr><td class="ko">짜장면</td><td><audio controls src="../audio/preview/jjajangmyeon.wav"></audio></td><td><audio controls src="../audio/preview/v2/jjajangmyeon.wav"></audio></td><td><audio controls src="../audio/preview/v3/jjajangmyeon.wav"></audio></td><td><audio controls src="../audio/preview/default/jjajangmyeon.wav"></audio></td></tr>
+      <tr><td class="ko">감사합니다</td><td><audio controls src="../audio/preview/kamsahamnida.wav"></audio></td><td><audio controls src="../audio/preview/v2/kamsahamnida.wav"></audio></td><td><audio controls src="../audio/preview/v3/kamsahamnida.wav"></audio></td><td><audio controls src="../audio/preview/default/kamsahamnida.wav"></audio></td></tr>
+    </tbody>
+  </table>
+
+  <p class="legend">
+    v1: <code>exaggeration=0.4 cfg_weight=0.5 temperature=0.8</code> · text = <code>ko</code><br>
+    <span class="v2">v2:</span> <code>exaggeration=0.3 cfg_weight=0.3 temperature=0.6</code> · text = <code>"ko."</code><br>
+    <span class="v3">v3:</span> v2 params · text = <code>"ko. ko. ko."</code> · auto-trimmed to middle instance via silencedetect<br>
+    <span class="def">Default:</span> v2 params · text = <code>"ko."</code> · NO reference clip (Chatterbox stock Korean voice) — diagnostic only
+  </p>
+</body>
+</html>

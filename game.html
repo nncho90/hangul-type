@@ -2918,26 +2918,64 @@ function renderPlayerSprite(lv) {
   PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 158)}</span>`;
 }
 
-// Briefly swap the player sprite to its strike pose for ~220ms, then back to
-// idle. Called from advanceLock() on every successful keystroke that triggers
-// an attack. Timer is tracked on state so chained typing keeps the strike pose
-// active across consecutive hits without flicker.
+// Preload all 3-frame strike sprites so the first hit doesn't flash.
+// Called once at module load time.
+(function preloadStrikeFrames() {
+  for (const sp of PLAYER_SPRITES) {
+    if (!sp.spriteStrike) continue;
+    for (const n of [1, 2, 3]) {
+      const im = new Image();
+      im.src = `sprites/${sp.spriteStrike}-${n}.png`;
+    }
+  }
+})();
+
+// Play the 3-frame strike animation. Called from advanceLock() on every
+// successful keystroke that lands an attack. Each tier auto-advances through
+// its sequence over ~180ms; tier 5 uses a 1-2-1-3 windup-recoil pattern (240ms).
+// Sustained typing replays the sequence; when typing pauses, returns to idle.
 function triggerStrikePose() {
   const sp = playerForLevel(state.level);
   if (!sp || !sp.spriteStrike) return;
   const img = PLAYER_EL.querySelector('img.sprite-img');
   if (!img) return;
-  const idleSrc   = `sprites/${sp.spriteBack}.png`;
-  const strikeSrc = `sprites/${sp.spriteStrike}.png`;
-  img.setAttribute('src', strikeSrc);
-  if (state._strikeTimer) clearTimeout(state._strikeTimer);
-  state._strikeTimer = setTimeout(() => {
-    // Only restore if we're still on the same tier — level-up will have
-    // already replaced the whole sprite block via renderPlayerSprite.
+
+  const sequence = sp.tier === 5 ? [1, 2, 1, 3] : [1, 2, 3];
+  const baseSrc  = `sprites/${sp.spriteStrike}`;
+  const idleSrc  = `sprites/${sp.spriteBack}.png`;
+  const FRAME_MS = 60;
+
+  // Mid-sequence: just flag that another strike is queued. The current
+  // sequence will replay when it finishes instead of stuttering on restart.
+  if (state._strikeRunning) {
+    state._strikePending = true;
+    return;
+  }
+
+  state._strikeRunning = true;
+  state._strikePending = false;
+  let i = 0;
+
+  const playFrame = () => {
     const nowImg = PLAYER_EL.querySelector('img.sprite-img');
-    if (nowImg) nowImg.setAttribute('src', idleSrc);
+    if (!nowImg) { state._strikeRunning = false; return; }
+    if (i < sequence.length) {
+      nowImg.setAttribute('src', `${baseSrc}-${sequence[i]}.png`);
+      i++;
+      state._strikeTimer = setTimeout(playFrame, FRAME_MS);
+      return;
+    }
+    if (state._strikePending) {
+      state._strikePending = false;
+      i = 0;
+      state._strikeTimer = setTimeout(playFrame, FRAME_MS);
+      return;
+    }
+    nowImg.setAttribute('src', idleSrc);
+    state._strikeRunning = false;
     state._strikeTimer = null;
-  }, 220);
+  };
+  playFrame();
 }
 
 const TIER_SPRITE_FILES = {

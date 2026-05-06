@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hangul Type — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
+  --bd: #e2e8f0;   --bdhi: #cbd5e1;
+  --thi: #0f172a;  --tmd: #475569;   --tlo: #94a3b8;
+  --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
+  --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
+}
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--thi);
+  font-size: 14px;
+}
+
+/* Layout */
+.topbar {
+  height: 52px;
+  background: var(--l1);
+  border-bottom: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--thi);
+}
+.topbar-sub {
+  font-size: 12px;
+  color: var(--tlo);
+}
+
+.page-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+  padding: 20px 24px;
+  min-height: calc(100vh - 52px - 64px);
+  align-items: start;
+}
+
+.controls-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 80px;
+}
+
+.preview-col {
+  position: sticky;
+  top: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Cards */
+.card {
+  background: var(--l1);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 20px;
+}
+.ctitle { font-size: 15px; font-weight: 600; color: var(--thi); margin-bottom: 4px; }
+.csub { font-size: 12px; color: var(--tlo); margin-bottom: 16px; }
+
+/* Section heading */
+.shead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.slbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tlo);
+}
+.sbadge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--l3);
+  color: var(--tmd);
+  border-radius: 20px;
+  padding: 1px 8px;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+.badge.bl { background: #dbeafe; color: #1d4ed8; }
+.badge.gr { background: #d1fae5; color: #065f46; }
+.badge.ye { background: #fef3c7; color: #92400e; }
+.badge.re { background: #fee2e2; color: #991b1b; }
+.badge.pu { background: #ede9fe; color: #5b21b6; }
+.badge.or { background: #ffedd5; color: #9a3412; }
+
+/* Sprites grid */
+.sprites-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.sprite-card {
+  background: var(--l2);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.sprite-card img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+.sprite-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tmd);
+}
+.sprite-sub {
+  font-size: 10px;
+  color: var(--tlo);
+  line-height: 1.4;
+}
+
+/* Tier behavior grid */
+.tier-header, .tier-row {
+  display: grid;
+  grid-template-columns: 80px 100px 160px 80px 80px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.tier-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tlo);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--bd);
+  margin-bottom: 10px;
+}
+.tier-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tmd);
+}
+
+/* Form inputs */
+input[type="number"], select {
+  width: 100%;
+  background: var(--l2);
+  border: 1px solid var(--bd);
+  border-radius: 7px;
+  padding: 5px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--thi);
+  transition: border-color 0.15s;
+}
+input[type="number"]:focus, select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+select {
+  font-family: 'Inter', system-ui;
+  font-size: 12px;
+}
+
+/* Generic form grid for pace / combat / etc */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px 16px;
+}
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tmd);
+}
+.form-hint {
+  font-size: 10px;
+  color: var(--tlo);
+  margin-top: 2px;
+}
+
+/* Level tier helpers */
+.tier-mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.tier-map-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tier-map-hint {
+  font-size: 10px;
+  color: var(--blue);
+  font-weight: 500;
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+/* Spawn cap */
+.spawn-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* Preview column */
+.preview-reload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--l1);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tmd);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.preview-reload-btn:hover {
+  background: var(--l3);
+  border-color: var(--bdhi);
+}
+
+/* Sticky footer */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: var(--l1);
+  border-top: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px;
+  z-index: 200;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.98); }
+.btn-save {
+  background: var(--green);
+  color: #fff;
+}
+.btn-reset {
+  background: var(--l3);
+  color: var(--tmd);
+  border: 1px solid var(--bd);
+}
+.btn-export {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--thi);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  padding: 10px 20px;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">Hangul Type — Admin</span>
+  <span class="topbar-sub">Game tuning panel · localStorage overrides</span>
+</div>
+
+<div class="page-grid">
+  <!-- LEFT: Controls -->
+  <div class="controls-col">
+
+    <!-- 1. SPRITES -->
+    <div class="card">
+      <div class="shead"><span class="slbl">SPRITES</span><span class="sbadge">7</span></div>
+      <div class="sprites-grid" id="sprites-grid"></div>
+    </div>
+
+    <!-- 2. PER-TIER BEHAVIOR -->
+    <div class="card">
+      <div class="shead"><span class="slbl">PER-TIER BEHAVIOR</span><span class="sbadge">6 tiers</span></div>
+      <div class="tier-header">
+        <div>Tier</div>
+        <div>Speed Mul</div>
+        <div>Motion</div>
+        <div>Font px</div>
+        <div>Anim s</div>
+      </div>
+      <div id="tier-rows"></div>
+    </div>
+
+    <!-- 3. LEVEL → TIER MAPPING -->
+    <div class="card">
+      <div class="shead"><span class="slbl">LEVEL &rarr; TIER MAPPING</span></div>
+      <div class="tier-mapping-grid" id="level-tier-grid"></div>
+    </div>
+
+    <!-- 4. GAME PACE -->
+    <div class="card">
+      <div class="shead"><span class="slbl">GAME PACE</span></div>
+      <div class="form-grid" id="pace-grid"></div>
+    </div>
+
+    <!-- 5. COMBAT -->
+    <div class="card">
+      <div class="shead"><span class="slbl">COMBAT</span></div>
+      <div class="form-grid" id="combat-grid"></div>
+    </div>
+
+    <!-- 6. SPAWN CAP -->
+    <div class="card">
+      <div class="shead"><span class="slbl">SPAWN CAP BY LEVEL</span></div>
+      <div class="spawn-grid" id="spawn-grid"></div>
+    </div>
+
+    <!-- 7. PLAYER -->
+    <div class="card">
+      <div class="shead"><span class="slbl">PLAYER</span></div>
+      <div style="max-width: 200px;">
+        <div class="form-field">
+          <label class="form-label" for="player-lives">Lives</label>
+          <input type="number" id="player-lives" min="1" max="9" step="1">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Preview -->
+  <div class="preview-col">
+    <button class="preview-reload-btn" onclick="reloadPreview()">
+      &#8635; Reload preview
+    </button>
+    <iframe id="game-preview" src="game.html" style="width:100%;height:calc(100vh - 60px);border:0;border-radius:14px;background:var(--l1);"></iframe>
+  </div>
+</div>
+
+<!-- Sticky footer -->
+<div class="footer">
+  <button class="btn btn-save" onclick="saveOverrides()">&#10003; SAVE</button>
+  <button class="btn btn-reset" onclick="resetDefaults()">&#8635; RESET TO DEFAULTS</button>
+  <button class="btn btn-export" onclick="exportJSON()">&#8595; EXPORT JSON</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* SHARED SCHEMA — consumed by game.html via localStorage hangul-admin-overrides-v1 */
+const ADMIN_DEFAULTS = {
+  tier: {
+    "1":    { speedMul: 0.80, motion: "straight", fontPx: 44, animS: 1.6 },
+    "2":    { speedMul: 0.95, motion: "straight", fontPx: 54, animS: 1.8 },
+    "3":    { speedMul: 0.95, motion: "zigzag",   fontPx: 62, animS: 2.0 },
+    "4":    { speedMul: 0.90, motion: "dive",     fontPx: 72, animS: 2.2 },
+    "5":    { speedMul: 1.05, motion: "tracker",  fontPx: 84, animS: 1.5 },
+    "boss": { speedMul: 0.55, motion: "teleport", fontPx: 96, animS: 2.5 }
+  },
+  levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19 },
+  pace: {
+    baseSpeedBase: 12, baseSpeedLevelMul: 0.9, baseSpeedTierMul: 1.0,
+    spawnIntervalFloor: 900, spawnIntervalStart: 2300, spawnIntervalLevelStep: 70,
+    initialSpawnMs: 1400
+  },
+  combat: {
+    specialComboPerCharge: 60, specialMaxCharges: 2,
+    chantDurationMs: 2000, specialBufferIdleMs: 1500,
+    heartSpawnChance: 0.018
+  },
+  spawnCap: { early: 3, mid: 4, late: 5, endgame: 6 },
+  player: { lives: 3 }
+};
+
+/* --- Sprite definitions --- */
+const SPRITES = [
+  { file: "enemies/01-dokkaebi-mini",    label: "Dokkaebi (mini)",   tier: "1",      badgeClass: "bl" },
+  { file: "enemies/02-gumiho-mini",      label: "Gumiho (mini)",     tier: "2",      badgeClass: "gr" },
+  { file: "enemies/03-cheonyeo-gwisin",  label: "Cheonyeo Gwisin",   tier: "5",      badgeClass: "pu" },
+  { file: "enemies/04-dueokshini",       label: "Dueokshini",        tier: "3",      badgeClass: "ye" },
+  { file: "enemies/05-dokkaebi-elder",   label: "Dokkaebi Elder",    tier: "boss",   badgeClass: "or" },
+  { file: "enemies/06-jeoseung-saja",    label: "Jeoseung Saja",     tier: "4",      badgeClass: "re" },
+  { file: "enemies/07-mudang",           label: "Mudang",            tier: "boss",   badgeClass: "or" },
+  { file: "enemies/08-hangeulwang",      label: "Hangeul-wang Boss", tier: "boss",   badgeClass: "or" },
+  { file: "player/01-baegui-front",      label: "백의 Commoner",      tier: "player", badgeClass: "bl" },
+  { file: "player/02-namukkun-front",    label: "나무꾼 Woodcutter",  tier: "player", badgeClass: "bl" },
+  { file: "player/03-seonbi-front",      label: "선비 Scholar",       tier: "player", badgeClass: "bl" },
+  { file: "player/04-yangban-front",     label: "양반 Yangban",      tier: "player", badgeClass: "bl" },
+  { file: "player/05-mugwan-front",      label: "무관 Officer",       tier: "player", badgeClass: "bl" },
+  { file: "player/06-janggun-front",     label: "장군 General",       tier: "player", badgeClass: "bl" },
+  { file: "player/07-daewang-front",     label: "대왕 Great King",    tier: "player", badgeClass: "bl" }
+];
+
+/* --- Deep merge helper --- */
+function deepMerge(base, override) {
+  const result = JSON.parse(JSON.stringify(base));
+  function merge(target, src) {
+    for (const key of Object.keys(src)) {
+      if (src[key] !== null && typeof src[key] === 'object' && !Array.isArray(src[key]) &&
+          key in target && typeof target[key] === 'object') {
+        merge(target[key], src[key]);
+      } else {
+        target[key] = src[key];
+      }
+    }
+  }
+  merge(result, override);
+  return result;
+}
+
+/* --- Load state --- */
+let state = JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+try {
+  const raw = localStorage.getItem('hangul-admin-overrides-v1');
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    state = deepMerge(ADMIN_DEFAULTS, parsed);
+  }
+} catch (e) {
+  console.warn('[admin] Failed to parse localStorage overrides, using defaults', e);
+}
+
+/* --- Build sprites section --- */
+function buildSprites() {
+  const grid = document.getElementById('sprites-grid');
+  grid.innerHTML = '';
+  for (const sp of SPRITES) {
+    const tierDef = state.tier[sp.tier];
+    let subtext = '';
+    if (tierDef) {
+      subtext = `${tierDef.motion} • ${tierDef.fontPx}px • ${tierDef.animS}s`;
+    } else if (sp.tier === 'player') {
+      subtext = 'player character';
+    }
+
+    const card = document.createElement('div');
+    card.className = 'sprite-card';
+    card.innerHTML = `
+      <img src="sprites/${sp.file}.png" alt="${sp.label}" onerror="this.style.opacity='0.3'">
+      <div class="sprite-name">${sp.label}</div>
+      <span class="badge ${sp.badgeClass}">${sp.tier === 'player' ? 'player' : 'tier ' + sp.tier}</span>
+      ${subtext ? `<div class="sprite-sub">${subtext}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  }
+}
+
+/* --- Build tier rows --- */
+const TIER_KEYS = ["1", "2", "3", "4", "5", "boss"];
+const MOTIONS = ["straight", "zigzag", "dive", "tracker", "teleport"];
+
+function buildTierRows() {
+  const container = document.getElementById('tier-rows');
+  container.innerHTML = '';
+  for (const t of TIER_KEYS) {
+    const d = state.tier[t];
+    const row = document.createElement('div');
+    row.className = 'tier-row';
+
+    const tierLabel = t === 'boss' ? 'Boss' : `Tier ${t}`;
+    row.innerHTML = `
+      <div class="tier-label">${tierLabel}</div>
+      <input type="number" id="tier-${t}-speedMul" value="${d.speedMul}" min="0.1" max="5" step="0.05">
+      <select id="tier-${t}-motion">
+        ${MOTIONS.map(m => `<option value="${m}"${m === d.motion ? ' selected' : ''}>${m}</option>`).join('')}
+      </select>
+      <input type="number" id="tier-${t}-fontPx" value="${d.fontPx}" min="10" max="200" step="1">
+      <input type="number" id="tier-${t}-animS" value="${d.animS}" min="0.1" max="10" step="0.1">
+    `;
+    container.appendChild(row);
+  }
+}
+
+/* --- Build level tier mapping --- */
+function buildLevelTierMapping() {
+  const grid = document.getElementById('level-tier-grid');
+  grid.innerHTML = '';
+  const fields = [
+    { key: 'tier2Start', label: 'Tier 2 Start' },
+    { key: 'tier3Start', label: 'Tier 3 Start' },
+    { key: 'tier4Start', label: 'Tier 4 Start' },
+    { key: 'tier5Start', label: 'Tier 5 Start' },
+  ];
+  for (const f of fields) {
+    const div = document.createElement('div');
+    div.className = 'tier-map-field';
+    div.innerHTML = `
+      <label class="form-label" for="lt-${f.key}">${f.label}</label>
+      <input type="number" id="lt-${f.key}" value="${state.levelTiers[f.key]}" min="1" max="99" step="1" oninput="updateTierHints()">
+      <div class="tier-map-hint" id="lt-${f.key}-hint"></div>
+    `;
+    grid.appendChild(div);
+  }
+  updateTierHints();
+}
+
+function updateTierHints() {
+  const t2 = parseInt(document.getElementById('lt-tier2Start')?.value) || state.levelTiers.tier2Start;
+  const t3 = parseInt(document.getElementById('lt-tier3Start')?.value) || state.levelTiers.tier3Start;
+  const t4 = parseInt(document.getElementById('lt-tier4Start')?.value) || state.levelTiers.tier4Start;
+  const t5 = parseInt(document.getElementById('lt-tier5Start')?.value) || state.levelTiers.tier5Start;
+
+  const hints = {
+    'lt-tier2Start-hint': `Tier 1: lvl 1–${t2 - 1} | Tier 2: lvl ${t2}+`,
+    'lt-tier3Start-hint': `Tier 2: lvl ${t2}–${t3 - 1} | Tier 3: lvl ${t3}+`,
+    'lt-tier4Start-hint': `Tier 3: lvl ${t3}–${t4 - 1} | Tier 4: lvl ${t4}+`,
+    'lt-tier5Start-hint': `Tier 4: lvl ${t4}–${t5 - 1} | Tier 5: lvl ${t5}+`,
+  };
+  for (const [id, text] of Object.entries(hints)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+}
+
+/* --- Build pace section --- */
+function buildPace() {
+  const grid = document.getElementById('pace-grid');
+  grid.innerHTML = '';
+  const fields = [
+    { key: 'baseSpeedBase',         label: 'Base Speed',           step: 1,   min: 1 },
+    { key: 'baseSpeedLevelMul',     label: 'Speed Level Mul',      step: 0.1, min: 0.1 },
+    { key: 'baseSpeedTierMul',      label: 'Speed Tier Mul',       step: 0.1, min: 0.1 },
+    { key: 'spawnIntervalFloor',    label: 'Spawn Interval Floor (ms)', step: 50, min: 100 },
+    { key: 'spawnIntervalStart',    label: 'Spawn Interval Start (ms)', step: 50, min: 100 },
+    { key: 'spawnIntervalLevelStep',label: 'Spawn Interval Step (ms)',  step: 5,  min: 0 },
+    { key: 'initialSpawnMs',        label: 'Initial Spawn Delay (ms)', step: 100, min: 0 },
+  ];
+  for (const f of fields) {
+    const div = document.createElement('div');
+    div.className = 'form-field';
+    div.innerHTML = `
+      <label class="form-label" for="pace-${f.key}">${f.label}</label>
+      <input type="number" id="pace-${f.key}" value="${state.pace[f.key]}" min="${f.min}" step="${f.step}">
+    `;
+    grid.appendChild(div);
+  }
+}
+
+/* --- Build combat section --- */
+function buildCombat() {
+  const grid = document.getElementById('combat-grid');
+  grid.innerHTML = '';
+  const fields = [
+    { key: 'specialComboPerCharge', label: 'Combo Per Charge',     step: 1,     min: 1 },
+    { key: 'specialMaxCharges',     label: 'Max Charges',          step: 1,     min: 1, max: 10 },
+    { key: 'chantDurationMs',       label: 'Chant Duration (ms)',  step: 100,   min: 100 },
+    { key: 'specialBufferIdleMs',   label: 'Special Buffer (ms)',  step: 100,   min: 0 },
+    { key: 'heartSpawnChance',      label: 'Heart Spawn Chance',   step: 0.001, min: 0, max: 1 },
+  ];
+  for (const f of fields) {
+    const div = document.createElement('div');
+    div.className = 'form-field';
+    div.innerHTML = `
+      <label class="form-label" for="combat-${f.key}">${f.label}</label>
+      <input type="number" id="combat-${f.key}" value="${state.combat[f.key]}" min="${f.min ?? 0}" ${f.max !== undefined ? `max="${f.max}"` : ''} step="${f.step}">
+    `;
+    grid.appendChild(div);
+  }
+}
+
+/* --- Build spawn cap section --- */
+function buildSpawnCap() {
+  const grid = document.getElementById('spawn-grid');
+  grid.innerHTML = '';
+  const fields = [
+    { key: 'early',   label: 'Early (lvl < 4)',   step: 1, min: 1 },
+    { key: 'mid',     label: 'Mid (lvl 4-6)',      step: 1, min: 1 },
+    { key: 'late',    label: 'Late (lvl 7-12)',    step: 1, min: 1 },
+    { key: 'endgame', label: 'Endgame (lvl 13+)',  step: 1, min: 1 },
+  ];
+  for (const f of fields) {
+    const div = document.createElement('div');
+    div.className = 'form-field';
+    div.innerHTML = `
+      <label class="form-label" for="spawn-${f.key}">${f.label}</label>
+      <input type="number" id="spawn-${f.key}" value="${state.spawnCap[f.key]}" min="${f.min}" step="${f.step}">
+    `;
+    grid.appendChild(div);
+  }
+}
+
+/* --- Build player section --- */
+function buildPlayer() {
+  document.getElementById('player-lives').value = state.player.lives;
+}
+
+/* --- Read form state back into an object --- */
+function readFormState() {
+  const out = JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+
+  for (const t of TIER_KEYS) {
+    out.tier[t].speedMul = parseFloat(document.getElementById(`tier-${t}-speedMul`).value);
+    out.tier[t].motion   = document.getElementById(`tier-${t}-motion`).value;
+    out.tier[t].fontPx   = parseInt(document.getElementById(`tier-${t}-fontPx`).value);
+    out.tier[t].animS    = parseFloat(document.getElementById(`tier-${t}-animS`).value);
+  }
+
+  out.levelTiers.tier2Start = parseInt(document.getElementById('lt-tier2Start').value);
+  out.levelTiers.tier3Start = parseInt(document.getElementById('lt-tier3Start').value);
+  out.levelTiers.tier4Start = parseInt(document.getElementById('lt-tier4Start').value);
+  out.levelTiers.tier5Start = parseInt(document.getElementById('lt-tier5Start').value);
+
+  for (const key of Object.keys(ADMIN_DEFAULTS.pace)) {
+    const el = document.getElementById(`pace-${key}`);
+    if (el) out.pace[key] = parseFloat(el.value);
+  }
+  for (const key of Object.keys(ADMIN_DEFAULTS.combat)) {
+    const el = document.getElementById(`combat-${key}`);
+    if (el) out.combat[key] = parseFloat(el.value);
+  }
+  for (const key of Object.keys(ADMIN_DEFAULTS.spawnCap)) {
+    const el = document.getElementById(`spawn-${key}`);
+    if (el) out.spawnCap[key] = parseInt(el.value);
+  }
+
+  out.player.lives = parseInt(document.getElementById('player-lives').value);
+  return out;
+}
+
+/* --- Actions --- */
+function saveOverrides() {
+  const formState = readFormState();
+  localStorage.setItem('hangul-admin-overrides-v1', JSON.stringify(formState));
+  reloadPreview();
+  showToast('Saved · preview reloading');
+  state = formState;
+  buildSprites(); // refresh sprite subtexts
+}
+
+function resetDefaults() {
+  if (!confirm('Reset all settings to defaults? This will clear localStorage overrides.')) return;
+  localStorage.removeItem('hangul-admin-overrides-v1');
+  state = JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+  buildAll();
+  reloadPreview();
+  showToast('Reset to defaults');
+}
+
+function exportJSON() {
+  const formState = readFormState();
+  const json = JSON.stringify(formState, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'overrides.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function reloadPreview() {
+  const iframe = document.getElementById('game-preview');
+  iframe.src = iframe.src;
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* --- Init --- */
+function buildAll() {
+  buildSprites();
+  buildTierRows();
+  buildLevelTierMapping();
+  buildPace();
+  buildCombat();
+  buildSpawnCap();
+  buildPlayer();
+}
+
+buildAll();
+</script>
+</body>
+</html>

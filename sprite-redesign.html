@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hangeul Battle Sprite Redesign Concepts</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f4f6f8;
+    --panel: #ffffff;
+    --ink: #132033;
+    --muted: #607086;
+    --line: #dce3ec;
+    --blue: #2563eb;
+    --green: #0f9f6e;
+    --gold: #b7791f;
+    --red: #dc2626;
+    --shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.76), rgba(244,246,248,0.92)),
+      radial-gradient(circle at 14% 0%, rgba(37, 99, 235, 0.14), transparent 24rem),
+      radial-gradient(circle at 90% 8%, rgba(15, 159, 110, 0.12), transparent 28rem),
+      var(--bg);
+    color: var(--ink);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  button,
+  summary {
+    font: inherit;
+  }
+
+  .page {
+    width: min(1380px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 28px 0 64px;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 0 18px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(28px, 4vw, 56px);
+    line-height: 0.98;
+    letter-spacing: 0;
+  }
+
+  .subtitle {
+    max-width: 760px;
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .status {
+    min-width: 230px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.74);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .status strong {
+    display: block;
+    color: var(--ink);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .baseline {
+    display: grid;
+    grid-template-columns: 1.1fr 1.9fr;
+    gap: 18px;
+    align-items: stretch;
+    margin: 18px 0 22px;
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.86);
+    box-shadow: var(--shadow);
+  }
+
+  .panel-inner {
+    padding: 18px;
+  }
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    letter-spacing: 0;
+  }
+
+  .current-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(72px, 1fr));
+    gap: 10px;
+  }
+
+  .current-sprite {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .current-sprite img {
+    width: 100%;
+    max-width: 94px;
+    aspect-ratio: 1;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 8px;
+  }
+
+  .current-sprite span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .rules {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .rule {
+    min-height: 118px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+
+  .rule b {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .rule span {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.42;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 14px 0 18px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tab {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--muted);
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  .tab[aria-pressed="true"] {
+    border-color: rgba(37, 99, 235, 0.45);
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--blue);
+    font-weight: 700;
+  }
+
+  .hint {
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .concepts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .concept {
+    overflow: clip;
+  }
+
+  .concept-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: start;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .concept h3 {
+    margin: 6px 0 8px;
+    font-size: clamp(22px, 3vw, 36px);
+    line-height: 1.05;
+  }
+
+  .concept-copy {
+    max-width: 880px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .badge {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #f8fafc;
+    color: var(--muted);
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .badge.wild { color: #9a3412; background: #fff7ed; border-color: #fed7aa; }
+  .badge.safe { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+  .badge.bold { color: #6d28d9; background: #f5f3ff; border-color: #ddd6fe; }
+
+  .lineup-wrap {
+    padding: 16px 18px 8px;
+  }
+
+  .lineup {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    display: block;
+  }
+
+  .tier-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px 18px 18px;
+  }
+
+  .tier-card {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fafc;
+    overflow: hidden;
+  }
+
+  .tier-thumb {
+    height: 160px;
+    background-repeat: no-repeat;
+    background-size: 500% auto;
+    background-position-y: center;
+    background-color: #fff;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tier-meta {
+    padding: 10px 10px 12px;
+  }
+
+  .tier-meta b {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .tier-meta span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.38;
+  }
+
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0 18px 16px;
+  }
+
+  .note {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+  }
+
+  .note b {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .note p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  details {
+    border-top: 1px solid var(--line);
+    background: #fbfdff;
+  }
+
+  summary {
+    cursor: pointer;
+    padding: 14px 18px;
+    color: var(--blue);
+    font-weight: 800;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    margin: 0;
+    padding: 0 18px 18px;
+    color: #243044;
+    font-size: 12px;
+    line-height: 1.52;
+  }
+
+  .compare {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .mini {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .mini img {
+    width: 100%;
+    aspect-ratio: 1.85 / 1;
+    object-fit: cover;
+    display: block;
+  }
+
+  .mini b {
+    display: block;
+    padding: 9px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 980px) {
+    .topbar,
+    .toolbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .topbar,
+    .baseline,
+    .concept-head,
+    .notes {
+      grid-template-columns: 1fr;
+    }
+
+    .status {
+      min-width: 0;
+    }
+
+    .badge-row {
+      justify-content: flex-start;
+    }
+
+    .current-grid,
+    .rules,
+    .tier-grid,
+    .compare {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .toolbar {
+      position: static;
+    }
+
+    .hint {
+      white-space: normal;
+    }
+
+    .tier-thumb {
+      height: 130px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .page {
+      width: min(100vw - 20px, 1380px);
+      padding-top: 14px;
+    }
+
+    .current-grid,
+    .rules,
+    .tier-grid,
+    .compare {
+      grid-template-columns: 1fr;
+    }
+
+    .tier-thumb {
+      height: 180px;
+    }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <section class="topbar" aria-labelledby="title">
+    <div>
+      <h1 id="title">Sprite Redesign Concepts</h1>
+      <p class="subtitle">Seven directions for the Hangeul Battle monster set. The progression follows the current tier design: early levels stay low-detail and readable; later tiers gain silhouette complexity, accessories, motion hooks, and boss energy. The MapleStory reference is treated as broad chibi side-scroller readability, not as a character copy target.</p>
+    </div>
+    <aside class="status">
+      <strong>Generation Path</strong>
+      Built with Codex built-in image generation. The explicit CLI/API route is prepared for <code>gpt-image-2</code>, but this shell currently has no <code>OPENAI_API_KEY</code>.
+    </aside>
+  </section>
+
+  <section class="baseline">
+    <div class="panel">
+      <div class="panel-inner">
+        <h2>Current Game Assets</h2>
+        <div class="current-grid">
+          <div class="current-sprite"><img src="sprites/player_hwarang.png" alt="Current player sprite"><span>Player</span></div>
+          <div class="current-sprite"><img src="sprites/dokkaebi.png" alt="Current tier 1 sprite"><span>Tier 1</span></div>
+          <div class="current-sprite"><img src="sprites/gumiho.png" alt="Current tier 2 sprite"><span>Tier 2</span></div>
+          <div class="current-sprite"><img src="sprites/dueokshini.png" alt="Current tier 3 sprite"><span>Tier 3</span></div>
+          <div class="current-sprite"><img src="sprites/jeoseung_saja.png" alt="Current tier 4 sprite"><span>Tier 4</span></div>
+          <div class="current-sprite"><img src="sprites/cheonyeo_gwisin.png" alt="Current tier 5 sprite"><span>Tier 5</span></div>
+          <div class="current-sprite"><img src="sprites/dragon_boss.png" alt="Current boss sprite"><span>Boss</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-inner">
+        <h2>Progression Rule</h2>
+        <div class="rules">
+          <div class="rule"><b>Lv 1-4 · Tier 1</b><span>One big shape, one horn, one prop. The player should read it instantly while learning the keyboard.</span></div>
+          <div class="rule"><b>Lv 5-8 · Tier 2</b><span>Still cute and readable, but adds tails, charms, or a second silhouette feature.</span></div>
+          <div class="rule"><b>Lv 9-13 · Tier 3</b><span>Medium complexity: masks, smoke, uneven movement, and stronger personality.</span></div>
+          <div class="rule"><b>Lv 14-18 · Tier 4</b><span>High detail: robes, lanterns, talismans, dive/tracker motion hooks.</span></div>
+          <div class="rule"><b>Lv 19+ · Tier 5</b><span>Most intricate normal enemy, with boss-adjacent silhouette and layered animation potential.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="toolbar" aria-label="Concept filters">
+    <div class="tabs" id="tabs"></div>
+    <div class="hint">Click a direction, compare the lineups, then open the prompt if you want to regenerate it.</div>
+  </nav>
+
+  <section class="compare" id="compare" aria-label="Quick visual comparison"></section>
+  <section class="concepts" id="concepts" aria-label="Sprite concepts"></section>
+</main>
+
+<script>
+const tiers = [
+  { name: 'Tier 1', range: 'Lv 1-4', desc: 'lowest detail, single readable gimmick', x: '0%' },
+  { name: 'Tier 2', range: 'Lv 5-8', desc: 'two-tail or charm detail, still simple', x: '25%' },
+  { name: 'Tier 3', range: 'Lv 9-13', desc: 'mask, smoke, or medium accessory load', x: '50%' },
+  { name: 'Tier 4', range: 'Lv 14-18', desc: 'robes, lantern, dive/tracker silhouette', x: '75%' },
+  { name: 'Tier 5', range: 'Lv 19+', desc: 'largest normal enemy, boss-like complexity', x: '100%' }
+];
+
+const concepts = [
+  {
+    id: 'chibi',
+    name: 'Polished Chibi Folklore',
+    file: 'sprite-concepts/lineups/chibi-fantasy.png',
+    tag: 'Safest',
+    badge: 'safe',
+    vibe: 'Closest to the current game feel, but cleaner: cute side-scroller proportions, crisp outlines, and a stronger left-to-right complexity ramp.',
+    works: 'Lowest integration risk. This can replace the current PNG set without changing the rest of the game language.',
+    risk: 'Could feel too expected unless the individual animation poses get personality.',
+    wild: 'Use the same base monster, but let every boss possession temporarily mutate it with dragon horns, extra tails, or floating jamo scars.',
+    prompt: `Use case: stylized-concept
+Asset type: sprite concept lineup for a browser Korean typing game, preview sheet for art direction
+Primary request: Create a single clean sprite concept sheet with five original Korean folklore monsters showing level progression from simple low-level enemy to complex high-level threat. Do not copy any existing game character or franchise. Use only broad 2D side-scrolling chibi MMORPG proportions: oversized heads, tiny bodies, readable silhouettes, crisp dark outlines, bright cel shading, compact idle poses.
+Scene/backdrop: perfectly flat warm off-white background, no environment, no shadows touching the background.
+Subject: Five separate full-body monster sprites in one horizontal row, evenly spaced, facing slightly toward camera but usable for side-scrolling gameplay. Tier 1 is a simple round dokkaebi imp with one horn and one club, very low detail. Tier 2 is a small gumiho fox spirit with two tails, slightly more detail. Tier 3 is a squat dream-eater goblin with a mask and smoky hair, medium detail. Tier 4 is a reaper envoy with paper talismans and a small lantern, high detail. Tier 5 is a ghost queen with layered robes, floating hair ribbons, and several spectral tails, most complex.
+Style: polished chibi Korean fantasy, cute but battle-ready, original designs, crisp 2D game sprite rendering, clean black outlines, simple cel shading, expressive eyes, MapleStory-like readability only in the broad sense of chibi side-scroller proportions.
+Composition: isolated character lineup, generous padding, no overlapping, each sprite centered in its own invisible 400x400 cell, consistent scale progression from small tier 1 to larger tier 5.
+Palette: balanced saturated colors with dancheong accents, jade, red, gold, white, violet, charcoal.
+Constraints: no text, no labels, no watermark, no UI, no weapons resembling modern guns, no copied MapleStory characters, no copyrighted mascot, transparent-looking clean edges, white/off-white background only.`
+  },
+  {
+    id: 'ink',
+    name: 'Ink Folklore',
+    file: 'sprite-concepts/lineups/ink-folklore.png',
+    tag: 'Distinctive',
+    badge: 'bold',
+    vibe: 'A Korean brush-and-minhwa direction. It makes the game feel less generic and gives every tier a handmade storybook identity.',
+    works: 'Strong brand signal for Korean learning. The dry-brush edges would look good against the existing temple, palace, and cosmos backdrops.',
+    risk: 'Needs careful cleanup for small-size readability; thin brush details can disappear at 60-90px.',
+    wild: 'Use ink splatter as hit feedback: when a monster dies, it collapses into brush strokes that form the typed syllable for a frame.',
+    prompt: `Use case: stylized-concept
+Asset type: sprite concept lineup for a browser Korean typing game, preview sheet for art direction
+Primary request: Create a single original sprite concept sheet with five Korean folklore monsters showing level progression from very simple to very complex. This version should feel like ink-and-brush folklore come alive, not like an existing franchise.
+Scene/backdrop: flat rice-paper white background, no scenery, no calligraphy, no text, no frame.
+Subject: Five separate full-body monster sprites in a horizontal row. Tier 1: tiny ink blot dokkaebi imp, one horn, round body, barely any accessories. Tier 2: paper-charm fox spirit with two tails and red mask markings. Tier 3: smoky dream eater with tiger-mask face and tangled black brushstroke hair. Tier 4: underworld messenger in gat hat holding a lantern and scroll, many talismans. Tier 5: large moon ghost queen with hanbok sleeves, ink-wash ribbons, ornate crown, layered spectral tails, most intricate silhouette.
+Style: Korean minhwa brush painting adapted into 2D game sprites, bold hand-ink outlines, watercolor fills, dry-brush texture, readable chibi proportions, compact idle poses, original characters only.
+Composition: isolated lineup, each monster centered in an invisible square cell, no overlap, clear scale growth and complexity growth across tiers.
+Palette: black ink, warm rice paper, cinnabar red, faded jade, muted indigo, aged gold.
+Constraints: no text, no labels, no watermark, no UI, no copied game character, no specific MapleStory character, no photo realism, no background details beyond flat paper tone.`
+  },
+  {
+    id: 'toy',
+    name: 'Designer Toy Monsters',
+    file: 'sprite-concepts/lineups/toy-clay.png',
+    tag: 'Cute',
+    badge: 'safe',
+    vibe: 'Soft collectible figures with chunky forms. This makes the enemies less scary and very legible for a learning game.',
+    works: 'Great for marketing screenshots and younger audiences. Easy to read on mobile because the silhouettes are thick.',
+    risk: '3D/clay rendering can clash with the flat current UI unless the whole game leans more toy-like.',
+    wild: 'Make each tier a capsule-toy pull. New monsters unlock with a vending-machine pop after chapter breaks.',
+    prompt: `Use case: stylized-concept
+Asset type: sprite concept lineup for a browser Korean typing game, preview sheet for art direction
+Primary request: Create a single original sprite concept sheet with five Korean folklore monsters progressing from simple low-level enemy to complex high-level boss. This style is cute collectible vinyl toy / clay maquette, made to read clearly at small game-sprite sizes.
+Scene/backdrop: perfectly flat pale gray studio background, no scenery, no floor shadow, no labels.
+Subject: Five separate monster sprites in a horizontal lineup. Tier 1: tiny red dokkaebi bean imp, one horn, soft club, very simple. Tier 2: plump white fox spirit with two tails, small charm bow, simple patterning. Tier 3: blue-green dream eater with mask belly and wispy hair, medium accessories. Tier 4: black underworld courier with gat hat, lantern, scroll straps, elaborate but chunky. Tier 5: floating ghost queen with layered hanbok sleeves, crown, five spectral ribbons, highest complexity.
+Style: adorable Korean folklore designer toy, soft 3D clay-rendered sprite, rounded forms, tactile painted details, thick clean silhouette, chibi proportions, game-ready readability, original designs only.
+Composition: five isolated characters evenly spaced, no overlap, front three-quarter idle pose, centered in invisible cells, complexity and size increase left to right.
+Palette: warm red, ivory, jade green, ink black, brass gold, violet spirit glow; not monochrome.
+Constraints: no text, no labels, no watermark, no copied character, no MapleStory character, no realistic horror, no background props.`
+  },
+  {
+    id: 'neon',
+    name: 'Neon Keyboard Demons',
+    file: 'sprite-concepts/lineups/neon-keyboard.png',
+    tag: 'Game-Native',
+    badge: 'bold',
+    vibe: 'Monsters made from keycaps, cables, and corrupted jamo energy. This ties the enemies directly to typing instead of only folklore.',
+    works: 'Best conceptual match for a Korean keyboard game. It can make the level progression feel like the keyboard itself is fighting back.',
+    risk: 'The current bright folklore backgrounds may need slightly darker enemy plates or rim-light tuning.',
+    wild: 'Typed mistakes could visibly attach broken keycaps to the boss. Clean streaks knock them off.',
+    prompt: `Use case: stylized-concept
+Asset type: sprite concept lineup for a browser Korean typing game, preview sheet for art direction
+Primary request: Create a single original sprite concept sheet with five monster sprites that turn Korean keyboard learning into enemies made of keys, jamo strokes, wires, and PC-bang neon. Progression must go from low-detail to high-detail.
+Scene/backdrop: flat dark charcoal background with no scenery and no text; clean isolated sprites.
+Subject: Five separate full-body monster sprites in a horizontal row. Tier 1: tiny keycap dokkaebi imp with one horn shaped like a keyboard key, very simple. Tier 2: fox spirit made from white keycaps and cable tails, two tails, cute face. Tier 3: corrupted jamo dream eater with floating keyboard fragments, medium complexity. Tier 4: cyber reaper messenger with gat silhouette, neon lantern, circuit talismans, high complexity. Tier 5: huge boss ghost queen assembled from glowing Hangul stroke shapes and translucent cable ribbons, most intricate.
+Style: neon arcade chibi 2D sprite art, crisp silhouette, black outlines with bright rim lights, readable at small sizes, playful not scary, original characters only.
+Composition: five isolated sprites, evenly spaced, no overlap, each in its own invisible square cell, increasing scale and detail left to right.
+Palette: charcoal, electric cyan, magenta, keyboard white, acid green, warning orange, violet glow; avoid one-color palette.
+Constraints: no readable letters or words, no text labels, no UI, no watermark, no copied game character, no existing franchise style clone, no guns, no busy background.`
+  },
+  {
+    id: 'paper',
+    name: 'Hanji Paper Spirits',
+    file: 'sprite-concepts/lineups/hanji-paper.png',
+    tag: 'Elegant',
+    badge: 'bold',
+    vibe: 'Cut-paper talisman creatures. Simple shapes scale well and the higher tiers can add layered paper without becoming noisy.',
+    works: 'Very easy to animate with CSS: fluttering talismans, folded tails, paper-tear death states.',
+    risk: 'Could read too quiet unless the color accents are pushed hard in-game.',
+    wild: 'Every killed enemy tears into blank talisman scraps that briefly orbit the player as combo armor.',
+    prompt: `Use case: stylized-concept
+Asset type: sprite concept lineup for a browser Korean typing game, preview sheet for art direction
+Primary request: Create a single original sprite concept sheet with five monsters made from Korean paper talismans, seals, folded paper, and hanji textures. Show progression from plain low-level charm creature to ornate high-level boss.
+Scene/backdrop: perfectly flat pale cream background, no scenery, no labels, no visible readable writing.
+Subject: Five separate full-body monster sprites in a horizontal row. Tier 1: tiny folded-paper dokkaebi charm imp, one horn, simple dot eyes. Tier 2: paper fox spirit with two folded tails and red seal ribbons. Tier 3: hunched paper-mask dream eater with smoky torn edges, medium detail. Tier 4: underworld messenger built from layered paper robes, gat hat, dangling blank talismans, lantern. Tier 5: towering paper ghost queen with layered hanbok-paper sleeves, blank seal streamers, folded crown, spectral paper tails, most complex.
+Style: flat 2D cut-paper sprite art, hanji paper grain, crisp silhouette, limited but expressive shapes, chibi side-scroller readability, original Korean folklore designs.
+Composition: five isolated characters, even spacing, no overlap, each centered in an invisible square cell, increasing detail and scale left to right.
+Palette: cream paper, vermilion seal red, charcoal ink, jade green, indigo, muted gold, pale violet spirit glow.
+Constraints: no readable Korean or English text, no labels, no watermark, no UI, no copied characters, no existing franchise clone, no realistic horror.`
+  },
+  {
+    id: 'food',
+    name: 'Night-Market Monsters',
+    file: 'sprite-concepts/lineups/food-market.png',
+    tag: 'Wild',
+    badge: 'wild',
+    vibe: 'Street-food folklore: rice cakes, fishcake tails, steam robes, cookware crowns. It is silly in a way that could become memorable.',
+    works: 'Strong shareability. Also opens up chapter themes around market, shrine, palace, and festival foods.',
+    risk: 'Might undercut the battle tone unless bosses are allowed to be absurd.',
+    wild: 'Missed words feed the monsters. Perfect combos turn them into snack drops that heal the player.',
+    prompt: `Use case: stylized-concept
+Asset type: sprite concept lineup for a browser Korean typing game, preview sheet for art direction
+Primary request: Create a wild original sprite concept sheet with five food-market Korean folklore monsters made from street food, cookware, steam, and festival colors. Progression goes from simple snack imp to complex festival boss.
+Scene/backdrop: flat clean light mint background, no scenery, no labels, no table, no floor.
+Subject: Five separate full-body monster sprites in a horizontal row. Tier 1: tiny tteok rice-cake dokkaebi imp with one sesame horn and simple club skewer. Tier 2: fluffy fox spirit with fishcake tails and red ribbon, cute and simple. Tier 3: steamy cauldron dream eater with mask face, noodles as hair, medium detail. Tier 4: night-market reaper chef with gat hat, lantern ladle, paper charm apron, high detail. Tier 5: grand ghost queen festival boss with hanbok made of translucent steam, ornate brass cookware crown, swirling ribbons like noodles and flames, most complex.
+Style: playful edible-fantasy chibi game sprites, glossy cel shading, bold outlines, sticker-like readability, Korean night market energy, original monster designs only.
+Composition: five isolated characters evenly spaced, no overlap, centered in invisible square cells, size and detail increase left to right.
+Palette: mint, gochujang red, sesame cream, seaweed charcoal, brass gold, violet steam, tangerine flame; varied and bright.
+Constraints: no text, no labels, no watermark, no logo, no copied character, no existing franchise clone, no realistic gore, no background props.`
+  },
+  {
+    id: 'cosmic',
+    name: 'Cosmic Palace Bossline',
+    file: 'sprite-concepts/lineups/cosmic-palace.png',
+    tag: 'Endgame',
+    badge: 'wild',
+    vibe: 'A bigger endgame swing: palace roofs, moon tiles, dragon energy, and cosmic brush-stroke tails.',
+    works: 'Best for late-game spectacle and boss intros. It matches the current game progression into palace and cosmos themes.',
+    risk: 'Too much visual density for early levels unless tier 1 and 2 are simplified further.',
+    wild: 'Levels could literally ascend from village floor to palace roof to star court, with monsters gaining roof-tile armor as the player climbs.',
+    prompt: `Use case: stylized-concept
+Asset type: sprite concept lineup for a browser Korean typing game, preview sheet for art direction
+Primary request: Create an original wild cosmic Korean folklore monster lineup where enemies are made from stars, palace roof tiles, dragons, and Hangul stroke energy. Progression goes from simple low-level celestial imp to ornate endgame boss.
+Scene/backdrop: flat midnight blue background, no scenery, no starfield, no labels.
+Subject: Five separate full-body monster sprites in a horizontal row. Tier 1: tiny moon-tile dokkaebi imp with one gold horn, simple silhouette. Tier 2: small comet fox spirit with two starry tails, slightly more detail. Tier 3: meteor dream eater with mask face and smoky constellation hair, medium complexity. Tier 4: royal underworld envoy with gat hat, palace-roof armor, lantern star core, high complexity. Tier 5: cosmic dragon ghost queen boss with hanbok robes, orbiting roof-tile scales, crescent crown, flowing nebula tails shaped like brush strokes, most intricate.
+Style: high-polish 2D chibi fantasy sprite art, crisp outlines, luminous gradients, side-scrolling MMORPG readability, original designs only, epic but still cute enough for a typing game.
+Composition: five isolated sprites evenly spaced, no overlap, centered in invisible square cells, clear left-to-right increase in size and visual complexity.
+Palette: midnight navy, moon white, royal jade, dancheong red, gold, violet nebula, cyan starlight; varied palette.
+Constraints: no text, no labels, no watermark, no copied character, no existing franchise clone, no realistic horror, no background objects.`
+  }
+];
+
+const tabs = document.getElementById('tabs');
+const conceptsEl = document.getElementById('concepts');
+const compareEl = document.getElementById('compare');
+
+function conceptCard(c) {
+  return `
+    <article class="concept panel" id="${c.id}" data-concept="${c.id}">
+      <header class="concept-head">
+        <div>
+          <div class="eyebrow">${c.tag}</div>
+          <h3>${c.name}</h3>
+          <p class="concept-copy">${c.vibe}</p>
+        </div>
+        <div class="badge-row">
+          <span class="badge ${c.badge}">${c.tag}</span>
+          <span class="badge">5-tier lineup</span>
+          <span class="badge">Game sprite readable</span>
+        </div>
+      </header>
+      <div class="lineup-wrap">
+        <img class="lineup" src="${c.file}" alt="${c.name} monster sprite lineup">
+      </div>
+      <div class="tier-grid">
+        ${tiers.map(t => `
+          <div class="tier-card">
+            <div class="tier-thumb" style="background-image:url('${c.file}');background-position-x:${t.x};"></div>
+            <div class="tier-meta">
+              <b>${t.name} · ${t.range}</b>
+              <span>${t.desc}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="notes">
+        <div class="note"><b>Why it works</b><p>${c.works}</p></div>
+        <div class="note"><b>Risk</b><p>${c.risk}</p></div>
+        <div class="note"><b>Wild mechanic</b><p>${c.wild}</p></div>
+      </div>
+      <details>
+        <summary>Generation Prompt</summary>
+        <pre>${c.prompt}</pre>
+      </details>
+    </article>
+  `;
+}
+
+function render() {
+  tabs.innerHTML = `<button class="tab" type="button" data-filter="all" aria-pressed="true">All</button>` +
+    concepts.map(c => `<button class="tab" type="button" data-filter="${c.id}" aria-pressed="false">${c.name}</button>`).join('');
+
+  compareEl.innerHTML = concepts.map(c => `
+    <a class="mini" href="#${c.id}" aria-label="Jump to ${c.name}">
+      <img src="${c.file}" alt="">
+      <b>${c.name}</b>
+    </a>
+  `).join('');
+
+  conceptsEl.innerHTML = concepts.map(conceptCard).join('');
+}
+
+function setFilter(filter) {
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.filter === filter));
+  });
+  document.querySelectorAll('.concept').forEach(card => {
+    card.hidden = filter !== 'all' && card.dataset.concept !== filter;
+  });
+}
+
+render();
+
+tabs.addEventListener('click', event => {
+  const btn = event.target.closest('.tab');
+  if (!btn) return;
+  setFilter(btn.dataset.filter);
+});
+</script>
+</body>
+</html>

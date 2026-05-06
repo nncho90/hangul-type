@@ -920,7 +920,7 @@
      row 3 starts 0.75 key right of row 1. flex-start (not center) preserves
      the stagger; the row is wrapped in a centering container so the whole
      keyboard still sits in the middle of the card. */
-  .kb-rows, #kb { display: flex; flex-direction: column; align-items: flex-start; width: fit-content; margin: 0 auto; }
+  .kb-rows, #kb { display: flex; flex-direction: column; align-items: flex-start; width: fit-content; }
   .kb-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
   .kb-row.r2 { padding-left: 11px; }
   .kb-row.r3 { padding-left: 33px; }
@@ -960,19 +960,18 @@
   }
   .key.target { background: var(--blue); border-color: var(--blue); }
   .key.target.f-pinky  { background: #a855f7; border-color: #a855f7; }
-  .key.target.f-ring   { background: #14b8a6; border-color: #14b8a6; }
+  .key.target.f-ring   { background: #0ea5e9; border-color: #0ea5e9; }
   .key.target.f-middle { background: #f59e0b; border-color: #f59e0b; }
   .key.target.f-index  { background: #ec4899; border-color: #ec4899; }
   .key.target .jamo, .key.target .qwerty, .key.target .shift {
     color: white;
   }
-  .key.shifted {
-    background: var(--orange);
-    border-color: var(--orange);
-  }
-  .key.shifted .jamo, .key.shifted .qwerty, .key.shifted .shift {
-    color: white;
-  }
+  .key.shifted { background: var(--orange); border-color: var(--orange); }
+  .key.shifted.f-pinky  { background: #a855f7; border-color: #a855f7; }
+  .key.shifted.f-ring   { background: #0ea5e9; border-color: #0ea5e9; }
+  .key.shifted.f-middle { background: #f59e0b; border-color: #f59e0b; }
+  .key.shifted.f-index  { background: #ec4899; border-color: #ec4899; }
+  .key.shifted .jamo, .key.shifted .qwerty, .key.shifted .shift { color: white; }
   /* Quick color tick on hit — no scale, so the row never shifts */
   .key.hit { animation: hit 0.15s ease; }
   @keyframes hit {
@@ -987,29 +986,38 @@
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--bd);
   }
-  /* Finger bar — mini hand diagram below the keyboard */
+  /* Keyboard + finger bar share a centered wrapper */
+  .kb-wrapper { width: fit-content; margin: 0 auto; }
+
+  /* Finger bar — mini hand diagram below the keyboard.
+     padding-left aligns left hand with the A key (11px row-2 offset).
+     fbar-sep width positions right-hand left edge under the J key. */
   .finger-bar {
     display: flex; align-items: flex-end; justify-content: center;
-    gap: 6px; margin-top: 14px;
+    margin-top: 14px;
   }
   .fbar-hand {
     display: flex; align-items: flex-end; gap: 4px;
     background: var(--l3); border-radius: 10px; padding: 8px 10px 6px;
   }
-  .fbar-sep { width: 18px; }
+  .fbar-sep { width: 25px; flex-shrink: 0; }
+
+  /* Shift / Enter special keys */
+  .key.kb-shift { flex: 0 0 68px; min-width: 68px; max-width: 68px; font-size: 9px; color: var(--tlo); }
+  .key.kb-enter { flex: 0 0 64px; min-width: 64px; max-width: 64px; font-size: 9px; color: var(--tlo); }
   .fbar-f {
     width: 13px; border-radius: 7px 7px 4px 4px;
     background: var(--bdhi);
-    transition: background 0.12s, box-shadow 0.12s, transform 0.12s;
+    transition: transform 0.1s;
   }
   .fbar-f[data-f$="-pinky"]  { height: 20px; }
   .fbar-f[data-f$="-ring"]   { height: 28px; }
   .fbar-f[data-f$="-middle"] { height: 33px; }
   .fbar-f[data-f$="-index"]  { height: 26px; }
-  .fbar-f.active[data-f$="-pinky"]  { background: #a855f7; box-shadow: 0 2px 10px #a855f760; transform: scaleY(1.08); }
-  .fbar-f.active[data-f$="-ring"]   { background: #14b8a6; box-shadow: 0 2px 10px #14b8a660; transform: scaleY(1.08); }
-  .fbar-f.active[data-f$="-middle"] { background: #f59e0b; box-shadow: 0 2px 10px #f59e0b60; transform: scaleY(1.08); }
-  .fbar-f.active[data-f$="-index"]  { background: #ec4899; box-shadow: 0 2px 10px #ec489960; transform: scaleY(1.08); }
+  .fbar-f.active[data-f$="-pinky"]  { background: #a855f7; box-shadow: 0 2px 10px #a855f760; transform: scaleY(1.1); }
+  .fbar-f.active[data-f$="-ring"]   { background: #0ea5e9; box-shadow: 0 2px 10px #0ea5e960; transform: scaleY(1.1); }
+  .fbar-f.active[data-f$="-middle"] { background: #f59e0b; box-shadow: 0 2px 10px #f59e0b60; transform: scaleY(1.1); }
+  .fbar-f.active[data-f$="-index"]  { background: #ec4899; box-shadow: 0 2px 10px #ec489960; transform: scaleY(1.1); }
   @media (max-width: 700px) {
     .keyboard {
       padding: 10px 8px;
@@ -1823,20 +1831,22 @@
                 <span class="kb-legend-swatch"></span> Shift
               </span>
             </div>
-            <div id="kb"></div>
-            <div class="finger-bar" id="fingerBar">
-              <div class="fbar-hand">
-                <div class="fbar-f" data-f="l-pinky"></div>
-                <div class="fbar-f" data-f="l-ring"></div>
-                <div class="fbar-f" data-f="l-middle"></div>
-                <div class="fbar-f" data-f="l-index"></div>
-              </div>
-              <div class="fbar-sep"></div>
-              <div class="fbar-hand">
-                <div class="fbar-f" data-f="r-index"></div>
-                <div class="fbar-f" data-f="r-middle"></div>
-                <div class="fbar-f" data-f="r-ring"></div>
-                <div class="fbar-f" data-f="r-pinky"></div>
+            <div class="kb-wrapper">
+              <div id="kb"></div>
+              <div class="finger-bar" id="fingerBar">
+                <div class="fbar-hand">
+                  <div class="fbar-f" data-f="l-pinky"></div>
+                  <div class="fbar-f" data-f="l-ring"></div>
+                  <div class="fbar-f" data-f="l-middle"></div>
+                  <div class="fbar-f" data-f="l-index"></div>
+                </div>
+                <div class="fbar-sep"></div>
+                <div class="fbar-hand">
+                  <div class="fbar-f" data-f="r-index"></div>
+                  <div class="fbar-f" data-f="r-middle"></div>
+                  <div class="fbar-f" data-f="r-ring"></div>
+                  <div class="fbar-f" data-f="r-pinky"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -2939,13 +2949,21 @@ function recordKeystroke(expectedJamo, actualJamo) {
 // ============================================================
 
 const KB_LAYOUT = [
-  ['q','w','e','r','t','y','u','i','o','p'],
-  ['a','s','d','f','g','h','j','k','l'],
+  ['q','w','e','r','t','y','u','i','o','p','[',']'],
+  ['a','s','d','f','g','h','j','k','l',';',"'"],
   ['z','x','c','v','b','n','m']
 ];
 
 function buildKeyboard() {
   buildKeyboardKeys('both');
+}
+
+function makeSpecialKey(label, dataKey, extraClass) {
+  const key = document.createElement('div');
+  key.className = 'key ' + extraClass;
+  key.dataset.key = dataKey;
+  key.innerHTML = `<div class="jamo" style="font-family:'Inter',system-ui;font-size:9px;color:var(--tlo)">${label}</div>`;
+  return key;
 }
 
 function buildKeyboardKeys(mode) {
@@ -2954,6 +2972,7 @@ function buildKeyboardKeys(mode) {
   KB_LAYOUT.forEach((row, idx) => {
     const rowEl = document.createElement('div');
     rowEl.className = 'kb-row r' + (idx + 1);
+
     row.forEach(k => {
       const key = document.createElement('div');
       const finger = KEY_TO_FINGER[k];
@@ -2976,6 +2995,11 @@ function buildKeyboardKeys(mode) {
       key.innerHTML = html;
       rowEl.appendChild(key);
     });
+
+    // Right Shift after M (row 3), Enter after L (row 2)
+    if (idx === 2) rowEl.appendChild(makeSpecialKey('Shift ⇧', 'rshift', 'kb-shift f-pinky'));
+    if (idx === 1) rowEl.appendChild(makeSpecialKey('Enter ↵', 'enter', 'kb-enter'));
+
     kb.appendChild(rowEl);
   });
   // Mobile-only utility row: Shift, Space, Backspace. Hidden on desktop via CSS,
@@ -3002,29 +3026,36 @@ const KEY_TO_FINGER = {
   u:'r-index', j:'r-index', m:'r-index',
   i:'r-middle',k:'r-middle',
   o:'r-ring',  l:'r-ring',
-  p:'r-pinky',
+  p:'r-pinky', ';':'r-pinky', "'": 'r-pinky',
+  '[':'r-pinky', ']':'r-pinky',
 };
 
 function highlightTargetKey(jamo) {
-  document.querySelectorAll('.key').forEach(k => {
-    k.classList.remove('target', 'shifted');
-  });
-  highlightFingerBar(null);
+  document.querySelectorAll('.key').forEach(k => k.classList.remove('target', 'shifted'));
+  highlightFingerBar();
   if (!jamo) return;
   const map = JAMO_TO_KEY[jamo];
   if (!map) return;
   const keyEl = document.querySelector(`.key[data-key="${map.key}"]`);
-  if (keyEl) {
-    keyEl.classList.add(map.shift ? 'shifted' : 'target');
-    highlightFingerBar(KEY_TO_FINGER[map.key] || null);
+  if (!keyEl) return;
+  keyEl.classList.add(map.shift ? 'shifted' : 'target');
+  const finger = KEY_TO_FINGER[map.key] || null;
+  if (map.shift) {
+    const shiftEl = document.querySelector('.key[data-key="rshift"]');
+    if (shiftEl) shiftEl.classList.add('shifted');
+    highlightFingerBar(finger, 'r-pinky');
+  } else {
+    highlightFingerBar(finger);
   }
 }
 
-function highlightFingerBar(finger) {
+function highlightFingerBar(...fingers) {
   document.querySelectorAll('.fbar-f').forEach(el => el.classList.remove('active'));
-  if (!finger) return;
-  const el = document.querySelector(`.fbar-f[data-f="${finger}"]`);
-  if (el) el.classList.add('active');
+  for (const f of fingers) {
+    if (!f) continue;
+    const el = document.querySelector(`.fbar-f[data-f="${f}"]`);
+    if (el) el.classList.add('active');
+  }
 }
 
 function flashKey(qwertyKey) {
@@ -3582,7 +3613,7 @@ const STATE_COLORS = {
   err:      '#ef4444',
   pending:  '#cbd5e1',
   'f-pinky':  '#a855f7',
-  'f-ring':   '#14b8a6',
+  'f-ring':   '#0ea5e9',
   'f-middle': '#f59e0b',
   'f-index':  '#ec4899',
 };

@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ channel: 'chrome' });
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+const page = await ctx.newPage();
+await page.goto('https://typehangeul.com/', { waitUntil: 'networkidle' });
+await page.waitForTimeout(800);
+const title = await page.title();
+const h1 = await page.locator('h1').first().textContent();
+await page.screenshot({ path: '/tmp/typehangeul-live.png', fullPage: false });
+console.log('title:', JSON.stringify(title));
+console.log('H1:', JSON.stringify(h1));
+console.log('screenshot: /tmp/typehangeul-live.png');
+await browser.close();
