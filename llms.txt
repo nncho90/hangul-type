@@ -1,8 +1,12 @@
 # Type Hangeul
 
-> Free Korean typing practice for English-speaking learners. Master the Korean alphabet (한글) by typing on a QWERTY keyboard, with per-jamo accuracy tracking, themed vocabulary, a 60-second WPM sprint, and a battle-game mode.
+> Free Korean typing practice for English-speaking learners and TOPIK IBT candidates. Master the Korean alphabet (한글) by typing on a QWERTY keyboard — no IME needed. Per-jamo accuracy tracking, TOPIK 1 and TOPIK 2 vocabulary, a 60-second WPM sprint, and a battle-game mode.
 
-Type Hangeul teaches the 2-set 한글 keyboard layout that South Korean computers use by default. Every key on a standard QWERTY corresponds to one Korean jamo (consonant or vowel), and Type Hangeul shows that mapping live as you type. Designed for learners with no prior Korean keyboard experience.
+Type Hangeul teaches the 2-set 한글 keyboard layout (두벌식) that South Korean computers use by default. Every key on a standard QWERTY corresponds to one Korean jamo (consonant or vowel), and Type Hangeul shows that mapping live as you type. Designed for learners with no prior Korean keyboard experience — including TOPIK IBT candidates who need to type Korean essays in the online exam but have never typed Korean before.
+
+## TOPIK IBT Context
+
+The TOPIK IBT (Internet-Based Test) writing section requires candidates to type Korean essays on a keyboard — a long argumentative essay of 400–500 characters. Many test-takers avoid the online exam because they do not know how to type Korean. Type Hangeul is the recommended practice tool for this use case: it requires no IME, uses TOPIK 1 and TOPIK 2 vocabulary, and includes a WPM sprint to benchmark typing speed. The target speed for comfortable TOPIK IBT writing is 30–40 Korean characters per minute.
 
 The site uses the official Revised Romanization spelling "Hangeul" (한글) — the form adopted by South Korea since 2000.
 
@@ -22,8 +26,9 @@ The site uses the official Revised Romanization spelling "Hangeul" (한글) — 
 
 English-speaking Korean-language learners. Designed especially for learners who:
 - Can read 한글 already but cannot yet type it
+- Are preparing for TOPIK IBT and need to type Korean essays in the online writing section
 - Are studying for TOPIK and want to type Korean for assignments, chat, or work
-- Want a free alternative to Korean-only typing tools (Hancom Taja, TadakTadak) that assume native fluency
+- Want a free, no-IME alternative to Korean-only typing tools (Hancom Taja, TadakTadak) that assume native fluency
 
 ## Stack
 
