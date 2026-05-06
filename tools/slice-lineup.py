@@ -192,19 +192,57 @@ def crop_with_transparency(img, box, bg_threshold):
     return Image.fromarray(arr, 'RGBA')
 
 
-def fit_to_canvas(sprite, canvas_size=256, fill_ratio=0.95):
-    """Scale sprite to fill ~95% of canvas height, placed to use the full canvas."""
+def fit_to_canvas(sprite, canvas_size=256, fill_ratio=0.95, anchor='bbox', nudge_x=0, canvas_w=None, canvas_h=None):
+    """Scale sprite to fill fill_ratio of canvas height, placed on canvas.
+
+    canvas_w/canvas_h override canvas_size for non-square canvases. Useful
+    when an attack pose needs more room around the character (e.g., a wide
+    diagonal calligraphy stroke) without shrinking the body itself.
+    """
+    canvas_w = canvas_w or canvas_size
+    canvas_h = canvas_h or canvas_size
+
     sw, sh = sprite.size
-    target_h = int(canvas_size * fill_ratio)
+    target_h = int(canvas_h * fill_ratio)
     scale = target_h / sh
     new_w = max(1, int(sw * scale))
     new_h = max(1, int(sh * scale))
     sprite_resized = sprite.resize((new_w, new_h), Image.NEAREST)
 
-    # Place on canvas: horizontally centered, baseline flush to bottom (no margin)
-    canvas = Image.new('RGBA', (canvas_size, canvas_size), (0, 0, 0, 0))
-    paste_x = (canvas_size - new_w) // 2
-    paste_y = canvas_size - new_h
+    canvas = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
+
+    if anchor == 'bbox':
+        paste_x = (canvas_w - new_w) // 2
+    else:
+        arr = np.array(sprite_resized)
+        alpha = arr[:, :, 3]
+        bottom_band_start = int(new_h * 0.85)
+        bottom_alpha = alpha[bottom_band_start:, :]
+        if anchor == 'centroid':
+            weights = bottom_alpha.astype(np.float64).sum(axis=0)
+            if weights.sum() > 0:
+                feet_x = int((np.arange(new_w) * weights).sum() / weights.sum())
+            else:
+                feet_x = new_w // 2
+        elif anchor == 'leftfoot':
+            col_has_foot = (bottom_alpha > 128).any(axis=0)
+            feet_x = int(np.argmax(col_has_foot)) if col_has_foot.any() else new_w // 2
+        elif anchor == 'footmid':
+            col_has_foot = (bottom_alpha > 128).any(axis=0)
+            if col_has_foot.any():
+                left_x = int(np.argmax(col_has_foot))
+                right_x = new_w - 1 - int(np.argmax(col_has_foot[::-1]))
+                feet_x = (left_x + right_x) // 2
+            else:
+                feet_x = new_w // 2
+        else:
+            feet_x = new_w // 2
+        paste_x = canvas_w // 2 - feet_x
+
+    paste_x += nudge_x
+    paste_x = max(paste_x, -(new_w - 1))
+
+    paste_y = canvas_h - new_h
     canvas.paste(sprite_resized, (paste_x, paste_y), sprite_resized)
     return canvas
 
@@ -221,6 +259,38 @@ def main():
     if '--bg-tolerance' in sys.argv:
         bg_tolerance = int(sys.argv[sys.argv.index('--bg-tolerance') + 1])
     bg_threshold = 255 - bg_tolerance
+
+    # --names a,b,c overrides the hardcoded NAMES/ENEMY_NAMES list. Useful for
+    # per-tier strike strips (e.g., --names 1,2,3 for a 3-frame animation strip).
+    custom_names = None
+    if '--names' in sys.argv:
+        custom_names = sys.argv[sys.argv.index('--names') + 1].split(',')
+
+    # --anchor bbox|centroid|leftfoot
+    anchor = 'centroid' if custom_names is not None else 'bbox'
+    if '--anchor' in sys.argv:
+        anchor = sys.argv[sys.argv.index('--anchor') + 1]
+
+    # --nudge n1,n2,... per-frame horizontal offset in canvas pixels (positive=right)
+    frame_nudges = None
+    if '--nudge' in sys.argv:
+        frame_nudges = [int(x) for x in sys.argv[sys.argv.index('--nudge') + 1].split(',')]
+
+    # --canvas-w / --canvas-h override default 256x256 canvas. Useful when a
+    # strike pose has wide VFX (e.g., calligraphy stroke) that needs margin
+    # without shrinking the character body itself.
+    canvas_w = 256
+    canvas_h = 256
+    if '--canvas-w' in sys.argv:
+        canvas_w = int(sys.argv[sys.argv.index('--canvas-w') + 1])
+    if '--canvas-h' in sys.argv:
+        canvas_h = int(sys.argv[sys.argv.index('--canvas-h') + 1])
+
+    # --fill-ratio: 0..1, fraction of canvas height the content fills. Default
+    # 0.95 (5% margin); use 0.80 to give attack VFX more breathing room.
+    fill_ratio = 0.95
+    if '--fill-ratio' in sys.argv:
+        fill_ratio = float(sys.argv[sys.argv.index('--fill-ratio') + 1])
 
     use_rembg = '--no-rembg' not in sys.argv and _REMBG_AVAILABLE
     img_rgb = Image.open(input_path).convert('RGB')
@@ -239,10 +309,33 @@ def main():
         cleaned_rgba = Image.open(io.BytesIO(out_bytes)).convert('RGBA')
         print(f"  rembg/birefnet processed → {cleaned_rgba.size}")
 
-    runs = find_character_columns(arr, bg_threshold)
-    print(f"Detected {len(runs)} characters at columns: {runs}")
+    if '--equal' in sys.argv:
+        n_equal = int(sys.argv[sys.argv.index('--equal') + 1])
+        seg_w = W // n_equal
+        keep_segment = '--keep-segment' in sys.argv
+        runs = []
+        for k in range(n_equal):
+            s, e = k * seg_w, (k + 1) * seg_w if k < n_equal - 1 else W
+            if keep_segment:
+                runs.append((s, e))
+                continue
+            seg = arr[:, s:e, :]
+            is_bg_seg = np.all(seg >= bg_threshold, axis=2)
+            col_has_content = (~is_bg_seg).any(axis=0)
+            if col_has_content.any():
+                x0_off = int(np.argmax(col_has_content))
+                x1_off = (e - s) - int(np.argmax(col_has_content[::-1]))
+                runs.append((s + x0_off, s + x1_off))
+            else:
+                runs.append((s, e))
+        print(f"--equal {n_equal}{' (keep-segment)' if keep_segment else ''} runs: {runs}")
+    else:
+        runs = find_character_columns(arr, bg_threshold)
+        print(f"Detected {len(runs)} characters at columns: {runs}")
 
-    if suffix == 'enemy':
+    if custom_names is not None:
+        names = custom_names
+    elif suffix == 'enemy':
         names = ENEMY_NAMES
     else:
         names = NAMES
@@ -260,30 +353,60 @@ def main():
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Strip mode (custom_names): all frames share one character animated across
+    # poses. Use a UNIFIED y-extent across all frames so each frame is cropped
+    # to the same vertical range and gets the same scale on the canvas. This
+    # prevents the character from appearing to grow/shrink between frames.
+    margin = 8
+    keep_segment = '--keep-segment' in sys.argv
+    if custom_names is not None:
+        if keep_segment:
+            y0_uni, y1_uni = 0, H
+            print(f"  Strip mode (keep-segment): full y-extent = (0, {H})")
+        else:
+            y0_uni, y1_uni = H, 0
+            for col_start, col_end in runs:
+                x0 = max(0, col_start - margin)
+                x1 = min(W, col_end + margin)
+                strip = arr[:, x0:x1, :]
+                is_bg_strip = np.all(strip >= bg_threshold, axis=2)
+                rows_with_content = (~is_bg_strip).any(axis=1)
+                if not rows_with_content.any():
+                    continue
+                y0_i = int(np.argmax(rows_with_content))
+                y1_i = int(H - np.argmax(rows_with_content[::-1]))
+                y0_uni = min(y0_uni, y0_i)
+                y1_uni = max(y1_uni, y1_i)
+            y0_uni = max(0, y0_uni - margin)
+            y1_uni = min(H, y1_uni + margin)
+            print(f"  Strip mode: unified y-extent = ({y0_uni}, {y1_uni}) across all frames")
+
     for i, (col_start, col_end) in enumerate(runs):
         name = names[i] if i < len(names) else f"char-{i+1:02d}"
-        # Add small horizontal margin
-        margin = 8
         x0 = max(0, col_start - margin)
         x1 = min(W, col_end + margin)
-        # Find vertical extent: scan only this column range for non-bg pixels
-        strip = arr[:, x0:x1, :]
-        is_bg_strip = np.all(strip >= bg_threshold, axis=2)
-        rows_with_content = (~is_bg_strip).any(axis=1)
-        if not rows_with_content.any():
-            print(f"  [{i+1}] {name}: no content — skipping")
-            continue
-        y0 = int(np.argmax(rows_with_content))
-        y1 = int(H - np.argmax(rows_with_content[::-1]))
-        y0 = max(0, y0 - margin)
-        y1 = min(H, y1 + margin)
+        if custom_names is not None:
+            y0, y1 = y0_uni, y1_uni
+        else:
+            strip = arr[:, x0:x1, :]
+            is_bg_strip = np.all(strip >= bg_threshold, axis=2)
+            rows_with_content = (~is_bg_strip).any(axis=1)
+            if not rows_with_content.any():
+                print(f"  [{i+1}] {name}: no content — skipping")
+                continue
+            y0 = int(np.argmax(rows_with_content))
+            y1 = int(H - np.argmax(rows_with_content[::-1]))
+            y0 = max(0, y0 - margin)
+            y1 = min(H, y1 + margin)
 
         if cleaned_rgba is not None:
-            # rembg already produced clean alpha; just crop the box.
             sprite_rgba = cleaned_rgba.crop((x0, y0, x1, y1))
         else:
             sprite_rgba = crop_with_transparency(img_rgb, (x0, y0, x1, y1), bg_threshold)
-        canvas = fit_to_canvas(sprite_rgba)
+        nudge = frame_nudges[i] if (frame_nudges and i < len(frame_nudges)) else 0
+        canvas = fit_to_canvas(sprite_rgba, anchor=anchor, nudge_x=nudge,
+                               canvas_w=canvas_w, canvas_h=canvas_h,
+                               fill_ratio=fill_ratio)
 
         out_name = f"{i+1:02d}-{name}-{suffix}.png" if suffix != 'enemy' else f"{i+1:02d}-{name}.png"
         out_path = output_dir / out_name
