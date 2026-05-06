@@ -24,7 +24,7 @@ print(f"Manifest has {len(manifest)} words. Rendering {len(to_render)} new sourc
 for i, ko in enumerate(to_render, 1):
     body = json.dumps({"ko": ko}).encode()
     req = urllib.request.Request(
-        "http://localhost:8765/api/redo",
+        "http://127.0.0.1:8765/api/redo",
         data=body,
         headers={"Content-Type": "application/json"},
     )

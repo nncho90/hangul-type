@@ -3176,6 +3176,76 @@ function playLevelUp() {
   });
 }
 
+// Korean pronunciation audio. Battle uses the same manifest and fallback path:
+// pre-rendered MP3 first, then the browser's Korean speech voice if needed.
+let pronunciationMap = null;
+const pronunciationCache = new Map();
+let koreanVoice = undefined;
+const ttsSupported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+
+fetch('audio/manifest.json')
+  .then(r => r.ok ? r.json() : null)
+  .then(m => { pronunciationMap = m || {}; })
+  .catch(() => { pronunciationMap = {}; });
+
+function findKoreanVoice() {
+  if (koreanVoice !== undefined) return koreanVoice;
+  if (!ttsSupported) { koreanVoice = false; return false; }
+  const voices = speechSynthesis.getVoices() || [];
+  const pick = voices.find(v => /^ko[-_]?KR$/i.test(v.lang)) ||
+               voices.find(v => /korean/i.test(v.name)) ||
+               voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ko')) ||
+               null;
+  koreanVoice = pick || false;
+  return koreanVoice;
+}
+
+function speakKoreanWord(text) {
+  if (!state || !state.audioOn || !text) return;
+  const url = pronunciationMap && pronunciationMap[text];
+  if (url) {
+    let audio = pronunciationCache.get(text);
+    if (!audio) {
+      audio = new Audio(url);
+      audio.preload = 'auto';
+      pronunciationCache.set(text, audio);
+    }
+    try {
+      audio.currentTime = 0;
+      audio.volume = 0.8;
+      audio.playbackRate = 1;
+      audio.play().catch(() => {});
+      return;
+    } catch (e) {}
+  }
+
+  if (!ttsSupported) return;
+  const voice = findKoreanVoice();
+  if (!voice) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = voice;
+  utterance.lang = voice.lang || 'ko-KR';
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.volume = 0.8;
+  speechSynthesis.speak(utterance);
+}
+
+function cancelPronunciation() {
+  for (const audio of pronunciationCache.values()) {
+    try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+  }
+  if (ttsSupported) speechSynthesis.cancel();
+}
+
+if (ttsSupported) {
+  speechSynthesis.addEventListener('voiceschanged', () => {
+    koreanVoice = undefined;
+    findKoreanVoice();
+  });
+  findKoreanVoice();
+}
+
 // ============================================================
 // Gamification: combo, juice, streak/league rendering, daily quest, records
 // ============================================================
@@ -4420,6 +4490,7 @@ function afterCorrectKeystroke() {
       // Word-completion juice (kept lightweight; XP/level system removed)
       const wordEl = document.querySelector('#targetWord');
       confettiBurst(wordEl, 8);
+      speakKoreanWord(target);
       playWordDing();
       renderStreak();
       setDiag('ok', `<span class="label">Nice.</span> <span class="ko">${target}</span> done.`);
@@ -4779,6 +4850,7 @@ function boot() {
     closeMobileMenu();
     state.audioOn = !state.audioOn;
     saveAudio();
+    if (!state.audioOn) cancelPronunciation();
     syncAudioBtn();
     if (state.audioOn) {
       ensureAudio();
