@@ -588,7 +588,7 @@
     .subtopic-tracker {
       grid-template-columns: 1fr;
     }
-    .target {
+    .practice-content > .target {
       padding: 22px 0 18px;
     }
     .target .word { font-size: 32px; gap: 10px; }
@@ -753,7 +753,7 @@
   }
 
   /* Practice card */
-  .target {
+  .practice-content > .target {
     text-align: center;
     padding: 36px 0 24px;
   }
@@ -771,20 +771,19 @@
   }
   .target .romanization:empty { display: none; }
 
-  /* Training ground — the same Hwarang character who fights in Battle Mode,
-     shown here training between rounds. Mirrors the level/tier of game.html so
-     practice and battle feel like one continuous progression. */
+  /* Practice avatar — same progression sprite as Battle, presented as a quiet
+     profile element so the practice page keeps its cleaner product UI. */
   .card-head-left { display: flex; align-items: center; gap: 14px; }
   .training-ground {
     position: relative;
     display: flex; flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 14px 10px 10px;
-    background: linear-gradient(180deg, #fde68a 0%, #fde68a 65%, #d4a373 65%, #d4a373 100%);
-    border: 2px solid var(--thi);
-    border-radius: 4px;
-    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.18);
+    gap: 10px;
+    padding: 16px 12px 14px;
+    background: linear-gradient(180deg, var(--l2) 0%, var(--l1) 100%);
+    border: 1px solid var(--bd);
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
     margin-bottom: 14px;
     user-select: none;
     overflow: hidden;
@@ -792,51 +791,45 @@
   }
   .training-ground::before {
     content: ''; position: absolute;
-    left: 0; right: 0; bottom: 36px;
-    height: 1px;
-    background: rgba(120, 53, 15, 0.22);
-  }
-  .training-ground::after {
-    content: '🏮'; position: absolute;
-    top: 4px; right: 8px;
-    font-size: 14px; opacity: 0.8;
+    left: 50%;
+    bottom: 58px;
+    width: 132px;
+    height: 18px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.08);
+    transform: translateX(-50%);
   }
   .training-ground .tg-hero {
     position: relative;
-    width: 96px; height: 96px;
+    width: 148px; height: 142px;
     display: flex; align-items: flex-end; justify-content: center;
     animation: tg-idle 2.6s ease-in-out infinite;
     z-index: 1;
   }
   .training-ground .tg-hero img {
-    width: 88px; height: 88px;
+    width: 138px; height: 138px;
     object-fit: contain;
-    filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.25));
-  }
-  .training-ground .tg-equip {
-    position: absolute;
-    right: -2px; bottom: 4px;
-    font-size: 22px;
-    filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.3));
+    filter: drop-shadow(0 8px 14px rgba(15, 23, 42, 0.14));
   }
   .training-ground .tg-meta {
     display: flex; flex-direction: column; align-items: center;
-    gap: 1px; z-index: 1;
+    gap: 3px; z-index: 1;
   }
   .training-ground .tg-tier {
-    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
-    font-size: 13px;
-    color: #78350f;
-    letter-spacing: 0.04em;
+    font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--thi);
+    letter-spacing: 0;
     text-align: center;
-    line-height: 1.1;
+    line-height: 1.25;
   }
   .training-ground .tg-level {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
-    color: #92400e;
-    letter-spacing: 0.12em;
+    color: var(--blue);
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
   .training-ground.bump .tg-hero { animation: tg-bump 0.34s ease-out; }
@@ -937,6 +930,7 @@
     transition: background 0.1s, border-color 0.1s, color 0.1s;
     position: relative;
     box-sizing: border-box;
+    transform: none;
   }
   .key .qwerty {
     font-family: 'JetBrains Mono', monospace;
@@ -968,6 +962,7 @@
   .key.shifted.f-middle { background: #f59e0b; border-color: #f59e0b; }
   .key.shifted.f-index  { background: #ec4899; border-color: #ec4899; }
   .key.shifted .jamo, .key.shifted .qwerty, .key.shifted .shift { color: white; }
+  .key.target, .key.shifted, .key.hit { transform: none; }
   /* Quick color tick on hit — no scale, so the row never shifts */
   .key.hit { animation: hit 0.15s ease; }
   @keyframes hit {
@@ -991,7 +986,7 @@
   .finger-bar {
     display: flex; align-items: flex-end; justify-content: flex-start;
     margin-top: 14px;
-    padding-left: 180px;
+    padding-left: 184.5px;
     box-sizing: border-box;
   }
   .fbar-hand {
@@ -1008,9 +1003,11 @@
     color: var(--tlo);
   }
   .key.kb-tab { flex: 0 0 58px; min-width: 58px; max-width: 58px; }
-  .key.kb-caps { flex: 0 0 74px; min-width: 74px; max-width: 74px; }
-  .key.kb-shift { flex: 0 0 80px; min-width: 80px; max-width: 80px; }
-  .key.kb-enter { flex: 0 0 72px; min-width: 72px; max-width: 72px; }
+  .key.kb-caps { flex: 0 0 78.5px; min-width: 78.5px; max-width: 78.5px; }
+  .key[data-key="m"] { flex: 0 0 49px; width: 49px; min-width: 49px; max-width: 49px; }
+  .key.kb-shift-left,
+  .key.kb-shift-right { flex: 0 0 100.5px; min-width: 100.5px; max-width: 100.5px; }
+  .key.kb-enter { flex: 0 0 78.5px; min-width: 78.5px; max-width: 78.5px; }
   .key.kb-backslash { flex: 0 0 50px; min-width: 50px; max-width: 50px; }
   .fbar-f {
     width: 13px; border-radius: 7px 7px 4px 4px;
@@ -1021,10 +1018,10 @@
   .fbar-f[data-f$="-ring"]   { height: 28px; }
   .fbar-f[data-f$="-middle"] { height: 33px; }
   .fbar-f[data-f$="-index"]  { height: 26px; }
-  .fbar-f.active[data-f$="-pinky"]  { background: #a855f7; box-shadow: 0 2px 10px #a855f760; transform: scaleY(1.1); }
-  .fbar-f.active[data-f$="-ring"]   { background: #0ea5e9; box-shadow: 0 2px 10px #0ea5e960; transform: scaleY(1.1); }
-  .fbar-f.active[data-f$="-middle"] { background: #f59e0b; box-shadow: 0 2px 10px #f59e0b60; transform: scaleY(1.1); }
-  .fbar-f.active[data-f$="-index"]  { background: #ec4899; box-shadow: 0 2px 10px #ec489960; transform: scaleY(1.1); }
+  .fbar-f.active[data-f$="-pinky"]  { background: #a855f7; box-shadow: 0 2px 10px #a855f760; transform: none; }
+  .fbar-f.active[data-f$="-ring"]   { background: #0ea5e9; box-shadow: 0 2px 10px #0ea5e960; transform: none; }
+  .fbar-f.active[data-f$="-middle"] { background: #f59e0b; box-shadow: 0 2px 10px #f59e0b60; transform: none; }
+  .fbar-f.active[data-f$="-index"]  { background: #ec4899; box-shadow: 0 2px 10px #ec489960; transform: none; }
   @media (max-width: 700px) {
     .keyboard {
       padding: 10px 8px;
@@ -1056,6 +1053,12 @@
       min-height: 44px;
       max-height: 44px;
       border-radius: 5px;
+    }
+    .key[data-key="m"] {
+      flex: 0 1 32px;
+      width: auto;
+      min-width: 0;
+      max-width: none;
     }
     .key .jamo { font-size: 15px; }
     .key .qwerty { font-size: 8px; }
@@ -1106,6 +1109,12 @@
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+    }
+    .key[data-key="m"] {
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+      max-width: none;
     }
     .key .jamo { font-size: 17px; font-weight: 600; }
     .key .qwerty { font-size: 9px; margin-top: 1px; }
@@ -1195,7 +1204,12 @@
 
   /* Heatmap */
   /* Per-jamo accuracy card: collapsible. Hidden by default. */
-  .jamo-card { padding: 18px 28px; }
+  .jamo-card {
+    width: 100%;
+    max-width: 701px;
+    margin: 14px auto 0;
+    padding: 16px 20px;
+  }
   .jamo-toggle {
     display: flex;
     align-items: center;
@@ -1801,10 +1815,9 @@
       <div class="practice-grid">
         <aside class="practice-side" id="practiceSide" aria-label="Vocabulary list">
           <div class="side-head">
-            <div class="training-ground" id="trainingGround" title="Your battle hero, training. Click ⚔️ Battle to fight." onclick="(document.getElementById('battleLink')||{}).click&&document.getElementById('battleLink').click()">
+            <div class="training-ground" id="trainingGround" title="Your practice progress. Click Battle to play." onclick="(document.getElementById('battleLink')||{}).click&&document.getElementById('battleLink').click()">
               <div class="tg-hero">
-                <img id="tgHeroImg" src="sprites/player/01-baegui-front.png" alt="Battle hero" onerror="this.outerHTML='&lt;span style=&quot;font-size:64px&quot;&gt;🥋&lt;/span&gt;'" />
-                <span class="tg-equip" id="tgEquip"></span>
+                <img id="tgHeroImg" src="sprites/player/01-baegui-front.png" alt="Practice progress avatar" onerror="this.outerHTML='&lt;span style=&quot;font-size:96px&quot;&gt;🥋&lt;/span&gt;'" />
               </div>
               <div class="tg-meta">
                 <span class="tg-tier" id="tgTier">무명 Nameless</span>
@@ -1863,6 +1876,23 @@
             </div>
           </div>
           <div class="kb-mobile-hint">Tap the word area and type on your phone keyboard.</div>
+
+          <!-- Per-jamo accuracy heatmap — collapsed by default -->
+          <section class="card jamo-card collapsed" id="jamoCard">
+            <button class="jamo-toggle" id="btnJamoToggle" aria-expanded="false">
+              <span class="jamo-toggle-label">Per-jamo accuracy</span>
+              <span class="jamo-toggle-caret">▾</span>
+            </button>
+            <div class="jamo-body">
+              <div class="csub">Where you struggle. Drilled words automatically target your weakest jamo.</div>
+              <div id="jamoGrid"></div>
+              <div class="legend">
+                <span><span class="dot weak"></span>&lt; 70%</span>
+                <span><span class="dot med"></span>70-90%</span>
+                <span><span class="dot good"></span>90%+</span>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -1874,36 +1904,14 @@
 
     </section>
 
-    <!-- Per-jamo accuracy heatmap — collapsed by default -->
-    <section class="card jamo-card collapsed" id="jamoCard">
-      <button class="jamo-toggle" id="btnJamoToggle" aria-expanded="false">
-        <span class="jamo-toggle-label">Per-jamo accuracy</span>
-        <span class="jamo-toggle-caret">▾</span>
-      </button>
-      <div class="jamo-body">
-        <div class="csub">Where you struggle. Drilled words automatically target your weakest jamo.</div>
-        <div id="jamoGrid"></div>
-        <div class="legend">
-          <span><span class="dot weak"></span>&lt; 70%</span>
-          <span><span class="dot med"></span>70–90%</span>
-          <span><span class="dot good"></span>90%+</span>
-        </div>
-      </div>
-    </section>
-
   </main>
 
   <div class="help">
-    Press <kbd>Esc</kbd> to skip · <kbd>Tab</kbd> to peek at next word · Type with QWERTY, no IME needed.
+    Press <kbd>Esc</kbd> to skip · Type with QWERTY, no IME needed.
   </div>
 
   <footer class="site-footer">
-    <a class="bmc-link" href="https://buymeacoffee.com/typehangeul" target="_blank" rel="noopener" data-event-name="bmc-click">☕ Buy me a coffee — keep Type Hangeul free</a>
     <div class="site-footer-meta">
-      <a href="game.html">⚔️ Battle Mode</a>
-      <span aria-hidden="true">·</span>
-      <a href="https://github.com/nncho90/hangul-type" target="_blank" rel="noopener">GitHub</a>
-      <span aria-hidden="true">·</span>
       <span>© Type Hangeul</span>
     </div>
   </footer>
@@ -2972,12 +2980,12 @@ const KB_LAYOUT = [
     { label: 'Enter ↵', key: 'enter', className: 'kb-enter kb-edge-right' }
   ],
   [
-    { label: 'Shift ⇧', key: 'lshift', className: 'kb-shift kb-edge-left f-pinky' },
+    { label: 'Shift ⇧', key: 'lshift', className: 'kb-shift-left kb-edge-left f-pinky' },
     'z','x','c','v','b','n','m',
     { label: ',', key: ',', className: 'kb-edge-right f-middle' },
     { label: '.', key: '.', className: 'kb-edge-right f-ring' },
     { label: '/', key: '/', className: 'kb-edge-right f-pinky' },
-    { label: 'Shift ⇧', key: 'rshift', className: 'kb-shift kb-edge-right f-pinky' }
+    { label: 'Shift ⇧', key: 'rshift', className: 'kb-shift-right kb-edge-right f-pinky' }
   ]
 ];
 
@@ -3502,23 +3510,21 @@ function renderRomanization(koWord) {
 }
 
 // ============================================================
-// Training ground — same Hwarang character who fights in Battle Mode, rendered
-// here to make the practice/battle progression feel continuous. Tier mirrors
-// the PLAYER_SPRITES table in game.html (also identical to BATTLE_SPRITES below
-// but with the equip emoji preserved).
+// Practice avatar — same Hwarang character who fights in Battle Mode, rendered
+// as a quieter progress marker in the practice sidebar.
 // ============================================================
 // 7 player tiers mapped to Joseon-era Korean social hierarchy. Mirrors
 // PLAYER_SPRITES in game.html so the practice ↔ battle progression feels
-// continuous. Each tier carries a front-view sprite (used in this training-
-// ground panel) — the back-view counterpart shows up in battle.
+// continuous. Each tier carries a front-view sprite for the practice panel;
+// the back-view counterpart shows up in battle.
 const PRACTICE_HERO_SPRITES = [
-  { lv: 1,  tier: 1, label: '백의 Commoner',     equip: '',    spriteFront: 'player/01-baegui-front' },
-  { lv: 5,  tier: 2, label: '나무꾼 Woodcutter', equip: '🪓',  spriteFront: 'player/02-namukkun-front' },
-  { lv: 10, tier: 3, label: '선비 Scholar',      equip: '📜',  spriteFront: 'player/03-seonbi-front' },
-  { lv: 16, tier: 4, label: '양반 Yangban',     equip: '🖌️', spriteFront: 'player/04-yangban-front' },
-  { lv: 23, tier: 5, label: '무관 Officer',      equip: '⚔️',  spriteFront: 'player/05-mugwan-front' },
-  { lv: 30, tier: 6, label: '장군 General',      equip: '🏹',  spriteFront: 'player/06-janggun-front' },
-  { lv: 40, tier: 7, label: '대왕 Great King',   equip: '👑',  spriteFront: 'player/07-daewang-front' }
+  { lv: 1,  tier: 1, label: '백의 Commoner',     spriteFront: 'player/01-baegui-front' },
+  { lv: 5,  tier: 2, label: '나무꾼 Woodcutter', spriteFront: 'player/02-namukkun-front' },
+  { lv: 10, tier: 3, label: '선비 Scholar',      spriteFront: 'player/03-seonbi-front' },
+  { lv: 16, tier: 4, label: '양반 Yangban',      spriteFront: 'player/04-yangban-front' },
+  { lv: 23, tier: 5, label: '무관 Officer',      spriteFront: 'player/05-mugwan-front' },
+  { lv: 30, tier: 6, label: '장군 General',      spriteFront: 'player/06-janggun-front' },
+  { lv: 40, tier: 7, label: '대왕 Great King',   spriteFront: 'player/07-daewang-front' }
 ];
 
 function practiceHeroForXp(xp) {
@@ -3531,7 +3537,7 @@ function practiceHeroForXp(xp) {
   }
   let pick = PRACTICE_HERO_SPRITES[0];
   for (const p of PRACTICE_HERO_SPRITES) if (lvl >= p.lv) pick = p;
-  return { lvl, label: pick.label, equip: pick.equip, spriteFront: pick.spriteFront };
+  return { lvl, label: pick.label, spriteFront: pick.spriteFront };
 }
 
 function renderTrainingGround(opts) {
@@ -3541,11 +3547,9 @@ function renderTrainingGround(opts) {
   const hero = practiceHeroForXp(xp);
   const tierEl  = document.getElementById('tgTier');
   const levelEl = document.getElementById('tgLevel');
-  const equipEl = document.getElementById('tgEquip');
   const heroImg = document.getElementById('tgHeroImg');
   if (tierEl)  tierEl.textContent  = hero.label;
   if (levelEl) levelEl.textContent = 'LV.' + hero.lvl;
-  if (equipEl) equipEl.textContent = hero.equip;
   if (heroImg && hero.spriteFront) {
     const newSrc = `sprites/${hero.spriteFront}.png`;
     if (heroImg.getAttribute('src') !== newSrc) heroImg.setAttribute('src', newSrc);
@@ -4715,8 +4719,6 @@ function attachInput() {
     if (e.key === 'Escape') { e.preventDefault(); loadWord(pickNextWordIdx(state.wordIdx)); return; }
     if (e.key === 'Tab') {
       e.preventDefault();
-      const next = state.activeWords[(state.wordIdx + 1) % state.activeWords.length];
-      setDiag('tip', `<span class="label">Next up:</span> <span class="ko">${next.ko}</span> (${next.en})`);
       return;
     }
     if (e.key === 'Backspace') {
