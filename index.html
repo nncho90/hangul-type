@@ -24,8 +24,9 @@
 <meta name="twitter:title" content="Type Hangeul · Korean Typing Practice for TOPIK IBT">
 <meta name="twitter:description" content="Free Korean typing practice built for TOPIK IBT. TOPIK 1 &amp; 2 vocabulary, no IME needed, per-jamo accuracy heatmap, and a 60-second WPM sprint.">
 <meta name="twitter:image" content="https://typehangeul.com/og-image.png">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="1024x1024" href="/logo.png">
 <link rel="icon" type="image/svg+xml" href="/logo.svg">
-<link rel="alternate icon" type="image/png" href="/logo.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Type Hangeul","url":"https://typehangeul.com/","applicationCategory":"EducationalApplication","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Free Korean typing practice on a QWERTY keyboard with TOPIK 1 and TOPIK 2 vocabulary, per-jamo accuracy tracking, and a 60-second WPM sprint. Designed for TOPIK IBT candidates who need to type Korean essays online.","image":"https://typehangeul.com/og-image.png","logo":"https://typehangeul.com/logo.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"keywords":"TOPIK IBT typing, TOPIK online exam, Korean keyboard practice, learn to type Korean, TOPIK 2 writing"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does the TOPIK online exam require typing in Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. The TOPIK IBT (Internet-Based Test) writing section requires candidates to type Korean characters directly into a text field. The long essay (Question 53/54) requires 400–500 characters typed in Korean. There is no handwriting or pen-and-paper component in the online format."}},{"@type":"Question","name":"How fast do I need to type Korean for TOPIK IBT?","acceptedAnswer":{"@type":"Answer","text":"Aim for at least 30–40 Korean characters per minute to write comfortably within the time limit. Type Hangeul's 60-second WPM sprint uses TOPIK-level vocabulary so you can benchmark your speed before exam day."}},{"@type":"Question","name":"How do I type Korean on a QWERTY keyboard for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"South Korea uses the 2-set (두벌식) keyboard layout, where each QWERTY key maps to one Korean jamo (consonant or vowel). Type Hangeul shows the full key map live as you practice, and its built-in composition engine means no IME installation is required. Just open the site and start typing."}},{"@type":"Question","name":"How long does it take to learn Korean typing for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"Most learners who can already read Hangeul reach a functional typing speed within 5–10 hours of deliberate practice. The 2-set layout has 24 jamo across 24 keys, so the learning curve is shorter than it appears."}},{"@type":"Question","name":"Can I practice TOPIK 2 vocabulary while learning to type Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. Type Hangeul includes separate word lists for TOPIK Level 1 and TOPIK Level 2, covering verbs, adjectives, nouns, and phrases. Select TOPIK 2 from the topic panel and the spaced-repetition system drills the most relevant vocabulary for the intermediate exam level."}}]}</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
@@ -515,19 +516,22 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    border-radius: 16px;
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    color: var(--tmd);
+    padding: 11px 20px;
+    min-height: 46px;
+    border-radius: 13px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid var(--bdhi);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+    color: var(--thi);
     text-decoration: none;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     transition: all 0.15s;
   }
   .battle-link:hover {
     border-color: var(--bdhi);
     color: var(--thi);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
   }
   .battle-link .battle-icon { font-size: 14px; line-height: 1; }
   .battle-link .battle-text { line-height: 1; }
@@ -568,6 +572,26 @@
     margin: 0 auto;
     width: 100%;
   }
+  .practice-content > .topics {
+    margin: 0 0 14px;
+    padding-bottom: 0;
+    border-bottom: 0;
+    gap: 10px;
+  }
+  .practice-content > .topics .topics-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .practice-content > .topics .topic-pill.big {
+    flex: 1 1 180px;
+    width: auto;
+    display: inline-flex;
+  }
+  .practice-content > .topics .subtopic-tracker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
   @media (max-width: 900px) {
     .practice-grid {
       grid-template-columns: 1fr;
@@ -575,6 +599,9 @@
     }
     .practice-content {
       max-width: none;
+    }
+    .practice-content > .topics .subtopic-tracker {
+      grid-template-columns: 1fr;
     }
     .practice-side {
       grid-column: auto;
@@ -601,15 +628,15 @@
   .practice-side {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     grid-column: 2;
     grid-row: 1;
     padding-left: 14px;
     border-left: 1px dashed var(--bd);
     /* De-emphasized: smaller, muted, hover-to-focus */
-    font-size: 11px;
+    font-size: 12px;
     color: var(--tlo);
-    opacity: 0.7;
+    opacity: 0.78;
     transition: opacity 0.2s;
   }
   .practice-side:hover { opacity: 1; }
@@ -675,10 +702,12 @@
     gap: 8px;
   }
   .practice-side .side-footer {
-    margin-top: auto;
-    padding-top: 10px;
-    border-top: 1px dashed var(--bd);
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
     position: relative;
+    display: flex;
+    justify-content: flex-end;
   }
   .icon-btn {
     background: var(--l1);
@@ -779,12 +808,12 @@
     display: flex; flex-direction: column;
     align-items: center;
     gap: 10px;
-    padding: 16px 12px 14px;
+    padding: 14px 12px 12px;
     background: linear-gradient(180deg, var(--l2) 0%, var(--l1) 100%);
     border: 1px solid var(--bd);
     border-radius: 12px;
     box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     user-select: none;
     overflow: hidden;
     cursor: pointer;
@@ -801,13 +830,13 @@
   }
   .training-ground .tg-hero {
     position: relative;
-    width: 148px; height: 142px;
+    width: 136px; height: 132px;
     display: flex; align-items: flex-end; justify-content: center;
     animation: tg-idle 2.6s ease-in-out infinite;
     z-index: 1;
   }
   .training-ground .tg-hero img {
-    width: 138px; height: 138px;
+    width: 124px; height: 124px;
     object-fit: contain;
     filter: drop-shadow(0 8px 14px rgba(15, 23, 42, 0.14));
   }
@@ -1701,43 +1730,57 @@
 
   /* SEO content section — informational text for search engines and curious users */
   .seo-section {
-    max-width: 720px;
-    margin: 0 auto 48px;
-    padding: 0 16px;
+    max-width: 1040px;
+    margin: 42px auto 56px;
+    padding: 24px 20px 28px;
     color: var(--tmd);
     font-size: 13px;
     line-height: 1.7;
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92));
+    border-top: 1px solid var(--bd);
+    border-bottom: 1px solid var(--bd);
   }
   .seo-section h2 {
     font-size: 18px;
     font-weight: 700;
     color: var(--thi);
-    margin: 0 0 12px;
-    padding-top: 32px;
-    border-top: 1px solid var(--bd);
+    margin: 0 0 10px;
   }
-  .seo-section h3 {
+  .seo-section p { margin: 0; }
+  .seo-intro {
+    max-width: 760px;
+    margin-bottom: 18px;
+  }
+  .seo-grid, .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .seo-card, .faq-card {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  }
+  .seo-card h3, .faq-card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--thi);
+  }
+  .seo-card p, .faq-card p { margin: 0; }
+  .faq-title {
+    margin: 24px 0 12px;
     font-size: 14px;
     font-weight: 700;
     color: var(--thi);
-    margin: 20px 0 6px;
   }
-  .seo-section p { margin: 0 0 10px; }
-  .seo-section dl { margin: 0; }
-  .seo-section dt {
-    font-weight: 700;
-    color: var(--thi);
-    margin-top: 14px;
-    font-size: 13px;
-  }
-  .seo-section dd {
-    margin: 4px 0 0 0;
-    padding-left: 12px;
-    border-left: 2px solid var(--bd);
-  }
+  .faq-grid { margin-top: 0; }
   @media (max-width: 700px) {
-    .seo-section { font-size: 13px; }
+    .seo-section { font-size: 13px; padding: 20px 16px 24px; }
     .seo-section h2 { font-size: 16px; }
+    .seo-grid, .faq-grid { grid-template-columns: 1fr; }
   }
 
   /* Hidden input (mobile keyboard fallback) */
@@ -1826,8 +1869,6 @@
             </div>
           </div>
 
-          <div class="topics" id="topics"></div>
-
           <div class="side-footer">
             <div class="settings-wrap" id="settingsWrap">
               <button class="icon-btn" id="btnSettings" title="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
@@ -1842,6 +1883,7 @@
 
         <div class="practice-content">
           <button id="mobileVocabBtn" class="mobile-vocab-toggle" type="button" aria-expanded="false" aria-controls="practiceSide">Vocab list</button>
+          <div class="topics" id="topics"></div>
           <div class="target">
             <div class="gloss" id="gloss">hello</div>
             <div class="word" id="targetWord">안녕</div>
@@ -1921,41 +1963,57 @@
   <div id="recent" hidden></div>
 
   <section class="seo-section" aria-label="About Korean typing for TOPIK IBT">
-    <h2>Korean Typing Practice for the TOPIK IBT Online Exam</h2>
-    <p>The TOPIK IBT (Internet-Based Test) requires candidates to type Korean essays directly on a keyboard. The writing section includes a short sentence-completion task and a long argumentative essay of 400–500 characters. If you have never typed Korean before, the online exam can feel daunting, but a few hours of deliberate practice is enough to reach a comfortable speed.</p>
+    <div class="seo-intro">
+      <h2>Korean Typing Practice for the TOPIK IBT Online Exam</h2>
+      <p>The TOPIK IBT (Internet-Based Test) requires candidates to type Korean essays directly on a keyboard. The writing section includes a short sentence-completion task and a long argumentative essay of 400–500 characters. If you have never typed Korean before, the online exam can feel daunting, but a few hours of deliberate practice is enough to reach a comfortable speed.</p>
+    </div>
 
-    <h3>Why Many TOPIK Takers Avoid the Online Exam</h3>
-    <p>Many TOPIK II candidates register for the paper-based test (PBT) specifically because they do not know how to type Korean on a QWERTY keyboard. Handwriting feels safer when you have never practiced Korean keyboard input. But the IBT offers faster results (2–3 weeks instead of 5) and the ability to edit and revise your essay on screen. Those are advantages worth learning to type for.</p>
+    <div class="seo-grid">
+      <article class="seo-card">
+        <h3>Why Many TOPIK Takers Avoid the Online Exam</h3>
+        <p>Many TOPIK II candidates register for the paper-based test (PBT) specifically because they do not know how to type Korean on a QWERTY keyboard. Handwriting feels safer when you have never practiced Korean keyboard input. But the IBT offers faster results (2–3 weeks instead of 5) and the ability to edit and revise your essay on screen. Those are advantages worth learning to type for.</p>
+      </article>
+      <article class="seo-card">
+        <h3>What Typing Speed Do You Need for TOPIK IBT?</h3>
+        <p>Aim for at least 30–40 Korean characters per minute to write comfortably within the time limit. Type Hangeul's 60-second WPM sprint measures your speed in real time using TOPIK-level vocabulary so you can benchmark your progress before exam day.</p>
+      </article>
+      <article class="seo-card">
+        <h3>How to Type Korean on a QWERTY Keyboard: No IME Needed</h3>
+        <p>South Korea uses the 2-set (두벌식) keyboard layout, where every QWERTY key maps to one Korean jamo (consonant or vowel). Type Hangeul shows the full jamo map on every key as you practice, and its built-in Hangeul composition engine means no operating system IME setup is required. Open the site and start typing. The same keys you press here are the ones that work in the TOPIK IBT browser.</p>
+      </article>
+      <article class="seo-card">
+        <h3>TOPIK 1 and TOPIK 2 Vocabulary, Built In</h3>
+        <p>The practice mode includes curated word lists drawn from TOPIK Level 1 and TOPIK Level 2 vocabulary: the same words that appear in the reading and writing sections of both exam levels. Practicing with test-relevant vocabulary means you build typing muscle memory and exam vocabulary at the same time. A spaced-repetition system (SRS) surfaces the words you miss most, so every session targets your real weak points.</p>
+      </article>
+    </div>
 
-    <h3>What Typing Speed Do You Need for TOPIK IBT?</h3>
-    <p>Aim for at least 30–40 Korean characters per minute to write comfortably within the time limit. Type Hangeul's 60-second WPM sprint measures your speed in real time using TOPIK-level vocabulary so you can benchmark your progress before exam day.</p>
-
-    <h3>How to Type Korean on a QWERTY Keyboard: No IME Needed</h3>
-    <p>South Korea uses the 2-set (두벌식) keyboard layout, where every QWERTY key maps to one Korean jamo (consonant or vowel). Type Hangeul shows the full jamo map on every key as you practice, and its built-in Hangeul composition engine means no operating system IME setup is required. Open the site and start typing. The same keys you press here are the ones that work in the TOPIK IBT browser.</p>
-
-    <h3>TOPIK 1 and TOPIK 2 Vocabulary, Built In</h3>
-    <p>The practice mode includes curated word lists drawn from TOPIK Level 1 and TOPIK Level 2 vocabulary: the same words that appear in the reading and writing sections of both exam levels. Practicing with test-relevant vocabulary means you build typing muscle memory and exam vocabulary at the same time. A spaced-repetition system (SRS) surfaces the words you miss most, so every session targets your real weak points.</p>
-
-    <h3>Frequently Asked Questions</h3>
-    <dl>
-      <dt>Does the TOPIK online exam require typing in Korean?</dt>
-      <dd>Yes. The TOPIK IBT writing section requires you to type Korean characters directly into a text field. The long essay (Question 53/54) requires 400–500 characters typed in Korean. There is no handwriting option in the online format.</dd>
-
-      <dt>How long does it take to learn Korean typing for TOPIK?</dt>
-      <dd>Most learners who can already read Hangeul reach a functional typing speed within 5–10 hours of deliberate practice. The 2-set layout maps 24 jamo to 24 keys, so the learning curve is shorter than it looks. Start with consonants, add vowels, then practice short words. Accuracy first, speed follows naturally.</dd>
-
-      <dt>What is the 2-set (두벌식) Korean keyboard layout?</dt>
-      <dd>두벌식 (dubeolsik) is the standard Korean keyboard used on virtually every South Korean computer. Each QWERTY key corresponds to one Korean consonant or vowel. Type Hangeul teaches this layout with a live key map highlighting the correct key for each jamo as you type.</dd>
-
-      <dt>Can I practice TOPIK 2 vocabulary while learning to type?</dt>
-      <dd>Yes. Select "TOPIK 2" from the topic panel and the SRS system drills verbs, adjectives, nouns, and phrases from the TOPIK Level 2 word list. The practice words are the same ones tested in the TOPIK II reading and writing sections.</dd>
-
-      <dt>Is an IME required to type Korean for TOPIK IBT?</dt>
-      <dd>Not on Type Hangeul: the site handles Hangeul composition internally. For the actual TOPIK IBT exam, the test browser provides a built-in Korean input method, so no prior IME setup is required on exam day either.</dd>
-
-      <dt>What is the difference between TOPIK PBT and TOPIK IBT?</dt>
-      <dd>TOPIK PBT (Paper-Based Test) uses printed answer sheets where you write Korean by hand with a pencil. TOPIK IBT (Internet-Based Test) is taken on a computer where you type your answers on a keyboard. IBT results are published in 2–3 weeks; PBT results take about 5 weeks. Both test the same content and award the same certificate.</dd>
-    </dl>
+    <div class="faq-title">Frequently Asked Questions</div>
+    <div class="faq-grid">
+      <article class="faq-card">
+        <h3>Does the TOPIK online exam require typing in Korean?</h3>
+        <p>Yes. The TOPIK IBT writing section requires you to type Korean characters directly into a text field. The long essay (Question 53/54) requires 400–500 characters typed in Korean. There is no handwriting option in the online format.</p>
+      </article>
+      <article class="faq-card">
+        <h3>How long does it take to learn Korean typing for TOPIK?</h3>
+        <p>Most learners who can already read Hangeul reach a functional typing speed within 5–10 hours of deliberate practice. The 2-set layout maps 24 jamo to 24 keys, so the learning curve is shorter than it looks. Start with consonants, add vowels, then practice short words. Accuracy first, speed follows naturally.</p>
+      </article>
+      <article class="faq-card">
+        <h3>What is the 2-set (두벌식) Korean keyboard layout?</h3>
+        <p>두벌식 (dubeolsik) is the standard Korean keyboard used on virtually every South Korean computer. Each QWERTY key corresponds to one Korean consonant or vowel. Type Hangeul teaches this layout with a live key map highlighting the correct key for each jamo as you type.</p>
+      </article>
+      <article class="faq-card">
+        <h3>Can I practice TOPIK 2 vocabulary while learning to type?</h3>
+        <p>Yes. Select "TOPIK 2" from the topic panel and the SRS system drills verbs, adjectives, nouns, and phrases from the TOPIK Level 2 word list. The practice words are the same ones tested in the TOPIK II reading and writing sections.</p>
+      </article>
+      <article class="faq-card">
+        <h3>Is an IME required to type Korean for TOPIK IBT?</h3>
+        <p>Not on Type Hangeul: the site handles Hangeul composition internally. For the actual TOPIK IBT exam, the test browser provides a built-in Korean input method, so no prior IME setup is required on exam day either.</p>
+      </article>
+      <article class="faq-card">
+        <h3>What is the difference between TOPIK PBT and TOPIK IBT?</h3>
+        <p>TOPIK PBT (Paper-Based Test) uses printed answer sheets where you write Korean by hand with a pencil. TOPIK IBT (Internet-Based Test) is taken on a computer where you type your answers on a keyboard. IBT results are published in 2–3 weeks; PBT results take about 5 weeks. Both test the same content and award the same certificate.</p>
+      </article>
+    </div>
   </section>
 
 </div>
