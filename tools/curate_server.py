@@ -7,7 +7,7 @@
 Run from project root:
     tools/.venv/bin/python tools/curate_server.py
 """
-import hashlib, json, pathlib, random, re, subprocess, time
+import hashlib, json, os, pathlib, random, re, subprocess, time
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -62,6 +62,9 @@ def slug_for(ko):
     return hashlib.sha1(ko.encode()).hexdigest()[:12]
 
 def pick_device():
+    override = os.environ.get("HANGUL_TTS_DEVICE")
+    if override:
+        return override
     if torch.cuda.is_available(): return "cuda"
     if torch.backends.mps.is_available(): return "mps"
     return "cpu"
