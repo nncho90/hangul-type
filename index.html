@@ -935,7 +935,8 @@
     display: block;
     transition: opacity 0.2s;
   }
-  .target .word .syl[data-pulse="1"] canvas {
+  .target .word .syl[data-pulse="1"] canvas,
+  .target.char-mode .word .syl[data-pulse="1"] {
     animation: pulse 1.4s ease-in-out infinite;
   }
 
@@ -1923,6 +1924,7 @@
               <div class="word" id="targetWord">안녕</div>
               <div class="target-preview" id="targetPreview"></div>
             </div>
+
             <div class="romanization" id="romanization"></div>
           </div>
 
@@ -2057,6 +2059,7 @@
 <input type="text" class="input-shield" id="shield" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
 <script src="vocab.js"></script>
+<script src="default-guides.js"></script>
 <script>
 'use strict';
 
@@ -2585,6 +2588,29 @@ function nextCharTopicId(topicId) {
   const idx = CHAR_TOPICS.findIndex(t => t.id === topicId);
   if (idx < 0) return CHAR_TOPICS[0].id;
   return CHAR_TOPICS[(idx + 1) % CHAR_TOPICS.length].id;
+}
+
+// Walk all topics in order (rows → TOPIK 1 subs → TOPIK 2 subs) starting after
+// `currentId` and return the first one that isn't 100% complete. Used after a
+// row finishes so practice flows from rows into vocabulary categories.
+function nextIncompleteTopic(currentId) {
+  const all = [
+    ...CHAR_TOPICS.map(t => ({ id: t.id, isChar: true })),
+    ...TOPICS.filter(t => (t.topikLevel || 1) === 1).map(t => ({ id: t.id, isChar: false, total: t.words.length })),
+    ...TOPICS.filter(t => (t.topikLevel || 1) === 2).map(t => ({ id: t.id, isChar: false, total: t.words.length })),
+  ];
+  if (!all.length) return currentId;
+  const startIdx = Math.max(0, all.findIndex(t => t.id === currentId));
+  for (let i = 1; i <= all.length; i++) {
+    const item = all[(startIdx + i) % all.length];
+    if (item.isChar) {
+      if (charTopicDone(item.id) < CHAR_SESSION_SIZE) return item.id;
+    } else {
+      const done = (progress.topicCompleted[item.id] || []).length;
+      if (done < item.total) return item.id;
+    }
+  }
+  return currentId;
 }
 
 // Merge the shared 1000-word deck into Practice without duplicating the
@@ -3631,6 +3657,19 @@ const state = {
 function saveAudio() { lsBoolSet(AUDIO_KEY, state.audioOn); }
 function saveRomanize() { lsBoolSet(ROMAN_KEY, state.romanizeOn); }
 
+const GUIDE_STORAGE_KEY = 'jamo-tuner-guide-v1';
+function loadGuideStore() {
+  try {
+    const raw = localStorage.getItem(GUIDE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+const guideStore = loadGuideStore();
+
+
 // ============================================================
 // Romanization (Korean Revised Romanization, 2000) — training wheels
 // Index-aligned with INITIALS / MEDIALS / FINALS arrays.
@@ -3898,6 +3937,33 @@ const STATE_COLORS = {
 const SYL_CACHE = new Map(); // key: `${char}|${px}` -> rendered syllable segmentation
 const FONT_SIZE_BY_CLASS = { '': 96, lg: 72, md: 56, sm: 44 };
 
+function getTunerGuide(syllableChar) {
+  // 1. Per-user localStorage (tuner edits) wins
+  try {
+    const raw = localStorage.getItem('jamo-tuner-guide-v1');
+    if (raw) {
+      const store = JSON.parse(raw);
+      const entry = store[syllableChar];
+      if (entry && entry.steps && entry.steps.length) {
+        const allNorm = entry.steps.every(s => s.ops && s.ops.every(op => op.normRect));
+        if (allNorm) return entry.steps;
+      }
+    }
+  } catch {}
+  // 2. Fall back to baked-in defaults shipped with the site
+  const defaults = (typeof window !== 'undefined' && window.DEFAULT_TUNER_GUIDES) || null;
+  if (defaults && defaults[syllableChar] && defaults[syllableChar].steps && defaults[syllableChar].steps.length) {
+    const steps = defaults[syllableChar].steps;
+    const allNorm = steps.every(s => s.ops && s.ops.every(op => op.normRect));
+    if (allNorm) return steps;
+  }
+  return null;
+}
+
+window.addEventListener('storage', ev => {
+  if (ev.key === 'jamo-tuner-guide-v1') SYL_CACHE.clear();
+});
+
 function syllableLayoutType(mIdx) {
   const m = MEDIALS[mIdx];
   if (COMPOUND_VOWELS.has(m)) return 'compound';
@@ -4049,7 +4115,87 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
     return out;
   };
 
-  if (layout === 'vert' && hasFinal) {
+  const tunerSteps = getTunerGuide(syllableChar);
+  const mKsCount = COMPOUND_VOWELS.has(medial) ? 2 : 1;
+  const mKsEnd = 1 + mKsCount;
+  const stepRects = tunerSteps ? tunerSteps.map(step => {
+    const adds = [], subs = [];
+    for (const op of step.ops) {
+      if (!op.normRect) continue;
+      const r = {
+        shape: op.shape === 'ellipse' ? 'ellipse' : 'rect',
+        x0: inkMinX + op.normRect.x * inkW,
+        y0: inkMinY + op.normRect.y * inkH,
+        x1: inkMinX + (op.normRect.x + op.normRect.w) * inkW,
+        y1: inkMinY + (op.normRect.y + op.normRect.h) * inkH,
+      };
+      (op.mode === 'subtract' ? subs : adds).push(r);
+    }
+    return { order: step.order, adds, subs };
+  }) : null;
+
+  const pointInRegion = (px, py, r) => {
+    if (r.shape === 'ellipse') {
+      const cx = (r.x0 + r.x1) / 2;
+      const cy = (r.y0 + r.y1) / 2;
+      const rx = (r.x1 - r.x0) / 2;
+      const ry = (r.y1 - r.y0) / 2;
+      if (rx <= 0 || ry <= 0) return false;
+      const dx = (px - cx) / rx;
+      const dy = (py - cy) / ry;
+      return dx * dx + dy * dy <= 1;
+    }
+    return px >= r.x0 && px < r.x1 && py >= r.y0 && py < r.y1;
+  };
+
+  if (stepRects) {
+    // Per-pixel step assignment: directly map ink pixels to step groups by which
+    // shape they fall in. This correctly handles merged components (e.g. ㅎ+ㅗ in 화)
+    // that straddle two different jamo, which per-component voting can't split.
+    const sortedSteps = tunerSteps.slice().sort((a, b) => a.order - b.order);
+    const stepPixels = sortedSteps.map(() => []);
+    const srByOrder = new Map(stepRects.map(sr => [sr.order, sr]));
+    const stepCenters = sortedSteps.map((step, i) => {
+      const sr = srByOrder.get(step.order);
+      if (!sr || !sr.adds.length) return { idx: i, cx: inkMinX + inkW / 2, cy: inkMinY + inkH / 2 };
+      const cx = sr.adds.reduce((s, r) => s + (r.x0 + r.x1) / 2, 0) / sr.adds.length;
+      const cy = sr.adds.reduce((s, r) => s + (r.y0 + r.y1) / 2, 0) / sr.adds.length;
+      return { idx: i, cx, cy };
+    });
+    for (const c of components) {
+      for (const p of c.pixels) {
+        const x = p % W, y = (p / W) | 0;
+        let assignedIdx = -1;
+        for (let si = 0; si < sortedSteps.length; si++) {
+          const sr = srByOrder.get(sortedSteps[si].order);
+          if (!sr) continue;
+          let inAdd = false;
+          for (const r of sr.adds) {
+            if (pointInRegion(x, y, r)) { inAdd = true; break; }
+          }
+          if (!inAdd) continue;
+          let inSub = false;
+          for (const r of sr.subs) {
+            if (pointInRegion(x, y, r)) { inSub = true; break; }
+          }
+          if (!inSub) { assignedIdx = si; break; }
+        }
+        if (assignedIdx < 0) {
+          let best = 0, bestDist = Infinity;
+          for (let si = 0; si < stepCenters.length; si++) {
+            const sc = stepCenters[si];
+            const d = Math.hypot(x - sc.cx, y - sc.cy);
+            if (d < bestDist) { bestDist = d; best = si; }
+          }
+          assignedIdx = best;
+        }
+        stepPixels[assignedIdx].push(p);
+      }
+    }
+    return { canvas, ctx, groups: stepPixels.map(arr => new Uint32Array(arr)), alpha, w: wCss, h: hCss };
+  }
+
+  if (layout === 'vert' && hasFinal && !tunerSteps) {
     const topCut = findRowCut(0.30, 0.50, 0.40);
     const bottomCut = findRowCut(0.50, 0.76, 0.62);
     const initialPixels = [];
@@ -4093,12 +4239,41 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
     c.relMinY = relMinY;
     c.relMaxY = relMaxY;
     let bucket;
-    if (layout === 'horiz') {
+    if (stepRects) {
+      const votes = new Map();
+      for (const p of c.pixels) {
+        const x = p % W, y = (p / W) | 0;
+        for (const sr of stepRects) {
+          let inAdd = false;
+          for (const r of sr.adds) {
+            if (x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1) { inAdd = true; break; }
+          }
+          if (!inAdd) continue;
+          let inSub = false;
+          for (const r of sr.subs) {
+            if (x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1) { inSub = true; break; }
+          }
+          if (inSub) continue;
+          votes.set(sr.order, (votes.get(sr.order) || 0) + 1);
+          break;
+        }
+      }
+      let bestOrder = null, bestCount = 0;
+      for (const [order, count] of votes) {
+        if (count > bestCount) { bestCount = count; bestOrder = order; }
+      }
+      if (bestOrder !== null) {
+        if (bestOrder === 1) bucket = 'initial';
+        else if (bestOrder <= mKsEnd) bucket = 'medial';
+        else bucket = 'final';
+      }
+    }
+    if (!bucket && layout === 'horiz') {
       // ㄱ left, ㅏ right; batchim bottom strip ~62%+
       if (hasFinal && relY > 0.60) bucket = 'final';
       else if (relX < 0.42) bucket = 'initial';
       else bucket = 'medial';
-    } else if (layout === 'vert') {
+    } else if (!bucket && layout === 'vert') {
       // ㄱ top, ㅗ middle, ㄴ bottom (3-tier if final); else top/bottom split.
       // Use BOTH centroid (relY) and bounding-box extent so the medial's vertical
       // stem (ㅗ ㅛ ㅜ ㅠ) doesn't get misclassified as initial when its centroid
@@ -4113,7 +4288,7 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
         if (relY < 0.45 && relMaxY < 0.55) bucket = 'initial';
         else bucket = 'medial';
       }
-    } else {
+    } else if (!bucket) {
       // compound vowel (ㅘ ㅙ ㅚ ㅝ ㅞ ㅟ ㅢ): consonant in TOP-LEFT corner only.
       // The vowel's vertical stem lives mid-left, the horizontal stem at the bottom.
       // Use a tight zone for initial AND require the component to NOT extend deep down.
@@ -4236,6 +4411,7 @@ function renderTargetWord() {
   const previewEl = document.getElementById('targetPreview');
   const targetEl = document.querySelector('.target');
   const charMode = isCharTopic(state.activeTopic);
+  const w = state.activeWords[state.wordIdx];
   targetEl.classList.toggle('char-mode', charMode);
   wordEl.classList.remove('lg', 'md', 'sm');
   const sylCount = state.expectedSyllables.length;
@@ -4248,9 +4424,22 @@ function renderTargetWord() {
 
   if (charMode) {
     wordEl.className = 'word';
-    const w = state.activeWords[state.wordIdx];
+    wordEl.innerHTML = '';
+    if (w) {
+      const ksLen = state.expectedKs.length;
+      const positions = Array.from({length: ksLen}, (_, i) => i);
+      const fb = document.createElement('span');
+      fb.className = 'syl';
+      fb.dataset.sylStart = '0';
+      fb.dataset.sylLen = String(ksLen);
+      fb.dataset.pos = positions.join(',');
+      fb.style.fontWeight = '500';
+      fb.style.color = STATE_COLORS[jamoPaintState(0, 0)] || STATE_COLORS.now;
+      fb.textContent = w.ko;
+      setSyllablePulse(fb, positions);
+      wordEl.appendChild(fb);
+    }
     const previewItems = state.activeWords.slice(state.wordIdx + 1, state.wordIdx + 1 + CHAR_PREVIEW_COUNT);
-    wordEl.textContent = w ? w.ko : '';
     previewEl.innerHTML = previewItems.map(item => `<span class="preview-char">${escapeHtml(item.ko)}</span>`).join('');
     if (previewItems.length) previewEl.style.display = 'inline-flex';
     else previewEl.style.display = 'none';
@@ -4259,8 +4448,6 @@ function renderTargetWord() {
 
   previewEl.innerHTML = '';
   previewEl.style.display = 'none';
-
-  const w = state.activeWords[state.wordIdx];
   const koChars = [...w.ko];
 
   wordEl.innerHTML = '';
@@ -4364,7 +4551,13 @@ function updateTargetJamoStates() {
       return;
     }
     const cached = el._cached;
-    if (!cached) return;
+    if (!cached) {
+      const ksLen = parseInt(el.dataset.sylLen, 10) || 1;
+      const positions = Array.from({length: ksLen}, (_, i) => i);
+      el.style.color = STATE_COLORS[jamoPaintState(0, 0)] || STATE_COLORS.now;
+      setSyllablePulse(el, positions);
+      return;
+    }
     const positions = (el.dataset.pos || '').split(',').filter(Boolean).map(n => parseInt(n, 10));
     paintSyllable(cached, positions.map((idx, localIdx) => jamoPaintState(idx, localIdx)));
     setSyllablePulse(el, positions);
@@ -4455,30 +4648,37 @@ function buildPriorityPool(level) {
 
 function buildTopicsPicker() {
   const el = document.getElementById('topics');
-  const activeCharId = isCharTopic(state.activeTopic) ? state.activeTopic : CHAR_TOPICS[0].id;
+  const activeCharId = isCharTopic(state.activeTopic) ? state.activeTopic : null;
   const charSection = CHAR_TOPICS.map(t => {
     const done = charTopicDone(t.id);
     const pct = Math.round((done / CHAR_SESSION_SIZE) * 100);
-    return `<button class="topic-pill big ${activeCharId === t.id ? 'on' : ''}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)}">
-      <span class="t-icon">${t.icon}</span> ${escapeHtml(t.name)} <span class="count">${done}/${CHAR_SESSION_SIZE}</span>
+    return `<button class="subtopic-chip ${activeCharId === t.id ? 'on' : ''}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)}">
       <span class="fill" style="width:${pct}%"></span>
+      <span class="label"><span class="ico">${t.icon}</span> ${escapeHtml(t.name)}</span>
+      <span class="count">${done}/${CHAR_SESSION_SIZE}</span>
     </button>`;
   }).join('');
 
   const topicLevel = isCharTopic(state.activeTopic) ? 1 : activeLevel();
-  const isT1Active = !isCharTopic(state.activeTopic) && topicLevel === 1;
-  const isT2Active = !isCharTopic(state.activeTopic) && topicLevel === 2;
+  const isT1Active = state.activeTopic === 'topik1';
+  const isT2Active = state.activeTopic === 'topik2';
   const t1Count = wordsForLevel(1).length;
   const t2Count = wordsForLevel(2).length;
   const t1Done = uniqueDoneForLevel(1);
   const t2Done = uniqueDoneForLevel(2);
   const subTopics = TOPICS.filter(t => (t.topikLevel || 1) === topicLevel);
-  let topicHtml = `<div class="topics-row" aria-label="Topic categories">
-    <button class="topic-pill big ${isT1Active ? 'on' : ''}" data-topic="topik1" type="button">
-      <span class="t-icon">📗</span> TOPIK 1 <span class="count">${t1Done}/${t1Count}</span>
+  const t1Pct = t1Count ? Math.round((t1Done / t1Count) * 100) : 0;
+  const t2Pct = t2Count ? Math.round((t2Done / t2Count) * 100) : 0;
+  let topicHtml = `<div class="subtopic-tracker" aria-label="Topic categories">
+    <button class="subtopic-chip ${isT1Active ? 'on' : ''}" data-topic="topik1" type="button">
+      <span class="fill" style="width:${t1Pct}%"></span>
+      <span class="label"><span class="ico">📗</span> TOPIK 1</span>
+      <span class="count">${t1Done}/${t1Count}</span>
     </button>
-    <button class="topic-pill big ${isT2Active ? 'on' : ''}" data-topic="topik2" type="button">
-      <span class="t-icon">📘</span> TOPIK 2 <span class="count">${t2Done}/${t2Count}</span>
+    <button class="subtopic-chip ${isT2Active ? 'on' : ''}" data-topic="topik2" type="button">
+      <span class="fill" style="width:${t2Pct}%"></span>
+      <span class="label"><span class="ico">📘</span> TOPIK 2</span>
+      <span class="count">${t2Done}/${t2Count}</span>
     </button>
   </div>`;
   if (subTopics.length) {
@@ -4504,7 +4704,7 @@ function buildTopicsPicker() {
   const html = `
     <div class="picker-section">
       <div class="picker-title">Rows</div>
-      <div class="topics-row" aria-label="Character rows">${charSection}</div>
+      <div class="subtopic-tracker" aria-label="Character rows">${charSection}</div>
     </div>
     <div class="picker-section">
       <div class="picker-title">Topics</div>
@@ -4686,10 +4886,11 @@ function afterCorrectKeystroke() {
         if (done >= CHAR_SESSION_SIZE) {
           state.wordsDone = 0;
           buildTopicsPicker();
-          const nextTopic = nextCharTopicId(state.activeTopic);
-          ensureCharProgress(state.activeTopic).done = 0;
+          const nextTopic = nextIncompleteTopic(state.activeTopic);
           saveProgress(progress);
-          setTimeout(() => setTopic(nextTopic), 260);
+          if (nextTopic !== state.activeTopic) {
+            setTimeout(() => setTopic(nextTopic), 260);
+          }
         } else {
           buildTopicsPicker();
           setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 220);

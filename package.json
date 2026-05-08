@@ -7,6 +7,8 @@
     "supabase:reset": "supabase db reset"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "http-server": "^14.1.1",
     "playwright": "^1.59.1",
     "supabase": "^2.98.0"
   }

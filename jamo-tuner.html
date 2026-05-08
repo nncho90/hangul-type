@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jamo Tuner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --bg: #eef2f7;
+    --panel: #ffffff;
+    --line: #d8e0ea;
+    --text: #102033;
+    --muted: #607086;
+    --blue: #2563eb;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --rose: #ef4444;
+    --slate: #94a3b8;
+  }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    background:
+      linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+    color: var(--text);
+  }
+  button, input, textarea { font: inherit; }
+  button {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  button:hover { border-color: #b8c4d3; }
+  button.active {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14) inset;
+  }
+  .shell {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+  .sidebar {
+    padding: 18px 14px;
+    border-right: 1px solid var(--line);
+    background: rgba(255,255,255,0.64);
+    backdrop-filter: blur(8px);
+  }
+  .main {
+    padding: 18px;
+  }
+  .title {
+    margin: 0 0 14px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .sub {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .group-label {
+    margin: 16px 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sample-list {
+    display: grid;
+    gap: 8px;
+  }
+  .sample-btn {
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sample-btn small {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+  .sample-btn .check {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 700;
+  }
+  .sample-btn.saved {
+    background: rgba(16, 185, 129, 0.06);
+    border-color: rgba(16, 185, 129, 0.35);
+  }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .toolbar .spacer { flex: 1 1 auto; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.8);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(360px, 1.15fr) minmax(320px, 0.85fr);
+    gap: 16px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  }
+  .canvas-panel {
+    padding: 16px;
+  }
+  .canvas-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 640px;
+    margin: 0 auto;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #glyphCanvas { pointer-events: none; }
+  #overlayCanvas { cursor: pointer; }
+  .info {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+  }
+  .meta-grid {
+    display: grid;
+    gap: 8px;
+  }
+  .meta {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fbfdff;
+  }
+  .meta .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .meta .value {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--text);
+    word-break: break-word;
+  }
+  .edit-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .edit-grid .field {
+    display: grid;
+    gap: 4px;
+  }
+  .edit-grid label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .edit-grid input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: #fff;
+    color: var(--text);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+  }
+  .order-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .order-grid button {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+  .order-grid button .n {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .order-grid button .r {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .guide-box {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    background: #fbfdff;
+  }
+  .guide-status {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+    margin-bottom: 8px;
+  }
+  .guide-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .guide-step {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: #fff;
+    font-size: 12px;
+  }
+  .guide-step .k {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+  }
+  .guide-step.active {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14) inset;
+  }
+  .shape-toggle {
+    display: inline-flex;
+    gap: 0;
+    margin-bottom: 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .shape-toggle .shape-btn {
+    border: 0;
+    border-radius: 0;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .shape-toggle .shape-btn + .shape-btn {
+    border-left: 1px solid var(--line);
+  }
+  .shape-toggle .shape-btn:hover { color: var(--text); }
+  .shape-toggle .shape-btn.active {
+    background: var(--blue);
+    color: #fff;
+  }
+  .guide-step.editable {
+    cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .guide-step.editable:hover {
+    border-color: var(--blue);
+    background: rgba(37, 99, 235, 0.04);
+  }
+  .guide-step .edit-hint {
+    color: var(--blue);
+    font-weight: 600;
+    margin-left: 6px;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+  .guide-step.editable:hover .edit-hint { opacity: 1; }
+  .comp-strip {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .comp-chip {
+    min-width: 42px;
+    text-align: center;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+  }
+  .comp-chip.active {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14) inset;
+  }
+  .comp-chip .n {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .comp-chip .r {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .practice-pad {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    background: #fff;
+    margin-top: 6px;
+  }
+  .practice-pad canvas {
+    position: static;
+    display: block;
+    width: 140px;
+    height: 160px;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 8px;
+    inset: auto;
+  }
+  .practice-pad input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .practice-pad input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+  }
+  .practice-pad input.err {
+    border-color: var(--red, #ef4444);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.18);
+  }
+  .practice-status {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .practice-status .key-hint {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .practice-status .ok {
+    color: var(--green, #10b981);
+    font-weight: 700;
+  }
+  .practice-kb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    margin-top: 6px;
+  }
+  .practice-kb-row {
+    display: flex;
+    gap: 3px;
+  }
+  .practice-kb-row.r2 { padding-left: 8px; }
+  .practice-kb-row.r3 { padding-left: 16px; }
+  .practice-kb-key {
+    position: relative;
+    width: 22px;
+    height: 28px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    line-height: 1.05;
+    transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  }
+  .practice-kb-key .pjamo {
+    font-family: "Noto Sans KR", system-ui;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .practice-kb-key .pqwerty {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--muted);
+    font-size: 7px;
+    margin-top: 1px;
+  }
+  .practice-kb-key .pshift {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    font-family: "Noto Sans KR", system-ui;
+    font-size: 7px;
+    color: var(--amber);
+  }
+  .practice-kb-key.next {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+  }
+  .practice-kb-key.next .pqwerty { color: rgba(255,255,255,0.78); }
+  .practice-kb-key.next .pshift  { color: rgba(255,255,255,0.9); }
+  .practice-kb-key.next-shift {
+    background: var(--amber);
+    color: #fff;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.28);
+  }
+  .practice-kb-key.next-shift .pqwerty { color: rgba(255,255,255,0.78); }
+  .practice-kb-key.next-shift .pshift  { color: #fff; }
+
+  @media (max-width: 980px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+    .workspace { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <h1 class="title">Jamo Tuner</h1>
+    <p class="sub">Pick a syllable, click a piece, or drag a box over the part you want to peel off. Then assign it a stroke number.</p>
+    <div class="group-label">Samples</div>
+    <div class="sample-list" id="sampleList"></div>
+  </aside>
+
+  <main class="main">
+    <div class="toolbar">
+      <button id="prevBtn">Prev</button>
+      <button id="nextBtn">Next</button>
+      <span class="pill" id="sampleLabel"></span>
+      <span class="spacer"></span>
+      <span class="pill" id="layoutLabel"></span>
+    </div>
+
+    <section class="workspace">
+      <div class="panel canvas-panel">
+        <div class="canvas-frame" id="frame">
+          <canvas id="glyphCanvas"></canvas>
+          <canvas id="overlayCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="panel info">
+        <div class="group-label">Walkthrough</div>
+        <div class="guide-box">
+          <div class="guide-status" id="guideStatus"></div>
+          <div class="shape-toggle">
+            <button class="shape-btn active" data-shape="rect" type="button" title="Rectangle (R)">▭ Rect</button>
+            <button class="shape-btn" data-shape="ellipse" type="button" title="Ellipse (E)">⬭ Ellipse</button>
+          </div>
+          <div class="stroke-grid">
+            <button id="guideStartBtn">Start</button>
+            <button id="guideDoneBtn">Done</button>
+            <button id="guideUndoBtn">Undo</button>
+            <button id="guideClearBtn">Clear</button>
+            <button id="guideSaveBtn">Save</button>
+            <button id="guideExportBtn" title="Copy all saved guides as JSON">Export</button>
+          </div>
+          <div class="guide-list" id="guideList"></div>
+        </div>
+
+        <div class="group-label">Practice this sample</div>
+        <div class="practice-pad">
+          <input id="practiceInput" type="text" placeholder="Type the keystrokes…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+          <div class="practice-status" id="practiceStatus"></div>
+          <canvas id="practiceCanvas"></canvas>
+          <div class="practice-kb" id="practiceKb"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+'use strict';
+
+const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const FINALS = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const VOWEL_DECOMPOSE = { 'ㅘ':['ㅗ','ㅏ'],'ㅙ':['ㅗ','ㅐ'],'ㅚ':['ㅗ','ㅣ'],'ㅝ':['ㅜ','ㅓ'],'ㅞ':['ㅜ','ㅔ'],'ㅟ':['ㅜ','ㅣ'],'ㅢ':['ㅡ','ㅣ'] };
+const FINAL_DECOMPOSE = { 'ㄳ':['ㄱ','ㅅ'],'ㄵ':['ㄴ','ㅈ'],'ㄶ':['ㄴ','ㅎ'],'ㄺ':['ㄹ','ㄱ'],'ㄻ':['ㄹ','ㅁ'],'ㄼ':['ㄹ','ㅂ'],'ㄽ':['ㄹ','ㅅ'],'ㄾ':['ㄹ','ㅌ'],'ㄿ':['ㄹ','ㅍ'],'ㅀ':['ㄹ','ㅎ'],'ㅄ':['ㅂ','ㅅ'] };
+const STORAGE_KEY = 'jamo-tuner-v2';
+const GUIDE_STORAGE_KEY = 'jamo-tuner-guide-v1';
+const DEFAULT_GUIDE_STORE = {};
+const COMPOUND_VOWELS = new Set(['ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ']);
+const HORIZ_VOWELS = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅐ','ㅒ','ㅔ','ㅖ','ㅣ']);
+const VERT_VOWELS = new Set(['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ']);
+const KEYMAP = {
+  'q':'ㅂ','w':'ㅈ','e':'ㄷ','r':'ㄱ','t':'ㅅ','y':'ㅛ','u':'ㅕ','i':'ㅑ','o':'ㅐ','p':'ㅔ',
+  'a':'ㅁ','s':'ㄴ','d':'ㅇ','f':'ㄹ','g':'ㅎ','h':'ㅗ','j':'ㅓ','k':'ㅏ','l':'ㅣ',
+  'z':'ㅋ','x':'ㅌ','c':'ㅊ','v':'ㅍ','b':'ㅠ','n':'ㅜ','m':'ㅡ',
+  'Q':'ㅃ','W':'ㅉ','E':'ㄸ','R':'ㄲ','T':'ㅆ','O':'ㅒ','P':'ㅖ'
+};
+const JAMO_TO_KEY = {};
+for (const [k, v] of Object.entries(KEYMAP)) {
+  JAMO_TO_KEY[v] = { key: k.toLowerCase(), shift: k !== k.toLowerCase() };
+}
+const PRACTICE_STATE_COLORS = {
+  done:    '#10b981',
+  now:     '#2563eb',
+  pending: '#cbd5e1',
+  err:     '#ef4444'
+};
+
+const SAMPLE_GROUPS = [
+  { label: 'Compound vowels', items: ['화', '원', '왜', '위', '외', '궤', '꿰', '괜', '워', '웨', '회'] },
+  { label: 'Batchim-heavy', items: ['감', '값', '읽', '닭', '밖', '넋', '앉', '넓', '삶', '흙', '꽃'] },
+  { label: 'Vertical layouts', items: ['물', '불', '국', '눈', '듣', '밟', '숲', '끝'] }
+];
+
+const state = {
+  index: 0,
+  selectedPiece: 0,
+  history: [],
+  seg: null,
+  drag: null,
+  guideBySample: loadGuideStore(),
+  guide: null,
+  shapeTool: 'rect'
+};
+
+const sampleListEl = document.getElementById('sampleList');
+const sampleLabelEl = document.getElementById('sampleLabel');
+const layoutLabelEl = document.getElementById('layoutLabel');
+const guideStatusEl = document.getElementById('guideStatus');
+const guideListEl = document.getElementById('guideList');
+const glyphCanvas = document.getElementById('glyphCanvas');
+const overlayCanvas = document.getElementById('overlayCanvas');
+const glyphCtx = glyphCanvas.getContext('2d');
+const overlayCtx = overlayCanvas.getContext('2d');
+
+function flattenSamples() {
+  return SAMPLE_GROUPS.flatMap(group => group.items.map(item => ({ group: group.label, syllable: item })));
+}
+
+const SAMPLES = flattenSamples();
+
+function loadOverrides() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+
+function loadGuideStore() {
+  try {
+    const raw = localStorage.getItem(GUIDE_STORAGE_KEY);
+    return Object.assign({}, DEFAULT_GUIDE_STORE, raw ? JSON.parse(raw) : {});
+  } catch {
+    return { ...DEFAULT_GUIDE_STORE };
+  }
+}
+
+function saveGuideStore() {
+  localStorage.setItem(GUIDE_STORAGE_KEY, JSON.stringify(state.guideBySample));
+}
+
+function syllableToKeystrokes(syl) {
+  const code = syl.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return [syl];
+  const x = code - 0xAC00;
+  const i = INITIALS[Math.floor(x / 588)];
+  const m = MEDIALS[Math.floor((x % 588) / 28)];
+  const f = FINALS[x % 28];
+  const out = [i];
+  if (VOWEL_DECOMPOSE[m]) out.push(...VOWEL_DECOMPOSE[m]);
+  else out.push(m);
+  if (f) {
+    if (FINAL_DECOMPOSE[f]) out.push(...FINAL_DECOMPOSE[f]);
+    else out.push(f);
+  }
+  return out;
+}
+
+function nfdParts(syl) {
+  return [...syl.normalize('NFD')];
+}
+
+function pieceBox(piece, seg) {
+  if (piece.box) return piece.box;
+  return {
+    x: Math.round(piece.minX / seg.dpr),
+    y: Math.round(piece.minY / seg.dpr),
+    w: Math.round((piece.maxX - piece.minX) / seg.dpr),
+    h: Math.round((piece.maxY - piece.minY) / seg.dpr)
+  };
+}
+
+function classifyLayout(mIdx) {
+  const medial = MEDIALS[mIdx];
+  if (['ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ'].includes(medial)) return 'compound';
+  if (['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ'].includes(medial)) return 'vertical';
+  return 'horizontal';
+}
+
+function thresholdsFor(syl) {
+  const saved = null;
+  return Object.assign({
+    horizontalSplit: 0.42,
+    batchimSplit: 0.60,
+    verticalTop: 0.38,
+    verticalBottom: 0.56,
+    compoundSplit: 0.56
+  }, saved || {});
+}
+
+function autoStrokeFor(comp, seg, t) {
+  if (seg.layout === 'horizontal') {
+    if (seg.hasFinal && comp.relY > t.batchimSplit) return 3;
+    return comp.relX < t.horizontalSplit ? 1 : 2;
+  }
+  if (seg.layout === 'vertical') {
+    if (seg.hasFinal) {
+      if (comp.relY > t.verticalBottom || comp.relMinY > (t.verticalBottom - 0.10)) return 3;
+      if (comp.relY < t.verticalTop && comp.relMaxY < (t.verticalTop + 0.14)) return 1;
+      return 2;
+    }
+    return (comp.relY < t.verticalTop && comp.relMaxY < (t.verticalTop + 0.18)) ? 1 : 2;
+  }
+  if (seg.hasFinal && comp.relY > (t.batchimSplit + 0.08)) return 4;
+  if (comp.relX < t.compoundSplit && comp.relY < 0.40 && comp.relMaxY < 0.55) return 1;
+  return comp.relX > 0.55 ? 3 : 2;
+}
+
+function keyForOrder(syl, order) {
+  const ks = syllableToKeystrokes(syl);
+  return ks[order - 1] || '';
+}
+
+
+function currentGuideKeys(sample) {
+  return syllableToKeystrokes(sample.syllable);
+}
+
+function guideSampleKey(sample) {
+  return sample.syllable;
+}
+
+function makeGuideStep(sample, order) {
+  const keys = currentGuideKeys(sample);
+  return {
+    order,
+    key: keys[order - 1] || '',
+    ops: []
+  };
+}
+
+function ensureGuideForSample(sample) {
+  const key = guideSampleKey(sample);
+  if (!state.guide || state.guide.sampleKey !== key) {
+    state.guide = state.guideBySample[key] || {
+      sampleKey: key,
+      active: false,
+      saved: false,
+      stepIndex: 0,
+      steps: [],
+      current: makeGuideStep(sample, 1)
+    };
+    if (!state.guide.current) {
+      const stepIndex = state.guide.stepIndex || 0;
+      state.guide.current = makeGuideStep(sample, stepIndex + 1);
+    }
+    if (typeof state.guide.saved !== 'boolean') state.guide.saved = false;
+  }
+}
+
+function persistGuide() {
+  if (!state.guide) return;
+  state.guideBySample[state.guide.sampleKey] = state.guide;
+}
+
+function startGuide() {
+  const sample = SAMPLES[state.index];
+  state.guide = {
+    sampleKey: guideSampleKey(sample),
+    active: true,
+    saved: false,
+    stepIndex: 0,
+    steps: [],
+    current: makeGuideStep(sample, 1)
+  };
+  persistGuide();
+  drawFrame();
+}
+
+function finishGuideStep() {
+  if (!state.guide || !state.guide.current) return;
+  const sample = SAMPLES[state.index];
+  const keys = currentGuideKeys(sample);
+  const current = state.guide.current;
+  if (!current.ops.length) return;
+  state.guide.saved = false;
+  // Insert/replace by order so out-of-order edits land in the right slot
+  const existingIdx = state.guide.steps.findIndex(s => s.order === current.order);
+  if (existingIdx >= 0) {
+    state.guide.steps[existingIdx] = current;
+  } else {
+    state.guide.steps.push(current);
+    state.guide.steps.sort((a, b) => a.order - b.order);
+  }
+  state.guide.stepIndex = state.guide.steps.length;
+  // Advance to next unfinished step (or stop if all done)
+  const doneOrders = new Set(state.guide.steps.map(s => s.order));
+  let nextOrder = null;
+  for (let o = 1; o <= keys.length; o++) {
+    if (!doneOrders.has(o)) { nextOrder = o; break; }
+  }
+  if (nextOrder !== null) {
+    state.guide.current = makeGuideStep(sample, nextOrder);
+    state.guide.active = true;
+  } else {
+    state.guide.current = null;
+    state.guide.active = false;
+  }
+  persistGuide();
+  drawFrame();
+}
+
+function editGuideStep(orderToEdit) {
+  if (!state.guide || !Array.isArray(state.guide.steps)) return;
+  const sample = SAMPLES[state.index];
+  // Stash any in-progress current step back into steps so it isn't lost
+  if (state.guide.current && state.guide.current.ops && state.guide.current.ops.length) {
+    const cIdx = state.guide.steps.findIndex(s => s.order === state.guide.current.order);
+    if (cIdx >= 0) state.guide.steps[cIdx] = state.guide.current;
+    else {
+      state.guide.steps.push(state.guide.current);
+      state.guide.steps.sort((a, b) => a.order - b.order);
+    }
+  }
+  const stepIdx = state.guide.steps.findIndex(s => s.order === orderToEdit);
+  if (stepIdx < 0) return;
+  const [clicked] = state.guide.steps.splice(stepIdx, 1);
+  clicked.ops = [];
+  state.guide.current = clicked;
+  state.guide.active = true;
+  state.guide.saved = false;
+  state.guide.stepIndex = state.guide.steps.length;
+  persistGuide();
+  drawFrame();
+}
+
+function saveGuide() {
+  if (!state.guide) return;
+  const sample = SAMPLES[state.index];
+  const keys = currentGuideKeys(sample);
+  if (state.guide.current && state.guide.current.ops.length > 0) {
+    state.guide.steps.push(state.guide.current);
+    state.guide.stepIndex = state.guide.steps.length;
+    state.guide.current = state.guide.stepIndex < keys.length
+      ? makeGuideStep(sample, state.guide.stepIndex + 1)
+      : null;
+  }
+  state.guide.saved = true;
+  state.guide.active = false;
+  if (state.seg) {
+    const inkMinX_css = state.seg.inkMinX / state.seg.dpr;
+    const inkMinY_css = state.seg.inkMinY / state.seg.dpr;
+    const inkW_css = Math.max(1, state.seg.inkW / state.seg.dpr);
+    const inkH_css = Math.max(1, state.seg.inkH / state.seg.dpr);
+    const normalize = (ops) => {
+      for (const op of ops || []) {
+        op.normRect = {
+          x: (op.rect.x - inkMinX_css) / inkW_css,
+          y: (op.rect.y - inkMinY_css) / inkH_css,
+          w: op.rect.w / inkW_css,
+          h: op.rect.h / inkH_css
+        };
+      }
+    };
+    for (const step of state.guide.steps || []) normalize(step.ops);
+  }
+  persistGuide();
+  saveGuideStore();
+  drawFrame();
+}
+
+function stopGuide() {
+  if (!state.guide) return;
+  state.guide.active = false;
+  persistGuide();
+  drawFrame();
+}
+
+function clearGuide() {
+  const sample = SAMPLES[state.index];
+  resetCurrent();
+  state.guide = {
+    sampleKey: guideSampleKey(sample),
+    active: false,
+    saved: false,
+    stepIndex: 0,
+    steps: [],
+    current: makeGuideStep(sample, 1)
+  };
+  persistGuide();
+  drawFrame();
+}
+
+function undoGuideStep() {
+  if (!state.guide) return;
+  if (state.guide.current && state.guide.current.ops.length) {
+    state.guide.current.ops.pop();
+  } else if (state.guide.steps.length) {
+    const last = state.guide.steps.pop();
+    state.guide.current = last;
+    state.guide.active = true;
+    state.guide.stepIndex = state.guide.steps.length;
+  }
+  state.guide.saved = false;
+  persistGuide();
+  drawFrame();
+}
+
+function renderGuide() {
+  const sample = SAMPLES[state.index];
+  ensureGuideForSample(sample);
+  const guide = state.guide;
+  const keys = currentGuideKeys(sample);
+  if (!guideStatusEl || !guideListEl) return;
+  if (guide.stepIndex >= keys.length && keys.length > 0 && !guide.current) {
+    guideStatusEl.textContent = guide.saved ? `Saved. All ${keys.length} boxes are captured.` : `Done. All ${keys.length} boxes are captured.`;
+  } else if (!guide.active) {
+    guideStatusEl.textContent = guide.saved ? `Saved.` : `Ready. This syllable needs ${keys.length} boxes: ${keys.join(' ')}`;
+  } else if (guide.current) {
+    const order = guide.current.order;
+    guideStatusEl.textContent = `Step ${order} / ${keys.length}: draw a box for ${guide.current.key}. Shift to add, Option to subtract. Press Done when finished.`;
+  }
+  const stepItems = guide.steps.map(step => {
+    return `<div class="guide-step editable" data-order="${step.order}" title="Click to redo this step"><span class="k">${step.key}</span><span>${step.ops.length} ops <span class="edit-hint">edit</span></span></div>`;
+  });
+  if (guide.current) {
+    stepItems.push(`<div class="guide-step active"><span class="k">${guide.current.key}</span><span>${guide.current.ops.length} ops</span></div>`);
+  }
+  guideListEl.innerHTML = stepItems.join('');
+  guideListEl.querySelectorAll('.guide-step.editable').forEach(el => {
+    el.addEventListener('click', () => {
+      const order = Number(el.dataset.order);
+      if (!Number.isFinite(order)) return;
+      editGuideStep(order);
+    });
+  });
+}
+
+function rectOverlap(a, b) {
+  const x1 = Math.max(a.x, b.x);
+  const y1 = Math.max(a.y, b.y);
+  const x2 = Math.min(a.x + a.w, b.x + b.w);
+  const y2 = Math.min(a.y + a.h, b.y + b.h);
+  return Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+}
+
+function findPieceForGuideRect(rectBox) {
+  const seg = state.seg;
+  if (!seg) return -1;
+  let best = -1;
+  let bestScore = 0;
+  seg.pieces.forEach((piece, idx) => {
+    const box = pieceBox(piece, seg);
+    const overlap = rectOverlap(box, rectBox);
+    const area = Math.max(1, box.w * box.h);
+    const score = overlap / area;
+    const cx = (piece.cx ?? 0) / seg.dpr;
+    const cy = (piece.cy ?? 0) / seg.dpr;
+    const centerInside = cx >= rectBox.x && cx <= rectBox.x + rectBox.w && cy >= rectBox.y && cy <= rectBox.y + rectBox.h;
+    const finalScore = centerInside ? score + 0.5 : score;
+    if (finalScore > bestScore) {
+      bestScore = finalScore;
+      best = idx;
+    }
+  });
+  return bestScore > 0.12 ? best : -1;
+}
+
+function buildSegmentation(syl, fontSizePx, cssW, cssH) {
+  const code = syl.charCodeAt(0);
+  const x = code - 0xAC00;
+  const mIdx = Math.floor((x % 588) / 28);
+  const fIdx = x % 28;
+  const medial = MEDIALS[mIdx];
+  const final = FINALS[fIdx];
+  const layout = classifyLayout(mIdx);
+  const hasFinal = fIdx > 0;
+  const dpr = window.devicePixelRatio || 1;
+  const canvasW = Math.floor(cssW);
+  const canvasH = Math.floor(cssH);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvasW, canvasH);
+  ctx.fillStyle = '#000000';
+  ctx.font = `500 270px "Noto Sans KR", system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(syl, canvasW / 2, Math.round(canvasH * 0.68));
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const data = ctx.getImageData(0, 0, W, H).data;
+  const alpha = new Uint8ClampedArray(W * H);
+  for (let i = 0; i < W * H; i++) alpha[i] = data[i * 4 + 3];
+  const isInk = (i) => alpha[i] > 0 && (data[i*4] + data[i*4+1] + data[i*4+2]) < 700;
+
+  const visited = new Uint8Array(W * H);
+  const compByPixel = new Int32Array(W * H);
+  compByPixel.fill(-1);
+  const queue = new Int32Array(W * H);
+  const components = [];
+
+  for (let y = 0; y < H; y++) {
+    for (let xPx = 0; xPx < W; xPx++) {
+      const start = y * W + xPx;
+      if (visited[start] || !isInk(start)) continue;
+      let qh = 0, qt = 0;
+      queue[qt++] = start;
+      visited[start] = 1;
+      let minX = xPx, maxX = xPx, minY = y, maxY = y, area = 0;
+      const pixels = [];
+      while (qh < qt) {
+        const p = queue[qh++];
+        pixels.push(p);
+        compByPixel[p] = components.length;
+        area++;
+        const py = (p / W) | 0;
+        const px = p - py * W;
+        if (px < minX) minX = px;
+        if (px > maxX) maxX = px;
+        if (py < minY) minY = py;
+        if (py > maxY) maxY = py;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const nx = px + dx;
+            const ny = py + dy;
+            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+            const n = ny * W + nx;
+            if (visited[n] || !isInk(n)) continue;
+            visited[n] = 1;
+            queue[qt++] = n;
+          }
+        }
+      }
+      if (area >= 6) {
+        components.push({ pixels, minX, maxX, minY, maxY, area });
+      }
+    }
+  }
+
+  let inkMinX = W, inkMaxX = 0, inkMinY = H, inkMaxY = 0;
+  for (const c of components) {
+    if (c.minX < inkMinX) inkMinX = c.minX;
+    if (c.maxX > inkMaxX) inkMaxX = c.maxX;
+    if (c.minY < inkMinY) inkMinY = c.minY;
+    if (c.maxY > inkMaxY) inkMaxY = c.maxY;
+  }
+  const inkW = Math.max(1, inkMaxX - inkMinX);
+  const inkH = Math.max(1, inkMaxY - inkMinY);
+
+  const t = thresholdsFor(syl);
+  const pieces = components.map((c, idx) => {
+    const cx = (c.minX + c.maxX) / 2;
+    const cy = (c.minY + c.maxY) / 2;
+    const relX = (cx - inkMinX) / inkW;
+    const relY = (cy - inkMinY) / inkH;
+    const relMinY = (c.minY - inkMinY) / inkH;
+    const relMaxY = (c.maxY - inkMinY) / inkH;
+    return {
+      id: `${idx}`,
+      pixels: c.pixels,
+      minX: c.minX,
+      maxX: c.maxX,
+      minY: c.minY,
+      maxY: c.maxY,
+      area: c.area,
+      cx,
+      cy,
+      relX,
+      relY,
+      relMinY,
+      relMaxY,
+      stroke: autoStrokeFor({ relX, relY, relMinY, relMaxY }, { layout, hasFinal }, t),
+      box: {
+        x: Math.round(c.minX / dpr),
+        y: Math.round(c.minY / dpr),
+        w: Math.round((c.maxX - c.minX) / dpr),
+        h: Math.round((c.maxY - c.minY) / dpr)
+      }
+    };
+  });
+
+  return {
+    syllable: syl,
+    syl,
+    layout,
+    hasFinal,
+    medial,
+    final,
+    t,
+    canvas,
+    ctx,
+    compByPixel,
+    pieces,
+    inkMinX,
+    inkMinY,
+    inkW,
+    inkH,
+    dpr
+  };
+}
+
+function paintSegmentation(seg) {
+  const { ctx, canvas, pieces } = seg;
+  const W = canvas.width;
+  const H = canvas.height;
+  const img = ctx.createImageData(W, H);
+  const px = img.data;
+
+  for (let i = 0; i < pieces.length; i++) {
+    const comp = pieces[i];
+    for (const p of comp.pixels) {
+      px[p * 4] = 35;
+      px[p * 4 + 1] = 47;
+      px[p * 4 + 2] = 68;
+      px[p * 4 + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(img, 0, 0);
+}
+
+function rebuildPixelMap(seg) {
+  const map = new Int32Array(seg.canvas.width * seg.canvas.height);
+  map.fill(-1);
+  seg.pieces.forEach((piece, idx) => {
+    for (const p of piece.pixels) map[p] = idx;
+  });
+  seg.compByPixel = map;
+}
+
+function sizeCanvases(seg) {
+  const rect = document.getElementById('frame').getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  [glyphCanvas, overlayCanvas].forEach(canvas => {
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+  });
+  return {
+    width: glyphCanvas.width,
+    height: glyphCanvas.height,
+    cssWidth: rect.width,
+    cssHeight: rect.height,
+    dpr
+  };
+}
+
+function drawFrame() {
+  const sample = SAMPLES[state.index];
+  const size = sizeCanvases();
+  const fontSizePx = Math.max(92, Math.round(Math.min(size.cssWidth, size.cssHeight) * 0.48));
+  if (!state.seg || state.seg.syllable !== sample.syllable) {
+    state.seg = buildSegmentation(sample.syllable, fontSizePx, size.cssWidth, size.cssHeight);
+  }
+  ensureGuideForSample(sample);
+  const seg = state.seg;
+  paintSegmentation(seg);
+  glyphCtx.clearRect(0, 0, glyphCanvas.width, glyphCanvas.height);
+  glyphCtx.drawImage(seg.canvas, 0, 0, glyphCanvas.width, glyphCanvas.height);
+  drawOverlay();
+  renderInfo();
+  sampleLabelEl.textContent = `${sample.syllable} · ${sample.group}`;
+  layoutLabelEl.textContent = seg.layout;
+  sampleListEl.querySelectorAll('button').forEach((btn, idx) => btn.classList.toggle('active', idx === state.index));
+  refreshSampleSavedMarks();
+  if (typeof renderPracticePad === 'function') renderPracticePad();
+  return size;
+}
+
+function drawOverlay() {
+  const seg = state.seg;
+  const rect = document.getElementById('frame').getBoundingClientRect();
+  const scaleX = overlayCanvas.width / rect.width;
+  const scaleY = overlayCanvas.height / rect.height;
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  overlayCtx.save();
+  overlayCtx.scale(scaleX, scaleY);
+
+  overlayCtx.strokeStyle = 'rgba(96, 112, 134, 0.55)';
+  overlayCtx.lineWidth = 1.2;
+  overlayCtx.font = '12px Inter, system-ui, sans-serif';
+  overlayCtx.textAlign = 'center';
+  overlayCtx.textBaseline = 'middle';
+
+  seg.pieces.forEach((comp, idx) => {
+    const x = comp.minX / seg.dpr;
+    const y = comp.minY / seg.dpr;
+    const w = (comp.maxX - comp.minX) / seg.dpr;
+    const h = (comp.maxY - comp.minY) / seg.dpr;
+    overlayCtx.strokeStyle = idx === state.selectedPiece ? 'rgba(37, 99, 235, 0.95)' : 'rgba(96, 112, 134, 0.45)';
+    overlayCtx.lineWidth = idx === state.selectedPiece ? 2.2 : 1;
+    const box = pieceBox(comp, seg);
+    overlayCtx.strokeRect(box.x, box.y, box.w, box.h);
+
+    const labelX = (comp.cx / seg.dpr);
+    const labelY = (comp.cy / seg.dpr);
+    overlayCtx.fillStyle = idx === state.selectedPiece ? 'rgba(37, 99, 235, 0.95)' : 'rgba(96, 112, 134, 0.8)';
+    overlayCtx.beginPath();
+    overlayCtx.arc(labelX, labelY, 11, 0, Math.PI * 2);
+    overlayCtx.fill();
+    overlayCtx.fillStyle = '#fff';
+    overlayCtx.fillText(comp.stroke ? String(comp.stroke) : '·', labelX, labelY + 0.5);
+  });
+
+  if (state.guide) {
+    const tracePath = (ctx, ops) => {
+      ctx.beginPath();
+      ops.forEach(op => {
+        if (op.shape === 'ellipse') {
+          const cx = op.rect.x + op.rect.w / 2;
+          const cy = op.rect.y + op.rect.h / 2;
+          const rx = Math.abs(op.rect.w / 2);
+          const ry = Math.abs(op.rect.h / 2);
+          if (rx > 0 && ry > 0) {
+            ctx.moveTo(cx + rx, cy);
+            ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+          }
+        } else {
+          ctx.rect(op.rect.x, op.rect.y, op.rect.w, op.rect.h);
+        }
+      });
+    };
+    const drawOps = (ops, fill, stroke, alpha, dashed) => {
+      if (!ops || !ops.length) return;
+      const addOps = ops.filter(op => op.mode !== 'subtract');
+      const subOps = ops.filter(op => op.mode === 'subtract');
+      overlayCtx.save();
+      overlayCtx.globalAlpha = alpha;
+      // Fill add regions
+      overlayCtx.fillStyle = fill;
+      tracePath(overlayCtx, addOps);
+      overlayCtx.fill();
+      // Punch holes for subtracts
+      if (subOps.length) {
+        overlayCtx.globalCompositeOperation = 'destination-out';
+        tracePath(overlayCtx, subOps);
+        overlayCtx.fill();
+        overlayCtx.globalCompositeOperation = 'source-over';
+      }
+      // Stroke add regions in step color
+      overlayCtx.strokeStyle = stroke;
+      overlayCtx.lineWidth = 2;
+      if (dashed) overlayCtx.setLineDash([5, 4]); else overlayCtx.setLineDash([]);
+      tracePath(overlayCtx, addOps);
+      overlayCtx.stroke();
+      // Stroke subtract regions in red dashed (always visible)
+      if (subOps.length) {
+        overlayCtx.strokeStyle = 'rgba(239, 68, 68, 0.95)';
+        overlayCtx.lineWidth = 2;
+        overlayCtx.setLineDash([4, 3]);
+        tracePath(overlayCtx, subOps);
+        overlayCtx.stroke();
+      }
+      overlayCtx.restore();
+    };
+    const drawStepLabel = (ops, key, color) => {
+      if (!ops || !ops.length || !key) return;
+      const addOps = ops.filter(op => op.mode !== 'subtract');
+      if (!addOps.length) return;
+      const minOp = addOps.reduce((a, b) => (a.rect.x + a.rect.y < b.rect.x + b.rect.y ? a : b));
+      overlayCtx.save();
+      overlayCtx.font = 'bold 14px "Noto Sans KR", system-ui, sans-serif';
+      overlayCtx.textAlign = 'left';
+      overlayCtx.textBaseline = 'top';
+      const padX = 4, padY = 2;
+      const tw = overlayCtx.measureText(key).width + padX * 2;
+      const th = 18;
+      overlayCtx.fillStyle = color;
+      overlayCtx.fillRect(minOp.rect.x, minOp.rect.y, tw, th);
+      overlayCtx.fillStyle = '#fff';
+      overlayCtx.fillText(key, minOp.rect.x + padX, minOp.rect.y + padY);
+      overlayCtx.restore();
+    };
+    const STEP_PALETTE = [
+      { fill: 'rgba(16, 185, 129, 0.18)', stroke: 'rgba(16, 185, 129, 0.95)' },   // green
+      { fill: 'rgba(249, 115, 22, 0.18)', stroke: 'rgba(249, 115, 22, 0.95)' },   // orange
+      { fill: 'rgba(139, 92, 246, 0.18)', stroke: 'rgba(139, 92, 246, 0.95)' },   // purple
+      { fill: 'rgba(236, 72, 153, 0.18)', stroke: 'rgba(236, 72, 153, 0.95)' }    // pink
+    ];
+    const paletteFor = order => STEP_PALETTE[((order || 1) - 1) % STEP_PALETTE.length];
+    if (state.guide.steps && state.guide.steps.length) {
+      state.guide.steps.forEach(step => {
+        const pal = paletteFor(step.order);
+        drawOps(step.ops, pal.fill, pal.stroke, 1, false);
+        drawStepLabel(step.ops, step.key, pal.stroke);
+      });
+    }
+    if (state.guide.current && state.guide.current.ops.length) {
+      drawOps(state.guide.current.ops, 'rgba(37, 99, 235, 0.22)', 'rgba(37, 99, 235, 0.95)', 1, true);
+      drawStepLabel(state.guide.current.ops, state.guide.current.key, 'rgba(37, 99, 235, 0.95)');
+    }
+  }
+
+  if (state.drag && state.drag.active) {
+    const d = state.drag;
+    const dragColors = {
+      replace:  { stroke: 'rgba(37, 99, 235, 0.95)',  fill: 'rgba(37, 99, 235, 0.10)' },
+      add:      { stroke: 'rgba(16, 185, 129, 0.95)', fill: 'rgba(16, 185, 129, 0.12)' },
+      subtract: { stroke: 'rgba(239, 68, 68, 0.95)',  fill: 'rgba(239, 68, 68, 0.12)' }
+    };
+    const c = dragColors[d.mode] || dragColors.replace;
+    overlayCtx.strokeStyle = c.stroke;
+    overlayCtx.fillStyle = c.fill;
+    overlayCtx.lineWidth = 2;
+    overlayCtx.setLineDash([6, 4]);
+    overlayCtx.beginPath();
+    if (d.shape === 'ellipse' && d.w > 0 && d.h > 0) {
+      const cx = d.x + d.w / 2;
+      const cy = d.y + d.h / 2;
+      const rx = d.w / 2;
+      const ry = d.h / 2;
+      overlayCtx.moveTo(cx + rx, cy);
+      overlayCtx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    } else {
+      overlayCtx.rect(d.x, d.y, d.w, d.h);
+    }
+    overlayCtx.fill();
+    overlayCtx.stroke();
+    overlayCtx.setLineDash([]);
+  }
+
+  overlayCtx.restore();
+}
+
+function renderInfo() {
+  renderGuide();
+}
+
+function renderSampleList() {
+  sampleListEl.innerHTML = SAMPLE_GROUPS.map(group => {
+    const buttons = group.items.map(item => {
+      const idx = SAMPLES.findIndex(s => s.syllable === item);
+      const saved = isSampleSaved(item);
+      return `<button class="sample-btn${saved ? ' saved' : ''}" data-index="${idx}"><span class="syl">${item}${saved ? ' <span class="check">✓</span>' : ''}</span><small>${group.label}</small></button>`;
+    }).join('');
+    return `<div><div class="group-label">${group.label}</div><div class="sample-list">${buttons}</div></div>`;
+  }).join('');
+  sampleListEl.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.index = Number(btn.dataset.index);
+      state.selectedPiece = 0;
+      drawFrame();
+    });
+  });
+}
+
+function isSampleSaved(syllable) {
+  const entry = state.guideBySample[syllable];
+  if (!entry || !entry.saved || !entry.steps || !entry.steps.length) return false;
+  return entry.steps.every(s => s.ops && s.ops.length && s.ops.every(op => op.normRect));
+}
+
+function refreshSampleSavedMarks() {
+  if (!sampleListEl) return;
+  sampleListEl.querySelectorAll('.sample-btn').forEach(btn => {
+    const idx = Number(btn.dataset.index);
+    const sample = SAMPLES[idx];
+    if (!sample) return;
+    const saved = isSampleSaved(sample.syllable);
+    btn.classList.toggle('saved', saved);
+    const sylEl = btn.querySelector('.syl');
+    if (!sylEl) return;
+    const existing = sylEl.querySelector('.check');
+    if (saved && !existing) {
+      const c = document.createElement('span');
+      c.className = 'check';
+      c.textContent = '✓';
+      sylEl.appendChild(document.createTextNode(' '));
+      sylEl.appendChild(c);
+    } else if (!saved && existing) {
+      existing.remove();
+    }
+  });
+}
+
+
+function commitGuideRect(rectBox, mode = 'replace', shape = 'rect') {
+  const sample = SAMPLES[state.index];
+  ensureGuideForSample(sample);
+  const guide = state.guide;
+  if (!guide || !guide.active || !guide.current) return false;
+  guide.saved = false;
+  const op = mode === 'replace' ? { mode: 'add', shape, rect: rectBox } : { mode, shape, rect: rectBox };
+  if (mode === 'replace') {
+    guide.current.ops = [op];
+  } else {
+    guide.current.ops.push(op);
+  }
+  persistGuide();
+  drawFrame();
+  return true;
+}
+
+function nextSample(step) {
+  const len = SAMPLES.length;
+  state.index = (state.index + step + len) % len;
+  state.selectedPiece = 0;
+  drawFrame();
+}
+
+function resetCurrent() {
+  if (!state.seg) return;
+  state.seg.pieces.forEach((p, idx) => {
+    p.stroke = autoStrokeFor({
+      relX: p.relX,
+      relY: p.relY,
+      relMinY: p.relMinY,
+      relMaxY: p.relMaxY
+    }, { layout: state.seg.layout, hasFinal: state.seg.hasFinal }, state.seg.t);
+  });
+  drawFrame();
+}
+
+function pointToComp(clientX, clientY) {
+  const rect = overlayCanvas.getBoundingClientRect();
+  const x = Math.floor((clientX - rect.left) * (overlayCanvas.width / rect.width));
+  const y = Math.floor((clientY - rect.top) * (overlayCanvas.height / rect.height));
+  if (!state.seg) return -1;
+  const px = Math.max(0, Math.min(overlayCanvas.width - 1, x));
+  const py = Math.max(0, Math.min(overlayCanvas.height - 1, y));
+  const idx = py * overlayCanvas.width + px;
+  return state.seg.compByPixel[idx] ?? -1;
+}
+
+function canvasPoint(ev) {
+  const rect = overlayCanvas.getBoundingClientRect();
+  return {
+    x: ev.clientX - rect.left,
+    y: ev.clientY - rect.top
+  };
+}
+
+let _wasDrag = false;
+
+function beginDrag(ev) {
+  if (!state.seg || (state.drag && state.drag.active)) return;
+  const pt = canvasPoint(ev);
+  state.drag = {
+    active: true,
+    mode: ev.altKey ? 'subtract' : (ev.shiftKey ? 'add' : 'replace'),
+    shape: state.shapeTool,
+    startX: pt.x,
+    startY: pt.y,
+    x: pt.x,
+    y: pt.y,
+    w: 0,
+    h: 0
+  };
+  if (typeof ev.pointerId === 'number' && overlayCanvas.setPointerCapture) {
+    try { overlayCanvas.setPointerCapture(ev.pointerId); } catch {}
+  }
+  drawFrame();
+}
+
+function moveDrag(ev) {
+  if (!state.drag || !state.drag.active) return;
+  const pt = canvasPoint(ev);
+  const x1 = Math.min(state.drag.startX, pt.x);
+  const y1 = Math.min(state.drag.startY, pt.y);
+  const x2 = Math.max(state.drag.startX, pt.x);
+  const y2 = Math.max(state.drag.startY, pt.y);
+  state.drag.x = x1;
+  state.drag.y = y1;
+  state.drag.w = x2 - x1;
+  state.drag.h = y2 - y1;
+  drawFrame();
+}
+
+function finishDrag(ev) {
+  if (!state.drag || !state.drag.active) return;
+  const d = state.drag;
+  state.drag.active = false;
+  if (typeof ev.pointerId === 'number' && overlayCanvas.releasePointerCapture) {
+    try { overlayCanvas.releasePointerCapture(ev.pointerId); } catch {}
+  }
+  const committed = d.w > 6 && d.h > 6;
+  if (committed) {
+    if (!commitGuideRect({ x: d.x, y: d.y, w: d.w, h: d.h }, d.mode, d.shape || 'rect')) {
+      drawFrame();
+    }
+  } else {
+    drawFrame();
+  }
+  state.drag = null;
+  _wasDrag = committed;
+}
+
+// ============================================================
+// Practice pad — mirrors the practice page's per-pixel coloring
+// using the live in-memory guide so user can test as they label.
+// ============================================================
+
+const practiceCanvas = document.getElementById('practiceCanvas');
+const practiceCtx = practiceCanvas.getContext('2d');
+const practiceInput = document.getElementById('practiceInput');
+const practiceStatusEl = document.getElementById('practiceStatus');
+const practiceKbEl = document.getElementById('practiceKb');
+
+const PRACTICE_KB_ROWS = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['z','x','c','v','b','n','m']
+];
+
+function buildPracticeKeyboard() {
+  practiceKbEl.innerHTML = '';
+  PRACTICE_KB_ROWS.forEach((row, idx) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = `practice-kb-row r${idx + 1}`;
+    row.forEach(k => {
+      const key = document.createElement('div');
+      key.className = 'practice-kb-key';
+      key.dataset.key = k;
+      const jamo = KEYMAP[k] || '';
+      const shifted = KEYMAP[k.toUpperCase()];
+      let html = `<div class="pjamo">${escapeHtmlSafe(jamo)}</div><div class="pqwerty">${k.toUpperCase()}</div>`;
+      if (shifted && shifted !== jamo) {
+        html += `<div class="pshift">${escapeHtmlSafe(shifted)}</div>`;
+      }
+      key.innerHTML = html;
+      rowEl.appendChild(key);
+    });
+    practiceKbEl.appendChild(rowEl);
+  });
+}
+
+function highlightPracticeNextKey() {
+  practiceKbEl.querySelectorAll('.practice-kb-key').forEach(k => {
+    k.classList.remove('next', 'next-shift');
+  });
+  const ks = practiceState.expectedKs;
+  if (practiceState.posKs >= ks.length) return;
+  const next = ks[practiceState.posKs];
+  const map = JAMO_TO_KEY[next];
+  if (!map) return;
+  const keyEl = practiceKbEl.querySelector(`.practice-kb-key[data-key="${map.key}"]`);
+  if (keyEl) keyEl.classList.add(map.shift ? 'next-shift' : 'next');
+}
+
+const practiceState = {
+  syllable: null,
+  expectedKs: [],
+  posKs: 0,
+  seg: null,
+  err: false
+};
+
+function getTunerGuideFromState(syllableChar) {
+  const entry = state.guideBySample[syllableChar];
+  if (!entry || !entry.steps || !entry.steps.length) return null;
+  const allNorm = entry.steps.every(s => s.ops && s.ops.every(op => op.normRect));
+  return allNorm ? entry.steps : null;
+}
+
+function buildPracticeSegmentation(syllableChar, fontSizePx) {
+  const dpr = window.devicePixelRatio || 1;
+  const code = syllableChar.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return null;
+  const x = code - 0xAC00;
+  const mIdx = Math.floor((x % 588) / 28);
+  const fIdx = x % 28;
+  const medial = MEDIALS[mIdx];
+  const final = FINALS[fIdx];
+  const hasFinal = fIdx > 0;
+  const layout = COMPOUND_VOWELS.has(medial) ? 'compound'
+    : VERT_VOWELS.has(medial) ? 'vert'
+    : 'horiz';
+
+  const wCss = Math.ceil(fontSizePx * 1.05);
+  const hCss = Math.ceil(fontSizePx * 1.20);
+  const canvas = document.createElement('canvas');
+  canvas.width = wCss * dpr;
+  canvas.height = hCss * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#000000';
+  ctx.font = `500 ${fontSizePx}px "Noto Sans KR", system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(syllableChar, wCss / 2, fontSizePx * 0.95);
+
+  const W = canvas.width, H = canvas.height;
+  const data = ctx.getImageData(0, 0, W, H).data;
+  const alpha = new Uint8ClampedArray(W * H);
+  for (let i = 0; i < W * H; i++) alpha[i] = data[i*4 + 3];
+  const isInk = (i) => alpha[i] > 0 && (data[i*4] + data[i*4+1] + data[i*4+2]) < 700;
+
+  const visited = new Uint8Array(W * H);
+  const components = [];
+  const queue = new Int32Array(W * H);
+  for (let y = 0; y < H; y++) {
+    for (let xp = 0; xp < W; xp++) {
+      const i0 = y * W + xp;
+      if (visited[i0] || !isInk(i0)) continue;
+      let qh = 0, qt = 0;
+      queue[qt++] = i0; visited[i0] = 1;
+      let minX = xp, maxX = xp, minY = y, maxY = y, area = 0;
+      const pixels = [];
+      while (qh < qt) {
+        const j = queue[qh++];
+        pixels.push(j);
+        area++;
+        const jy = (j / W) | 0, jx = j - jy * W;
+        if (jx < minX) minX = jx; if (jx > maxX) maxX = jx;
+        if (jy < minY) minY = jy; if (jy > maxY) maxY = jy;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const nx = jx + dx, ny = jy + dy;
+            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+            const ni = ny * W + nx;
+            if (visited[ni] || !isInk(ni)) continue;
+            visited[ni] = 1;
+            queue[qt++] = ni;
+          }
+        }
+      }
+      if (area >= 4) components.push({ pixels, minX, maxX, minY, maxY, area, cx: (minX+maxX)/2, cy: (minY+maxY)/2 });
+    }
+  }
+
+  if (components.length === 0) return { canvas, ctx, groups: [], alpha, w: wCss, h: hCss };
+
+  let inkMinX = W, inkMaxX = 0, inkMinY = H, inkMaxY = 0;
+  for (const c of components) {
+    if (c.minX < inkMinX) inkMinX = c.minX;
+    if (c.maxX > inkMaxX) inkMaxX = c.maxX;
+    if (c.minY < inkMinY) inkMinY = c.minY;
+    if (c.maxY > inkMaxY) inkMaxY = c.maxY;
+  }
+  const inkW = inkMaxX - inkMinX;
+  const inkH = inkMaxY - inkMinY;
+
+  const tunerSteps = getTunerGuideFromState(syllableChar);
+  const stepRects = tunerSteps ? tunerSteps.map(step => {
+    const adds = [], subs = [];
+    for (const op of step.ops) {
+      if (!op.normRect) continue;
+      const r = {
+        shape: op.shape === 'ellipse' ? 'ellipse' : 'rect',
+        x0: inkMinX + op.normRect.x * inkW,
+        y0: inkMinY + op.normRect.y * inkH,
+        x1: inkMinX + (op.normRect.x + op.normRect.w) * inkW,
+        y1: inkMinY + (op.normRect.y + op.normRect.h) * inkH
+      };
+      (op.mode === 'subtract' ? subs : adds).push(r);
+    }
+    return { order: step.order, adds, subs };
+  }) : null;
+
+  const pointInRegion = (px, py, r) => {
+    if (r.shape === 'ellipse') {
+      const cx = (r.x0 + r.x1) / 2;
+      const cy = (r.y0 + r.y1) / 2;
+      const rx = (r.x1 - r.x0) / 2;
+      const ry = (r.y1 - r.y0) / 2;
+      if (rx <= 0 || ry <= 0) return false;
+      const dx = (px - cx) / rx;
+      const dy = (py - cy) / ry;
+      return dx * dx + dy * dy <= 1;
+    }
+    return px >= r.x0 && px < r.x1 && py >= r.y0 && py < r.y1;
+  };
+
+  if (stepRects) {
+    const sortedSteps = tunerSteps.slice().sort((a, b) => a.order - b.order);
+    const stepPixels = sortedSteps.map(() => []);
+    const srByOrder = new Map(stepRects.map(sr => [sr.order, sr]));
+    const stepCenters = sortedSteps.map((step, i) => {
+      const sr = srByOrder.get(step.order);
+      if (!sr || !sr.adds.length) return { idx: i, cx: inkMinX + inkW / 2, cy: inkMinY + inkH / 2 };
+      const cx = sr.adds.reduce((s, r) => s + (r.x0 + r.x1) / 2, 0) / sr.adds.length;
+      const cy = sr.adds.reduce((s, r) => s + (r.y0 + r.y1) / 2, 0) / sr.adds.length;
+      return { idx: i, cx, cy };
+    });
+    for (const c of components) {
+      for (const p of c.pixels) {
+        const px = p % W, py = (p / W) | 0;
+        let assignedIdx = -1;
+        for (let si = 0; si < sortedSteps.length; si++) {
+          const sr = srByOrder.get(sortedSteps[si].order);
+          if (!sr) continue;
+          let inAdd = false;
+          for (const r of sr.adds) {
+            if (pointInRegion(px, py, r)) { inAdd = true; break; }
+          }
+          if (!inAdd) continue;
+          let inSub = false;
+          for (const r of sr.subs) {
+            if (pointInRegion(px, py, r)) { inSub = true; break; }
+          }
+          if (!inSub) { assignedIdx = si; break; }
+        }
+        if (assignedIdx < 0) {
+          let best = 0, bestDist = Infinity;
+          for (let si = 0; si < stepCenters.length; si++) {
+            const sc = stepCenters[si];
+            const d = Math.hypot(px - sc.cx, py - sc.cy);
+            if (d < bestDist) { bestDist = d; best = si; }
+          }
+          assignedIdx = best;
+        }
+        stepPixels[assignedIdx].push(p);
+      }
+    }
+    return { canvas, ctx, groups: stepPixels.map(arr => new Uint32Array(arr)), alpha, w: wCss, h: hCss };
+  }
+
+  // Heuristic fallback for unlabeled syllables
+  const partGroups = { initial: [], medial: [], final: [] };
+  for (const c of components) {
+    const relX = (c.cx - inkMinX) / Math.max(1, inkW);
+    const relY = (c.cy - inkMinY) / Math.max(1, inkH);
+    let bucket;
+    if (layout === 'horiz') {
+      if (hasFinal && relY > 0.60) bucket = 'final';
+      else if (relX < 0.42) bucket = 'initial';
+      else bucket = 'medial';
+    } else if (layout === 'vert') {
+      if (hasFinal) {
+        if (relY < 0.36) bucket = 'initial';
+        else if (relY < 0.66) bucket = 'medial';
+        else bucket = 'final';
+      } else {
+        bucket = relY < 0.50 ? 'initial' : 'medial';
+      }
+    } else {
+      if (hasFinal && relY > 0.68) bucket = 'final';
+      else if (relX < 0.42 && relY < 0.40) bucket = 'initial';
+      else bucket = 'medial';
+    }
+    partGroups[bucket].push(...c.pixels);
+  }
+  const medialParts = VOWEL_DECOMPOSE[medial] || [medial];
+  const finalParts = final ? (FINAL_DECOMPOSE[final] || [final]) : [];
+  const splitX = (pixels, count) => {
+    if (count <= 1) return [pixels];
+    const sorted = pixels.slice().sort((a, b) => (a % W) - (b % W));
+    const out = Array.from({ length: count }, () => []);
+    sorted.forEach((p, i) => out[Math.min(count - 1, Math.floor(i * count / sorted.length))].push(p));
+    return out;
+  };
+  const medialGroups = medialParts.length === 2
+    ? splitX(partGroups.medial, 2)
+    : [partGroups.medial];
+  const finalGroups = finalParts.length === 2
+    ? splitX(partGroups.final, 2)
+    : (finalParts.length ? [partGroups.final] : []);
+  const groups = [
+    new Uint32Array(partGroups.initial),
+    ...medialGroups.map(arr => new Uint32Array(arr)),
+    ...finalGroups.map(arr => new Uint32Array(arr))
+  ];
+  return { canvas, ctx, groups, alpha, w: wCss, h: hCss };
+}
+
+function paintPracticeSyllable(seg, states) {
+  const { canvas, ctx, groups, alpha } = seg;
+  const W = canvas.width, H = canvas.height;
+  const img = ctx.createImageData(W, H);
+  const px = img.data;
+  const paint = (group, hex) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    for (let i = 0; i < group.length; i++) {
+      const p = group[i];
+      px[p*4] = r; px[p*4+1] = g; px[p*4+2] = b; px[p*4+3] = alpha[p] || 0;
+    }
+  };
+  for (let i = 0; i < groups.length; i++) {
+    paint(groups[i], PRACTICE_STATE_COLORS[states[i] || 'pending']);
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function renderPracticePad() {
+  const sample = SAMPLES[state.index];
+  if (!sample) return;
+  const syl = sample.syllable;
+  const ks = syllableToKeystrokes(syl);
+  const sylChanged = practiceState.syllable !== syl;
+  if (sylChanged) {
+    practiceState.syllable = syl;
+    practiceState.expectedKs = ks;
+    practiceState.posKs = 0;
+    practiceState.err = false;
+    practiceInput.value = '';
+    practiceInput.classList.remove('err');
+  } else {
+    practiceState.expectedKs = ks;
+    if (practiceState.posKs > ks.length) practiceState.posKs = ks.length;
+  }
+
+  const seg = buildPracticeSegmentation(syl, 140);
+  practiceState.seg = seg;
+  // Size the canvas to its CSS box × DPR so retina displays render sharp
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = practiceCanvas.clientWidth || 140;
+  const cssH = practiceCanvas.clientHeight || 160;
+  if (practiceCanvas.width !== cssW * dpr || practiceCanvas.height !== cssH * dpr) {
+    practiceCanvas.width = cssW * dpr;
+    practiceCanvas.height = cssH * dpr;
+  }
+  practiceCtx.setTransform(1, 0, 0, 1, 0, 0);
+  practiceCtx.clearRect(0, 0, practiceCanvas.width, practiceCanvas.height);
+  if (!seg || !seg.groups || !seg.groups.length) {
+    practiceStatusEl.innerHTML = `<em>No segmentation</em>`;
+    return;
+  }
+
+  const states = [];
+  for (let i = 0; i < seg.groups.length; i++) {
+    if (i < practiceState.posKs) states.push('done');
+    else if (i === practiceState.posKs) states.push('now');
+    else states.push('pending');
+  }
+  paintPracticeSyllable(seg, states);
+
+  practiceCtx.save();
+  practiceCtx.scale(dpr, dpr);
+  practiceCtx.imageSmoothingEnabled = true;
+  practiceCtx.imageSmoothingQuality = 'high';
+  const scale = Math.min(cssW / seg.w, cssH / seg.h);
+  const drawW = seg.w * scale;
+  const drawH = seg.h * scale;
+  const dx = (cssW - drawW) / 2;
+  const dy = (cssH - drawH) / 2;
+  practiceCtx.drawImage(seg.canvas, dx, dy, drawW, drawH);
+  practiceCtx.restore();
+
+  if (practiceState.posKs >= ks.length) {
+    practiceStatusEl.innerHTML = `<span class="ok">✓ Done!</span> Press Space or any key to retry.`;
+  } else {
+    const next = ks[practiceState.posKs];
+    const map = JAMO_TO_KEY[next];
+    const keyHint = map ? (map.shift ? `Shift+${map.key}` : map.key) : '?';
+    practiceStatusEl.innerHTML = `Next: <span class="key-hint">${escapeHtmlSafe(next)}</span> (press <span class="key-hint">${escapeHtmlSafe(keyHint)}</span>)`;
+  }
+  highlightPracticeNextKey();
+}
+
+function escapeHtmlSafe(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch]);
+}
+
+practiceInput.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Backspace') {
+    ev.preventDefault();
+    if (practiceState.posKs > 0) practiceState.posKs--;
+    practiceInput.value = '';
+    practiceState.err = false;
+    practiceInput.classList.remove('err');
+    renderPracticePad();
+    return;
+  }
+  if (ev.key === 'Escape' || ev.key === 'Enter') {
+    ev.preventDefault();
+    practiceState.posKs = 0;
+    practiceInput.value = '';
+    practiceState.err = false;
+    practiceInput.classList.remove('err');
+    renderPracticePad();
+    return;
+  }
+  if (ev.key.length !== 1) return;
+  const ks = practiceState.expectedKs;
+  if (practiceState.posKs >= ks.length) {
+    ev.preventDefault();
+    practiceState.posKs = 0;
+    practiceInput.value = '';
+    renderPracticePad();
+    return;
+  }
+  const next = ks[practiceState.posKs];
+  const map = JAMO_TO_KEY[next];
+  if (!map) return;
+  const wantsShift = map.shift;
+  const matches = ev.key.toLowerCase() === map.key && ev.shiftKey === wantsShift;
+  if (matches) {
+    ev.preventDefault();
+    practiceState.posKs++;
+    practiceState.err = false;
+    practiceInput.classList.remove('err');
+    practiceInput.value = '';
+    renderPracticePad();
+  } else if (/^[a-zA-Z]$/.test(ev.key)) {
+    ev.preventDefault();
+    practiceState.err = true;
+    practiceInput.classList.add('err');
+    setTimeout(() => {
+      practiceInput.classList.remove('err');
+      practiceState.err = false;
+    }, 250);
+  }
+});
+
+practiceInput.addEventListener('input', () => {
+  // Always clear so it acts like a one-key-at-a-time pad
+  practiceInput.value = '';
+});
+
+document.querySelectorAll('.shape-toggle .shape-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.shapeTool = btn.dataset.shape;
+    document.querySelectorAll('.shape-toggle .shape-btn').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+  });
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => nextSample(-1));
+document.getElementById('nextBtn').addEventListener('click', () => nextSample(1));
+document.getElementById('guideStartBtn').addEventListener('click', startGuide);
+document.getElementById('guideDoneBtn').addEventListener('click', finishGuideStep);
+document.getElementById('guideUndoBtn').addEventListener('click', undoGuideStep);
+document.getElementById('guideClearBtn').addEventListener('click', clearGuide);
+document.getElementById('guideSaveBtn').addEventListener('click', saveGuide);
+document.getElementById('guideExportBtn').addEventListener('click', exportGuides);
+
+function exportGuides() {
+  const exported = {};
+  for (const [key, entry] of Object.entries(state.guideBySample)) {
+    if (!entry || !entry.saved || !entry.steps || !entry.steps.length) continue;
+    const cleanSteps = entry.steps.map(step => ({
+      order: step.order,
+      key: step.key,
+      ops: (step.ops || []).filter(op => op.normRect).map(op => ({
+        mode: op.mode,
+        shape: op.shape || 'rect',
+        normRect: op.normRect
+      }))
+    })).filter(s => s.ops.length);
+    if (cleanSteps.length) exported[key] = { steps: cleanSteps };
+  }
+  const json = JSON.stringify(exported, null, 2);
+  const count = Object.keys(exported).length;
+  const writeText = (text) => navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject('no clipboard');
+  writeText(json).then(() => {
+    if (guideStatusEl) guideStatusEl.textContent = `Exported ${count} syllable${count === 1 ? '' : 's'} to clipboard.`;
+  }).catch(() => {
+    // Fallback: open a dialog with the JSON
+    window.prompt(`Copy this JSON (${count} syllables):`, json);
+  });
+}
+
+overlayCanvas.addEventListener('click', (ev) => {
+  if (_wasDrag) { _wasDrag = false; return; }
+  const compIdx = pointToComp(ev.clientX, ev.clientY);
+  if (compIdx < 0) return;
+  state.selectedPiece = compIdx;
+  drawFrame();
+});
+
+overlayCanvas.addEventListener('pointerdown', beginDrag);
+overlayCanvas.addEventListener('pointermove', moveDrag);
+overlayCanvas.addEventListener('pointerup', finishDrag);
+overlayCanvas.addEventListener('pointercancel', () => {
+  state.drag = null;
+  drawFrame();
+});
+
+window.addEventListener('keydown', (ev) => {
+  if (document.activeElement === practiceInput) return;
+  if (ev.key === 'ArrowLeft') {
+    ev.preventDefault();
+    nextSample(-1);
+  } else if (ev.key === 'ArrowRight') {
+    ev.preventDefault();
+    nextSample(1);
+  } else if ((ev.key === 'r' || ev.key === 'R') && !ev.metaKey && !ev.ctrlKey) {
+    state.shapeTool = 'rect';
+    document.querySelectorAll('.shape-toggle .shape-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.shape === 'rect');
+    });
+  } else if ((ev.key === 'e' || ev.key === 'E') && !ev.metaKey && !ev.ctrlKey) {
+    state.shapeTool = 'ellipse';
+    document.querySelectorAll('.shape-toggle .shape-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.shape === 'ellipse');
+    });
+  }
+});
+
+window.addEventListener('resize', () => drawFrame());
+
+window.__state = state;
+buildPracticeKeyboard();
+document.fonts.ready.then(() => {
+  renderSampleList();
+  drawFrame();
+});
+</script>
+</body>
+</html>

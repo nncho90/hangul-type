@@ -38,6 +38,9 @@
     --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
     --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
     --korean: 'Noto Sans KR', 'Inter', sans-serif;
+    --floor-a: rgba(255, 255, 255, 0.38);
+    --floor-b: rgba(15, 23, 42, 0.08);
+    --floor-line: rgba(15, 23, 42, 0.12);
   }
   html, body {
     height: 100%;
@@ -85,6 +88,11 @@
   body.theme-village .backdrop {
     background: linear-gradient(180deg, #fff1f7 0%, #fde2e9 30%, #fbcfe8 60%, #f9a8d4 100%);
   }
+  body.theme-village {
+    --floor-a: rgba(254, 205, 211, 0.55);
+    --floor-b: rgba(180, 83, 9, 0.14);
+    --floor-line: rgba(120, 53, 15, 0.20);
+  }
   body.theme-village .backdrop::before {
     background:
       /* Hanok rooftop silhouette */
@@ -98,6 +106,11 @@
   /* lv 5-8 — 대숲 (Bamboo Forest): jade green, vertical bamboo, mist */
   body.theme-forest .backdrop {
     background: linear-gradient(180deg, #d1fae5 0%, #6ee7b7 30%, #10b981 70%, #047857 100%);
+  }
+  body.theme-forest {
+    --floor-a: rgba(110, 231, 183, 0.38);
+    --floor-b: rgba(6, 95, 70, 0.28);
+    --floor-line: rgba(6, 78, 59, 0.30);
   }
   body.theme-forest .backdrop::before {
     background:
@@ -189,6 +202,31 @@
   body.theme-courtyard .backdrop  { background: linear-gradient(180deg, #fce7f3 0%, #f9a8d4 50%, #c084fc 100%); }
   body.theme-camp .backdrop       { background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
   body.theme-battlefield .backdrop{ background: linear-gradient(180deg, #7c2d12 0%, #ea580c 50%, #1f2937 100%); }
+  body.theme-study {
+    --floor-a: rgba(254, 243, 199, 0.50);
+    --floor-b: rgba(217, 119, 6, 0.16);
+    --floor-line: rgba(146, 64, 14, 0.22);
+  }
+  body.theme-courtyard {
+    --floor-a: rgba(249, 168, 212, 0.38);
+    --floor-b: rgba(88, 28, 135, 0.18);
+    --floor-line: rgba(107, 33, 168, 0.25);
+  }
+  body.theme-camp {
+    --floor-a: rgba(203, 213, 225, 0.36);
+    --floor-b: rgba(51, 65, 85, 0.25);
+    --floor-line: rgba(30, 41, 59, 0.28);
+  }
+  body.theme-battlefield {
+    --floor-a: rgba(251, 146, 60, 0.26);
+    --floor-b: rgba(67, 20, 7, 0.34);
+    --floor-line: rgba(124, 45, 18, 0.42);
+  }
+  body.theme-palace {
+    --floor-a: rgba(6, 182, 212, 0.30);
+    --floor-b: rgba(12, 74, 110, 0.26);
+    --floor-line: rgba(14, 116, 144, 0.32);
+  }
   /* lv 23+ — 별나라 (Cosmos): deep night, constellations, nebula */
   body.theme-cosmos .backdrop {
     background: radial-gradient(ellipse at 50% 30%, #312e81 0%, #1e1b4b 40%, #0f0c29 80%, #000 100%);
@@ -424,6 +462,113 @@
     inset: 0 0 0 0;
     z-index: 50;
     overflow: hidden;
+    perspective: 760px;
+    perspective-origin: 50% 42%;
+    transform-style: preserve-3d;
+    isolation: isolate;
+  }
+  .stage::after {
+    content: '';
+    position: absolute; inset: 0;
+    z-index: 95;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(circle at 50% 54%, rgba(255,255,255,0.22), rgba(255,255,255,0) 34%),
+                radial-gradient(ellipse at 50% 100%, rgba(15, 23, 42, 0.16), rgba(15,23,42,0) 58%);
+  }
+  .stage.camera-pulse::after { animation: camera-pulse 460ms ease-out; }
+  .stage.camera-heavy::after { animation: camera-heavy 760ms ease-out; }
+  @keyframes camera-pulse {
+    0% { opacity: 0; transform: scale(1); }
+    34% { opacity: 1; transform: scale(1.018); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+  @keyframes camera-heavy {
+    0% { opacity: 0; transform: scale(1); }
+    18% { opacity: 1; transform: scale(1.035) translateY(4px); }
+    42% { opacity: 0.75; transform: scale(1.012) translateY(-2px); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+  .battle-depth {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .battle-floor {
+    left: -12%;
+    right: -12%;
+    top: 38%;
+    height: 82%;
+    z-index: 12;
+    transform: rotateX(63deg) translateZ(-120px);
+    transform-origin: 50% 100%;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.28), rgba(255,255,255,0) 46%),
+      linear-gradient(180deg, var(--floor-a), var(--floor-b)),
+      repeating-linear-gradient(90deg, transparent 0 58px, var(--floor-line) 58px 59px),
+      repeating-linear-gradient(0deg, transparent 0 48px, var(--floor-line) 48px 49px);
+    box-shadow: inset 0 36px 70px rgba(255,255,255,0.16), inset 0 -60px 90px rgba(15, 23, 42, 0.18);
+    opacity: 0.78;
+    -webkit-mask-image:
+      radial-gradient(ellipse 68% 92% at 50% 70%, #000 0%, #000 58%, rgba(0,0,0,0.55) 76%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, #000 22%, #000 100%);
+    mask-image:
+      radial-gradient(ellipse 68% 92% at 50% 70%, #000 0%, #000 58%, rgba(0,0,0,0.55) 76%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, #000 22%, #000 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+    animation: floor-breathe 8s ease-in-out infinite;
+  }
+  .battle-floor::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -18%;
+    width: 10px;
+    height: 130%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0));
+    box-shadow:
+      -220px 0 0 rgba(255,255,255,0.08),
+       220px 0 0 rgba(255,255,255,0.08);
+    opacity: 0.65;
+  }
+  @keyframes floor-breathe {
+    0%, 100% { filter: saturate(1) brightness(1); }
+    50% { filter: saturate(1.08) brightness(1.04); }
+  }
+  .battle-foreground {
+    z-index: 58;
+    background:
+      linear-gradient(180deg, rgba(15,23,42,0) 72%, rgba(15,23,42,0.20) 100%),
+      radial-gradient(ellipse 52% 12% at 50% 98%, rgba(15,23,42,0.28), rgba(15,23,42,0) 72%);
+  }
+  .battle-foreground::before,
+  .battle-foreground::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    width: clamp(90px, 12vw, 190px);
+    height: clamp(130px, 24vh, 310px);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.30));
+    filter: blur(0.2px);
+  }
+  .battle-foreground::before {
+    left: -26px;
+    clip-path: polygon(0 100%, 22% 38%, 40% 100%, 58% 18%, 78% 100%, 100% 45%, 100% 100%);
+  }
+  .battle-foreground::after {
+    right: -28px;
+    clip-path: polygon(0 48%, 20% 100%, 38% 24%, 56% 100%, 74% 36%, 100% 100%, 0 100%);
+  }
+  .stage.camera-pulse .battle-floor,
+  .stage.camera-heavy .battle-floor {
+    animation: floor-breathe 8s ease-in-out infinite, floor-push 520ms ease-out;
+  }
+  @keyframes floor-push {
+    0% { transform: rotateX(63deg) translateZ(-120px) translateY(0); }
+    32% { transform: rotateX(63deg) translateZ(-92px) translateY(10px); }
+    100% { transform: rotateX(63deg) translateZ(-120px) translateY(0); }
   }
 
   /* Player */
@@ -487,8 +632,13 @@
     flex-direction: column;
     align-items: center;
     transition: filter 0.2s;
-    will-change: transform, top;
+    transform-origin: 50% 95%;
+    will-change: transform;
     pointer-events: none;
+  }
+  .monster.depth-billboard {
+    filter:
+      drop-shadow(0 calc(4px + var(--depth-shadow, 0px)) calc(8px + var(--depth-shadow, 0px)) rgba(15, 23, 42, var(--shadow-alpha, 0.18)));
   }
   /* Soft fade on appear so a fresh wave doesn't pop in jarringly. Opacity-only
      so it doesn't fight the inline translateX(-50%) the JS sets per monster. */
@@ -509,6 +659,20 @@
     line-height: 1;
     filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.15));
     animation: bob 1.8s ease-in-out infinite;
+  }
+  .monster.depth-billboard .sprite::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 78%;
+    height: 17%;
+    transform: translateX(-50%) scaleX(var(--shadow-scale, 1));
+    transform-origin: 50% 50%;
+    z-index: -1;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, var(--shadow-alpha, 0.18));
+    filter: blur(8px);
   }
   .monster .sprite .sprite-img { display: block; }
   /* 2-frame walk cycle for enemies. The step-pose image is stacked over the
@@ -789,9 +953,9 @@
     to { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(180deg); filter: blur(6px); }
   }
   @keyframes tp-in {
-    0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.6) rotate(-180deg); filter: blur(4px); }
-    60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(0); filter: blur(0); }
-    100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); filter: blur(0); }
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.75) translateY(8px); filter: blur(6px); }
+    55%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08) translateY(-2px); filter: blur(0); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1) translateY(0); filter: blur(0); }
   }
   .player.swinging { animation: swing 0.18s ease-out; }
   @keyframes swing {
@@ -2161,6 +2325,21 @@
   /* When the parent .sprite span has its bob animation, kill it so we don't
      double-animate (the new breathe-img on the img is richer + per-tier). */
   .monster .sprite { animation: none; }
+  @media (max-width: 720px) {
+    .stage { perspective: 620px; perspective-origin: 50% 46%; }
+    .battle-floor {
+      top: 42%;
+      height: 76%;
+      transform: rotateX(61deg) translateZ(-110px);
+    }
+    @keyframes floor-push {
+      0% { transform: rotateX(61deg) translateZ(-110px) translateY(0); }
+      32% { transform: rotateX(61deg) translateZ(-86px) translateY(8px); }
+      100% { transform: rotateX(61deg) translateZ(-110px) translateY(0); }
+    }
+    .battle-foreground::before,
+    .battle-foreground::after { opacity: 0.22; }
+  }
 </style>
 </head>
 <body>
@@ -2205,6 +2384,8 @@
 <div class="xpbar"><div class="xpbar-fill" id="xpFill"></div></div>
 
 <div class="stage" id="stage">
+  <div class="battle-depth battle-floor" aria-hidden="true"></div>
+  <div class="battle-depth battle-foreground" aria-hidden="true"></div>
   <div class="player" id="player">🥷</div>
 </div>
 
@@ -2332,6 +2513,7 @@
 <!-- Extra vocab loaded synchronously so window.BATTLE_VOCAB is ready when the
      main script merges it into VOCAB. Falls back gracefully if the file 404s. -->
 <script src="vocab.js"></script>
+<script src="default-guides.js"></script>
 
 <script>
 'use strict';
@@ -2422,6 +2604,31 @@ const COMPOUND_VOWELS = new Set(['ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ']);
 const STATE_COLORS = { done:'#10b981', now:'#2563eb', err:'#ef4444', pending:'#0f172a' };
 const SYL_CACHE = new Map();
 
+function getTunerGuide(syllableChar) {
+  try {
+    const raw = localStorage.getItem('jamo-tuner-guide-v1');
+    if (raw) {
+      const store = JSON.parse(raw);
+      const entry = store[syllableChar];
+      if (entry && entry.steps && entry.steps.length) {
+        const allNorm = entry.steps.every(s => s.ops && s.ops.every(op => op.normRect));
+        if (allNorm) return entry.steps;
+      }
+    }
+  } catch {}
+  const defaults = (typeof window !== 'undefined' && window.DEFAULT_TUNER_GUIDES) || null;
+  if (defaults && defaults[syllableChar] && defaults[syllableChar].steps && defaults[syllableChar].steps.length) {
+    const steps = defaults[syllableChar].steps;
+    const allNorm = steps.every(s => s.ops && s.ops.every(op => op.normRect));
+    if (allNorm) return steps;
+  }
+  return null;
+}
+
+window.addEventListener('storage', ev => {
+  if (ev.key === 'jamo-tuner-guide-v1') SYL_CACHE.clear();
+});
+
 function syllableLayoutType(mIdx) {
   const m = MEDIALS[mIdx];
   if (COMPOUND_VOWELS.has(m)) return 'compound';
@@ -2495,28 +2702,141 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
     if (c.maxY > inkMaxY) inkMaxY = c.maxY;
   }
   const inkW = inkMaxX - inkMinX, inkH = inkMaxY - inkMinY;
+  const tunerSteps = getTunerGuide(syllableChar);
+  const mKsCount = COMPOUND_VOWELS.has(MEDIALS[mIdx]) ? 2 : 1;
+  const mKsEnd = 1 + mKsCount;
+  const stepRects = tunerSteps ? tunerSteps.map(step => {
+    const adds = [], subs = [];
+    for (const op of step.ops) {
+      if (!op.normRect) continue;
+      const r = {
+        shape: op.shape === 'ellipse' ? 'ellipse' : 'rect',
+        x0: inkMinX + op.normRect.x * inkW,
+        y0: inkMinY + op.normRect.y * inkH,
+        x1: inkMinX + (op.normRect.x + op.normRect.w) * inkW,
+        y1: inkMinY + (op.normRect.y + op.normRect.h) * inkH,
+      };
+      (op.mode === 'subtract' ? subs : adds).push(r);
+    }
+    return { order: step.order, adds, subs };
+  }) : null;
+
+  const pointInRegion = (px, py, r) => {
+    if (r.shape === 'ellipse') {
+      const cx = (r.x0 + r.x1) / 2;
+      const cy = (r.y0 + r.y1) / 2;
+      const rx = (r.x1 - r.x0) / 2;
+      const ry = (r.y1 - r.y0) / 2;
+      if (rx <= 0 || ry <= 0) return false;
+      const dx = (px - cx) / rx;
+      const dy = (py - cy) / ry;
+      return dx * dx + dy * dy <= 1;
+    }
+    return px >= r.x0 && px < r.x1 && py >= r.y0 && py < r.y1;
+  };
+
+  if (stepRects) {
+    const sortedSteps = tunerSteps.slice().sort((a, b) => a.order - b.order);
+    const stepPixels = sortedSteps.map(() => []);
+    const srByOrder = new Map(stepRects.map(sr => [sr.order, sr]));
+    const stepCenters = sortedSteps.map((step, i) => {
+      const sr = srByOrder.get(step.order);
+      if (!sr || !sr.adds.length) return { idx: i, cx: inkMinX + inkW / 2, cy: inkMinY + inkH / 2 };
+      const cx = sr.adds.reduce((s, r) => s + (r.x0 + r.x1) / 2, 0) / sr.adds.length;
+      const cy = sr.adds.reduce((s, r) => s + (r.y0 + r.y1) / 2, 0) / sr.adds.length;
+      return { idx: i, cx, cy };
+    });
+    for (const c of components) {
+      for (const p of c.pixels) {
+        const x = p % W, y = (p / W) | 0;
+        let assignedIdx = -1;
+        for (let si = 0; si < sortedSteps.length; si++) {
+          const sr = srByOrder.get(sortedSteps[si].order);
+          if (!sr) continue;
+          let inAdd = false;
+          for (const r of sr.adds) {
+            if (pointInRegion(x, y, r)) { inAdd = true; break; }
+          }
+          if (!inAdd) continue;
+          let inSub = false;
+          for (const r of sr.subs) {
+            if (pointInRegion(x, y, r)) { inSub = true; break; }
+          }
+          if (!inSub) { assignedIdx = si; break; }
+        }
+        if (assignedIdx < 0) {
+          let best = 0, bestDist = Infinity;
+          for (let si = 0; si < stepCenters.length; si++) {
+            const sc = stepCenters[si];
+            const d = Math.hypot(x - sc.cx, y - sc.cy);
+            if (d < bestDist) { bestDist = d; best = si; }
+          }
+          assignedIdx = best;
+        }
+        stepPixels[assignedIdx].push(p);
+      }
+    }
+    const namedGroups = { initial: [], medial: [], final: [] };
+    sortedSteps.forEach((step, i) => {
+      const bucket = step.order === 1 ? 'initial' : step.order <= mKsEnd ? 'medial' : 'final';
+      namedGroups[bucket].push(...stepPixels[i]);
+    });
+    return { canvas, ctx, groups: { initial: new Uint32Array(namedGroups.initial), medial: new Uint32Array(namedGroups.medial), final: new Uint32Array(namedGroups.final) }, alpha, w: wCss, h: hCss };
+  }
+
   const groups = { initial: [], medial: [], final: [] };
   for (const c of components) {
     const relX = (c.cx - inkMinX) / Math.max(1, inkW);
     const relY = (c.cy - inkMinY) / Math.max(1, inkH);
     const relMaxY = (c.maxY - inkMinY) / Math.max(1, inkH);
     let bucket;
-    if (layout === 'horiz') {
-      if (hasFinal && relY > 0.60) bucket = 'final';
-      else if (relX < 0.50) bucket = 'initial';
-      else bucket = 'medial';
-    } else if (layout === 'vert') {
-      if (hasFinal) {
-        if (relY < 0.38) bucket = 'initial';
-        else if (relY < 0.72) bucket = 'medial';
-        else bucket = 'final';
-      } else {
-        bucket = relY < 0.50 ? 'initial' : 'medial';
+    if (stepRects) {
+      const votes = new Map();
+      for (const p of c.pixels) {
+        const x = p % W, y = (p / W) | 0;
+        for (const sr of stepRects) {
+          let inAdd = false;
+          for (const r of sr.adds) {
+            if (x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1) { inAdd = true; break; }
+          }
+          if (!inAdd) continue;
+          let inSub = false;
+          for (const r of sr.subs) {
+            if (x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1) { inSub = true; break; }
+          }
+          if (inSub) continue;
+          votes.set(sr.order, (votes.get(sr.order) || 0) + 1);
+          break;
+        }
       }
-    } else {
-      if (hasFinal && relY > 0.68) bucket = 'final';
-      else if (relX < 0.42 && relY < 0.40 && relMaxY < 0.55) bucket = 'initial';
-      else bucket = 'medial';
+      let bestOrder = null, bestCount = 0;
+      for (const [order, count] of votes) {
+        if (count > bestCount) { bestCount = count; bestOrder = order; }
+      }
+      if (bestOrder !== null) {
+        if (bestOrder === 1) bucket = 'initial';
+        else if (bestOrder <= mKsEnd) bucket = 'medial';
+        else bucket = 'final';
+      }
+    }
+    if (!bucket) {
+      if (layout === 'horiz') {
+        if (hasFinal && relY > 0.60) bucket = 'final';
+        else if (relX < 0.50) bucket = 'initial';
+        else bucket = 'medial';
+      } else if (layout === 'vert') {
+        if (hasFinal) {
+          if (relY < 0.38) bucket = 'initial';
+          else if (relY < 0.72) bucket = 'medial';
+          else bucket = 'final';
+        } else {
+          bucket = relY < 0.50 ? 'initial' : 'medial';
+        }
+      } else {
+        if (hasFinal && relY > 0.68) bucket = 'final';
+        else if (relX < 0.42 && relY < 0.40 && relMaxY < 0.55) bucket = 'initial';
+        else bucket = 'medial';
+      }
     }
     groups[bucket].push(...c.pixels);
   }
@@ -3744,6 +4064,7 @@ function spawnMonster(forceBoss) {
 
 function spawnBoss() {
   sfxBossWarn();
+  pulseBattleCamera('heavy');
   state.bossActive = true;
   const word = pickAvailableWord(VOCAB.boss, activeFirstJamos());
   if (!word) { state.bossActive = false; return null; }
@@ -3752,20 +4073,18 @@ function spawnBoss() {
   const spriteFile = profile.sprite;
   const id = ++monsterId;
   const ks = wordToKeystrokes(word.ko);
-  const beh = behaviorForTier('boss');
-  const baseSpeed = (8 + state.level * 0.6) * beh.speedMul;
   const startX = window.innerWidth / 2;
   const monster = {
     id, sprite, spriteFile, name: profile.name,
     word: word.ko, en: word.en, tier: 'boss',
     ks, hp: ks.length, maxHp: ks.length,
-    speed: baseSpeed,
-    motion: beh.motion,
+    speed: 0,
+    motion: 'hold',
     x: startX, originX: startX,
     y: monsterSpawnY('boss'),
     zigT: 0, zigAmp: 0, zigFreq: 0,
-    diveSpeed: baseSpeed,
-    tpT: 0, tpHoldUntil: 1400,
+    diveSpeed: 0,
+    tpT: 0, tpHoldUntil: 0,
     isBoss: true, el: null
   };
   // Cutscene first, then build the on-stage element so the boss appears with the music
@@ -3849,11 +4168,12 @@ function buildMonsterEl(m) {
   hpBar.appendChild(hpFill);
   el.appendChild(hpBar);
 
-  el.style.left = m.x + 'px';
-  el.style.top  = m.y + 'px';
-  el.style.transform = 'translateX(-50%)';
+  el.classList.add('depth-billboard');
+  el.style.left = '0px';
+  el.style.top  = '0px';
   STAGE.appendChild(el);
   m.el = el;
+  renderMonsterDepth(m);
 }
 
 function killMonster(m, byPlayer) {
@@ -3891,7 +4211,11 @@ function killMonster(m, byPlayer) {
     floatScorePop(m.x, m.y, '+' + sc + (isCrit ? ' ✨' : ''));
     // English-translation reveal — closes the learning loop. Suppressed during
     // 필살기 so 6+ kills don't dogpile the screen with overlapping translations.
-    if (!state.specialMoveBurst) floatEnglishReveal(m.x, m.y, m.en);
+    if (!state.specialMoveBurst) {
+      const wordEl = m.el && m.el.querySelector('.word');
+      const r = (wordEl || m.el).getBoundingClientRect();
+      floatEnglishReveal(r.left + r.width / 2, r.top + r.height / 2, m.en);
+    }
     // Pronunciation cue — fires AFTER the player completed typing the word so
     // the audio confirms what they just produced. Suppressed during 필살.
     if (!state.specialMoveBurst) speakKoreanWord(m.word);
@@ -4027,6 +4351,7 @@ function showActBreak(act) {
 
 function onLevelUp() {
   sfxLevelUp();
+  pulseBattleCamera('pulse');
   PLAYER_EL.classList.remove('levelup');
   void PLAYER_EL.offsetWidth;
   PLAYER_EL.classList.add('levelup');
@@ -4100,13 +4425,8 @@ function floatEnglishReveal(x, y, en) {
   const el = document.createElement('div');
   el.className = 'english-reveal';
   el.textContent = en;
-  // Stage spans inset:0 0 160 0, so stage-relative (x,y) == viewport (x,y).
-  // Clamp y so the reveal stays on-screen even after the -84px rise.
-  const minY = 90;
-  const maxY = window.innerHeight - 180;
-  const safeY = Math.max(minY, Math.min(maxY, y - 24));
   el.style.left = x + 'px';
-  el.style.top  = safeY + 'px';
+  el.style.top  = y + 'px';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1620);
 }
@@ -4213,13 +4533,28 @@ if (_ttsSupported) {
 // ── Ninja teleport + sword melee ──────────────────────────────────────────
 // Player position state. baseX/baseY = stage-relative center-bottom anchor.
 // When teleported, we override left/top with explicit pixels.
-function spawnSmokePuff(x, y) {
+function spawnSmokePuff(x, y, opts = {}) {
+  const size = Math.max(24, Math.min(96, Number(opts.size) || 64));
+  const alpha = Math.max(0.15, Math.min(1, Number(opts.alpha) || 1));
   const el = document.createElement('div');
   el.className = 'smoke-puff';
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  el.style.opacity = String(alpha);
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
   STAGE.appendChild(el);
   setTimeout(() => el.remove(), 440);
+}
+function spawnTeleportDust(x, y) {
+  const bursts = [
+    { dx: -18, dy:  6, size: 34, alpha: 0.55, delay: 0 },
+    { dx:  12, dy:  2, size: 42, alpha: 0.48, delay: 18 },
+    { dx:  -2, dy: -6, size: 26, alpha: 0.35, delay: 34 }
+  ];
+  for (const b of bursts) {
+    setTimeout(() => spawnSmokePuff(x + b.dx, y + b.dy, { size: b.size, alpha: b.alpha }), b.delay);
+  }
 }
 function spawnSlashFx(x, y, isCrit) {
   const el = document.createElement('div');
@@ -4258,6 +4593,41 @@ function invalidateStageRect() { _stageRectCache = null; }
 window.addEventListener('resize', invalidateStageRect, { passive: true });
 window.addEventListener('orientationchange', invalidateStageRect, { passive: true });
 
+function clamp01(n) {
+  return Math.max(0, Math.min(1, n));
+}
+
+function monsterDepth(m) {
+  const rect = getStageRect();
+  const horizon = 18;
+  const homeLine = rect.height * 0.92;
+  return clamp01((((m && Number(m.y)) || 0) - horizon) / Math.max(1, homeLine - horizon));
+}
+
+function renderMonsterDepth(m) {
+  if (!m || !m.el) return;
+  const d = monsterDepth(m);
+  const base = m.isBoss ? 0.82 : 0.72;
+  const grow = m.isBoss ? 0.34 : 0.46;
+  const scale = base + d * grow;
+  const x = Math.round(m.x || 0);
+  const y = Math.round(m.y || 0);
+  m.el.style.transform = `translate3d(${x}px, ${y}px, 0) translateX(-50%) scale(${scale.toFixed(3)})`;
+  m.el.style.zIndex = String(38 + Math.round(d * 48) + (m.isBoss ? 4 : 0));
+  m.el.style.setProperty('--depth-shadow', (d * 16).toFixed(1) + 'px');
+  m.el.style.setProperty('--shadow-alpha', (0.16 + d * 0.16).toFixed(3));
+  m.el.style.setProperty('--shadow-scale', (0.72 + d * 0.86).toFixed(3));
+}
+
+function pulseBattleCamera(kind) {
+  if (!STAGE) return;
+  const cls = kind === 'heavy' ? 'camera-heavy' : 'camera-pulse';
+  STAGE.classList.remove('camera-pulse', 'camera-heavy');
+  void STAGE.offsetWidth;
+  STAGE.classList.add(cls);
+  setTimeout(() => STAGE.classList.remove(cls), kind === 'heavy' ? 820 : 520);
+}
+
 let _playerHomePending = null;
 function teleportPlayerTo(x, y) {
   // Smoke at current position (departure puff)
@@ -4265,7 +4635,7 @@ function teleportPlayerTo(x, y) {
   const sr = getStageRect();
   const fromX = (r.left + r.width / 2) - sr.left;
   const fromY = (r.top + r.height / 2)  - sr.top;
-  spawnSmokePuff(fromX, fromY);
+  spawnTeleportDust(fromX, fromY);
   // Move + arrival animation. Inline styles override the .player breathe rules.
   PLAYER_EL.classList.remove('teleporting','arriving');
   void PLAYER_EL.offsetWidth;
@@ -4278,7 +4648,7 @@ function teleportPlayerTo(x, y) {
   PLAYER_EL.style.transform = 'translate(-50%, -50%)';
   PLAYER_EL.style.animation = 'none';   // disable the bottom-anchored breathe while teleported
   PLAYER_EL.classList.add('arriving');
-  setTimeout(() => spawnSmokePuff(targetX, targetY), 30);
+  setTimeout(() => spawnTeleportDust(targetX, targetY), 24);
   state.playerTeleported = true;
   if (_playerHomePending) { clearTimeout(_playerHomePending); _playerHomePending = null; }
 }
@@ -4289,7 +4659,7 @@ function teleportPlayerHome(immediate) {
     if (state.playerTeleported) {
       const r = PLAYER_EL.getBoundingClientRect();
       const sr = getStageRect();
-      spawnSmokePuff((r.left + r.width / 2) - sr.left, (r.top + r.height / 2) - sr.top);
+      spawnTeleportDust((r.left + r.width / 2) - sr.left, (r.top + r.height / 2) - sr.top);
     }
     PLAYER_EL.classList.remove('arriving','swinging','teleporting');
     PLAYER_EL.style.bottom = '';
@@ -4637,6 +5007,7 @@ async function triggerSpecialMove() {
   state.specialMoveBurst  = true;   // suppresses per-kill TTS + english-reveal dogpile
   cancelAllSpeech();
   setFastFall(false);               // any held Tab is dropped while the cinematic plays
+  pulseBattleCamera('heavy');
 
   const victims = state.monsters.slice();
 
@@ -5295,6 +5666,8 @@ function loop(t) {
       } else if (m.motion === 'dive') {
         m.diveSpeed += 16 * dts;       // gentler gravity-like accel (was 30)
         m.y += m.diveSpeed * dts;
+      } else if (m.motion === 'hold') {
+        // Boss stays framed in place; the cutscene and attack VFX carry the beat.
       } else if (m.motion === 'tracker') {
         m.y += m.speed * dts;
         const targetX = window.innerWidth / 2; // player is centered at bottom
@@ -5321,8 +5694,7 @@ function loop(t) {
       const minX = 60, maxX = window.innerWidth - 60;
       if (m.x < minX) m.x = minX;
       if (m.x > maxX) m.x = maxX;
-      m.el.style.top = m.y + 'px';
-      m.el.style.left = m.x + 'px';
+      renderMonsterDepth(m);
       if (m.y > baseY - 50) {
         damagePlayer();
         m.el.classList.add('dying');
