@@ -6,3 +6,8 @@ node_modules/
 tools/.venv/
 sprite-concepts/lineups/_wait_*.png
 tmp/
+.claude/
+logs/
+test-results/
+playwright-report/
+progress.txt
