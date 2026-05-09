@@ -1369,9 +1369,14 @@
     }
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
-    .player { font-size: 101px; bottom: 4%; }
-    .player .player-main { font-size: 101px; }
-    .player .player-equip { font-size: 43px; }
+    .player { font-size: 70px; bottom: 4%; }
+    .player .player-main { font-size: 70px; }
+    .player .player-equip { font-size: 30px; }
+    /* Shrink the actual player sprite img on mobile — the inline width/height
+       baked by spriteHtml() needs !important to override. The sprite img is
+       siblings the same size as the emoji fallback, so font-size and img
+       dimensions need to move together. */
+    .player .sprite-img { width: 100px !important; height: 100px !important; }
     .monster .sprite { font-size: 79px; }
     .monster.tier-1 .sprite { font-size: 65px; }
     .monster.tier-2 .sprite { font-size: 79px; }
@@ -2806,7 +2811,7 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
       const bucket = step.order === 1 ? 'initial' : step.order <= mKsEnd ? 'medial' : 'final';
       namedGroups[bucket].push(...stepPixels[i]);
     });
-    return { canvas, ctx, groups: { initial: new Uint32Array(namedGroups.initial), medial: new Uint32Array(namedGroups.medial), final: new Uint32Array(namedGroups.final) }, alpha, w: wCss, h: hCss };
+    return { canvas, ctx, groups: { initial: new Uint32Array(namedGroups.initial), medial: new Uint32Array(namedGroups.medial), final: new Uint32Array(namedGroups.final) }, w: wCss, h: hCss };
   }
 
   const groups = { initial: [], medial: [], final: [] };
