@@ -1165,8 +1165,22 @@
       box-shadow: 0 -2px 14px rgba(15, 23, 42, 0.06);
     }
     .kb-legend-row { display: none; }
-    .kb-row { gap: 4px; margin-bottom: 4px; }
+    /* Override desktop's width:fit-content so keys can stretch to viewport width */
+    .kb-rows, #kb { width: 100%; align-items: stretch; }
+    .kb-wrapper { width: 100%; }
+    .finger-bar { display: none; }
+    .kb-row { gap: 4px; margin-bottom: 4px; width: 100%; }
     .kb-row.r2, .kb-row.r3 { padding-left: 0; }
+    /* Hide decorative non-hangul keys on mobile so letter keys can fill the width */
+    .key.kb-label,
+    .key[data-key="["],
+    .key[data-key="]"],
+    .key[data-key="\\"],
+    .key[data-key=";"],
+    .key[data-key="'"],
+    .key[data-key=","],
+    .key[data-key="."],
+    .key[data-key="/"] { display: none; }
     .key {
       flex: 1 1 0;
       width: auto;
