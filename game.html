@@ -1551,6 +1551,93 @@
   .battle-lb-row:last-child { border-bottom: none; }
   .battle-lb-row.you { background: rgba(37,99,235,0.06); font-weight: 600; cursor: pointer; }
   .battle-lb-row.you.below { border-top: 2px solid var(--bdhi); background: rgba(37,99,235,0.10); }
+  /* Fandom badge — appears next to the current player's display name on the
+     leaderboard. Tiny, colored, doesn't overflow narrow rows. */
+  .battle-lb-row .lb-fandom {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(139,92,246,0.18), rgba(236,72,153,0.18));
+    color: var(--purple);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  /* Share-result modal — centered card with the rendered canvas + save/share
+     buttons. The canvas is sized 1080×1920 (Instagram story) and scales down
+     on screen with object-fit so it stays sharp on retina exports. */
+  #shareModal { display: none; }
+  #shareModal.open { display: flex; }
+  .share-card-wrap {
+    position: relative;
+    background: var(--l1);
+    border-radius: 18px;
+    padding: 16px;
+    max-width: min(380px, calc(100vw - 32px));
+    width: 100%;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    overflow-y: auto;
+  }
+  .share-card-wrap canvas {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+    background: #0f172a;
+  }
+  .share-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .share-actions button {
+    flex: 1 1 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--bd);
+    background: var(--l2);
+    color: var(--thi);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .share-actions button.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+  }
+  .share-actions button:active { transform: scale(0.97); }
+  .share-hint {
+    font-size: 11px;
+    color: var(--tlo);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .share-hint strong { color: var(--thi); }
+  .share-close {
+    position: absolute;
+    top: 6px; right: 8px;
+    width: 32px; height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tmd);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .share-close:hover { background: var(--l3); color: var(--thi); }
   .battle-lb-empty { padding: 18px 14px; text-align: center; font-size: 12px; color: var(--tlo); }
   .battle-lb-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
   .battle-lb-row .n { color: var(--thi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2487,8 +2574,21 @@
     </div>
     <div class="actions">
       <button class="primary" id="btnRetry">Retry</button>
+      <button id="btnShareResult">📸 Share my result</button>
       <button id="btnHome">Back to practice</button>
     </div>
+  </div>
+</div>
+
+<div id="shareModal" class="modal-veil" style="display:none;">
+  <div class="share-card-wrap">
+    <button class="share-close" id="shareClose" aria-label="Close">×</button>
+    <canvas id="shareCanvas" width="1080" height="1920"></canvas>
+    <div class="share-actions">
+      <button class="primary" id="shareDownload">⬇ Save image</button>
+      <button id="shareNative">📤 Share…</button>
+    </div>
+    <div class="share-hint">Save the image and post it on Instagram / KakaoTalk / X. Tag <strong>@typehangeul</strong>!</div>
   </div>
 </div>
 
@@ -2503,6 +2603,10 @@
     <div class="profile-field">
       <label for="profileCountrySelect">Country</label>
       <select id="profileCountrySelect"></select>
+    </div>
+    <div class="profile-field">
+      <label for="profileFandomSelect">Fandom (optional)</label>
+      <select id="profileFandomSelect"></select>
     </div>
     <div class="profile-modal-actions">
       <button class="menu-btn" id="profileCancel">Cancel</button>
@@ -3621,6 +3725,29 @@ const SUPABASE_URL      = 'https://yugrqnocdrfvpmkrddya.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_xKJO3LJAlU1qkEigRBvTRg_wTlwFVjP';
 
 // ── Player identity (shared with main app via localStorage) ──
+// Curated K-pop fandom list. Players opt in once via the profile modal; the
+// id is stored in localStorage (no backend column yet) and surfaces as a small
+// badge next to the user's row in the leaderboard plus on the shareable
+// game-over result card. Add new entries here; ids must stay stable.
+const FANDOMS = [
+  { id: '',          label: 'No fandom',  emoji: '',   artist: '' },
+  { id: 'army',      label: 'ARMY',       emoji: '💜', artist: 'BTS' },
+  { id: 'blink',     label: 'BLINK',      emoji: '🖤', artist: 'BLACKPINK' },
+  { id: 'once',      label: 'ONCE',       emoji: '🍭', artist: 'TWICE' },
+  { id: 'stay',      label: 'STAY',       emoji: '⭐', artist: 'Stray Kids' },
+  { id: 'atiny',     label: 'ATINY',      emoji: '🏴', artist: 'ATEEZ' },
+  { id: 'moa',       label: 'MOA',        emoji: '💙', artist: 'TXT' },
+  { id: 'engene',    label: 'ENGENE',     emoji: '🔥', artist: 'ENHYPEN' },
+  { id: 'bunnies',   label: 'BUNNIES',    emoji: '🐰', artist: 'NewJeans' },
+  { id: 'midzy',     label: 'MIDZY',      emoji: '🐱', artist: 'ITZY' },
+  { id: 'my',        label: 'MY',         emoji: '✨', artist: 'aespa' },
+  { id: 'fearnot',   label: 'FEARNOT',    emoji: '🦋', artist: 'LE SSERAFIM' },
+  { id: 'neverland', label: 'NEVERLAND',  emoji: '🌙', artist: '(G)I-DLE' },
+  { id: 'other',     label: 'Other',      emoji: '🌟', artist: '' },
+];
+const FANDOM_BY_ID = Object.fromEntries(FANDOMS.map(f => [f.id, f]));
+function fandomFor(id) { return FANDOM_BY_ID[id] || FANDOMS[0]; }
+
 function getProgress() {
   // Sanitize on load — localStorage is user-writable, so any string we later
   // interpolate into innerHTML or render in the leaderboard must be capped
@@ -3633,7 +3760,9 @@ function getProgress() {
     if (raw.profile && typeof raw.profile === 'object') {
       const name = (typeof raw.profile.name === 'string' ? raw.profile.name : '').slice(0, 24).trim();
       const cc   = (typeof raw.profile.countryCode === 'string' ? raw.profile.countryCode : '').slice(0, 2).toUpperCase();
-      out.profile = { name: name || 'Player', countryCode: cc || 'US' };
+      const fid  = (typeof raw.profile.fandom === 'string' ? raw.profile.fandom : '').slice(0, 16);
+      const safeFandom = FANDOM_BY_ID[fid] ? fid : '';
+      out.profile = { name: name || 'Player', countryCode: cc || 'US', fandom: safeFandom };
     }
     return out;
   } catch (e) { return {}; }
@@ -3912,6 +4041,13 @@ async function renderBattleLeaderboard(containerId) {
     ? `${totalPlayers.toLocaleString()} player${totalPlayers === 1 ? '' : 's'} battled`
     : 'Be the first to battle';
 
+  // The fandom is local-only (no DB column), so we can only attach a fandom
+  // badge to the current player's row. Other rows show the country flag alone.
+  const myFandom = (progress.profile && fandomFor(progress.profile.fandom)) || fandomFor('');
+  const myFandomBadge = myFandom.id
+    ? `<span class="lb-fandom" title="${escapeHtml(myFandom.label + (myFandom.artist ? ' · ' + myFandom.artist : ''))}">${myFandom.emoji} ${escapeHtml(myFandom.label)}</span>`
+    : '';
+
   let listHtml = '';
   if (rows.length === 0) {
     listHtml = '<div class="battle-lb-empty">Be the first to enter the leaderboard.</div>';
@@ -3922,10 +4058,13 @@ async function renderBattleLeaderboard(containerId) {
       const cls = isUser ? 'battle-lb-row you' : 'battle-lb-row';
       const flag = flagEmoji(r.country || 'US');
       const safeName = escapeHtml(r.name || 'Player');
+      const nameCell = isUser && myFandomBadge
+        ? `<span class="n">${safeName}${myFandomBadge}</span>`
+        : `<span class="n">${safeName}</span>`;
       return `<div class="${cls}"${isUser ? ' data-edit-profile="1"' : ''}>
         <span class="r">#${rankN}</span>
         <span>${flag}</span>
-        <span class="n">${safeName}</span>
+        ${nameCell}
         <span class="lv">Lv.${r.level}</span>
         <span class="pts">${(Number(r.points) || 0).toLocaleString()}</span>
       </div>`;
@@ -3937,10 +4076,13 @@ async function renderBattleLeaderboard(containerId) {
   if (myRank > 100) {
     const userName = (progress.profile && progress.profile.name) || 'Player';
     const userCountry = (progress.profile && progress.profile.countryCode) || detectCountry();
+    const pinNameCell = myFandomBadge
+      ? `<span class="n">${escapeHtml(userName)}${myFandomBadge}</span>`
+      : `<span class="n">${escapeHtml(userName)}</span>`;
     pinHtml = `<div class="battle-lb-row you below" data-edit-profile="1">
       <span class="r">#${myRank.toLocaleString()}</span>
       <span>${flagEmoji(userCountry)}</span>
-      <span class="n">${escapeHtml(userName)}</span>
+      ${pinNameCell}
       <span class="lv">Lv.${state.level}</span>
       <span class="pts">${(state.score || 0).toLocaleString()}</span>
     </div>`;
@@ -3986,13 +4128,21 @@ function openProfileModal() {
   if (!modal) return;
   const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
   const name = (progress.profile && progress.profile.name) || 'Player';
+  const fandom = (progress.profile && progress.profile.fandom) || '';
   const nameInput = document.getElementById('profileNameInput');
   const countrySelect = document.getElementById('profileCountrySelect');
+  const fandomSelect = document.getElementById('profileFandomSelect');
   nameInput.value = name;
   countrySelect.innerHTML = Object.entries(COUNTRY_NAMES)
     .sort((a, b) => a[1].localeCompare(b[1]))
     .map(([code, label]) => `<option value="${code}" ${code === cc ? 'selected' : ''}>${flagEmoji(code)} ${label}</option>`)
     .join('');
+  if (fandomSelect) {
+    fandomSelect.innerHTML = FANDOMS.map(f => {
+      const lbl = f.id ? `${f.emoji ? f.emoji + ' ' : ''}${f.label}${f.artist ? ' · ' + f.artist : ''}` : f.label;
+      return `<option value="${f.id}" ${f.id === fandom ? 'selected' : ''}>${escapeHtml(lbl)}</option>`;
+    }).join('');
+  }
   modal.style.display = 'flex';
   const close = () => { modal.style.display = 'none'; };
   const onBackdrop = (e) => { if (e.target === modal) close(); };
@@ -4000,9 +4150,11 @@ function openProfileModal() {
   const onSave = () => {
     const newName = (nameInput.value || 'Player').trim().slice(0, 24) || 'Player';
     const newCC = countrySelect.value || detectCountry();
-    progress.profile = { name: newName, countryCode: newCC };
+    const newFandom = fandomSelect ? (fandomSelect.value || '') : '';
+    progress.profile = { name: newName, countryCode: newCC, fandom: FANDOM_BY_ID[newFandom] ? newFandom : '' };
     saveProgress(progress);
-    // No-op server-side if the player isn't on the leaderboard yet.
+    // No-op server-side if the player isn't on the leaderboard yet. Fandom
+    // is local-only for now (no DB column), so we don't ship it to Supabase.
     updateBattleProfile(newName, newCC).finally(() => {
       renderBattleLeaderboard();                       // game-over modal
       renderBattleLeaderboard('battleLbIntroContainer'); // intro modal
@@ -6011,6 +6163,208 @@ document.getElementById('achievementsModal').addEventListener('click', (e) => {
 document.getElementById('storyDialog').addEventListener('click', advanceStory);
 document.getElementById('btnRetry').addEventListener('click', startGame);
 document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html');
+
+// ─── Shareable result card ────────────────────────────────────────────────
+// Renders a 1080×1920 (Instagram story) canvas summarizing the player's run:
+// big score hero, top 3 from the leaderboard, the player's rank, and their
+// fandom badge if set. Uses the most recent leaderboard cache so it reflects
+// the same data the player just saw on the game-over screen.
+function _shareDrawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+
+function buildShareCard() {
+  const cv = document.getElementById('shareCanvas');
+  if (!cv) return null;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+
+  // Background — soft navy gradient with a faint top glow, matches the
+  // game's village/forest backdrop palette.
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0b1230');
+  bg.addColorStop(0.5, '#0f172a');
+  bg.addColorStop(1, '#020617');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Soft amber glow at the top
+  const glow = ctx.createRadialGradient(W/2, -120, 60, W/2, 200, 700);
+  glow.addColorStop(0, 'rgba(245, 158, 11, 0.30)');
+  glow.addColorStop(1, 'rgba(245, 158, 11, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, 600);
+
+  // Brand block at top
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(241, 245, 249, 0.55)';
+  ctx.font = '700 36px "Inter", system-ui, sans-serif';
+  ctx.fillText('TYPE HANGEUL', W/2, 110);
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = '900 84px "Inter", system-ui, sans-serif';
+  ctx.fillText('한글 BATTLE', W/2, 160);
+
+  // GAME OVER label
+  ctx.fillStyle = 'rgba(248, 250, 252, 0.55)';
+  ctx.font = '700 38px "Inter", system-ui, sans-serif';
+  ctx.fillText('GAME OVER', W/2, 320);
+
+  // Hero score — huge yellow number (matches AIR;PORT inspiration)
+  const score = (state.score || 0).toLocaleString();
+  ctx.fillStyle = '#fde047';
+  ctx.shadowColor = 'rgba(253, 224, 71, 0.55)';
+  ctx.shadowBlur = 50;
+  ctx.font = '900 220px "Inter", system-ui, sans-serif';
+  ctx.fillText(score, W/2, 400);
+  ctx.shadowBlur = 0;
+
+  // Subtitle row: Lv · Kills · Best combo
+  const sub = `Lv.${state.level}  ·  ${state.kills} kills  ·  ${state.bestCombo}× combo`;
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '600 38px "Inter", system-ui, sans-serif';
+  ctx.fillText(sub, W/2, 680);
+
+  // Top 3 leaderboard panel
+  const cache = (typeof _battleLbCache !== 'undefined' && _battleLbCache) || null;
+  const rows = (cache && Array.isArray(cache.rows)) ? cache.rows : [];
+  const myRank = (cache && cache.rank && cache.rank.rank > 0) ? cache.rank.rank : 0;
+  const panelY = 800;
+  const panelH = 540;
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.68)';
+  _shareDrawRoundedRect(ctx, 80, panelY, W - 160, panelH, 28);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.18)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(241, 245, 249, 0.55)';
+  ctx.font = '700 34px "Inter", system-ui, sans-serif';
+  ctx.fillText('순위',  140, panelY + 36);
+  ctx.fillText('이름',  260, panelY + 36);
+  ctx.textAlign = 'right';
+  ctx.fillText('기록',  W - 140, panelY + 36);
+
+  ctx.font = '700 50px "Inter", system-ui, sans-serif';
+  for (let i = 0; i < Math.min(3, rows.length); i++) {
+    const r = rows[i];
+    const y = panelY + 130 + i * 105;
+    ctx.fillStyle = '#fde047';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${i+1}`, 140, y);
+    ctx.fillStyle = '#f8fafc';
+    const name = (r.name || 'Player').slice(0, 14);
+    ctx.fillText(name, 260, y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#10b981';
+    const pts = (Number(r.points) || 0).toLocaleString();
+    ctx.fillText(pts, W - 140, y);
+  }
+  // …if there are 3+ rows, indicate more below
+  if (rows.length > 3) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+    ctx.font = '700 40px "Inter", system-ui, sans-serif';
+    ctx.fillText('⋮', W/2, panelY + 130 + 3*105 + 6);
+  }
+
+  // Your rank pill
+  ctx.textAlign = 'center';
+  const rankText = myRank > 0
+    ? `내 순위 · #${myRank.toLocaleString()}`
+    : '100위 밖';
+  ctx.fillStyle = 'rgba(37, 99, 235, 0.18)';
+  _shareDrawRoundedRect(ctx, 140, panelY + panelH - 110, W - 280, 90, 20);
+  ctx.fill();
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = '800 44px "Inter", system-ui, sans-serif';
+  ctx.fillText(rankText, W/2, panelY + panelH - 92);
+
+  // Fandom badge (only if user picked one)
+  const me = (progress && progress.profile) || {};
+  const fandom = fandomFor(me.fandom);
+  if (fandom.id) {
+    const badgeY = panelY + panelH + 50;
+    const badgeH = 110;
+    ctx.fillStyle = 'rgba(139, 92, 246, 0.18)';
+    _shareDrawRoundedRect(ctx, 200, badgeY, W - 400, badgeH, 26);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.45)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f5d0fe';
+    ctx.font = '900 50px "Inter", system-ui, sans-serif';
+    ctx.fillText(`${fandom.emoji}  ${fandom.label}`, W/2, badgeY + 18);
+    if (fandom.artist) {
+      ctx.fillStyle = 'rgba(248, 250, 252, 0.55)';
+      ctx.font = '600 32px "Inter", system-ui, sans-serif';
+      ctx.fillText(fandom.artist, W/2, badgeY + 70);
+    }
+  }
+
+  // Footer: brand URL
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(248, 250, 252, 0.45)';
+  ctx.font = '700 30px "Inter", system-ui, sans-serif';
+  ctx.fillText('typehangeul.com', W/2, H - 100);
+  return cv;
+}
+
+function openShareModal() {
+  const modal = document.getElementById('shareModal');
+  if (!modal) return;
+  buildShareCard();
+  modal.classList.add('open');
+  modal.style.display = 'flex';
+}
+
+function closeShareModal() {
+  const modal = document.getElementById('shareModal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  modal.style.display = 'none';
+}
+
+document.getElementById('btnShareResult').addEventListener('click', openShareModal);
+document.getElementById('shareClose').addEventListener('click', closeShareModal);
+document.getElementById('shareModal').addEventListener('click', (e) => {
+  if (e.target.id === 'shareModal') closeShareModal();
+});
+document.getElementById('shareDownload').addEventListener('click', () => {
+  const cv = document.getElementById('shareCanvas');
+  if (!cv) return;
+  const link = document.createElement('a');
+  link.download = `hangeul-battle-${state.score || 0}.png`;
+  link.href = cv.toDataURL('image/png');
+  link.click();
+});
+document.getElementById('shareNative').addEventListener('click', async () => {
+  const cv = document.getElementById('shareCanvas');
+  if (!cv) return;
+  const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+  if (!blob) return;
+  const file = new File([blob], `hangeul-battle-${state.score || 0}.png`, { type: 'image/png' });
+  const text = `한글 Battle · Lv.${state.level} · ${(state.score || 0).toLocaleString()} pts. typehangeul.com`;
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], text }); return; } catch (_) {}
+  }
+  if (navigator.share) {
+    try { await navigator.share({ text, url: 'https://typehangeul.com/game.html' }); return; } catch (_) {}
+  }
+  // Fallback: just download.
+  const link = document.createElement('a');
+  link.download = `hangeul-battle-${state.score || 0}.png`;
+  link.href = cv.toDataURL('image/png');
+  link.click();
+});
 document.getElementById('btnBack').addEventListener('click', () => location.href = 'index.html');
 document.getElementById('btnMenu').addEventListener('click', () => state.running && togglePause());
 document.getElementById('btnAudio').addEventListener('click', toggleAudio);
