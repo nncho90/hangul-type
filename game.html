@@ -2689,6 +2689,7 @@
      main script merges it into VOCAB. Falls back gracefully if the file 404s. -->
 <script src="vocab.js"></script>
 <script src="default-guides.js"></script>
+<script src="battle-config.js"></script>
 
 <script>
 'use strict';
@@ -3362,33 +3363,14 @@ const VOCAB = {
 // Make vocab queryable by topik level for the practice app
 window.HangulBattleVocab = VOCAB;
 
-const TIER_SPRITES = {
-  1: ['🐛','🦋','🐌','🐞','🦟','🪲','🐜'],
-  2: ['👻','🧚','🐸','🦊','🐰','🦔','🐭'],
-  3: ['🦅','🐺','🕷️','🦂','🦇','🦝','🐗'],
-  4: ['👹','🧟','🐲','🦹','🧛','🦴'],
-  5: ['👾','💀','🦖','🐍','🦑','🧞'],
-  boss: ['🐉','🦠','👹','💀']
-};
-
-// 7 player tiers mapped to Joseon-era Korean social hierarchy. Each tier has
-// a distinct sprite (back-view for combat, front-view for UI), a Korean+English
-// label, and an attack type that drives which combat VFX fires (melee teleport,
-// ranged projectile, or spell AoE). Cap is 대왕 — once you hit Lv.40 you stay.
-const PLAYER_SPRITES = [
-  { lv: 1,  tier: 1, emoji: '🥋', label: '백의 Commoner',     spriteBack: 'player/01-baegui-back',   spriteFront: 'player/01-baegui-front',   spriteStrike: 'player/01-baegui-back-attack',   attackType: 'melee'  },
-  { lv: 5,  tier: 2, emoji: '🪓', label: '나무꾼 Woodcutter', spriteBack: 'player/02-namukkun-back', spriteFront: 'player/02-namukkun-front', spriteStrike: 'player/02-namukkun-back-attack', attackType: 'melee'  },
-  { lv: 10, tier: 3, emoji: '📜', label: '선비 Scholar',      spriteBack: 'player/03-seonbi-back',   spriteFront: 'player/03-seonbi-front',   spriteStrike: 'player/03-seonbi-back-attack',   attackType: 'spell'  },
-  { lv: 16, tier: 4, emoji: '🖌️', label: '양반 Yangban',     spriteBack: 'player/04-yangban-back',  spriteFront: 'player/04-yangban-front',  spriteStrike: 'player/04-yangban-back-attack',  attackType: 'spell'  },
-  { lv: 23, tier: 5, emoji: '⚔️', label: '무관 Officer',      spriteBack: 'player/05-mugwan-back',   spriteFront: 'player/05-mugwan-front',   spriteStrike: 'player/05-mugwan-back-attack',   attackType: 'melee'  },
-  { lv: 30, tier: 6, emoji: '🏹', label: '장군 General',      spriteBack: 'player/06-janggun-back',  spriteFront: 'player/06-janggun-front',  spriteStrike: 'player/06-janggun-back-attack',  attackType: 'ranged' },
-  { lv: 40, tier: 7, emoji: '👑', label: '대왕 Great King',   spriteBack: 'player/07-daewang-back',  spriteFront: 'player/07-daewang-front',  spriteStrike: 'player/07-daewang-back-attack',  attackType: 'spell'  }
-];
+// Sprite mappings, boss roster, XP curve, and per-tier visual sizes live in
+// battle-config.js. battle-workshop.html consumes the same module to preview
+// every sprite at game-accurate sizes.
+const TIER_SPRITES = window.BATTLE_CONFIG.tierEmoji;
+const PLAYER_SPRITES = window.BATTLE_CONFIG.players;
 
 function playerForLevel(lv) {
-  let pick = PLAYER_SPRITES[0];
-  for (const p of PLAYER_SPRITES) if (lv >= p.lv) pick = p;
-  return pick;
+  return window.BATTLE_CONFIG.playerForLevel(lv);
 }
 
 // Sprite asset map. If a file exists in sprites/, we render <img>; on error
@@ -3570,13 +3552,7 @@ function triggerJumpPose(phase) {
   }
 }
 
-const TIER_SPRITE_FILES = {
-  1: 'enemies/01-imp',
-  2: 'enemies/02-gumiho',
-  3: 'enemies/04-oni',
-  4: 'enemies/06-jeoseung',
-  5: 'enemies/03-cheonyeo'
-};
+const TIER_SPRITE_FILES = window.BATTLE_CONFIG.enemyTiers;
 function tierSpriteFile(tier) { return TIER_SPRITE_FILES[tier] || null; }
 
 // Strict tier-per-level: one monster type per stage so the player learns
@@ -4379,16 +4355,10 @@ const state = {
 function getHighScore() { try { return Number(localStorage.getItem(HIGH_KEY)) || 0; } catch (e) { return 0; } }
 function setHighScore(n) { try { localStorage.setItem(HIGH_KEY, String(n)); } catch (e) {} }
 
-// Gentler curve at low levels: 60, 180, 360, 600, 900, 1260, 1680...
-// Levels 12+13 get a 30% discount — they sit at the deep end of tier 3
-// (3-syllable words) and the spawn cap jumps to endgame, so raw kill count
-// was disproportionately high vs. neighbouring levels.
 function xpThresholdForLevel(lv) {
-  // Linear-ish curve: each level needs ~4-8 kills depending on tier XP yield.
-  // Old curve (30 * lv * (lv+1)) was quadratic — L2→L3 needed 180 XP (~8 kills),
-  // L3→L4 needed 360 XP — so most players got stuck at level 2.
-  const base = 60 + 40 * (lv - 1);
-  if (lv === 12 || lv === 13) return Math.round(base * 0.70);
+  const x = (window.BATTLE_CONFIG && window.BATTLE_CONFIG.xp) || { base: 90, step: 70, lateDiscount: { levels: [12, 13], factor: 0.70 } };
+  const base = x.base + x.step * (lv - 1);
+  if (x.lateDiscount && x.lateDiscount.levels.includes(lv)) return Math.round(base * x.lateDiscount.factor);
   return base;
 }
 function xpForKill(tier) {
@@ -4557,20 +4527,17 @@ function buildMonsterEl(m) {
   el.className = 'monster' + ' tier-' + (m.tier === 'boss' ? '5 boss' : m.tier);
   const sprite = document.createElement('span');
   sprite.className = 'sprite';
-  // Per-tier image size (matches existing CSS font-size scale)
-  const sizePx = m.tier === 'boss' ? 234
-    : m.tier === 5 ? 180
-    : m.tier === 4 ? 155
-    : m.tier === 3 ? 137
-    : m.tier === 2 ? 119
-    : 101;
+  // Per-tier image size (matches existing CSS font-size scale).
+  // Live in battle-config.js so the workshop previews at game-accurate sizes.
+  const sizePx = (window.BATTLE_CONFIG.tierSizePx && window.BATTLE_CONFIG.tierSizePx[m.tier]) || 101;
   if (m.spriteFile) {
-    // Stack two sprite images: walk-1 (idle pose) underneath, walk-3 (step pose)
-    // on top. CSS animation alternates the step image's opacity, producing a
-    // 2-frame walk cycle from the new 4-frame walk row without needing JS per
-    // frame. (Frames 1 and 3 contrast best — opposite legs forward.)
-    const idleHtml = spriteHtml(m.spriteFile + '-walk-1', m.sprite, sizePx);
-    const stepHtml = spriteHtml(m.spriteFile + '-walk-3', m.sprite, sizePx)
+    // Bosses ship as <base>.png + <base>-step.png (2 frames, no walk row).
+    // Standard enemies have a 4-frame walk row; we sample frames 1 and 3
+    // (opposite legs forward) for the cheapest visible step cycle.
+    const idleSuffix = m.tier === 'boss' ? ''      : '-walk-1';
+    const stepSuffix = m.tier === 'boss' ? '-step' : '-walk-3';
+    const idleHtml = spriteHtml(m.spriteFile + idleSuffix, m.sprite, sizePx);
+    const stepHtml = spriteHtml(m.spriteFile + stepSuffix, m.sprite, sizePx)
       .replace('class="sprite-img"', 'class="sprite-img sprite-step"');
     sprite.innerHTML = idleHtml + stepHtml;
     // Randomize per-monster phase so a wave of demons doesn't bob in lockstep.
@@ -5713,13 +5680,8 @@ function renderPowerupHud() {
 }
 
 // ─── Boss intro cutscene + named bosses ───────────────────────────────────
-const BOSS_PROFILES = [
-  { sprite: 'enemies/08-hangeulwang',     emoji: '🐉', name: '한글왕',         subtitle: 'Demon King of Hangeul',     flavor: '"All who would speak my tongue, kneel."' },
-  { sprite: 'enemies/02-gumiho-mini',     emoji: '🦊', name: '구미호 여왕',     subtitle: 'Queen of Nine Tails',      flavor: '"Your syllables taste like fear, little one."' },
-  { sprite: 'enemies/05-dokkaebi-elder',  emoji: '👹', name: '도깨비 대장',     subtitle: 'Goblin Chieftain',         flavor: '"Hahaha! Type if you dare, mortal!"' },
-  { sprite: 'enemies/06-jeoseung-saja',   emoji: '🪦', name: '저승사자',        subtitle: 'Reaper of the Underworld', flavor: '"Your ledger… is incomplete."' },
-  { sprite: 'enemies/03-cheonyeo-gwisin', emoji: '👻', name: '처녀귀신',        subtitle: 'Maiden of Vengeance',      flavor: '"You forgot me. I have not forgotten you."' }
-];
+// Roster lives in battle-config.js so battle-workshop.html can preview them.
+const BOSS_PROFILES = window.BATTLE_CONFIG.bosses;
 let _bossCycleIdx = 0;
 function nextBossProfile() {
   const p = BOSS_PROFILES[_bossCycleIdx % BOSS_PROFILES.length];
