@@ -438,6 +438,80 @@
   }
   .subtopic-chip.on .fill { background: rgba(37, 99, 235, 0.20); }
   .subtopic-chip.on .label { font-weight: 700; }
+  /* Accordion-style topic picker. Three independent <details> sections —
+     TOPIK 1, TOPIK 2, Position Practice. Each header is a button-styled
+     summary with a progress fill bar behind the label and a caret that
+     rotates when the section is open. The active section auto-opens. */
+  .topic-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .topic-section {
+    border: 1px solid var(--bd);
+    border-radius: 12px;
+    background: var(--l1);
+    overflow: hidden;
+  }
+  .topic-section.has-active {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+  }
+  .topic-section-head {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 22px 1fr auto 16px;
+    align-items: center;
+    gap: 10px;
+    color: var(--thi);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .topic-section-head::-webkit-details-marker { display: none; }
+  .topic-section-head .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: rgba(37, 99, 235, 0.10);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .topic-section-head > * { position: relative; z-index: 1; }
+  .topic-section-head .ico { font-size: 16px; line-height: 1; }
+  .topic-section-head .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topic-section-head .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--tmd);
+    font-weight: 600;
+  }
+  .topic-section.has-active .topic-section-head .count { color: var(--blue); }
+  .topic-section-head .caret {
+    color: var(--tmd);
+    font-size: 12px;
+    transition: transform 0.18s ease;
+  }
+  .topic-section[open] .topic-section-head .caret { transform: rotate(-180deg); }
+  .topic-section-head:hover { background: var(--l2); }
+  .topic-section-body {
+    padding: 8px 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid var(--bd);
+    background: var(--l2);
+  }
+  /* Subtopic chips inside an accordion body fit one per row in the sidebar
+     so the progress bar + label + mastery + count line up cleanly. */
+  .topic-section-body .subtopic-chip {
+    width: 100%;
+  }
+
   .subtopic-chip.complete {
     border-color: var(--green);
     color: var(--green);
@@ -4675,11 +4749,31 @@ function buildPriorityPool(level) {
   return out;
 }
 
+// Persisted accordion state — which sections are open. The active section is
+// always force-opened so the player can see what they're practicing; this
+// state only governs the OTHER sections' open/closed memory.
+const ACCORDION_KEY = 'hangul-type-topics-open-v1';
+function _loadAccordionOpen() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ACCORDION_KEY)) || {};
+    return {
+      topik1:    raw.topik1 !== false,
+      topik2:    raw.topik2 === true,
+      positions: raw.positions === true
+    };
+  } catch (e) { return { topik1: true, topik2: false, positions: false }; }
+}
+function _saveAccordionOpen(state) {
+  try { localStorage.setItem(ACCORDION_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
 function buildTopicsPicker() {
   const el = document.getElementById('topics');
   const inCharMode = isCharTopic(state.activeTopic);
   const activeCharId = inCharMode ? state.activeTopic : null;
-  const charSection = CHAR_TOPICS.map(t => {
+
+  // Subtopic chips for each section ────────────────────────────────────────
+  const charChips = CHAR_TOPICS.map(t => {
     const done = charTopicDone(t.id);
     const pct = Math.round((done / CHAR_SESSION_SIZE) * 100);
     return `<button class="subtopic-chip ${activeCharId === t.id ? 'on' : ''}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)}">
@@ -4689,42 +4783,9 @@ function buildTopicsPicker() {
     </button>`;
   }).join('');
 
-  const topicLevel = inCharMode ? 1 : activeLevel();
-  const isT1Active = state.activeTopic === 'topik1';
-  const isT2Active = state.activeTopic === 'topik2';
-  const isPositionActive = inCharMode;
-  const t1Count = wordsForLevel(1).length;
-  const t2Count = wordsForLevel(2).length;
-  const t1Done = uniqueDoneForLevel(1);
-  const t2Done = uniqueDoneForLevel(2);
-  const subTopics = inCharMode ? [] : TOPICS.filter(t => (t.topikLevel || 1) === topicLevel);
-  const t1Pct = t1Count ? Math.round((t1Done / t1Count) * 100) : 0;
-  const t2Pct = t2Count ? Math.round((t2Done / t2Count) * 100) : 0;
-  const charTotalDone = CHAR_TOPICS.reduce((s, t) => s + charTopicDone(t.id), 0);
-  const charTotalGoal = CHAR_TOPICS.length * CHAR_SESSION_SIZE;
-  const charPct = charTotalGoal ? Math.round((charTotalDone / charTotalGoal) * 100) : 0;
-  let topicHtml = `<div class="subtopic-tracker" aria-label="Topic categories">
-    <button class="subtopic-chip ${isT1Active ? 'on' : ''}" data-topic="topik1" type="button">
-      <span class="fill" style="width:${t1Pct}%"></span>
-      <span class="label"><span class="ico">📗</span> TOPIK 1</span>
-      <span class="count">${t1Done}/${t1Count}</span>
-    </button>
-    <button class="subtopic-chip ${isT2Active ? 'on' : ''}" data-topic="topik2" type="button">
-      <span class="fill" style="width:${t2Pct}%"></span>
-      <span class="label"><span class="ico">📘</span> TOPIK 2</span>
-      <span class="count">${t2Done}/${t2Count}</span>
-    </button>
-    <button class="subtopic-chip ${isPositionActive ? 'on' : ''}" data-topic="${CHAR_TOPICS[0].id}" type="button">
-      <span class="fill" style="width:${charPct}%"></span>
-      <span class="label"><span class="ico">⌨️</span> Position Practice</span>
-      <span class="count">${charTotalDone}/${charTotalGoal}</span>
-    </button>
-  </div>`;
-  if (inCharMode) {
-    topicHtml += `<div class="subtopic-tracker" aria-label="Character rows">${charSection}</div>`;
-  } else if (subTopics.length) {
-    topicHtml += `<div class="subtopic-tracker" aria-label="Subcategory progress">`;
-    for (const t of subTopics) {
+  function buildLevelChips(level) {
+    const subs = TOPICS.filter(t => (t.topikLevel || 1) === level);
+    return subs.map(t => {
       const done = (progress.topicCompleted[t.id] || []).length;
       const total = t.words.length;
       const pct = total ? Math.round((done / total) * 100) : 0;
@@ -4732,26 +4793,74 @@ function buildTopicsPicker() {
       const ico = TOPIC_ICONS[t.id] || '·';
       const mastery = topicMasteryStored(t.id).level;
       const masteryIcon = MASTERY_ICONS[mastery] || MASTERY_ICONS[1];
-      topicHtml += `<button class="subtopic-chip ${cls}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)} — ${done}/${total} typed · mastery Lv ${mastery}. Click to pin/unpin.">
+      return `<button class="subtopic-chip ${cls}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)} — ${done}/${total} typed · mastery Lv ${mastery}. Click to pin/unpin.">
         <span class="fill" style="width:${pct}%"></span>
-        <span class="label"><span class="ico">${ico}</span> ${escapeHtml(t.name.replace(/^TOPIK 2 · /, ''))}</span>
+        <span class="label"><span class="ico">${ico}</span> ${escapeHtml(t.name.replace(/^TOPIK \d · /, ''))}</span>
         <span class="mastery">${masteryIcon}</span>
         <span class="count">${done}/${total}</span>
       </button>`;
-    }
-    topicHtml += `</div>`;
+    }).join('');
+  }
+
+  // Header progress totals ──────────────────────────────────────────────────
+  const t1Count = wordsForLevel(1).length;
+  const t2Count = wordsForLevel(2).length;
+  const t1Done = uniqueDoneForLevel(1);
+  const t2Done = uniqueDoneForLevel(2);
+  const t1Pct = t1Count ? Math.round((t1Done / t1Count) * 100) : 0;
+  const t2Pct = t2Count ? Math.round((t2Done / t2Count) * 100) : 0;
+  const charTotalDone = CHAR_TOPICS.reduce((s, t) => s + charTopicDone(t.id), 0);
+  const charTotalGoal = CHAR_TOPICS.length * CHAR_SESSION_SIZE;
+  const charPct = charTotalGoal ? Math.round((charTotalDone / charTotalGoal) * 100) : 0;
+
+  // Force the active section open; otherwise honor the user's saved preference.
+  const open = _loadAccordionOpen();
+  const activeLvl = inCharMode ? 0 : activeLevel();
+  if (activeLvl === 1) open.topik1 = true;
+  if (activeLvl === 2) open.topik2 = true;
+  if (inCharMode)      open.positions = true;
+  _saveAccordionOpen(open);
+
+  function section(key, ico, label, doneN, totalN, pct, bodyHtml, isActive) {
+    return `<details class="topic-section ${isActive ? 'has-active' : ''}" data-section="${key}" ${open[key] ? 'open' : ''}>
+      <summary class="topic-section-head">
+        <span class="fill" style="width:${pct}%"></span>
+        <span class="ico">${ico}</span>
+        <span class="label">${label}</span>
+        <span class="count">${doneN}/${totalN}</span>
+        <span class="caret" aria-hidden="true">▾</span>
+      </summary>
+      <div class="topic-section-body">${bodyHtml}</div>
+    </details>`;
   }
 
   const html = `
     <div class="picker-section">
-      ${topicHtml}
+      <div class="topic-accordion" aria-label="Practice topics">
+        ${section('topik1',    '📗', 'TOPIK 1',           t1Done,        t1Count,       t1Pct,   buildLevelChips(1), activeLvl === 1)}
+        ${section('topik2',    '📘', 'TOPIK 2',           t2Done,        t2Count,       t2Pct,   buildLevelChips(2), activeLvl === 2)}
+        ${section('positions', '⌨️', 'Position Practice', charTotalDone, charTotalGoal, charPct, charChips,          inCharMode)}
+      </div>
     </div>`;
 
   el.innerHTML = html;
-  el.querySelectorAll('.topic-pill, .subtopic-chip').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const id = pill.dataset.topic || state.activeTopic || CHAR_TOPICS[0].id;
+
+  // Subtopic chip click → activate that topic for practice. The accordion
+  // stays open so the user keeps the same browse context.
+  el.querySelectorAll('.subtopic-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const id = chip.dataset.topic || state.activeTopic || CHAR_TOPICS[0].id;
       setTopic(id);
+    });
+  });
+
+  // Persist accordion open state whenever the user toggles a header.
+  el.querySelectorAll('details.topic-section').forEach(d => {
+    d.addEventListener('toggle', () => {
+      const key = d.getAttribute('data-section');
+      const cur = _loadAccordionOpen();
+      cur[key] = d.open;
+      _saveAccordionOpen(cur);
     });
   });
 }
