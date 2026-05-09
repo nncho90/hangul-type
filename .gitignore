@@ -5,6 +5,7 @@ node_modules/
 .vercel
 tools/.venv/
 sprite-concepts/lineups/_wait_*.png
+sprite-concepts/lineups/_fail_*.png
 tmp/
 .claude/
 logs/
