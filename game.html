@@ -4014,7 +4014,10 @@ function setHighScore(n) { try { localStorage.setItem(HIGH_KEY, String(n)); } ca
 // (3-syllable words) and the spawn cap jumps to endgame, so raw kill count
 // was disproportionately high vs. neighbouring levels.
 function xpThresholdForLevel(lv) {
-  const base = 30 * lv * (lv + 1);
+  // Linear-ish curve: each level needs ~4-8 kills depending on tier XP yield.
+  // Old curve (30 * lv * (lv+1)) was quadratic — L2→L3 needed 180 XP (~8 kills),
+  // L3→L4 needed 360 XP — so most players got stuck at level 2.
+  const base = 60 + 40 * (lv - 1);
   if (lv === 12 || lv === 13) return Math.round(base * 0.70);
   return base;
 }
