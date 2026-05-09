@@ -266,6 +266,17 @@
     border-color: var(--blue);
     box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14) inset;
   }
+  .export-btn {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+    font-weight: 600;
+    padding: 7px 14px;
+  }
+  .export-btn:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+  }
   .shape-toggle {
     display: inline-flex;
     gap: 0;
@@ -478,6 +489,7 @@
       <span class="pill" id="sampleLabel"></span>
       <span class="spacer"></span>
       <span class="pill" id="layoutLabel"></span>
+      <button id="guideExportBtn" class="export-btn" title="Copy all saved guides as JSON to clipboard, then paste to ship as site defaults">⬆ Export all saved</button>
     </div>
 
     <section class="workspace">
@@ -502,7 +514,6 @@
             <button id="guideUndoBtn">Undo</button>
             <button id="guideClearBtn">Clear</button>
             <button id="guideSaveBtn">Save</button>
-            <button id="guideExportBtn" title="Copy all saved guides as JSON">Export</button>
           </div>
           <div class="guide-list" id="guideList"></div>
         </div>
