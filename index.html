@@ -1169,7 +1169,17 @@
     .kb-rows, #kb { width: 100%; align-items: stretch; }
     .kb-wrapper { width: 100%; }
     .finger-bar { display: none; }
-    .kb-row { gap: 4px; margin-bottom: 4px; width: 100%; }
+    /* Uniform key width across every row: each key is 1/10 of (viewport −
+       horizontal padding − 9 inter-key gaps). Row 1 fills the width with 10
+       letter keys; row 2 (9 keys) and row 3 (7 letters + shift + backspace =
+       9 keys) center naturally with the same key size. No more staircase
+       stretching where row-2 keys ended up wider than row-1. */
+    .kb-row {
+      gap: 4px;
+      margin-bottom: 4px;
+      width: 100%;
+      justify-content: center;
+    }
     .kb-row.r2, .kb-row.r3 { padding-left: 0; }
     /* Hide decorative non-hangul keys on mobile so letter keys can fill the width */
     .key.kb-label,
@@ -1182,8 +1192,8 @@
     .key[data-key="."],
     .key[data-key="/"] { display: none; }
     .key {
-      flex: 1 1 0;
-      width: auto;
+      flex: 0 0 calc((100vw - 12px - 36px) / 10);
+      width: calc((100vw - 12px - 36px) / 10);
       height: 44px;
       min-height: 44px;
       max-height: 44px;
@@ -1199,8 +1209,8 @@
       touch-action: manipulation;
     }
     .key[data-key="m"] {
-      flex: 1 1 0;
-      width: auto;
+      flex: 0 0 calc((100vw - 12px - 36px) / 10);
+      width: calc((100vw - 12px - 36px) / 10);
       min-width: 0;
       max-width: none;
     }
@@ -1215,17 +1225,22 @@
     .key.kb-pressed .jamo, .key:active .jamo,
     .key.kb-pressed .qwerty, .key:active .qwerty,
     .key.kb-pressed .shift, .key:active .shift { color: white; }
-    .kb-row.mobile-only { display: flex; gap: 4px; margin-bottom: 0; }
+    .kb-row.mobile-only { display: flex; gap: 4px; margin-bottom: 0; justify-content: center; }
     .key.kb-special {
       display: flex;
-      flex: 0 0 auto;
-      padding: 0 8px;
+      flex: 0 0 calc((100vw - 12px - 36px) / 10);
+      width: calc((100vw - 12px - 36px) / 10);
+      padding: 0;
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 12px;
       font-weight: 700;
       color: var(--tmd);
     }
-    .key.kb-shift, .key.kb-back { flex: 0 0 56px; min-width: 56px; }
+    .key.kb-shift, .key.kb-back {
+      flex: 0 0 calc((100vw - 12px - 36px) / 10);
+      width: calc((100vw - 12px - 36px) / 10);
+      min-width: 0;
+    }
     .key.kb-space {
       flex: 1 1 auto;
       min-width: 0;

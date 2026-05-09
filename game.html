@@ -1409,10 +1409,15 @@
       justify-content: center;
       margin-bottom: 4px;
     }
-    .battle-kb .kb-row.r2 { padding-left: clamp(8px, 4vw, 16px); }
-    .battle-kb .kb-row.r3 { padding-left: clamp(18px, 9vw, 34px); }
+    /* Uniform letter-key width across every row: 1/10 of (viewport − 12px
+       horizontal padding − 9 inter-key gaps of 4px each). Row 1 fills with 10
+       keys; rows 2 and 3 center with their 9 / 7 keys at the same key size,
+       producing the iOS-style stair-step without flex-stretching. */
+    .battle-kb .kb-row.r2,
+    .battle-kb .kb-row.r3 { padding-left: 0; }
     .battle-kb .key {
-      flex: 1 1 0;
+      flex: 0 0 calc((100vw - 12px - 36px) / 10);
+      width: calc((100vw - 12px - 36px) / 10);
       min-width: 0;
       height: 44px;
       background: var(--l2);
@@ -1464,13 +1469,21 @@
     .battle-kb .key.kb-pressed .shift,
     .battle-kb .key:active .shift { color: white; }
     .battle-kb .kb-row.r4 { gap: 4px; padding-left: 0; margin-bottom: 0; }
+    /* Utility row keys (shift, space, ⌫) sized to the same uniform key width
+       as the letter keys, except space which spans 4 key-widths so it stays
+       comfortably tappable. */
     .battle-kb .key.kb-special {
-      flex: 0 0 auto;
-      padding: 0 8px;
+      flex: 0 0 calc((100vw - 12px - 36px) / 10);
+      width: calc((100vw - 12px - 36px) / 10);
+      padding: 0;
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 12px;
       font-weight: 700;
       color: var(--tmd);
+    }
+    .battle-kb .key.kb-space {
+      flex: 0 0 calc(((100vw - 12px - 36px) / 10) * 4 + 12px);
+      width: calc(((100vw - 12px - 36px) / 10) * 4 + 12px);
     }
     .battle-kb .key.kb-shift,
     .battle-kb .key.kb-back { flex: 0 0 56px; min-width: 56px; }
@@ -3280,6 +3293,18 @@ function triggerStrikePose() {
   if (!sp || !sp.spriteStrike) return;
   const img = PLAYER_EL.querySelector('img.sprite-img');
   if (!img) return;
+  // If a melee teleport-out jump is mid-flight, defer the strike until the
+  // jump frames finish. Without this guard the very next keystroke clobbers
+  // jump-1 in ~50ms and the leap is never visible.
+  const now = Date.now();
+  if (state._jumpUntil && now < state._jumpUntil) {
+    if (state._strikeDefer) clearTimeout(state._strikeDefer);
+    state._strikeDefer = setTimeout(() => {
+      state._strikeDefer = null;
+      triggerStrikePose();
+    }, state._jumpUntil - now + 10);
+    return;
+  }
 
   const sequence = [1, 2, 3, 4];
   const baseSrc  = `sprites/${sp.spriteStrike}`;
@@ -3320,9 +3345,10 @@ function triggerStrikePose() {
 }
 
 // Play a brief 2-frame "got hit" reaction on a monster. Called from advanceLock
-// every time the player lands a keystroke. Swaps the visible idle img to the
-// hit-1 frame, flashes hit-2 80ms later, then restores walk-1. Skipped if the
-// monster is already in its dying explode animation.
+// every time the player lands a keystroke. Sets BOTH the idle and step layers
+// to the hit frame (otherwise the CSS opacity flicker on .sprite-step would
+// keep showing the walk-3 pose half the time). Skipped if the monster is
+// already in its dying explode animation.
 function triggerMonsterHit(m) {
   if (!m || !m.el || !m.spriteFile) return;
   if (m.el.classList.contains('dying')) return;
@@ -3332,32 +3358,37 @@ function triggerMonsterHit(m) {
   const stepImg = spriteEl.querySelector('img.sprite-img.sprite-step');
   if (!idleImg) return;
   const base = `sprites/${m.spriteFile}`;
-  const idleRest = `${base}-walk-1.png`;
-  // Tag so a second hit during the same window doesn't re-stack timers.
-  if (m._hitToken) clearTimeout(m._hitToken[0]);
-  if (m._hitToken && m._hitToken[1]) clearTimeout(m._hitToken[1]);
-  idleImg.setAttribute('src', `${base}-hit-1.png`);
-  if (stepImg) stepImg.style.opacity = '0';
+  const setBoth = (src) => {
+    if (idleImg && idleImg.parentNode) idleImg.setAttribute('src', src);
+    if (stepImg && stepImg.parentNode) stepImg.setAttribute('src', src);
+  };
+  if (m._hitToken) {
+    clearTimeout(m._hitToken[0]);
+    clearTimeout(m._hitToken[1]);
+  }
+  setBoth(`${base}-hit-1.png`);
   spriteEl.classList.add('monster-hitflash');
   const t1 = setTimeout(() => {
     if (!m.el || m.el.classList.contains('dying')) return;
-    idleImg.setAttribute('src', `${base}-hit-2.png`);
-  }, 80);
+    setBoth(`${base}-hit-2.png`);
+  }, 110);
   const t2 = setTimeout(() => {
     if (!m.el) return;
     spriteEl.classList.remove('monster-hitflash');
     if (m.el.classList.contains('dying')) return;
-    idleImg.setAttribute('src', idleRest);
-    if (stepImg) stepImg.style.opacity = '';
+    if (idleImg && idleImg.parentNode) idleImg.setAttribute('src', `${base}-walk-1.png`);
+    if (stepImg && stepImg.parentNode) stepImg.setAttribute('src', `${base}-walk-3.png`);
     m._hitToken = null;
-  }, 200);
+  }, 280);
   m._hitToken = [t1, t2];
 }
 
-// Play a brief jump or land pose on the player sprite during a melee teleport.
-// phase 'out' = crouch + apex on departure; phase 'in' = land sequence on
-// arrival. Each phase is ~140ms total; the next keystroke's triggerStrikePose
-// will overwrite the src cleanly when the player is mid-attack at the monster.
+// Play a jump or land pose on the player sprite during a melee teleport.
+// phase 'out' = crouch (jump-1) + apex (jump-2) on departure to the monster;
+// phase 'in' = land-1 → land-2 → idle on arrival back home. The 'out' window
+// also sets state._jumpUntil so triggerStrikePose defers itself until the jump
+// frames finish — otherwise the very next keystroke's strike would overwrite
+// jump-1 within ~50ms and the player would never visibly leap.
 function triggerJumpPose(phase) {
   const sp = playerForLevel(state.level);
   if (!sp || !sp.spriteBack) return;
@@ -3366,21 +3397,25 @@ function triggerJumpPose(phase) {
   const base = `sprites/${sp.spriteBack}`;
   if (state._jumpTimers) { state._jumpTimers.forEach(t => clearTimeout(t)); state._jumpTimers = null; }
   if (phase === 'out') {
+    // Hold the jump frames for ~260ms total. During this window strike poses
+    // queue instead of overwriting (see triggerStrikePose).
+    state._jumpUntil = Date.now() + 260;
     img.setAttribute('src', `${base}-jump-1.png`);
-    state._jumpTimers = [setTimeout(() => {
+    const t1 = setTimeout(() => {
       if (img.parentNode) img.setAttribute('src', `${base}-jump-2.png`);
-    }, 60)];
+    }, 130);
+    state._jumpTimers = [t1];
   } else if (phase === 'in') {
     img.setAttribute('src', `${base}-land-1.png`);
     const t1 = setTimeout(() => {
       if (img.parentNode) img.setAttribute('src', `${base}-land-2.png`);
-    }, 70);
+    }, 130);
     const t2 = setTimeout(() => {
       if (!img.parentNode) return;
       // Don't overwrite an in-progress strike sequence.
       if (state._strikeRunning) return;
       img.setAttribute('src', `${base}.png`);
-    }, 160);
+    }, 260);
     state._jumpTimers = [t1, t2];
   }
 }
