@@ -7,6 +7,9 @@ tools/.venv/
 sprite-concepts/lineups/_wait_*.png
 sprite-concepts/lineups/_fail_*.png
 tmp/
+.tmp*
+__pycache__/
+sprites/enemies/_wait_*.png
 .claude/
 logs/
 test-results/
