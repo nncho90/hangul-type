@@ -511,6 +511,18 @@
   .topic-section-body .subtopic-chip {
     width: 100%;
   }
+  /* Small jamo strip rendered next to a Lesson chip's label, e.g. "Lesson 5
+     ㅋ ㅌ" — quieter color, monospace so vowels and consonants line up. */
+  .subtopic-chip .lesson-jamo {
+    font-family: var(--korean), 'Noto Sans KR', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--tlo);
+    margin-left: 6px;
+    letter-spacing: 0.04em;
+  }
+  .subtopic-chip.on .lesson-jamo,
+  .subtopic-chip:hover .lesson-jamo { color: var(--tmd); }
 
   .subtopic-chip.complete {
     border-color: var(--green);
@@ -2777,6 +2789,155 @@ function addSharedVocabTopics() {
 }
 addSharedVocabTopics();
 
+// ─── Smart curriculum ──────────────────────────────────────────────────────
+// Generates a sequence of 15-word lessons that reinforce previously-learned
+// jamo and gradually introduce new ones. Words are pulled from the TOPIK 1
+// + TOPIK 2 corpus (after addSharedVocabTopics has merged extras), so when
+// the user finishes a lesson the same words also fill the corresponding
+// topic's done/total. New visitors land on lesson_01 by default; topic-
+// direct browsing (clicking a TOPIK 1 / TOPIK 2 chip) is unchanged.
+//
+// Algorithm: jamo are ranked by corpus frequency. The "active set" starts
+// with the 4 most-common jamo and grows by 2 jamo whenever the candidate
+// pool falls below LESSON_SIZE. Each lesson's words are the simplest
+// not-yet-used words whose entire jamo set fits inside the active set,
+// sorted by complexity ascending. Deterministic on the corpus snapshot at
+// module load time, so lesson IDs stay stable across sessions.
+const LESSON_SIZE = 15;
+const LESSON_INITIAL_JAMO = 4;
+const LESSON_NEW_JAMO_PER_BUCKET = 2;
+const LESSON_MAX_COUNT = 60;
+function buildCurriculum() {
+  // 1. Collect TOPIK 1 + 2 words, deduped by ko, remembering every parent topic.
+  const byKo = new Map();
+  for (const t of TOPICS) {
+    const lvl = t.topikLevel || 1;
+    if (lvl !== 1 && lvl !== 2) continue;
+    for (const w of t.words) {
+      if (!byKo.has(w.ko)) {
+        byKo.set(w.ko, { ko: w.ko, en: w.en, topics: [t.id] });
+      } else {
+        const prev = byKo.get(w.ko);
+        if (!prev.topics.includes(t.id)) prev.topics.push(t.id);
+      }
+    }
+  }
+  if (byKo.size < 30) return [];
+  // 2. Decompose + complexity-score each word.
+  for (const w of byKo.values()) {
+    const ks = wordToKeystrokes(w.ko);
+    w._jamoSet = new Set(ks);
+    w._jamoCount = ks.length;
+    w._sylCount = (w.ko.match(/[가-힣]/g) || []).length;
+    w._complexity = w._jamoCount + w._sylCount * 0.5 + (w.ko.includes(' ') ? 2 : 0);
+  }
+  const allWords = Array.from(byKo.values());
+  // 3. Frequency-rank jamo across the corpus.
+  const freq = new Map();
+  for (const w of allWords) for (const j of w._jamoSet) freq.set(j, (freq.get(j) || 0) + 1);
+  const jamoOrder = Array.from(freq.entries()).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+  // 4. Greedy assembly. Each lesson introduces NEW jamo on top of the prior
+  //    lesson's active set, then picks the simplest words whose jamo set fits
+  //    inside the new active set, preferring words that EXERCISE the freshly-
+  //    introduced jamo so each lesson teaches something new.
+  const used = new Set();
+  const active = new Set(jamoOrder.slice(0, LESSON_INITIAL_JAMO));
+  let cursor = LESSON_INITIAL_JAMO;
+  const lessons = [];
+  while (used.size < allWords.length && lessons.length < LESSON_MAX_COUNT) {
+    // First lesson: don't pre-add — the initial 4 jamo ARE the introduction.
+    // Subsequent lessons: add NEW_PER_LESSON jamo before selecting candidates.
+    const introduced = [];
+    if (lessons.length === 0) {
+      for (const j of active) introduced.push(j);
+    } else {
+      for (let k = 0; k < LESSON_NEW_JAMO_PER_BUCKET && cursor < jamoOrder.length; k++) {
+        const j = jamoOrder[cursor++];
+        active.add(j);
+        introduced.push(j);
+      }
+    }
+    let candidates = allWords.filter(w => !used.has(w.ko) && [...w._jamoSet].every(j => active.has(j)));
+    let safety = 80;
+    // Expand active further if pool still too thin to fill a lesson.
+    while (candidates.length < LESSON_SIZE && cursor < jamoOrder.length && safety-- > 0) {
+      const j = jamoOrder[cursor++];
+      active.add(j);
+      introduced.push(j);
+      candidates = allWords.filter(w => !used.has(w.ko) && [...w._jamoSet].every(j2 => active.has(j2)));
+    }
+    if (candidates.length === 0) break;
+    // Sort candidates by (a) whether they exercise newly-introduced jamo
+    // (descending), (b) complexity (ascending). Words touching the new jamo
+    // come first so the lesson visibly teaches the new shapes.
+    const introducedSet = new Set(introduced);
+    candidates.sort((a, b) => {
+      const aHits = [...a._jamoSet].some(j => introducedSet.has(j)) ? 0 : 1;
+      const bHits = [...b._jamoSet].some(j => introducedSet.has(j)) ? 0 : 1;
+      if (aHits !== bHits) return aHits - bHits;
+      return a._complexity - b._complexity;
+    });
+    const take = candidates.slice(0, LESSON_SIZE);
+    const num = lessons.length + 1;
+    lessons.push({
+      id: `lesson_${String(num).padStart(2, '0')}`,
+      number: num,
+      label: `Lesson ${num}`,
+      name: `Lesson ${num}`,
+      jamoIntroduced: introduced,
+      words: take.map(w => ({ ko: w.ko, en: w.en, topics: w.topics.slice() }))
+    });
+    for (const w of take) used.add(w.ko);
+  }
+  // Sanity: verify no lesson contains a jamo not in the cumulative active set.
+  let cumulative = new Set();
+  for (const l of lessons) {
+    for (const j of l.jamoIntroduced) cumulative.add(j);
+    for (const w of l.words) {
+      const ks = wordToKeystrokes(w.ko);
+      for (const j of ks) {
+        if (!cumulative.has(j)) console.warn('curriculum: leaked jamo', j, 'in', l.id, w.ko);
+      }
+    }
+  }
+  // Strip the transient _ fields from the original byKo entries — they were
+  // computed on objects that don't ship in the lesson payload.
+  for (const w of byKo.values()) { delete w._jamoSet; delete w._jamoCount; delete w._sylCount; delete w._complexity; }
+  return lessons;
+}
+const LESSONS = buildCurriculum();
+const LESSON_BY_ID = Object.fromEntries(LESSONS.map(l => [l.id, l]));
+function isLessonId(id) { return typeof id === 'string' && id.startsWith('lesson_') && !!LESSON_BY_ID[id]; }
+function lessonById(id) { return LESSON_BY_ID[id] || null; }
+function lessonDone(id) {
+  return (progress && progress.lessonsCompleted && progress.lessonsCompleted[id])
+    ? progress.lessonsCompleted[id].length : 0;
+}
+function firstIncompleteLesson() {
+  for (const l of LESSONS) if (lessonDone(l.id) < l.words.length) return l;
+  return LESSONS[0] || null;
+}
+function nextIncompleteLessonAfter(prev) {
+  if (!LESSONS.length) return null;
+  const idx = LESSONS.findIndex(l => l.id === prev.id);
+  for (let i = 1; i <= LESSONS.length; i++) {
+    const cand = LESSONS[(idx + i) % LESSONS.length];
+    if (cand.id === prev.id) continue;
+    if (lessonDone(cand.id) < cand.words.length) return cand;
+  }
+  return null;
+}
+function lessonsTotalDone() {
+  let s = 0;
+  for (const l of LESSONS) s += lessonDone(l.id);
+  return s;
+}
+function lessonsTotalGoal() {
+  let s = 0;
+  for (const l of LESSONS) s += l.words.length;
+  return s;
+}
+
 // "All" topic = flatten + shuffle
 function buildAllWords() {
   const all = [];
@@ -2879,9 +3040,12 @@ const DEFAULT_PROGRESS = {
   bestWPM: 0,
   topicCompleted: {},
   charProgress: {},
+  // Per-lesson progress map — { 'lesson_01': ['안녕', '하나', ...], ... }.
+  // Mirrors topicCompleted's shape so the same UI math works for both.
+  lessonsCompleted: {},
   // Sticky topic — restored across sessions so the sidebar opens where the
-  // user left off. Null means "first-time flow", which boots into TOPIK 1 →
-  // Basics so newcomers don't land on a Position-row practice they didn't pick.
+  // user left off. Null means "first-time flow", which boots into Lesson 1
+  // (the curriculum) so newcomers get a paced ramp instead of a random topic.
   activeTopic: null,
   // v2 gamification
   xp: 0,
@@ -2913,6 +3077,7 @@ function loadProgress() {
         bestWPM: safeBestWPM,
         topicCompleted: p.topicCompleted && typeof p.topicCompleted === 'object' ? p.topicCompleted : {},
         charProgress: p.charProgress && typeof p.charProgress === 'object' ? p.charProgress : {},
+        lessonsCompleted: p.lessonsCompleted && typeof p.lessonsCompleted === 'object' ? p.lessonsCompleted : {},
         activeTopic: typeof p.activeTopic === 'string' && p.activeTopic.length <= 64 ? p.activeTopic : null,
         xp: Number(p.xp) || 0,
         level: Number(p.level) || 1,
@@ -3739,16 +3904,18 @@ function relTime(iso) {
 // ── Celebration overlay ──
 
 // Resolve the topic the user should land on at boot. Restore the saved
-// activeTopic when valid; otherwise default to TOPIK 1 → Basics so the
-// first-time flow shows real vocabulary instead of a row-position drill.
+// activeTopic when valid; otherwise default to Lesson 1 of the smart
+// curriculum so the first-time flow gets a paced jamo ramp instead of a
+// random topic. Falls back to 'basics' when the curriculum is unavailable.
 function _initialActiveTopic() {
   const saved = progress && progress.activeTopic;
   if (typeof saved === 'string' && saved) {
     if (TOPICS.some(t => t.id === saved)) return saved;
     if (CHAR_TOPICS.some(t => t.id === saved)) return saved;
+    if (isLessonId(saved)) return saved;
     if (['topik1', 'topik2', 'mistakes', 'all'].includes(saved)) return saved;
   }
-  return 'basics';
+  return LESSONS.length ? LESSONS[0].id : 'basics';
 }
 
 const state = {
@@ -3955,6 +4122,48 @@ function activeLevel() {
 function pickNextWordIdx(currentIdx) {
   if (isCharTopic(state.activeTopic)) {
     return state.activeWords.length ? (currentIdx + 1) % state.activeWords.length : 0;
+  }
+  // Lesson auto-flow: each lesson is its own pool. When a lesson fills, fire
+  // the same celebration toast as topic auto-advance and roll into the next
+  // incomplete lesson. Falls through to topic flow if the curriculum is empty
+  // or the saved id was wiped.
+  if (isLessonId(state.activeTopic)) {
+    const currentKo = state.activeWords[currentIdx] && state.activeWords[currentIdx].ko;
+    let lesson = lessonById(state.activeTopic);
+    if (!lesson) {
+      lesson = firstIncompleteLesson();
+      if (lesson) {
+        state.activeTopic = lesson.id;
+        progress.activeTopic = lesson.id;
+        saveProgress(progress);
+        buildTopicsPicker();
+      }
+    }
+    if (lesson) {
+      const seen = new Set(progress.lessonsCompleted[lesson.id] || []);
+      const fresh = lesson.words.filter(w => !seen.has(w.ko));
+      if (fresh.length > 0) {
+        state.activeWords = fresh.concat(lesson.words.filter(w => seen.has(w.ko)));
+      } else {
+        const next = nextIncompleteLessonAfter(lesson);
+        if (next) {
+          celebrateTopicComplete({ id: lesson.id, name: lesson.label }, { name: next.label });
+          state.activeTopic = next.id;
+          progress.activeTopic = next.id;
+          saveProgress(progress);
+          state.activeWords = next.words.slice();
+          buildTopicsPicker();
+        } else {
+          // All lessons complete — fall back to TOPIK 1 priority pool for review.
+          state.activeWords = buildPriorityPool(1);
+          buildTopicsPicker();
+        }
+      }
+      const newCurrent = currentKo
+        ? state.activeWords.findIndex(w => w.ko === currentKo)
+        : -1;
+      return srsSelectIndex(state.activeWords, newCurrent);
+    }
   }
   // Auto-flow: practice always sits inside ONE specific sub-category. Words
   // come from that sub-cat until every word in it has been typed. When the
@@ -4775,11 +4984,12 @@ function _loadAccordionOpen() {
   try {
     const raw = JSON.parse(localStorage.getItem(ACCORDION_KEY)) || {};
     return {
-      topik1:    raw.topik1 !== false,
+      lessons:   raw.lessons !== false,
+      topik1:    raw.topik1 === true,
       topik2:    raw.topik2 === true,
       positions: raw.positions === true
     };
-  } catch (e) { return { topik1: true, topik2: false, positions: false }; }
+  } catch (e) { return { lessons: true, topik1: false, topik2: false, positions: false }; }
 }
 function _saveAccordionOpen(state) {
   try { localStorage.setItem(ACCORDION_KEY, JSON.stringify(state)); } catch (e) {}
@@ -4791,6 +5001,24 @@ function buildTopicsPicker() {
   const activeCharId = inCharMode ? state.activeTopic : null;
 
   // Subtopic chips for each section ────────────────────────────────────────
+  const inLessonMode = isLessonId(state.activeTopic);
+  const lessonChips = LESSONS.map(l => {
+    const done = lessonDone(l.id);
+    const total = l.words.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const isActive = state.activeTopic === l.id;
+    const isComplete = done >= total && total > 0;
+    const cls = (isActive ? 'on ' : '') + (isComplete ? 'complete ' : '');
+    const jamo = l.jamoIntroduced && l.jamoIntroduced.length
+      ? `<small class="lesson-jamo">${escapeHtml(l.jamoIntroduced.join(' '))}</small>`
+      : '';
+    return `<button class="subtopic-chip ${cls}" data-topic="${l.id}" type="button" title="${escapeHtml(l.label)} — ${done}/${total} words">
+      <span class="fill" style="width:${pct}%"></span>
+      <span class="label"><span class="ico">📚</span> ${escapeHtml(l.label)} ${jamo}</span>
+      <span class="count">${done}/${total}</span>
+    </button>`;
+  }).join('');
+
   const charChips = CHAR_TOPICS.map(t => {
     const done = charTopicDone(t.id);
     const pct = Math.round((done / CHAR_SESSION_SIZE) * 100);
@@ -4830,10 +5058,14 @@ function buildTopicsPicker() {
   const charTotalDone = CHAR_TOPICS.reduce((s, t) => s + charTopicDone(t.id), 0);
   const charTotalGoal = CHAR_TOPICS.length * CHAR_SESSION_SIZE;
   const charPct = charTotalGoal ? Math.round((charTotalDone / charTotalGoal) * 100) : 0;
+  const lessonsDoneN = lessonsTotalDone();
+  const lessonsGoalN = lessonsTotalGoal();
+  const lessonsPct = lessonsGoalN ? Math.round((lessonsDoneN / lessonsGoalN) * 100) : 0;
 
   // Force the active section open; otherwise honor the user's saved preference.
   const open = _loadAccordionOpen();
-  const activeLvl = inCharMode ? 0 : activeLevel();
+  const activeLvl = inCharMode || inLessonMode ? 0 : activeLevel();
+  if (inLessonMode)    open.lessons = true;
   if (activeLvl === 1) open.topik1 = true;
   if (activeLvl === 2) open.topik2 = true;
   if (inCharMode)      open.positions = true;
@@ -4852,9 +5084,13 @@ function buildTopicsPicker() {
     </details>`;
   }
 
+  const lessonsBlock = LESSONS.length
+    ? section('lessons', '📚', 'Lessons', lessonsDoneN, lessonsGoalN, lessonsPct, lessonChips, inLessonMode)
+    : '';
   const html = `
     <div class="picker-section">
       <div class="topic-accordion" aria-label="Practice topics">
+        ${lessonsBlock}
         ${section('topik1',    '📗', 'TOPIK 1',           t1Done,        t1Count,       t1Pct,   buildLevelChips(1), activeLvl === 1)}
         ${section('topik2',    '📘', 'TOPIK 2',           t2Done,        t2Count,       t2Pct,   buildLevelChips(2), activeLvl === 2)}
         ${section('positions', '⌨️', 'Position',          charTotalDone, charTotalGoal, charPct, charChips,          inCharMode)}
@@ -4896,6 +5132,12 @@ function setTopic(id) {
     ensureCharProgress(id);
     state.activeWords = buildCharSession(id);
     state.sessionGoal = CHAR_SESSION_SIZE;
+  } else if (isLessonId(id)) {
+    const lesson = lessonById(id);
+    const seen = new Set((progress.lessonsCompleted && progress.lessonsCompleted[id]) || []);
+    const fresh = lesson.words.filter(w => !seen.has(w.ko));
+    state.activeWords = fresh.concat(lesson.words.filter(w => seen.has(w.ko)));
+    state.sessionGoal = lesson.words.length;
   } else if (id === 'mistakes') {
     state.activeWords = getMistakeWords(20).map(m => ({ ko: m.ko, en: m.en }));
     state.sessionGoal = state.activeWords.length || 1;
@@ -5066,12 +5308,29 @@ function afterCorrectKeystroke() {
           setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 220);
         }
       } else {
-        recordTopicCompletion(state.activeTopic, target);
-        rateWord(target, ratingFromAccuracy(wAcc));
-        if (state.activeTopic !== 'all') recordTopicPractice(state.activeTopic);
-        else {
-          for (const t of TOPICS) if (t.words.some(w => w.ko === target)) { recordTopicPractice(t.id); break; }
+        if (isLessonId(state.activeTopic)) {
+          // Lesson words mirror to (a) the lesson's own progress and (b)
+          // every parent topic the word lives in, so the topic chips fill
+          // alongside the lesson chip.
+          const lid = state.activeTopic;
+          if (!Array.isArray(progress.lessonsCompleted[lid])) progress.lessonsCompleted[lid] = [];
+          if (!progress.lessonsCompleted[lid].includes(target)) progress.lessonsCompleted[lid].push(target);
+          const lesson = lessonById(lid);
+          const lw = lesson && lesson.words.find(w => w.ko === target);
+          const parentTopics = (lw && lw.topics) || [];
+          for (const tid of parentTopics) {
+            if (!Array.isArray(progress.topicCompleted[tid])) progress.topicCompleted[tid] = [];
+            if (!progress.topicCompleted[tid].includes(target)) progress.topicCompleted[tid].push(target);
+            recordTopicPractice(tid);
+          }
+        } else {
+          recordTopicCompletion(state.activeTopic, target);
+          if (state.activeTopic !== 'all') recordTopicPractice(state.activeTopic);
+          else {
+            for (const t of TOPICS) if (t.words.some(w => w.ko === target)) { recordTopicPractice(t.id); break; }
+          }
         }
+        rateWord(target, ratingFromAccuracy(wAcc));
         saveProgress(progress);
         buildTopicsPicker();
         renderAvatarBlob({ bump: true });
