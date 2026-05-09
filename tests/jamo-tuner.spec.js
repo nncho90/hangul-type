@@ -29,9 +29,9 @@ test('title is "Jamo Tuner"', async ({ page }) => {
   await expect(page).toHaveTitle('Jamo Tuner');
 });
 
-test('sample list renders all 30 syllable buttons', async ({ page }) => {
+test('sample list renders all 44 syllable buttons', async ({ page }) => {
   const btns = await page.locator('.sample-btn').count();
-  expect(btns).toBe(30);
+  expect(btns).toBe(44);
 });
 
 test('initial sample label shows 화', async ({ page }) => {
