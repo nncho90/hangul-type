@@ -1553,6 +1553,47 @@
   .battle-lb-row.you.below { border-top: 2px solid var(--bdhi); background: rgba(37,99,235,0.10); }
   /* Fandom badge — appears next to the current player's display name on the
      leaderboard. Tiny, colored, doesn't overflow narrow rows. */
+  /* Players / Fandoms tab toggle. Sits in the toolbar where the title +
+     subtitle used to live; the active tab fills with the brand blue, the
+     inactive tab stays as a quiet outline button. */
+  .lb-tabs { display: flex; gap: 6px; }
+  .lb-tab {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--bd);
+    background: transparent;
+    color: var(--tmd);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .lb-tab.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+  }
+  .lb-tab:not(.active):hover { background: var(--l3); color: var(--thi); }
+  /* Fandom row layout: rank, emoji, fandom name, members, total points. */
+  .lb-fandom-row {
+    display: grid;
+    grid-template-columns: 44px 28px 1fr 60px 92px;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--bd);
+    font-size: 13px;
+  }
+  .lb-fandom-row:last-child { border-bottom: none; }
+  .lb-fandom-row.you { background: rgba(139,92,246,0.10); font-weight: 600; }
+  .lb-fandom-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
+  .lb-fandom-row .fe { font-size: 18px; line-height: 1; text-align: center; }
+  .lb-fandom-row .fn { color: var(--thi); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-fandom-row .fn small { display: block; color: var(--tlo); font-weight: 500; font-size: 10px; }
+  .lb-fandom-row .members { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tmd); text-align: right; }
+  .lb-fandom-row .total   { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); text-align: right; }
   .battle-lb-row .lb-fandom {
     display: inline-flex;
     align-items: center;
@@ -2518,13 +2559,13 @@
       <div><div class="k">Best Wave</div><div class="v" id="introBest">0</div></div>
     </div>
     <div class="battle-lb-toolbar">
-      <div>
-        <div class="title">Battle ranking</div>
-        <div class="meta">Top players this season.</div>
+      <div class="lb-tabs" data-lb="battleLbIntroContainer">
+        <button class="lb-tab active" data-tab="players">Players</button>
+        <button class="lb-tab" data-tab="fandoms">Fandoms</button>
       </div>
       <button class="menu-btn" id="btnEditProfileIntro">Edit profile</button>
     </div>
-    <div id="battleLbIntroContainer" class="battle-lb">
+    <div id="battleLbIntroContainer" class="battle-lb" data-tab="players">
       <div class="battle-lb-loading">Loading battle rankings…</div>
     </div>
     <div class="actions">
@@ -2563,13 +2604,13 @@
       <div><div class="k">Best combo</div><div class="v" id="overCombo">0</div></div>
     </div>
     <div class="battle-lb-toolbar">
-      <div>
-        <div class="title">Battle ranking</div>
-        <div class="meta">Sorted by level, then points.</div>
+      <div class="lb-tabs" data-lb="battleLbContainer">
+        <button class="lb-tab active" data-tab="players">Players</button>
+        <button class="lb-tab" data-tab="fandoms">Fandoms</button>
       </div>
       <button class="menu-btn" id="btnEditProfile">Edit profile</button>
     </div>
-    <div id="battleLbContainer" class="battle-lb">
+    <div id="battleLbContainer" class="battle-lb" data-tab="players">
       <div class="battle-lb-loading">Loading battle rankings…</div>
     </div>
     <div class="actions">
@@ -3951,9 +3992,34 @@ async function submitBattleScore(level, points) {
     // Network errors (offline, DNS, timeout) hit the catch block and DO get queued for next load.
     if (!res.ok && res.status >= 500) _enqueueSubmit({ body });
     _battleLbCache = null;
+    // Mirror the player's local fandom selection to their server row, so the
+    // fandom leaderboard aggregate stays accurate. Fire-and-forget; the call
+    // is a no-op if the migration hasn't been applied yet.
+    const fandomId = (progress.profile && progress.profile.fandom) || '';
+    if (fandomId !== undefined) setBattleFandom(fandomId);
   } catch (e) {
     _enqueueSubmit({ body });
   }
+}
+
+async function setBattleFandom(fandomId) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  const pid = (progress && progress.playerId) || null;
+  if (!pid) return;
+  const safe = (typeof fandomId === 'string' && FANDOM_BY_ID[fandomId]) ? fandomId : '';
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_battle_fandom`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_id: pid, p_fandom: safe })
+    });
+    _battleLbCache = null;
+    _fandomLbCache = null;
+  } catch (e) {}
 }
 
 async function updateBattleProfile(name, countryCode) {
@@ -4107,6 +4173,114 @@ async function renderBattleLeaderboard(containerId) {
   });
 }
 
+// ─── Fandom leaderboard ───────────────────────────────────────────────────
+// Aggregates total points per fandom and renders top 50. Cached for 60s
+// across both intro and game-over modals; the cache is invalidated whenever
+// a score is submitted or a fandom changes.
+let _fandomLbCache = null;
+let _fandomLbCacheAt = 0;
+
+async function fetchFandomLeaderboard(force) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  const now = Date.now();
+  if (!force && _fandomLbCache && now - _fandomLbCacheAt < 60000) return _fandomLbCache;
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' };
+  const myFandom = (progress && progress.profile && progress.profile.fandom) || '';
+  try {
+    const [rowsRes, rankRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/rpc/get_fandom_leaderboard`, { method: 'POST', headers, body: '{}' }),
+      myFandom
+        ? fetch(`${SUPABASE_URL}/rest/v1/rpc/get_fandom_rank`, {
+            method: 'POST', headers, body: JSON.stringify({ p_fandom: myFandom })
+          })
+        : Promise.resolve(null)
+    ]);
+    if (!rowsRes.ok) throw new Error('fandom-rows-not-ok');
+    const rows = await rowsRes.json();
+    const rank = rankRes && rankRes.ok ? await rankRes.json() : [];
+    _fandomLbCache = {
+      rows: Array.isArray(rows) ? rows : [],
+      rank: (Array.isArray(rank) && rank[0]) || null
+    };
+    _fandomLbCacheAt = now;
+    return _fandomLbCache;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function renderFandomLeaderboard(containerId) {
+  const container = document.getElementById(containerId || 'battleLbContainer');
+  if (!container) return;
+  progress = getProgress();
+  container.innerHTML = '<div class="battle-lb-loading">Loading fandom rankings…</div>';
+  const data = await fetchFandomLeaderboard();
+  if (!data) {
+    container.innerHTML = '<div class="battle-lb-empty">Fandom rankings will appear once the migration is applied. Pick a fandom in your profile to be on it!</div>';
+    return;
+  }
+  const { rows, rank } = data;
+  const myFandom = (progress.profile && progress.profile.fandom) || '';
+  const myRank = rank && rank.rank > 0 ? rank.rank : 0;
+  const total = rank && rank.total ? rank.total : rows.length;
+  const headerMeta = myRank > 0
+    ? `Your fandom: <strong>#${myRank.toLocaleString()}</strong>`
+    : (myFandom ? `<strong>Score</strong> to put your fandom on the board` : `Pick a <strong>fandom</strong> in your profile`);
+  const blurb = `${total.toLocaleString()} fandom${total === 1 ? '' : 's'} ranked`;
+
+  let listHtml;
+  if (rows.length === 0) {
+    listHtml = '<div class="battle-lb-empty">Be the first fandom on the board.</div>';
+  } else {
+    listHtml = rows.map((r, i) => {
+      const f = fandomFor(r.fandom);
+      const isYou = myFandom && r.fandom === myFandom;
+      const cls = isYou ? 'lb-fandom-row you' : 'lb-fandom-row';
+      const totalPts = (Number(r.total_points) || 0).toLocaleString();
+      const members = (Number(r.members) || 0).toLocaleString();
+      const topPlayer = r.top_player ? escapeHtml(r.top_player) : '';
+      return `<div class="${cls}">
+        <span class="r">#${i + 1}</span>
+        <span class="fe">${f.emoji || '🎶'}</span>
+        <span class="fn">${escapeHtml(f.label)}${topPlayer ? `<small>top: ${topPlayer}</small>` : ''}</span>
+        <span class="members">${members} ppl</span>
+        <span class="total">${totalPts}</span>
+      </div>`;
+    }).join('');
+  }
+
+  container.innerHTML = `
+    <div class="battle-lb-header">
+      <span class="title">Top fandoms · ${blurb}</span>
+      <span class="meta">${headerMeta}</span>
+    </div>
+    <div class="battle-lb-list">${listHtml}</div>`;
+}
+
+// Router: dispatches to the right renderer based on the container's
+// data-tab attribute (set by the tab switcher).
+function renderActiveLeaderboard(containerId) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  const tab = c.getAttribute('data-tab') || 'players';
+  if (tab === 'fandoms') return renderFandomLeaderboard(containerId);
+  return renderBattleLeaderboard(containerId);
+}
+
+// Tab click handler — both modals' tab strips share this delegated listener.
+document.addEventListener('click', (e) => {
+  const tab = e.target.closest && e.target.closest('.lb-tab');
+  if (!tab) return;
+  const strip = tab.parentElement;
+  const lbId = strip && strip.getAttribute('data-lb');
+  const tabName = tab.getAttribute('data-tab');
+  if (!lbId || !tabName) return;
+  strip.querySelectorAll('.lb-tab').forEach(t => t.classList.toggle('active', t === tab));
+  const container = document.getElementById(lbId);
+  if (container) container.setAttribute('data-tab', tabName);
+  renderActiveLeaderboard(lbId);
+});
+
 function renderProfilePreview() {
   progress = getProgress();
   const nameEl = document.getElementById('profileNameInput');
@@ -4151,13 +4325,17 @@ function openProfileModal() {
     const newName = (nameInput.value || 'Player').trim().slice(0, 24) || 'Player';
     const newCC = countrySelect.value || detectCountry();
     const newFandom = fandomSelect ? (fandomSelect.value || '') : '';
-    progress.profile = { name: newName, countryCode: newCC, fandom: FANDOM_BY_ID[newFandom] ? newFandom : '' };
+    const safeFandom = FANDOM_BY_ID[newFandom] ? newFandom : '';
+    progress.profile = { name: newName, countryCode: newCC, fandom: safeFandom };
     saveProgress(progress);
-    // No-op server-side if the player isn't on the leaderboard yet. Fandom
-    // is local-only for now (no DB column), so we don't ship it to Supabase.
+    // No-op server-side if the player isn't on the leaderboard yet.
     updateBattleProfile(newName, newCC).finally(() => {
-      renderBattleLeaderboard();                       // game-over modal
-      renderBattleLeaderboard('battleLbIntroContainer'); // intro modal
+      // Mirror fandom to the server row so the fandom leaderboard aggregates
+      // pick it up. Safe to call even when the player has no row yet.
+      setBattleFandom(safeFandom).finally(() => {
+        renderActiveLeaderboard('battleLbContainer');
+        renderActiveLeaderboard('battleLbIntroContainer');
+      });
     });
     close();
   };
@@ -5685,10 +5863,10 @@ function gameOver() {
   document.getElementById('gameOverModal').style.display = 'flex';
   // Submit, then render. submitBattleScore invalidates the cache so render fetches fresh.
   submitBattleScore(state.level, state.score).finally(() => {
-    renderBattleLeaderboard();
+    renderActiveLeaderboard('battleLbContainer');
   });
   // Optimistic first paint while the network round-trip lands.
-  renderBattleLeaderboard();
+  renderActiveLeaderboard('battleLbContainer');
   // Sync XP back to main app
   try {
     const raw = localStorage.getItem(PROGRESS_KEY);
@@ -6147,7 +6325,7 @@ document.getElementById('storySkip').addEventListener('click', (e) => {
 // Drain any queued submits left over from a prior offline session, then
 // surface the leaderboard on the intro modal as well as game-over.
 flushBattleSubmitQueue();
-renderBattleLeaderboard('battleLbIntroContainer');
+renderActiveLeaderboard('battleLbIntroContainer');
 document.getElementById('btnAchievements').addEventListener('click', () => {
   renderAchievementGrid();
   document.getElementById('achievementsModal').style.display = 'flex';
