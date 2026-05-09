@@ -4036,7 +4036,7 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
           }
         }
       }
-      if (area >= 4) components.push({ pixels, minX, maxX, minY, maxY, area, cx: (minX+maxX)/2, cy: (minY+maxY)/2 });
+      if (area >= 1) components.push({ pixels, minX, maxX, minY, maxY, area, cx: (minX+maxX)/2, cy: (minY+maxY)/2 });
     }
   }
 
@@ -4648,7 +4648,8 @@ function buildPriorityPool(level) {
 
 function buildTopicsPicker() {
   const el = document.getElementById('topics');
-  const activeCharId = isCharTopic(state.activeTopic) ? state.activeTopic : null;
+  const inCharMode = isCharTopic(state.activeTopic);
+  const activeCharId = inCharMode ? state.activeTopic : null;
   const charSection = CHAR_TOPICS.map(t => {
     const done = charTopicDone(t.id);
     const pct = Math.round((done / CHAR_SESSION_SIZE) * 100);
@@ -4659,16 +4660,20 @@ function buildTopicsPicker() {
     </button>`;
   }).join('');
 
-  const topicLevel = isCharTopic(state.activeTopic) ? 1 : activeLevel();
+  const topicLevel = inCharMode ? 1 : activeLevel();
   const isT1Active = state.activeTopic === 'topik1';
   const isT2Active = state.activeTopic === 'topik2';
+  const isPositionActive = inCharMode;
   const t1Count = wordsForLevel(1).length;
   const t2Count = wordsForLevel(2).length;
   const t1Done = uniqueDoneForLevel(1);
   const t2Done = uniqueDoneForLevel(2);
-  const subTopics = TOPICS.filter(t => (t.topikLevel || 1) === topicLevel);
+  const subTopics = inCharMode ? [] : TOPICS.filter(t => (t.topikLevel || 1) === topicLevel);
   const t1Pct = t1Count ? Math.round((t1Done / t1Count) * 100) : 0;
   const t2Pct = t2Count ? Math.round((t2Done / t2Count) * 100) : 0;
+  const charTotalDone = CHAR_TOPICS.reduce((s, t) => s + charTopicDone(t.id), 0);
+  const charTotalGoal = CHAR_TOPICS.length * CHAR_SESSION_SIZE;
+  const charPct = charTotalGoal ? Math.round((charTotalDone / charTotalGoal) * 100) : 0;
   let topicHtml = `<div class="subtopic-tracker" aria-label="Topic categories">
     <button class="subtopic-chip ${isT1Active ? 'on' : ''}" data-topic="topik1" type="button">
       <span class="fill" style="width:${t1Pct}%"></span>
@@ -4680,8 +4685,15 @@ function buildTopicsPicker() {
       <span class="label"><span class="ico">📘</span> TOPIK 2</span>
       <span class="count">${t2Done}/${t2Count}</span>
     </button>
+    <button class="subtopic-chip ${isPositionActive ? 'on' : ''}" data-topic="${CHAR_TOPICS[0].id}" type="button">
+      <span class="fill" style="width:${charPct}%"></span>
+      <span class="label"><span class="ico">⌨️</span> Position Practice</span>
+      <span class="count">${charTotalDone}/${charTotalGoal}</span>
+    </button>
   </div>`;
-  if (subTopics.length) {
+  if (inCharMode) {
+    topicHtml += `<div class="subtopic-tracker" aria-label="Character rows">${charSection}</div>`;
+  } else if (subTopics.length) {
     topicHtml += `<div class="subtopic-tracker" aria-label="Subcategory progress">`;
     for (const t of subTopics) {
       const done = (progress.topicCompleted[t.id] || []).length;
@@ -4703,11 +4715,6 @@ function buildTopicsPicker() {
 
   const html = `
     <div class="picker-section">
-      <div class="picker-title">Rows</div>
-      <div class="subtopic-tracker" aria-label="Character rows">${charSection}</div>
-    </div>
-    <div class="picker-section">
-      <div class="picker-title">Topics</div>
       ${topicHtml}
     </div>`;
 
