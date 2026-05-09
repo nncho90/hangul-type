@@ -2879,6 +2879,10 @@ const DEFAULT_PROGRESS = {
   bestWPM: 0,
   topicCompleted: {},
   charProgress: {},
+  // Sticky topic — restored across sessions so the sidebar opens where the
+  // user left off. Null means "first-time flow", which boots into TOPIK 1 →
+  // Basics so newcomers don't land on a Position-row practice they didn't pick.
+  activeTopic: null,
   // v2 gamification
   xp: 0,
   level: 1,
@@ -2909,6 +2913,7 @@ function loadProgress() {
         bestWPM: safeBestWPM,
         topicCompleted: p.topicCompleted && typeof p.topicCompleted === 'object' ? p.topicCompleted : {},
         charProgress: p.charProgress && typeof p.charProgress === 'object' ? p.charProgress : {},
+        activeTopic: typeof p.activeTopic === 'string' && p.activeTopic.length <= 64 ? p.activeTopic : null,
         xp: Number(p.xp) || 0,
         level: Number(p.level) || 1,
         comboBest: Number(p.comboBest) || 0,
@@ -3733,9 +3738,22 @@ function relTime(iso) {
 
 // ── Celebration overlay ──
 
+// Resolve the topic the user should land on at boot. Restore the saved
+// activeTopic when valid; otherwise default to TOPIK 1 → Basics so the
+// first-time flow shows real vocabulary instead of a row-position drill.
+function _initialActiveTopic() {
+  const saved = progress && progress.activeTopic;
+  if (typeof saved === 'string' && saved) {
+    if (TOPICS.some(t => t.id === saved)) return saved;
+    if (CHAR_TOPICS.some(t => t.id === saved)) return saved;
+    if (['topik1', 'topik2', 'mistakes', 'all'].includes(saved)) return saved;
+  }
+  return 'basics';
+}
+
 const state = {
   wordIdx: 0,
-  activeTopic: 'midrow',
+  activeTopic: _initialActiveTopic(),
   activeWords: [],
   expectedKs: [],          // flat expected keystroke sequence (jamo)
   expectedSyllables: [],   // grouped per syllable, for per-jamo target rendering
@@ -4839,7 +4857,7 @@ function buildTopicsPicker() {
       <div class="topic-accordion" aria-label="Practice topics">
         ${section('topik1',    '📗', 'TOPIK 1',           t1Done,        t1Count,       t1Pct,   buildLevelChips(1), activeLvl === 1)}
         ${section('topik2',    '📘', 'TOPIK 2',           t2Done,        t2Count,       t2Pct,   buildLevelChips(2), activeLvl === 2)}
-        ${section('positions', '⌨️', 'Position Practice', charTotalDone, charTotalGoal, charPct, charChips,          inCharMode)}
+        ${section('positions', '⌨️', 'Position',          charTotalDone, charTotalGoal, charPct, charChips,          inCharMode)}
       </div>
     </div>`;
 
@@ -4867,6 +4885,13 @@ function buildTopicsPicker() {
 
 function setTopic(id) {
   state.activeTopic = id;
+  // Persist so the next session opens the same topic instead of falling back
+  // to the first-time default. Save eagerly; subsequent state mutations call
+  // saveProgress on their own milestones.
+  if (progress.activeTopic !== id) {
+    progress.activeTopic = id;
+    saveProgress(progress);
+  }
   if (isCharTopic(id)) {
     ensureCharProgress(id);
     state.activeWords = buildCharSession(id);
