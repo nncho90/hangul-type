@@ -3481,14 +3481,34 @@ function triggerStrikePose() {
 function triggerMonsterHit(m) {
   if (!m || !m.el || !m.spriteFile) return;
   if (m.el.classList.contains('dying')) return;
-  // Bosses ship as <base>.png + <base>-step.png only — no hit-1/hit-2/walk-N
-  // frames. Swapping to those non-existent paths fires the spriteHtml onerror
-  // on BOTH layers (idle + step), each replacing its <img> with the emoji
-  // fallback → two 🐉 emojis briefly stack on top of the sprite. Skip the
-  // pose swap for bosses; the hp bar + hitflash class still register the hit.
-  if (m.tier === 'boss') return;
   const spriteEl = m.el.querySelector('.sprite');
   if (!spriteEl) return;
+  // CSS-driven red glow + shake. Applied to every tier including boss so
+  // the hit always reads visually, even when no hit-frame PNG is available.
+  spriteEl.classList.add('monster-hitflash');
+  // Bosses ship as <base>.png + <base>-step.png only — no hit-1/hit-2/walk-N
+  // frames. Swapping the <img> src to those non-existent paths fires the
+  // spriteHtml onerror on BOTH layers (idle + step), each replacing its
+  // <img> with the emoji fallback → two 🐉 stack on top of the sprite.
+  // Skip the source swap for bosses but still hide the step layer for the
+  // duration of the hit so the boss freezes in its idle pose during the
+  // flash, then restore the walk-step alternation after.
+  if (m.tier === 'boss') {
+    const stepImgBoss = spriteEl.querySelector('img.sprite-img.sprite-step');
+    if (stepImgBoss) stepImgBoss.style.opacity = '0';
+    if (m._hitToken) {
+      clearTimeout(m._hitToken[0]);
+      clearTimeout(m._hitToken[1]);
+    }
+    const tBoss = setTimeout(() => {
+      if (!m.el) return;
+      spriteEl.classList.remove('monster-hitflash');
+      if (stepImgBoss) stepImgBoss.style.opacity = '';
+      m._hitToken = null;
+    }, 280);
+    m._hitToken = [tBoss, tBoss];
+    return;
+  }
   const idleImg = spriteEl.querySelector('img.sprite-img:not(.sprite-step)');
   const stepImg = spriteEl.querySelector('img.sprite-img.sprite-step');
   if (!idleImg) return;
@@ -3502,7 +3522,6 @@ function triggerMonsterHit(m) {
     clearTimeout(m._hitToken[1]);
   }
   setBoth(`${base}-hit-1.png`);
-  spriteEl.classList.add('monster-hitflash');
   const t1 = setTimeout(() => {
     if (!m.el || m.el.classList.contains('dying')) return;
     setBoth(`${base}-hit-2.png`);
