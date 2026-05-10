@@ -524,6 +524,87 @@
   .subtopic-chip.on .lesson-jamo,
   .subtopic-chip:hover .lesson-jamo { color: var(--tmd); }
 
+  /* Lesson Units — 12 mini-accordions inside the Lessons section so 60
+     lessons aren't one giant scrolling list. Each unit gathers 5 lessons,
+     auto-opens when it contains the active lesson, and shows a TOPIK
+     readiness tag. */
+  .lesson-unit {
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    background: var(--l1);
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .lesson-unit.has-active { border-color: var(--blue); }
+  .lesson-unit.complete { border-color: var(--green); }
+  .lesson-unit-head {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr auto 14px;
+    column-gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--thi);
+  }
+  .lesson-unit-head::-webkit-details-marker { display: none; }
+  .lesson-unit-head .lu-fill {
+    position: absolute;
+    inset: 0;
+    background: rgba(37, 99, 235, 0.08);
+    pointer-events: none;
+    z-index: 0;
+    transition: width 0.4s ease;
+  }
+  .lesson-unit.complete .lesson-unit-head .lu-fill { background: rgba(16, 185, 129, 0.12); }
+  .lesson-unit-head > * { position: relative; z-index: 1; }
+  .lesson-unit-head .lu-num {
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--thi);
+    white-space: nowrap;
+  }
+  .lesson-unit-head .lu-tag {
+    font-size: 10px;
+    color: var(--tmd);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lesson-unit-head .lu-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tmd);
+  }
+  .lesson-unit.has-active .lesson-unit-head .lu-num,
+  .lesson-unit.has-active .lesson-unit-head .lu-count { color: var(--blue); }
+  .lesson-unit.complete .lesson-unit-head .lu-num,
+  .lesson-unit.complete .lesson-unit-head .lu-count { color: var(--green); }
+  .lesson-unit-head .lu-caret {
+    color: var(--tmd);
+    font-size: 11px;
+    transition: transform 0.18s ease;
+  }
+  .lesson-unit[open] .lesson-unit-head .lu-caret { transform: rotate(-180deg); }
+  .lesson-unit-head:hover { background: var(--l2); }
+  .lesson-unit-body {
+    padding: 6px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-top: 1px solid var(--bd);
+    background: var(--l2);
+  }
+  .lesson-unit-body .subtopic-chip {
+    width: 100%;
+  }
+
   .subtopic-chip.complete {
     border-color: var(--green);
     color: var(--green);
@@ -1046,15 +1127,98 @@
     50% { opacity: 0.5; }
   }
 
+  /* TOPIK Readiness header card — sits at the top of the practice content
+     pane and gives the player a single readiness number tied to TOPIK 급
+     levels. The card shows current level, percentage to next 급, and how
+     many more words the player needs to type correctly to get there. */
+  .topik-readiness {
+    margin: 0 0 18px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(139,92,246,0.06));
+    border: 1px solid var(--bd);
+  }
+  .topik-readiness .tr-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .topik-readiness .tr-icon { font-size: 22px; line-height: 1; }
+  .topik-readiness .tr-meta { display: flex; flex-direction: column; flex: 1 1 auto; gap: 2px; min-width: 0; }
+  .topik-readiness .tr-tag {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--blue);
+    line-height: 1;
+  }
+  .topik-readiness .tr-level {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--thi);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topik-readiness .tr-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue);
+  }
+  .topik-readiness .tr-meter {
+    height: 8px;
+    background: var(--l3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .topik-readiness .tr-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    width: 0%;
+    transition: width 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+  .topik-readiness .tr-sub {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--tmd);
+  }
+  /* Level-up flash when the readiness number ticks up to a new 급. */
+  .topik-readiness.level-up {
+    animation: tr-pulse 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes tr-pulse {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.0); }
+    35%  { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(139, 92, 246, 0.18); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.0); }
+  }
+
   .progress {
-    height: 6px; background: var(--l3); border-radius: 3px;
+    position: relative;
+    height: 18px; background: var(--l3); border-radius: 9px;
     margin: 12px 0 18px;
     overflow: hidden;
   }
   .progress-fill {
-    height: 100%; background: var(--green);
+    height: 100%; background: linear-gradient(90deg, var(--green), #34d399);
     width: 0%;
-    transition: width 0.2s;
+    transition: width 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+  .progress-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--tmd);
+    pointer-events: none;
+    letter-spacing: 0.04em;
   }
 
   /* Keyboard */
@@ -1911,36 +2075,72 @@
     max-width: 760px;
     margin-bottom: 18px;
   }
-  .seo-grid, .faq-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+  /* Single-column accordion (replaces the old 2-col card grid).
+     Uses native <details>/<summary> so the content stays in the DOM and
+     remains crawlable for SEO; Google indexes collapsed content the same
+     as visible content as long as it's not JS-injected. */
+  .seo-accordion, .faq-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
-  .seo-card, .faq-card {
+  .seo-accordion details, .faq-accordion details {
     background: var(--l1);
     border: 1px solid var(--bd);
     border-radius: 12px;
-    padding: 16px 18px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
   }
-  .seo-card h3, .faq-card h3 {
-    margin: 0 0 8px;
+  .seo-accordion summary, .faq-accordion summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 18px;
     font-size: 14px;
-    line-height: 1.35;
+    line-height: 1.4;
+    font-weight: 700;
     color: var(--thi);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    user-select: none;
   }
-  .seo-card p, .faq-card p { margin: 0; }
+  .seo-accordion summary:hover, .faq-accordion summary:hover { background: var(--l2); }
+  .seo-accordion summary::-webkit-details-marker,
+  .faq-accordion summary::-webkit-details-marker { display: none; }
+  .seo-accordion summary::after, .faq-accordion summary::after {
+    content: '';
+    flex: 0 0 auto;
+    width: 8px; height: 8px;
+    border-right: 2px solid var(--tmd);
+    border-bottom: 2px solid var(--tmd);
+    transform: rotate(45deg);
+    transition: transform 0.18s ease;
+    margin-top: -3px;
+  }
+  .seo-accordion details[open] summary::after,
+  .faq-accordion details[open] summary::after {
+    transform: rotate(-135deg);
+    margin-top: 3px;
+  }
+  .seo-accordion details > p, .faq-accordion details > p {
+    margin: 0;
+    padding: 0 18px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--tmd);
+  }
   .faq-title {
     margin: 24px 0 12px;
     font-size: 14px;
     font-weight: 700;
     color: var(--thi);
   }
-  .faq-grid { margin-top: 0; }
   @media (max-width: 700px) {
     .seo-section { font-size: 13px; padding: 20px 16px 24px; }
     .seo-section h2 { font-size: 16px; }
-    .seo-grid, .faq-grid { grid-template-columns: 1fr; }
+    .seo-accordion summary, .faq-accordion summary { padding: 12px 14px; font-size: 13px; }
+    .seo-accordion details > p, .faq-accordion details > p { padding: 0 14px 14px; }
   }
 
   /* Hidden input (mobile keyboard fallback) */
@@ -2033,6 +2233,18 @@
 
         <div class="practice-content">
           <button id="mobileVocabBtn" class="mobile-vocab-toggle" type="button" aria-expanded="false" aria-controls="practiceSide">Rows</button>
+          <div id="topikReadiness" class="topik-readiness" aria-label="TOPIK readiness">
+            <div class="tr-head">
+              <span class="tr-icon" aria-hidden="true">🎯</span>
+              <span class="tr-meta">
+                <span class="tr-tag">Just starting</span>
+                <span class="tr-level">Pre-Beginner</span>
+              </span>
+              <span class="tr-pct" aria-hidden="true"><span class="tr-meter-text">0%</span></span>
+            </div>
+            <div class="tr-meter"><div class="tr-fill"></div></div>
+            <div class="tr-sub">0 words mastered</div>
+          </div>
           <div class="target">
             <div class="gloss" id="gloss">hello</div>
             <div class="char-row">
@@ -2043,7 +2255,10 @@
             <div class="romanization" id="romanization"></div>
           </div>
 
-          <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress">
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-label" id="progressLabel"></div>
+          </div>
 
           <div class="keyboard">
             <div class="kb-legend-row">
@@ -2121,51 +2336,51 @@
       <p>The TOPIK IBT (Internet-Based Test) requires candidates to type Korean essays directly on a keyboard. The writing section includes a short sentence-completion task and a long argumentative essay of 400–500 characters. If you have never typed Korean before, the online exam can feel daunting, but a few hours of deliberate practice is enough to reach a comfortable speed.</p>
     </div>
 
-    <div class="seo-grid">
-      <article class="seo-card">
-        <h3>Why Many TOPIK Takers Avoid the Online Exam</h3>
+    <div class="seo-accordion">
+      <details>
+        <summary>Why Many TOPIK Takers Avoid the Online Exam</summary>
         <p>Many TOPIK II candidates register for the paper-based test (PBT) specifically because they do not know how to type Korean on a QWERTY keyboard. Handwriting feels safer when you have never practiced Korean keyboard input. But the IBT offers faster results (2–3 weeks instead of 5) and the ability to edit and revise your essay on screen. Those are advantages worth learning to type for.</p>
-      </article>
-      <article class="seo-card">
-        <h3>What Typing Speed Do You Need for TOPIK IBT?</h3>
+      </details>
+      <details>
+        <summary>What Typing Speed Do You Need for TOPIK IBT?</summary>
         <p>Aim for at least 30–40 Korean characters per minute to write comfortably within the time limit. Type Hangeul's 60-second WPM sprint measures your speed in real time using TOPIK-level vocabulary so you can benchmark your progress before exam day.</p>
-      </article>
-      <article class="seo-card">
-        <h3>How to Type Korean on a QWERTY Keyboard: No IME Needed</h3>
+      </details>
+      <details>
+        <summary>How to Type Korean on a QWERTY Keyboard: No IME Needed</summary>
         <p>South Korea uses the 2-set (두벌식) keyboard layout, where every QWERTY key maps to one Korean jamo (consonant or vowel). Type Hangeul shows the full jamo map on every key as you practice, and its built-in Hangeul composition engine means no operating system IME setup is required. Open the site and start typing. The same keys you press here are the ones that work in the TOPIK IBT browser.</p>
-      </article>
-      <article class="seo-card">
-        <h3>TOPIK 1 and TOPIK 2 Vocabulary, Built In</h3>
+      </details>
+      <details>
+        <summary>TOPIK 1 and TOPIK 2 Vocabulary, Built In</summary>
         <p>The practice mode includes curated word lists drawn from TOPIK Level 1 and TOPIK Level 2 vocabulary: the same words that appear in the reading and writing sections of both exam levels. Practicing with test-relevant vocabulary means you build typing muscle memory and exam vocabulary at the same time. A spaced-repetition system (SRS) surfaces the words you miss most, so every session targets your real weak points.</p>
-      </article>
+      </details>
     </div>
 
     <div class="faq-title">Frequently Asked Questions</div>
-    <div class="faq-grid">
-      <article class="faq-card">
-        <h3>Does the TOPIK online exam require typing in Korean?</h3>
+    <div class="faq-accordion">
+      <details>
+        <summary>Does the TOPIK online exam require typing in Korean?</summary>
         <p>Yes. The TOPIK IBT writing section requires you to type Korean characters directly into a text field. The long essay (Question 53/54) requires 400–500 characters typed in Korean. There is no handwriting option in the online format.</p>
-      </article>
-      <article class="faq-card">
-        <h3>How long does it take to learn Korean typing for TOPIK?</h3>
+      </details>
+      <details>
+        <summary>How long does it take to learn Korean typing for TOPIK?</summary>
         <p>Most learners who can already read Hangeul reach a functional typing speed within 5–10 hours of deliberate practice. The 2-set layout maps 24 jamo to 24 keys, so the learning curve is shorter than it looks. Start with consonants, add vowels, then practice short words. Accuracy first, speed follows naturally.</p>
-      </article>
-      <article class="faq-card">
-        <h3>What is the 2-set (두벌식) Korean keyboard layout?</h3>
+      </details>
+      <details>
+        <summary>What is the 2-set (두벌식) Korean keyboard layout?</summary>
         <p>두벌식 (dubeolsik) is the standard Korean keyboard used on virtually every South Korean computer. Each QWERTY key corresponds to one Korean consonant or vowel. Type Hangeul teaches this layout with a live key map highlighting the correct key for each jamo as you type.</p>
-      </article>
-      <article class="faq-card">
-        <h3>Can I practice TOPIK 2 vocabulary while learning to type?</h3>
+      </details>
+      <details>
+        <summary>Can I practice TOPIK 2 vocabulary while learning to type?</summary>
         <p>Yes. Select "TOPIK 2" from the topic panel and the SRS system drills verbs, adjectives, nouns, and phrases from the TOPIK Level 2 word list. The practice words are the same ones tested in the TOPIK II reading and writing sections.</p>
-      </article>
-      <article class="faq-card">
-        <h3>Is an IME required to type Korean for TOPIK IBT?</h3>
+      </details>
+      <details>
+        <summary>Is an IME required to type Korean for TOPIK IBT?</summary>
         <p>Not on Type Hangeul: the site handles Hangeul composition internally. For the actual TOPIK IBT exam, the test browser provides a built-in Korean input method, so no prior IME setup is required on exam day either.</p>
-      </article>
-      <article class="faq-card">
-        <h3>What is the difference between TOPIK PBT and TOPIK IBT?</h3>
+      </details>
+      <details>
+        <summary>What is the difference between TOPIK PBT and TOPIK IBT?</summary>
         <p>TOPIK PBT (Paper-Based Test) uses printed answer sheets where you write Korean by hand with a pencil. TOPIK IBT (Internet-Based Test) is taken on a computer where you type your answers on a keyboard. IBT results are published in 2–3 weeks; PBT results take about 5 weeks. Both test the same content and award the same certificate.</p>
-      </article>
+      </details>
     </div>
   </section>
 
@@ -4048,7 +4263,23 @@ function renderTrainingGround(opts) {
 // Backwards-compat shim — the old renderAvatarBlob name is referenced by
 // streak/word-complete code paths. Keep the same callable, route to the new
 // training ground render so all existing call sites keep working unchanged.
-function renderAvatarBlob(opts) { renderTrainingGround(opts); }
+// Also pulse the TOPIK readiness card whenever a word completes; the card's
+// own data-level attribute tracks crossings and we flash on level-up.
+function renderAvatarBlob(opts) {
+  const card = document.getElementById('topikReadiness');
+  const prevLevel = card ? Number(card.dataset.level || 0) : 0;
+  renderTrainingGround(opts);
+  renderTopikReadiness();
+  if (card) {
+    const newLevel = Number(card.dataset.level || 0);
+    if (newLevel > prevLevel) {
+      card.classList.remove('level-up');
+      void card.offsetWidth;
+      card.classList.add('level-up');
+      setTimeout(() => card.classList.remove('level-up'), 1300);
+    }
+  }
+}
 
 
 // Pick the first sub-category at this TOPIK level that the user hasn't filled.
@@ -5002,21 +5233,65 @@ function buildTopicsPicker() {
 
   // Subtopic chips for each section ────────────────────────────────────────
   const inLessonMode = isLessonId(state.activeTopic);
-  const lessonChips = LESSONS.map(l => {
-    const done = lessonDone(l.id);
-    const total = l.words.length;
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    const isActive = state.activeTopic === l.id;
-    const isComplete = done >= total && total > 0;
-    const cls = (isActive ? 'on ' : '') + (isComplete ? 'complete ' : '');
-    const jamo = l.jamoIntroduced && l.jamoIntroduced.length
-      ? `<small class="lesson-jamo">${escapeHtml(l.jamoIntroduced.join(' '))}</small>`
-      : '';
-    return `<button class="subtopic-chip ${cls}" data-topic="${l.id}" type="button" title="${escapeHtml(l.label)} — ${done}/${total} words">
-      <span class="fill" style="width:${pct}%"></span>
-      <span class="label"><span class="ico">📚</span> ${escapeHtml(l.label)} ${jamo}</span>
-      <span class="count">${done}/${total}</span>
-    </button>`;
+  // Group the 60 lessons into 12 nested "Units" of 5 so the sidebar isn't a
+  // single 60-item scroll. Each unit auto-collapses unless it contains the
+  // active lesson; the user can manually open any unit. Per-unit progress
+  // (lessons completed / 5) is shown in the unit header.
+  const UNIT_SIZE = 5;
+  const UNIT_TAGS = [
+    'TOPIK 1 · 1급 prep',  // Unit 1 (L1-5)
+    'TOPIK 1 · 1급 prep',  // Unit 2 (L6-10)
+    'TOPIK 1 · 1급 ready', // Unit 3 (L11-15)
+    'TOPIK 1 · 2급 prep',  // Unit 4 (L16-20)
+    'TOPIK 1 · 2급 prep',  // Unit 5 (L21-25)
+    'TOPIK 1 · 2급 ready', // Unit 6 (L26-30)
+    'TOPIK 2 · 3급 prep',  // Unit 7 (L31-35)
+    'TOPIK 2 · 3급 ready', // Unit 8 (L36-40)
+    'TOPIK 2 · 4급 prep',  // Unit 9 (L41-45)
+    'TOPIK 2 · 4급 ready', // Unit 10 (L46-50)
+    'TOPIK 2 · 5급 prep',  // Unit 11 (L51-55)
+    'TOPIK 2 · 6급 path'   // Unit 12 (L56-60)
+  ];
+  const lessonUnits = [];
+  for (let i = 0; i < LESSONS.length; i += UNIT_SIZE) lessonUnits.push(LESSONS.slice(i, i + UNIT_SIZE));
+  const activeUnitIdx = inLessonMode
+    ? Math.floor(LESSONS.findIndex(l => l.id === state.activeTopic) / UNIT_SIZE)
+    : -1;
+  const lessonChips = lessonUnits.map((chunk, ui) => {
+    const startN = chunk[0].number, endN = chunk[chunk.length - 1].number;
+    const lessonsDone = chunk.filter(l => lessonDone(l.id) >= l.words.length && l.words.length > 0).length;
+    const wordsDoneInUnit = chunk.reduce((s, l) => s + lessonDone(l.id), 0);
+    const wordsTotalInUnit = chunk.reduce((s, l) => s + l.words.length, 0);
+    const unitPct = wordsTotalInUnit ? Math.round((wordsDoneInUnit / wordsTotalInUnit) * 100) : 0;
+    const isUnitOpen = activeUnitIdx === ui;
+    const isUnitComplete = lessonsDone === chunk.length;
+    const tag = UNIT_TAGS[ui] || `Lessons ${startN}–${endN}`;
+    const chipsHtml = chunk.map(l => {
+      const done = lessonDone(l.id);
+      const total = l.words.length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      const isActive = state.activeTopic === l.id;
+      const isComplete = done >= total && total > 0;
+      const cls = (isActive ? 'on ' : '') + (isComplete ? 'complete ' : '');
+      const jamo = l.jamoIntroduced && l.jamoIntroduced.length
+        ? `<small class="lesson-jamo">${escapeHtml(l.jamoIntroduced.join(' '))}</small>`
+        : '';
+      return `<button class="subtopic-chip ${cls}" data-topic="${l.id}" type="button" title="${escapeHtml(l.label)} — ${done}/${total} words">
+        <span class="fill" style="width:${pct}%"></span>
+        <span class="label"><span class="ico">📚</span> ${escapeHtml(l.label)} ${jamo}</span>
+        <span class="count">${done}/${total}</span>
+      </button>`;
+    }).join('');
+    return `<details class="lesson-unit ${isUnitOpen ? 'has-active' : ''} ${isUnitComplete ? 'complete' : ''}" ${isUnitOpen ? 'open' : ''}>
+      <summary class="lesson-unit-head">
+        <span class="lu-fill" style="width:${unitPct}%"></span>
+        <span class="lu-num">Unit ${ui + 1}</span>
+        <span class="lu-tag">${escapeHtml(tag)}</span>
+        <span class="lu-count">${lessonsDone}/${chunk.length}</span>
+        <span class="lu-caret" aria-hidden="true">▾</span>
+      </summary>
+      <div class="lesson-unit-body">${chipsHtml}</div>
+    </details>`;
   }).join('');
 
   const charChips = CHAR_TOPICS.map(t => {
@@ -5160,10 +5435,99 @@ function setTopic(id) {
 }
 
 function updateProgress() {
-  const pct = isCharTopic(state.activeTopic)
-    ? (charTopicDone(state.activeTopic) / CHAR_SESSION_SIZE) * 100
-    : (state.expectedKs.length ? (state.posKs / state.expectedKs.length) * 100 : 0);
-  document.getElementById('progressFill').style.width = pct + '%';
+  // Bar above the keyboard reflects the OVERALL session, not the per-keystroke
+  // position inside one word. Filling it requires actually clearing words.
+  let pct = 0, label = '';
+  if (isCharTopic(state.activeTopic)) {
+    const done = charTopicDone(state.activeTopic);
+    pct = (done / CHAR_SESSION_SIZE) * 100;
+    label = `${done}/${CHAR_SESSION_SIZE}`;
+  } else if (isLessonId(state.activeTopic)) {
+    const lesson = lessonById(state.activeTopic);
+    const done = lessonDone(state.activeTopic);
+    const total = lesson ? lesson.words.length : 1;
+    pct = (done / Math.max(1, total)) * 100;
+    label = `${done}/${total}`;
+  } else {
+    const t = TOPICS.find(x => x.id === state.activeTopic);
+    if (t) {
+      const done = (progress.topicCompleted[t.id] || []).length;
+      const total = t.words.length;
+      pct = (done / Math.max(1, total)) * 100;
+      label = `${done}/${total}`;
+    } else {
+      // Meta-pool ('all' / 'mistakes' / 'topik1' / 'topik2'): keep the legacy
+      // per-keystroke position so the bar still moves while typing.
+      pct = state.expectedKs.length ? (state.posKs / state.expectedKs.length) * 100 : 0;
+    }
+  }
+  const fill = document.getElementById('progressFill');
+  if (fill) fill.style.width = pct + '%';
+  const lbl = document.getElementById('progressLabel');
+  if (lbl) lbl.textContent = label;
+}
+
+// ─── TOPIK readiness ──────────────────────────────────────────────────────
+// Counts every unique Korean word the user has typed correctly across all
+// topics, maps that count to a TOPIK 급 level (Pre / 1급 / 2급 / 3급 / 4급 /
+// 5급 / 6급), and renders a header card showing where the user stands and
+// what's between them and the next 급. Thresholds are tuned to the curated
+// TOPIK 1+2 corpus actually shipped with the app (~900 words).
+const TOPIK_LEVELS = [
+  { num: 0, tag: 'Just starting',     label: 'Pre-Beginner',         next: 'TOPIK 1 · 1급', threshold: 0   },
+  { num: 1, tag: 'TOPIK 1 · 1급',     label: 'TOPIK 1 · 1급 ready',  next: 'TOPIK 1 · 2급', threshold: 60  },
+  { num: 2, tag: 'TOPIK 1 · 2급',     label: 'TOPIK 1 · 2급 ready',  next: 'TOPIK 2 · 3급', threshold: 180 },
+  { num: 3, tag: 'TOPIK 2 · 3급',     label: 'TOPIK 2 · 3급 ready',  next: 'TOPIK 2 · 4급', threshold: 360 },
+  { num: 4, tag: 'TOPIK 2 · 4급',     label: 'TOPIK 2 · 4급 ready',  next: 'TOPIK 2 · 5급', threshold: 540 },
+  { num: 5, tag: 'TOPIK 2 · 5급',     label: 'TOPIK 2 · 5급 ready',  next: 'TOPIK 2 · 6급', threshold: 720 },
+  { num: 6, tag: 'TOPIK 2 · 6급',     label: 'TOPIK 2 · 6급 (Master)', next: null,           threshold: 850 }
+];
+function wordsMasteredCount() {
+  const seen = new Set();
+  if (progress && progress.topicCompleted) {
+    for (const k of Object.keys(progress.topicCompleted)) {
+      for (const ko of (progress.topicCompleted[k] || [])) seen.add(ko);
+    }
+  }
+  return seen.size;
+}
+function topikReadiness() {
+  const count = wordsMasteredCount();
+  let cur = TOPIK_LEVELS[0];
+  let next = TOPIK_LEVELS[1] || null;
+  for (let i = TOPIK_LEVELS.length - 1; i >= 0; i--) {
+    if (count >= TOPIK_LEVELS[i].threshold) {
+      cur = TOPIK_LEVELS[i];
+      next = TOPIK_LEVELS[i + 1] || null;
+      break;
+    }
+  }
+  let pct = 100;
+  if (next) {
+    const span = Math.max(1, next.threshold - cur.threshold);
+    pct = Math.max(0, Math.min(100, Math.round(((count - cur.threshold) / span) * 100)));
+  }
+  return { count, current: cur, next, pct };
+}
+function renderTopikReadiness() {
+  const card = document.getElementById('topikReadiness');
+  if (!card) return;
+  const r = topikReadiness();
+  const tagEl  = card.querySelector('.tr-tag');
+  const lvlEl  = card.querySelector('.tr-level');
+  const pctEl  = card.querySelector('.tr-meter-text');
+  const fillEl = card.querySelector('.tr-fill');
+  const subEl  = card.querySelector('.tr-sub');
+  if (tagEl) tagEl.textContent  = r.current.tag;
+  if (lvlEl) lvlEl.textContent  = r.current.label;
+  if (pctEl) pctEl.textContent  = r.pct + '%';
+  if (fillEl) fillEl.style.width = r.pct + '%';
+  if (subEl) {
+    subEl.textContent = r.next
+      ? `${r.count} words mastered · ${Math.max(0, r.next.threshold - r.count)} to ${r.next.tag}`
+      : `${r.count} words mastered — full corpus complete!`;
+  }
+  card.dataset.level = String(r.current.num);
 }
 
 function setDiag(kind, html) {
