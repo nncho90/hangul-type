@@ -514,6 +514,7 @@
             <button id="guideUndoBtn">Undo</button>
             <button id="guideClearBtn">Clear</button>
             <button id="guideSaveBtn">Save</button>
+            <button id="guideOkBtn" type="button" title="Mark this syllable as already correct so it gets a ✓ without saving any custom shape">👍 Looks good</button>
           </div>
           <div class="guide-list" id="guideList"></div>
         </div>
@@ -530,6 +531,9 @@
   </main>
 </div>
 
+<!-- Shipped tuner defaults — used as a baseline so the tuner shows previously
+     shipped shapes when localStorage is empty. localStorage still wins per-key. -->
+<script src="default-guides.js"></script>
 <script>
 'use strict';
 
@@ -561,11 +565,15 @@ const PRACTICE_STATE_COLORS = {
   err:     '#ef4444'
 };
 
+// Round 2 — only syllables that still need a custom guide. Earlier rounds
+// (compound vowels, batchim-heavy, verticals, common) shipped in
+// default-guides.js or were judged OK as-is.
 const SAMPLE_GROUPS = [
-  { label: 'Compound vowels', items: ['화', '원', '왜', '위', '외', '궤', '꿰', '괜', '워', '웨', '회'] },
-  { label: 'Batchim-heavy', items: ['일', '안', '녕', '감', '값', '읽', '닭', '밖', '넋', '앉', '넓', '삶', '흙', '꽃'] },
-  { label: 'Vertical layouts', items: ['요', '물', '불', '국', '족', '눈', '듣', '밟', '숲', '끝'] },
-  { label: 'Common', items: ['하', '세', '사', '아', '니', '오', '저', '를', '의'] }
+  { label: 'Needs revision', items: ['어', '버'] },
+  { label: 'Open', items: ['머', '드', '쇼', '꺼', '고', '꾸', '떠', '예', '초', '빠'] },
+  { label: 'ㅕ / ㅖ', items: ['열', '별', '격', '계', '명', '결', '정', '연', '볍'] },
+  { label: 'Horizontal + final', items: ['빨', '땅', '활', '없', '멈', '업', '넣'] },
+  { label: 'Vertical + final', items: ['공', '돌', '송', '준', '꿈', '귤', '금', '분', '권', '먼', '좋', '놀', '획', '올', '문', '졸', '운', '높'] }
 ];
 
 const state = {
@@ -605,12 +613,41 @@ function loadOverrides() {
 }
 
 
+// Convert shipped DEFAULT_TUNER_GUIDES (just { steps }) into the shape the
+// tuner expects in state.guideBySample so isSampleSaved + ensureGuideForSample
+// pick them up. Anything in localStorage still wins per-syllable.
+function buildShippedGuideStore() {
+  const defaults = (typeof window !== 'undefined' && window.DEFAULT_TUNER_GUIDES) || {};
+  const out = {};
+  for (const [key, entry] of Object.entries(defaults)) {
+    if (!entry || !Array.isArray(entry.steps) || !entry.steps.length) continue;
+    out[key] = {
+      sampleKey: key,
+      active: false,
+      saved: true,
+      stepIndex: entry.steps.length,
+      steps: entry.steps.map(s => ({
+        order: s.order,
+        key: s.key,
+        ops: (s.ops || []).map(op => ({
+          mode: op.mode || 'add',
+          shape: op.shape || 'rect',
+          normRect: op.normRect
+        }))
+      })),
+      current: null
+    };
+  }
+  return out;
+}
+
 function loadGuideStore() {
+  const shipped = buildShippedGuideStore();
   try {
     const raw = localStorage.getItem(GUIDE_STORAGE_KEY);
-    return Object.assign({}, DEFAULT_GUIDE_STORE, raw ? JSON.parse(raw) : {});
+    return Object.assign({}, DEFAULT_GUIDE_STORE, shipped, raw ? JSON.parse(raw) : {});
   } catch {
-    return { ...DEFAULT_GUIDE_STORE };
+    return Object.assign({}, DEFAULT_GUIDE_STORE, shipped);
   }
 }
 
@@ -1322,8 +1359,30 @@ function renderSampleList() {
 
 function isSampleSaved(syllable) {
   const entry = state.guideBySample[syllable];
-  if (!entry || !entry.saved || !entry.steps || !entry.steps.length) return false;
+  if (!entry) return false;
+  if (entry.reviewed) return true;
+  if (!entry.saved || !entry.steps || !entry.steps.length) return false;
   return entry.steps.every(s => s.ops && s.ops.length && s.ops.every(op => op.normRect));
+}
+
+// "Looks good" — mark the syllable as reviewed without writing any custom
+// shape. Shows ✓ in the sample list. exportGuides() skips entries with no
+// ops, so the data file is left untouched (default behavior keeps applying).
+function markGuideOK() {
+  const sample = SAMPLES[state.index];
+  if (!sample) return;
+  const key = sample.syllable;
+  ensureGuideForSample(sample);
+  if (state.guide) state.guide.reviewed = true;
+  // Also stamp the stored map entry directly so the flag survives even if
+  // the live guide object differs from the map entry.
+  const existing = state.guideBySample[key] || { sampleKey: key, steps: [], saved: false, stepIndex: 0 };
+  existing.reviewed = true;
+  state.guideBySample[key] = existing;
+  saveGuideStore();
+  refreshSampleSavedMarks();
+  if (guideStatusEl) guideStatusEl.textContent = `Marked ${key} as OK — no custom shape needed.`;
+  drawFrame();
 }
 
 function refreshSampleSavedMarks() {
@@ -1768,7 +1827,10 @@ function renderPracticePad() {
     if (practiceState.posKs > ks.length) practiceState.posKs = ks.length;
   }
 
-  const seg = buildPracticeSegmentation(syl, 140);
+  // Render at the same font size as the main tuner glyph (270px) so the
+  // practice view is pixel-identical to what the user tuned against.
+  // The visible practice canvas downscales via drawImage below.
+  const seg = buildPracticeSegmentation(syl, 270);
   practiceState.seg = seg;
   // Size the canvas to its CSS box × DPR so retina displays render sharp
   const dpr = window.devicePixelRatio || 1;
@@ -1821,6 +1883,14 @@ function escapeHtmlSafe(s) {
 }
 
 practiceInput.addEventListener('keydown', (ev) => {
+  // Ignore OS auto-repeat — holding a key was firing several jamo presses
+  // back to back, advancing past where the user actually typed.
+  if (ev.repeat) { ev.preventDefault(); return; }
+  // Korean IME (한글 mode): keydown arrives as 'Process' / keyCode 229. Don't
+  // preventDefault — that would cancel the IME composition. Just bail out so
+  // the keydown branch doesn't try to match it as an English letter; the
+  // 'input' handler below will see the composed jamo and advance from there.
+  if (ev.isComposing || ev.key === 'Process' || ev.keyCode === 229) return;
   if (ev.key === 'Backspace') {
     ev.preventDefault();
     if (practiceState.posKs > 0) practiceState.posKs--;
@@ -1872,8 +1942,48 @@ practiceInput.addEventListener('keydown', (ev) => {
 });
 
 practiceInput.addEventListener('input', () => {
-  // Always clear so it acts like a one-key-at-a-time pad
+  // Korean IME path: keydown bails for 'Process' / keyCode 229, so the IME
+  // composes the syllable and lands here as 'input'. Decompose composed
+  // syllables to jamo, then advance the practice — same matching logic as
+  // the English keydown branch, just on the resulting jamo characters.
+  const value = practiceInput.value;
   practiceInput.value = '';
+  if (!value) return;
+  let jamos = '';
+  for (const ch of value) {
+    const code = ch.charCodeAt(0);
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+      jamos += syllableToKeystrokes(ch).join('');
+    } else if (code >= 0x3131 && code <= 0x318E) {
+      jamos += ch;
+    }
+    // Latin / other: ignore — handled by the keydown branch.
+  }
+  if (!jamos) return;
+  const ks = practiceState.expectedKs;
+  let mismatched = false;
+  for (const jamo of jamos) {
+    if (practiceState.posKs >= ks.length) {
+      practiceState.posKs = 0;
+    }
+    if (jamo === ks[practiceState.posKs]) {
+      practiceState.posKs++;
+      practiceState.err = false;
+      practiceInput.classList.remove('err');
+    } else {
+      mismatched = true;
+      break;
+    }
+  }
+  if (mismatched) {
+    practiceState.err = true;
+    practiceInput.classList.add('err');
+    setTimeout(() => {
+      practiceInput.classList.remove('err');
+      practiceState.err = false;
+    }, 250);
+  }
+  renderPracticePad();
 });
 
 document.querySelectorAll('.shape-toggle .shape-btn').forEach(btn => {
@@ -1892,6 +2002,7 @@ document.getElementById('guideDoneBtn').addEventListener('click', finishGuideSte
 document.getElementById('guideUndoBtn').addEventListener('click', undoGuideStep);
 document.getElementById('guideClearBtn').addEventListener('click', clearGuide);
 document.getElementById('guideSaveBtn').addEventListener('click', saveGuide);
+document.getElementById('guideOkBtn').addEventListener('click', markGuideOK);
 document.getElementById('guideExportBtn').addEventListener('click', exportGuides);
 
 function exportGuides() {
@@ -1938,6 +2049,10 @@ overlayCanvas.addEventListener('pointercancel', () => {
 
 window.addEventListener('keydown', (ev) => {
   if (document.activeElement === practiceInput) return;
+  // Ignore OS auto-repeat — holding arrows was advancing several samples per press.
+  if (ev.repeat) return;
+  // Ignore Korean IME composition events that fire alongside the real key.
+  if (ev.isComposing || ev.key === 'Process' || ev.keyCode === 229) return;
   if (ev.key === 'ArrowLeft') {
     ev.preventDefault();
     nextSample(-1);
@@ -1961,10 +2076,26 @@ window.addEventListener('resize', () => drawFrame());
 
 window.__state = state;
 buildPracticeKeyboard();
-document.fonts.ready.then(() => {
-  renderSampleList();
-  drawFrame();
-});
+// Pre-load Noto Sans KR for every syllable + jamo we'll render. Google Fonts
+// subset-loads on demand, so without this the canvas paint can hit a
+// system-font fallback (Apple SD Gothic Neo) which has thinner strokes —
+// causing some syllables to look thin and others thick.
+const NOTO_PRELOAD_TEXT =
+  SAMPLES.map(s => s.syllable).join('') +
+  'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㄲㄸㅃㅆㅉㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣㅐㅒㅔㅖㅘㅙㅚㅝㅞㅟㅢ';
+function preloadNotoKr() {
+  if (!document.fonts || !document.fonts.load) return Promise.resolve();
+  return Promise.all([
+    document.fonts.load(`500 270px "Noto Sans KR"`, NOTO_PRELOAD_TEXT),
+    document.fonts.load(`bold 14px "Noto Sans KR"`, NOTO_PRELOAD_TEXT)
+  ]).catch(() => {});
+}
+document.fonts.ready
+  .then(preloadNotoKr)
+  .then(() => {
+    renderSampleList();
+    drawFrame();
+  });
 </script>
 </body>
 </html>

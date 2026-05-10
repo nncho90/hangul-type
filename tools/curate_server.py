@@ -178,5 +178,6 @@ def curate_page():
 app.mount("/", StaticFiles(directory=str(ROOT), html=True), name="root")
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8765, log_level="warning")
+    import sys, uvicorn
+    port = int(os.environ.get("CURATE_PORT") or (sys.argv[1] if len(sys.argv) > 1 else 8765))
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
