@@ -594,7 +594,7 @@
     align-items: flex-end;
     gap: 0;
   }
-  .player .player-main { font-size: 72px; line-height: 1; }
+  .player .player-main { font-size: 144px; line-height: 1; }
   .player .player-equip {
     font-size: 32px;
     margin-left: -8px;
@@ -715,33 +715,33 @@
      Sprite art is the same 7 PNGs today; the visual progression here gives
      the existing roster a clearer "this is a stronger demon" read. */
   .monster.tier-1 .sprite {
-    font-size: var(--tier1-font, 79px);
+    font-size: var(--tier1-font, 158px);
     filter: drop-shadow(0 4px 6px rgba(15, 23, 42, 0.18));
   }
   .monster.tier-2 .sprite {
-    font-size: var(--tier2-font, 97px);
+    font-size: var(--tier2-font, 194px);
     filter: drop-shadow(0 5px 8px rgba(15, 23, 42, 0.22));
   }
   .monster.tier-3 .sprite {
-    font-size: var(--tier3-font, 112px);
+    font-size: var(--tier3-font, 224px);
     filter:
       drop-shadow(0 7px 10px rgba(15, 23, 42, 0.25))
       drop-shadow(0 0 8px rgba(245, 158, 11, 0.18));
   }
   .monster.tier-4 .sprite {
-    font-size: var(--tier4-font, 130px);
+    font-size: var(--tier4-font, 260px);
     filter:
       drop-shadow(0 9px 14px rgba(15, 23, 42, 0.30))
       drop-shadow(0 0 14px rgba(139, 92, 246, 0.32));
   }
   .monster.tier-5 .sprite {
-    font-size: var(--tier5-font, 151px);
+    font-size: var(--tier5-font, 302px);
     filter:
       drop-shadow(0 11px 18px rgba(15, 23, 42, 0.34))
       drop-shadow(0 0 22px rgba(239, 68, 68, 0.38));
   }
   .monster.boss .sprite {
-    font-size: 198px;
+    font-size: 320px;
     animation: bossbob 1.4s ease-in-out infinite;
     filter:
       drop-shadow(0 14px 24px rgba(15, 23, 42, 0.38))
@@ -1419,7 +1419,7 @@
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
     .player { font-size: 70px; bottom: 4%; }
-    .player .player-main { font-size: 70px; }
+    .player .player-main { font-size: 140px; }
     .player .player-equip { font-size: 30px; }
     /* Shrink the actual player sprite img on mobile — the inline width/height
        baked by spriteHtml() needs !important to override. The sprite img is
@@ -1427,12 +1427,12 @@
        dimensions need to move together. */
     .player .sprite-img { width: 100px !important; height: 100px !important; }
     .monster .sprite { font-size: 79px; }
-    .monster.tier-1 .sprite { font-size: 65px; }
-    .monster.tier-2 .sprite { font-size: 79px; }
-    .monster.tier-3 .sprite { font-size: 90px; }
-    .monster.tier-4 .sprite { font-size: 101px; }
-    .monster.tier-5 .sprite { font-size: 115px; }
-    .monster.boss .sprite { font-size: 144px; }
+    .monster.tier-1 .sprite { font-size: 130px; }
+    .monster.tier-2 .sprite { font-size: 158px; }
+    .monster.tier-3 .sprite { font-size: 180px; }
+    .monster.tier-4 .sprite { font-size: 202px; }
+    .monster.tier-5 .sprite { font-size: 230px; }
+    .monster.boss .sprite { font-size: 240px; }
     .monster .word {
       padding: 6px 10px;
       max-width: calc(100vw - 32px);
@@ -3390,7 +3390,7 @@ function renderPlayerSprite(lv) {
   // Battle stage uses the back-view sprite (Pokemon-style — player faces up
   // toward the descending enemies). The new tier sprites have the weapon baked
   // in, so no separate equip emoji is needed.
-  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 158)}</span>`;
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 316)}</span>`;
 }
 
 // Preload all 4-frame attack sprites so the first hit doesn't flash. Also
@@ -5338,10 +5338,13 @@ function clamp01(n) {
 // monster scaling and the player's mid-jump scale, so the world reads
 // consistently no matter who's at what Y.
 const DEPTH = {
-  horizonPct: 30,   // % from top — vanishing line
+  horizonPct: 10,   // % from top — vanishing line. Kept high (close to the
+                    //   top) so a monster spawned at y=16px is already
+                    //   inside the depth zone, then visibly grows as it
+                    //   descends instead of being clamped at far scale.
   floorPct:    4,   // % from bottom — closest plane
-  nearScale:  1.45, // sprite scale at the floor (nearest)
-  farScale:   0.30, // sprite scale at the horizon (farthest)
+  nearScale:  1.0,  // sprite scale at the floor (nearest)
+  farScale:   0.50, // sprite scale at the horizon (farthest) — clean 2× growth
   bossScale:  1.18  // bosses stay slightly larger than the curve at any depth
 };
 
