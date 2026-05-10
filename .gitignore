@@ -10,6 +10,8 @@ tmp/
 .tmp*
 __pycache__/
 sprites/enemies/_wait_*.png
+sprites/backgrounds/_wait_*.png
+sprites/backgrounds/_old-*/
 .claude/
 logs/
 test-results/
