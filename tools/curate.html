@@ -18,6 +18,8 @@
   .btn:hover { transform: translateY(-1px); }
   .btn.approve { background: var(--green); color: #fff; border-color: var(--green); }
   .btn.redo { background: var(--l1); color: var(--tmd); }
+  .btn.record { background: var(--l1); color: var(--tmd); }
+  .btn.record.recording { background: var(--red); color: #fff; border-color: var(--red); }
   .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
   .empty { color: var(--tmd); padding: 24px; text-align: center; font-style: italic; max-width: 720px; }
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--thi); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: .2s; pointer-events: none; }
@@ -28,9 +30,12 @@
 </head>
 <body>
   <h1>🎙️ Voice curation</h1>
-  <p class="sub">Approve locks the word in. Redo regenerates with a new seed (~5–10s).</p>
+  <p class="sub">Approve locks the word in. Redo regenerates with a new seed (~5–10s). Record uses your mic.</p>
   <div class="stats" id="stats">Loading...</div>
   <div id="list"></div>
+  <div id="loadMoreWrap" style="max-width:720px;margin-top:12px;display:none;text-align:center">
+    <button id="loadMoreBtn" class="btn">Load next 100</button>
+  </div>
   <div class="actions">
     <a href="/game.html" target="_blank">▶ Open game</a>
   </div>
@@ -40,6 +45,13 @@
 const list  = document.getElementById('list');
 const stats = document.getElementById('stats');
 const toast = document.getElementById('toast');
+const loadMoreWrap = document.getElementById('loadMoreWrap');
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+const PAGE_SIZE = 100;
+let pendingQueue = [];   // remaining items not yet rendered
+let totalPending = 0;
+let approvedCount = 0;
 
 function showToast(msg) {
   toast.textContent = msg;
@@ -47,47 +59,69 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 1500);
 }
 
-function setStats(d) {
-  stats.textContent = `${d.pending.length} pending · ${d.approved_count} approved · ${d.total} total`;
+function refreshStats() {
+  const rendered = totalPending - pendingQueue.length;
+  stats.textContent = `${totalPending} pending (${rendered} loaded) · ${approvedCount} approved`;
+}
+
+function renderNextPage() {
+  const slice = pendingQueue.splice(0, PAGE_SIZE);
+  for (const item of slice) list.appendChild(buildRow(item.ko, item.url));
+  if (pendingQueue.length === 0) {
+    loadMoreWrap.style.display = 'none';
+  } else {
+    loadMoreWrap.style.display = 'block';
+    loadMoreBtn.textContent = `Load next ${Math.min(PAGE_SIZE, pendingQueue.length)} (${pendingQueue.length} more)`;
+  }
+  refreshStats();
 }
 
 async function load() {
   const r = await fetch('/api/pending');
   const data = await r.json();
-  setStats(data);
+  totalPending = data.pending.length;
+  approvedCount = data.approved_count;
+  pendingQueue = data.pending.slice();
   list.innerHTML = '';
-  if (data.pending.length === 0) {
+  if (totalPending === 0) {
     list.innerHTML = '<div class="empty">All caught up. 🎉</div>';
+    loadMoreWrap.style.display = 'none';
+    refreshStats();
     return;
   }
-  for (const item of data.pending) list.appendChild(buildRow(item.ko, item.url));
+  renderNextPage();
 }
+
+loadMoreBtn.onclick = () => renderNextPage();
 
 function buildRow(ko, url) {
   const row = document.createElement('div');
   row.className = 'row';
   row.innerHTML = `
     <div class="ko">${ko}</div>
-    <audio controls src="/${url}?t=${Date.now()}"></audio>
+    <audio controls preload="none" src="/${url}?t=${Date.now()}"></audio>
     <button class="btn approve">Approve</button>
-    <button class="btn redo">Redo</button>`;
+    <button class="btn redo">Redo</button>
+    <button class="btn record" title="Record your own voice (mic). Click again to stop.">🎤 Record</button>`;
   const audio = row.querySelector('audio');
   const approveBtn = row.querySelector('.approve');
   const redoBtn = row.querySelector('.redo');
+  const recordBtn = row.querySelector('.record');
 
   approveBtn.onclick = async () => {
-    approveBtn.disabled = true; redoBtn.disabled = true;
+    approveBtn.disabled = true; redoBtn.disabled = true; recordBtn.disabled = true;
     await fetch('/api/approve', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ko})});
     row.classList.add('fading');
-    setTimeout(async () => {
+    setTimeout(() => {
       row.remove();
-      const r = await fetch('/api/pending');
-      setStats(await r.json());
+      totalPending = Math.max(0, totalPending - 1);
+      approvedCount += 1;
+      refreshStats();
     }, 350);
   };
 
   redoBtn.onclick = async () => {
-    approveBtn.disabled = true; redoBtn.disabled = true;
+    approveBtn.disabled = true; redoBtn.disabled = true; recordBtn.disabled = true;
     redoBtn.textContent = 'Redoing…';
     try {
       const r = await fetch('/api/redo', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ko})});
@@ -100,9 +134,54 @@ function buildRow(ko, url) {
       showToast(`Error: ${e.message}`);
     } finally {
       redoBtn.textContent = 'Redo';
-      approveBtn.disabled = false; redoBtn.disabled = false;
+      approveBtn.disabled = false; redoBtn.disabled = false; recordBtn.disabled = false;
     }
   };
+
+  let mediaRecorder = null;
+  let chunks = [];
+  recordBtn.onclick = async () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      chunks = [];
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        recordBtn.classList.remove('recording');
+        recordBtn.textContent = '⏳ Saving…';
+        approveBtn.disabled = true; redoBtn.disabled = true; recordBtn.disabled = true;
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const fd = new FormData();
+        fd.append('ko', ko);
+        fd.append('audio', blob, 'recording.webm');
+        try {
+          const r = await fetch('/api/record', { method: 'POST', body: fd });
+          if (!r.ok) throw new Error(await r.text());
+          const data = await r.json();
+          audio.src = '/' + data.url + '?t=' + data.ts;
+          audio.load();
+          audio.play().catch(()=>{});
+          showToast(`Recorded ${ko}`);
+        } catch (e) {
+          showToast(`Record error: ${e.message}`);
+        } finally {
+          recordBtn.textContent = '🎤 Record';
+          approveBtn.disabled = false; redoBtn.disabled = false; recordBtn.disabled = false;
+        }
+      };
+      mediaRecorder.start();
+      recordBtn.classList.add('recording');
+      recordBtn.textContent = '⏺ Stop';
+    } catch (e) {
+      showToast(`Mic error: ${e.message}`);
+    }
+  };
+
   return row;
 }
 

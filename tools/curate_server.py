@@ -8,7 +8,7 @@ Run from project root:
     tools/.venv/bin/python tools/curate_server.py
 """
 import hashlib, json, os, pathlib, random, re, subprocess, time
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, Form, File
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -168,6 +168,36 @@ def redo(req: WordReq):
         manifest[ko] = f"audio/{slug}.mp3"
         save_manifest(manifest)
 
+    return {"ok": True, "url": manifest[ko], "ts": int(time.time())}
+
+@app.post("/api/record")
+async def record(ko: str = Form(...), audio: UploadFile = File(...)):
+    """Accept a blob recorded in the browser and replace this word's mp3.
+    Same trim/normalize pipeline as the AI-generated takes (so loudness +
+    leading-silence behavior stays consistent across the dataset)."""
+    slug = slug_for(ko)
+    raw = RAW / f"{slug}_record.webm"
+    wav = RAW / f"{slug}_record.wav"
+    mp3 = AUDIO / f"{slug}.mp3"
+    raw.write_bytes(await audio.read())
+    # Decode whatever the browser sent (webm/opus, m4a, wav…) into a clean
+    # 24kHz mono wav for trim_middle_word — same sample rate the model uses.
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(raw), "-ac", "1", "-ar", "24000",
+         "-af", "loudnorm=I=-18:TP=-2", str(wav)],
+        capture_output=True, check=True,
+    )
+    trim_middle_word(wav, mp3)
+    raw.unlink(missing_ok=True)
+    wav.unlink(missing_ok=True)
+    manifest = load_manifest()
+    if ko not in manifest:
+        manifest[ko] = f"audio/{slug}.mp3"
+        save_manifest(manifest)
+    counts = load_redo_count()
+    counts[ko] = counts.get(ko, 0) + 1
+    save_redo_count(counts)
+    print(f"  recorded {ko} (user voice) -> {manifest[ko]}")
     return {"ok": True, "url": manifest[ko], "ts": int(time.time())}
 
 @app.get("/curate")
