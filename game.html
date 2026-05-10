@@ -2232,63 +2232,6 @@
     animation: boss-name-rise 1.5s 0.2s ease-out forwards;
   }
 
-  /* Achievement toast */
-  .achievement-toast {
-    position: fixed;
-    top: 90px; right: 20px;
-    z-index: 250;
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    border: 2px solid #f59e0b;
-    border-radius: 12px;
-    padding: 10px 16px 10px 12px;
-    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.35);
-    display: flex; align-items: center; gap: 10px;
-    min-width: 240px;
-    animation: ach-slide 4.5s ease-out forwards;
-  }
-  @keyframes ach-slide {
-    0%   { transform: translateX(120%); opacity: 0; }
-    8%   { transform: translateX(0);    opacity: 1; }
-    88%  { transform: translateX(0);    opacity: 1; }
-    100% { transform: translateX(120%); opacity: 0; }
-  }
-  .achievement-toast .ach-icon { font-size: 28px; line-height: 1; }
-  .achievement-toast .ach-meta { display: flex; flex-direction: column; line-height: 1.2; }
-  .achievement-toast .ach-eyebrow {
-    font-size: 9px; font-weight: 800; color: #92400e;
-    text-transform: uppercase; letter-spacing: 0.12em;
-  }
-  .achievement-toast .ach-title {
-    font-size: 14px; font-weight: 800; color: #78350f;
-    margin-top: 1px;
-  }
-  .achievement-toast .ach-desc {
-    font-size: 11px; color: #92400e; margin-top: 2px;
-  }
-
-  /* Achievement viewer (intro modal) */
-  .ach-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
-    margin-top: 10px;
-    max-height: 280px; overflow-y: auto;
-    text-align: left;
-  }
-  .ach-card {
-    background: var(--l2);
-    border: 1px solid var(--bd);
-    border-radius: 8px;
-    padding: 8px 10px;
-    display: flex; align-items: center; gap: 8px;
-    text-align: left;
-  }
-  .ach-card.locked { opacity: 0.45; }
-  .ach-card .ach-card-ico { font-size: 22px; min-width: 24px; line-height: 1; }
-  .ach-card .ach-card-meta { line-height: 1.2; }
-  .ach-card .ach-card-title { font-size: 12px; font-weight: 800; color: var(--thi); }
-  .ach-card .ach-card-desc { font-size: 10px; color: var(--tmd); margin-top: 2px; }
-  .ach-card.unlocked { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
-  .ach-card.unlocked .ach-card-title { color: #78350f; }
-
   /* English-translation reveal on kill — closes the learning loop.
      Attached to <body> (not .stage) so .stage's overflow:hidden can't clip it
      when the kill happens near the top of the play area. */
@@ -2611,20 +2554,7 @@
     </div>
     <div class="actions">
       <button class="primary" id="btnStart">Start Battle</button>
-      <button id="btnAchievements">🏆 Achievements</button>
       <button id="btnBack">← Back to practice</button>
-    </div>
-  </div>
-</div>
-
-<div id="achievementsModal" class="modal-veil" style="display:none;">
-  <div class="modal-card">
-    <div class="badge">🏆 Hall of Renown</div>
-    <h1>업적 — Achievements</h1>
-    <p class="subtitle">Track your milestones across all battles. Unlocked deeds carry over forever.</p>
-    <div id="achGrid" class="ach-grid"></div>
-    <div class="actions">
-      <button class="primary" id="btnAchClose">Close</button>
     </div>
   </div>
 </div>
@@ -5841,13 +5771,8 @@ function saveAchievements() {
 }
 
 function unlockAchievement(id) {
-  const def = ACHIEVEMENTS.find(a => a.id === id);
-  if (!def) return;
-  const owned = loadAchievements();
-  if (owned[id]) return;
-  owned[id] = { unlockedAt: new Date().toISOString() };
-  saveAchievements();
-  showAchievementToast(def);
+  // Achievements removed — call sites kept as no-ops so we don't have to
+  // surgically rip out every unlockAchievement('foo') call across the file.
 }
 
 function showAchievementToast(def) {
@@ -6395,18 +6320,6 @@ document.getElementById('storySkip').addEventListener('click', (e) => {
 // surface the leaderboard on the intro modal as well as game-over.
 flushBattleSubmitQueue();
 renderActiveLeaderboard('battleLbIntroContainer');
-document.getElementById('btnAchievements').addEventListener('click', () => {
-  renderAchievementGrid();
-  document.getElementById('achievementsModal').style.display = 'flex';
-});
-document.getElementById('btnAchClose').addEventListener('click', () => {
-  document.getElementById('achievementsModal').style.display = 'none';
-});
-document.getElementById('achievementsModal').addEventListener('click', (e) => {
-  if (e.target.id === 'achievementsModal') {
-    document.getElementById('achievementsModal').style.display = 'none';
-  }
-});
 document.getElementById('storyDialog').addEventListener('click', advanceStory);
 document.getElementById('btnRetry').addEventListener('click', startGame);
 document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html');
