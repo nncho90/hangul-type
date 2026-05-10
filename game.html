@@ -594,7 +594,7 @@
     align-items: flex-end;
     gap: 0;
   }
-  .player .player-main { font-size: 144px; line-height: 1; }
+  .player .player-main { font-size: 72px; line-height: 1; }
   .player .player-equip {
     font-size: 32px;
     margin-left: -8px;
@@ -1419,7 +1419,7 @@
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
     .player { font-size: 70px; bottom: 4%; }
-    .player .player-main { font-size: 140px; }
+    .player .player-main { font-size: 70px; }
     .player .player-equip { font-size: 30px; }
     /* Shrink the actual player sprite img on mobile — the inline width/height
        baked by spriteHtml() needs !important to override. The sprite img is
@@ -3311,16 +3311,16 @@ const VOCAB = {
   ],
   // Boss-tier — TOPIK 2.5–2.6 long sentences
   boss: [
-    { ko:'한국어를 잘 하고 싶어요',
-      en:'I want to speak Korean well', topikLevel:2 },
-    { ko:'어디에서 왔어요 이름이 뭐예요',
-      en:'Where are you from, what is your name', topikLevel:2 },
-    { ko:'안녕하세요 저는 학생이에요 만나서 반가워요',
-      en:'Hi, I am a student, nice to meet you', topikLevel:2 },
-    { ko:'한국에서 살고 싶지만 일이 많아요',
-      en:'I want to live in Korea but I have a lot of work', topikLevel:2 },
-    { ko:'오늘은 날씨가 좋고 햇빛도 따뜻해요',
-      en:"Today the weather is nice and the sun is warm", topikLevel:2 }
+    { ko:'한국어 배우고 싶어',
+      en:'I want to learn Korean', topikLevel:2 },
+    { ko:'이름이 뭐예요',
+      en:'What is your name', topikLevel:2 },
+    { ko:'만나서 반가워요',
+      en:'Nice to meet you', topikLevel:2 },
+    { ko:'한국에서 살고 싶어',
+      en:'I want to live in Korea', topikLevel:2 },
+    { ko:'날씨가 너무 좋아요',
+      en:'The weather is so nice', topikLevel:2 }
   ]
 };
 
@@ -3390,7 +3390,7 @@ function renderPlayerSprite(lv) {
   // Battle stage uses the back-view sprite (Pokemon-style — player faces up
   // toward the descending enemies). The new tier sprites have the weapon baked
   // in, so no separate equip emoji is needed.
-  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 316)}</span>`;
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 158)}</span>`;
 }
 
 // Preload all 4-frame attack sprites so the first hit doesn't flash. Also
@@ -3481,6 +3481,12 @@ function triggerStrikePose() {
 function triggerMonsterHit(m) {
   if (!m || !m.el || !m.spriteFile) return;
   if (m.el.classList.contains('dying')) return;
+  // Bosses ship as <base>.png + <base>-step.png only — no hit-1/hit-2/walk-N
+  // frames. Swapping to those non-existent paths fires the spriteHtml onerror
+  // on BOTH layers (idle + step), each replacing its <img> with the emoji
+  // fallback → two 🐉 emojis briefly stack on top of the sprite. Skip the
+  // pose swap for bosses; the hp bar + hitflash class still register the hit.
+  if (m.tier === 'boss') return;
   const spriteEl = m.el.querySelector('.sprite');
   if (!spriteEl) return;
   const idleImg = spriteEl.querySelector('img.sprite-img:not(.sprite-step)');
@@ -4645,7 +4651,9 @@ function killMonster(m, byPlayer) {
   // before the defeat fade. Both layers (idle + step) point at hit-2 so the
   // CSS opacity flicker on .sprite-step doesn't reveal a walking pose
   // mid-fade. Fall back silently if the sprite hasn't been built yet.
-  if (m.el && m.spriteFile) {
+  // Bosses ship without hit-2 frames, so skip the swap or both <img> tags
+  // 404 and onerror replaces each with the emoji → two 🐉 stack on top.
+  if (m.el && m.spriteFile && m.tier !== 'boss') {
     const base = `sprites/${m.spriteFile}`;
     const idleImg = m.el.querySelector('img.sprite-img:not(.sprite-step)');
     const stepImg = m.el.querySelector('img.sprite-img.sprite-step');
