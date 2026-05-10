@@ -671,20 +671,11 @@
     filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.15));
     animation: bob 1.8s ease-in-out infinite;
   }
-  .monster.depth-billboard .sprite::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    width: 78%;
-    height: 17%;
-    transform: translateX(-50%) scaleX(var(--shadow-scale, 1));
-    transform-origin: 50% 50%;
-    z-index: -1;
-    border-radius: 50%;
-    background: rgba(15, 23, 42, var(--shadow-alpha, 0.18));
-    filter: blur(8px);
-  }
+  /* Removed: the .sprite::after pseudo-element used to draw a dark blurred
+     ellipse beneath every monster as a ground shadow. Combined with the
+     opacity-flicker on .sprite-step it read as "another png layered on
+     top" — a recurring user complaint. The new sprite PNGs have no built-
+     in drop shadow, so nothing should render here. */
   .monster .sprite .sprite-img { display: block; }
   /* 2-frame walk cycle for enemies. The step-pose image is stacked over the
      idle image and its opacity flickers on/off, producing the step. Pairs with
@@ -5445,18 +5436,21 @@ function teleportPlayerTo(x, y, monster) {
   // shrinks when jumping to a far-away (high-Y) target.
   const jumpScaleNum = depthScaleAtPx(y);
   const jumpScale = jumpScaleNum.toFixed(3);
-  // Land flush against the monster's right edge. The monster's visible
-  // half-width = (tierFont * jumpScale * bossMultiplier) * 0.5. Subtract a
-  // small overlap so the slash visibly crosses the demon instead of just
-  // touching, and use a sane fallback if no monster object was passed.
+  // Land flush against the monster's right edge AND vertically centered on
+  // its body. monster.y is the top edge — the player center needs to drop
+  // by ~half the monster's rendered height (baseFont * scale) to align with
+  // the demon's torso instead of floating above its head.
   const tierKey = monster && monster.isBoss ? 'boss' : (monster && monster.tier) || 1;
   const baseFont = MONSTER_BASE_PX[tierKey] || MONSTER_BASE_PX[1];
   const monsterScale = jumpScaleNum * (monster && monster.isBoss ? DEPTH.bossScale : 1);
-  // 0.32 puts the player slightly inside the demon's right silhouette so
-  // the sword crosses the body cleanly. Tune here if it feels off.
-  const sideOffset = baseFont * monsterScale * 0.32;
+  const monsterRendered = baseFont * monsterScale;
+  // 0.32 puts the player slightly inside the demon's right silhouette so the
+  // sword crosses the body cleanly. 0.50 places the player vertically at the
+  // monster's center.
+  const sideOffset = monsterRendered * 0.297;
+  const verticalOffset = monsterRendered * 1.965;
   const targetX = x + sideOffset;
-  const targetY = y + 24 * jumpScaleNum;
+  const targetY = y + verticalOffset;
   PLAYER_EL.style.bottom = 'auto';
   PLAYER_EL.style.left = targetX + 'px';
   PLAYER_EL.style.top  = targetY + 'px';
