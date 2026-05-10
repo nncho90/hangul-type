@@ -125,13 +125,15 @@ function buildRow(ko, url) {
     redoBtn.textContent = 'Redoing…';
     try {
       const r = await fetch('/api/redo', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ko})});
-      const data = await r.json();
+      const text = await r.text();
+      if (!r.ok) throw new Error(text.slice(0, 120));
+      const data = JSON.parse(text);
       audio.src = '/' + data.url + '?t=' + data.ts;
       audio.load();
       audio.play().catch(()=>{});
       showToast(`Re-rendered ${ko}`);
     } catch (e) {
-      showToast(`Error: ${e.message}`);
+      showToast(`Redo failed: ${e.message}`);
     } finally {
       redoBtn.textContent = 'Redo';
       approveBtn.disabled = false; redoBtn.disabled = false; recordBtn.disabled = false;

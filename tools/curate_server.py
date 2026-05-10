@@ -142,20 +142,31 @@ def redo(req: WordReq):
     mp3 = AUDIO / f"{slug}.mp3"
     raw = RAW / f"{slug}_redo.wav"
 
-    # Vary seed + small temperature jitter for genuinely different takes
-    torch.manual_seed(random.randint(0, 2**31 - 1))
-    temp = 0.6 + random.uniform(-0.05, 0.15)
-
+    # Vary seed + small temperature jitter for genuinely different takes.
+    # Retry once if chatterbox's alignment analyzer trips on a forced-EOS
+    # path (it occasionally crashes with NoneType in last_aligned_attns).
     t0 = time.time()
-    wav = model.generate(
-        text=f"{spoken}. {spoken}. {spoken}.",
-        language_id="ko",
-        audio_prompt_path=str(REF),
-        exaggeration=0.3,
-        cfg_weight=0.3,
-        temperature=temp,
-        repetition_penalty=2.0,
-    )
+    last_error = None
+    wav = None
+    for attempt in range(3):
+        torch.manual_seed(random.randint(0, 2**31 - 1))
+        temp = 0.6 + random.uniform(-0.05, 0.15)
+        try:
+            wav = model.generate(
+                text=f"{spoken}. {spoken}. {spoken}.",
+                language_id="ko",
+                audio_prompt_path=str(REF),
+                exaggeration=0.3,
+                cfg_weight=0.3,
+                temperature=temp,
+                repetition_penalty=2.0,
+            )
+            break
+        except Exception as exc:
+            last_error = exc
+            print(f"  redo {ko} attempt {attempt+1} failed: {exc!r}; retrying with fresh seed")
+    if wav is None:
+        raise HTTPException(status_code=500, detail=f"generate failed after 3 attempts: {last_error}")
     torchaudio.save(str(raw), wav, model.sr)
     trim_middle_word(raw, mp3)
     raw.unlink(missing_ok=True)
