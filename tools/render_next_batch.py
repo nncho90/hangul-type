@@ -5,13 +5,21 @@ import json, pathlib, re, sys, urllib.request
 
 LIMIT = int(sys.argv[1]) if len(sys.argv) > 1 else 50
 
-SRC = pathlib.Path("vocab.js").read_text()
+# Pull from every source that defines vocab so we don't miss words like the
+# basics list inlined in index.html or battle wordbanks in game.html.
+SOURCES = ["vocab.js", "index.html", "game.html"]
 seen, ordered = set(), []
-for m in re.finditer(r"ko:\s*'([^']+)'", SRC):
-    w = m.group(1)
-    if w not in seen:
-        seen.add(w)
-        ordered.append(w)
+for path in SOURCES:
+    p = pathlib.Path(path)
+    if not p.exists():
+        continue
+    text = p.read_text()
+    # Match ko:'…' or ko:"…" — index.html/game.html sometimes use double quotes
+    for m in re.finditer(r"""ko:\s*['"]([^'"]+)['"]""", text):
+        w = m.group(1)
+        if w not in seen:
+            seen.add(w)
+            ordered.append(w)
 
 manifest = {}
 mp = pathlib.Path("audio/manifest.json")

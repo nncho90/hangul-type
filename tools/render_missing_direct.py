@@ -112,12 +112,19 @@ def trim_middle_word(in_wav, out_mp3):
 
 
 def ordered_vocab():
+    # Pull from every source that defines vocab so we don't miss words like the
+    # basics list inlined in index.html or battle wordbanks in game.html.
+    sources = [VOCAB_PATH, ROOT / "index.html", ROOT / "game.html"]
     seen, ordered = set(), []
-    for m in re.finditer(r"ko:\s*'([^']+)'", VOCAB_PATH.read_text()):
-        ko = m.group(1)
-        if ko not in seen:
-            seen.add(ko)
-            ordered.append(ko)
+    for src in sources:
+        if not src.exists():
+            continue
+        text = src.read_text()
+        for m in re.finditer(r"""ko:\s*['"]([^'"]+)['"]""", text):
+            ko = m.group(1)
+            if ko not in seen:
+                seen.add(ko)
+                ordered.append(ko)
     return ordered
 
 
