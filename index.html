@@ -517,12 +517,15 @@
   /* Small jamo strip rendered next to a Lesson chip's label, e.g. "Lesson 5
      ㅋ ㅌ" — quieter color, monospace so vowels and consonants line up. */
   .subtopic-chip .lesson-jamo {
+    display: block;
+    margin-top: 2px;
+    margin-left: 0;
     font-family: var(--korean), 'Noto Sans KR', system-ui, sans-serif;
     font-weight: 600;
     font-size: 11px;
     color: var(--tlo);
-    margin-left: 6px;
     letter-spacing: 0.04em;
+    word-break: keep-all;
   }
   .subtopic-chip.on .lesson-jamo,
   .subtopic-chip:hover .lesson-jamo { color: var(--tmd); }
@@ -575,9 +578,7 @@
   .lesson-unit-head .lu-tag {
     font-size: 10px;
     color: var(--tmd);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.3;
   }
   .lesson-unit-head .lu-count {
     font-family: 'JetBrains Mono', monospace;
@@ -1131,51 +1132,71 @@
   }
 
   /* TOPIK Readiness header card — sits at the top of the practice content
-     pane and gives the player a single readiness number tied to TOPIK 급
-     levels. The card shows current level, percentage to next 급, and how
-     many more words the player needs to type correctly to get there. */
+     pane. The hero is the big "words mastered" count on the left; on the
+     right is the player's current 한글-rank title plus the corresponding
+     TOPIK 급. The meter underneath shows progress to the next 급. */
   .topik-readiness {
     margin: 0 0 18px;
-    padding: 12px 16px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(139,92,246,0.06));
+    padding: 16px 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(37,99,235,0.07), rgba(139,92,246,0.07));
     border: 1px solid var(--bd);
   }
-  .topik-readiness .tr-head {
+  .topik-readiness .tr-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
   }
-  .topik-readiness .tr-icon { font-size: 22px; line-height: 1; }
-  .topik-readiness .tr-meta { display: flex; flex-direction: column; flex: 1 1 auto; gap: 2px; min-width: 0; }
-  .topik-readiness .tr-tag {
-    font-size: 9px;
+  .topik-readiness .tr-hero { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+  .topik-readiness .tr-count {
+    font-family: 'Black Han Sans', 'Inter', system-ui, sans-serif;
+    font-size: 44px;
+    font-weight: 900;
+    color: var(--thi);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .topik-readiness .tr-count-label {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--tmd);
+  }
+  .topik-readiness .tr-rank {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 0;
+    text-align: right;
+  }
+  .topik-readiness .tr-rank-title {
+    font-size: 20px;
     font-weight: 800;
+    color: var(--thi);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .topik-readiness .tr-rank-tag {
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--blue);
-    line-height: 1;
-  }
-  .topik-readiness .tr-level {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--thi);
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .topik-readiness .tr-pct {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--blue);
   }
   .topik-readiness .tr-meter {
-    height: 8px;
+    height: 10px;
     background: var(--l3);
-    border-radius: 4px;
+    border-radius: 5px;
     overflow: hidden;
   }
   .topik-readiness .tr-fill {
@@ -1185,9 +1206,18 @@
     transition: width 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
   }
   .topik-readiness .tr-sub {
-    margin-top: 6px;
-    font-size: 11px;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--tmd);
+  }
+  /* Mobile: stack hero + rank on top of each other */
+  @media (max-width: 700px) {
+    .topik-readiness { padding: 14px 16px; }
+    .topik-readiness .tr-row { gap: 8px; }
+    .topik-readiness .tr-rank { align-items: flex-start; text-align: left; }
+    .topik-readiness .tr-count { font-size: 36px; }
+    .topik-readiness .tr-rank-title { font-size: 18px; }
   }
   /* Level-up flash when the readiness number ticks up to a new 급. */
   .topik-readiness.level-up {
@@ -1199,30 +1229,8 @@
     100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.0); }
   }
 
-  .progress {
-    position: relative;
-    height: 18px; background: var(--l3); border-radius: 9px;
-    margin: 12px 0 18px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%; background: linear-gradient(90deg, var(--green), #34d399);
-    width: 0%;
-    transition: width 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
-  }
-  .progress-label {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--tmd);
-    pointer-events: none;
-    letter-spacing: 0.04em;
-  }
+  /* (Cumulative progress bar removed — TOPIK readiness card + per-jamo
+     coloring on the target word already convey progress.) */
 
   /* Keyboard */
   .keyboard {
@@ -2237,16 +2245,18 @@
         <div class="practice-content">
           <button id="mobileVocabBtn" class="mobile-vocab-toggle" type="button" aria-expanded="false" aria-controls="practiceSide">Rows</button>
           <div id="topikReadiness" class="topik-readiness" aria-label="TOPIK readiness">
-            <div class="tr-head">
-              <span class="tr-icon" aria-hidden="true">🎯</span>
-              <span class="tr-meta">
-                <span class="tr-tag">Just starting</span>
-                <span class="tr-level">Pre-Beginner</span>
-              </span>
-              <span class="tr-pct" aria-hidden="true"><span class="tr-meter-text">0%</span></span>
+            <div class="tr-row">
+              <div class="tr-hero">
+                <div class="tr-count" id="trCount">0</div>
+                <div class="tr-count-label">words mastered</div>
+              </div>
+              <div class="tr-rank">
+                <div class="tr-rank-title">한글 Newcomer</div>
+                <div class="tr-rank-tag">Just getting started</div>
+              </div>
             </div>
             <div class="tr-meter"><div class="tr-fill"></div></div>
-            <div class="tr-sub">0 words mastered</div>
+            <div class="tr-sub">60 words to TOPIK 1 · 1급</div>
           </div>
           <div class="target">
             <div class="gloss" id="gloss">hello</div>
@@ -2256,11 +2266,6 @@
             </div>
 
             <div class="romanization" id="romanization"></div>
-          </div>
-
-          <div class="progress">
-            <div class="progress-fill" id="progressFill"></div>
-            <div class="progress-label" id="progressLabel"></div>
           </div>
 
           <div class="keyboard">
@@ -5438,36 +5443,11 @@ function setTopic(id) {
 }
 
 function updateProgress() {
-  // Bar above the keyboard reflects the OVERALL session, not the per-keystroke
-  // position inside one word. Filling it requires actually clearing words.
-  let pct = 0, label = '';
-  if (isCharTopic(state.activeTopic)) {
-    const done = charTopicDone(state.activeTopic);
-    pct = (done / CHAR_SESSION_SIZE) * 100;
-    label = `${done}/${CHAR_SESSION_SIZE}`;
-  } else if (isLessonId(state.activeTopic)) {
-    const lesson = lessonById(state.activeTopic);
-    const done = lessonDone(state.activeTopic);
-    const total = lesson ? lesson.words.length : 1;
-    pct = (done / Math.max(1, total)) * 100;
-    label = `${done}/${total}`;
-  } else {
-    const t = TOPICS.find(x => x.id === state.activeTopic);
-    if (t) {
-      const done = (progress.topicCompleted[t.id] || []).length;
-      const total = t.words.length;
-      pct = (done / Math.max(1, total)) * 100;
-      label = `${done}/${total}`;
-    } else {
-      // Meta-pool ('all' / 'mistakes' / 'topik1' / 'topik2'): keep the legacy
-      // per-keystroke position so the bar still moves while typing.
-      pct = state.expectedKs.length ? (state.posKs / state.expectedKs.length) * 100 : 0;
-    }
-  }
-  const fill = document.getElementById('progressFill');
-  if (fill) fill.style.width = pct + '%';
-  const lbl = document.getElementById('progressLabel');
-  if (lbl) lbl.textContent = label;
+  // The dedicated cumulative progress bar above the keyboard was removed —
+  // the TOPIK readiness card + per-jamo coloring on the target word now do
+  // that job. This stub stays for callers that still ping it; renderTopik
+  // Readiness is what actually moves on completion.
+  renderTopikReadiness();
 }
 
 // ─── TOPIK readiness ──────────────────────────────────────────────────────
@@ -5476,14 +5456,17 @@ function updateProgress() {
 // 5급 / 6급), and renders a header card showing where the user stands and
 // what's between them and the next 급. Thresholds are tuned to the curated
 // TOPIK 1+2 corpus actually shipped with the app (~900 words).
+// Each rank pairs an accomplished-feeling title (한글 Newcomer → Master) with
+// the matching TOPIK 급 tag. Thresholds are tuned to the curated TOPIK 1+2
+// corpus (~900 words). Crossing a threshold pulses the readiness card.
 const TOPIK_LEVELS = [
-  { num: 0, tag: 'Just starting',     label: 'Pre-Beginner',         next: 'TOPIK 1 · 1급', threshold: 0   },
-  { num: 1, tag: 'TOPIK 1 · 1급',     label: 'TOPIK 1 · 1급 ready',  next: 'TOPIK 1 · 2급', threshold: 60  },
-  { num: 2, tag: 'TOPIK 1 · 2급',     label: 'TOPIK 1 · 2급 ready',  next: 'TOPIK 2 · 3급', threshold: 180 },
-  { num: 3, tag: 'TOPIK 2 · 3급',     label: 'TOPIK 2 · 3급 ready',  next: 'TOPIK 2 · 4급', threshold: 360 },
-  { num: 4, tag: 'TOPIK 2 · 4급',     label: 'TOPIK 2 · 4급 ready',  next: 'TOPIK 2 · 5급', threshold: 540 },
-  { num: 5, tag: 'TOPIK 2 · 5급',     label: 'TOPIK 2 · 5급 ready',  next: 'TOPIK 2 · 6급', threshold: 720 },
-  { num: 6, tag: 'TOPIK 2 · 6급',     label: 'TOPIK 2 · 6급 (Master)', next: null,           threshold: 850 }
+  { num: 0, title: '한글 Newcomer',   tag: 'Just getting started',  next: 'TOPIK 1 · 1급', threshold: 0   },
+  { num: 1, title: '한글 Apprentice', tag: 'TOPIK 1 · 1급 ready',   next: 'TOPIK 1 · 2급', threshold: 60  },
+  { num: 2, title: '한글 Initiate',   tag: 'TOPIK 1 · 2급 ready',   next: 'TOPIK 2 · 3급', threshold: 180 },
+  { num: 3, title: '한글 Adept',      tag: 'TOPIK 2 · 3급 ready',   next: 'TOPIK 2 · 4급', threshold: 360 },
+  { num: 4, title: '한글 Disciple',   tag: 'TOPIK 2 · 4급 ready',   next: 'TOPIK 2 · 5급', threshold: 540 },
+  { num: 5, title: '한글 Sage',       tag: 'TOPIK 2 · 5급 ready',   next: 'TOPIK 2 · 6급', threshold: 720 },
+  { num: 6, title: '한글 Master',     tag: 'TOPIK 2 · 6급 · Master', next: null,           threshold: 850 }
 ];
 function wordsMasteredCount() {
   const seen = new Set();
@@ -5516,19 +5499,19 @@ function renderTopikReadiness() {
   const card = document.getElementById('topikReadiness');
   if (!card) return;
   const r = topikReadiness();
-  const tagEl  = card.querySelector('.tr-tag');
-  const lvlEl  = card.querySelector('.tr-level');
-  const pctEl  = card.querySelector('.tr-meter-text');
-  const fillEl = card.querySelector('.tr-fill');
-  const subEl  = card.querySelector('.tr-sub');
-  if (tagEl) tagEl.textContent  = r.current.tag;
-  if (lvlEl) lvlEl.textContent  = r.current.label;
-  if (pctEl) pctEl.textContent  = r.pct + '%';
-  if (fillEl) fillEl.style.width = r.pct + '%';
+  const countEl = card.querySelector('.tr-count');
+  const titleEl = card.querySelector('.tr-rank-title');
+  const tagEl   = card.querySelector('.tr-rank-tag');
+  const fillEl  = card.querySelector('.tr-fill');
+  const subEl   = card.querySelector('.tr-sub');
+  if (countEl) countEl.textContent = r.count.toLocaleString();
+  if (titleEl) titleEl.textContent = r.current.title;
+  if (tagEl)   tagEl.textContent   = r.current.tag;
+  if (fillEl)  fillEl.style.width  = r.pct + '%';
   if (subEl) {
     subEl.textContent = r.next
-      ? `${r.count} words mastered · ${Math.max(0, r.next.threshold - r.count)} to ${r.next.tag}`
-      : `${r.count} words mastered — full corpus complete!`;
+      ? `${Math.max(0, r.next.threshold - r.count)} more words to ${r.next.title} · ${r.pct}%`
+      : 'Full corpus complete — top of the curriculum!';
   }
   card.dataset.level = String(r.current.num);
 }
