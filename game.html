@@ -647,10 +647,11 @@
     will-change: transform;
     pointer-events: none;
   }
-  .monster.depth-billboard {
-    filter:
-      drop-shadow(0 calc(4px + var(--depth-shadow, 0px)) calc(8px + var(--depth-shadow, 0px)) rgba(15, 23, 42, var(--shadow-alpha, 0.18)));
-  }
+  /* depth-billboard's drop-shadow filter was the per-depth ground-shadow
+     under each monster — removed so the silhouette doesn't get a dark
+     halo that the .sprite-step flicker turned into a ghosted second
+     layer. */
+  .monster.depth-billboard { /* shadow filter intentionally absent */ }
   /* Soft fade on appear so a fresh wave doesn't pop in jarringly. Opacity-only
      so it doesn't fight the inline translateX(-50%) the JS sets per monster. */
   .monster {
@@ -668,7 +669,6 @@
     display: block;
     font-size: 56px;
     line-height: 1;
-    filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.15));
     animation: bob 1.8s ease-in-out infinite;
   }
   /* Removed: the .sprite::after pseudo-element used to draw a dark blurred
@@ -705,38 +705,19 @@
      tiers feel heavy and dangerous via drop-shadow strength + colored aura.
      Sprite art is the same 7 PNGs today; the visual progression here gives
      the existing roster a clearer "this is a stronger demon" read. */
-  .monster.tier-1 .sprite {
-    font-size: var(--tier1-font, 474px);
-    filter: drop-shadow(0 4px 6px rgba(15, 23, 42, 0.18));
-  }
-  .monster.tier-2 .sprite {
-    font-size: var(--tier2-font, 582px);
-    filter: drop-shadow(0 5px 8px rgba(15, 23, 42, 0.22));
-  }
-  .monster.tier-3 .sprite {
-    font-size: var(--tier3-font, 672px);
-    filter:
-      drop-shadow(0 7px 10px rgba(15, 23, 42, 0.25))
-      drop-shadow(0 0 8px rgba(245, 158, 11, 0.18));
-  }
-  .monster.tier-4 .sprite {
-    font-size: var(--tier4-font, 780px);
-    filter:
-      drop-shadow(0 9px 14px rgba(15, 23, 42, 0.30))
-      drop-shadow(0 0 14px rgba(139, 92, 246, 0.32));
-  }
-  .monster.tier-5 .sprite {
-    font-size: var(--tier5-font, 906px);
-    filter:
-      drop-shadow(0 11px 18px rgba(15, 23, 42, 0.34))
-      drop-shadow(0 0 22px rgba(239, 68, 68, 0.38));
-  }
+  /* Per-tier sprite size only. Drop-shadow filters were stripped —
+     they painted a dark halo around the silhouette that combined with
+     the .sprite-step flicker to read as an extra ghosted layer.
+     Higher tiers used to also get a colored aura via a second filter;
+     re-add via a separate .glow class later if we miss the tier read. */
+  .monster.tier-1 .sprite { font-size: var(--tier1-font, 474px); }
+  .monster.tier-2 .sprite { font-size: var(--tier2-font, 582px); }
+  .monster.tier-3 .sprite { font-size: var(--tier3-font, 672px); }
+  .monster.tier-4 .sprite { font-size: var(--tier4-font, 780px); }
+  .monster.tier-5 .sprite { font-size: var(--tier5-font, 906px); }
   .monster.boss .sprite {
     font-size: 960px;
     animation: bossbob 1.4s ease-in-out infinite;
-    filter:
-      drop-shadow(0 14px 24px rgba(15, 23, 42, 0.38))
-      drop-shadow(0 0 32px rgba(239, 68, 68, 0.55));
   }
   @keyframes bossbob {
     0%, 100% { transform: translateY(0) scale(1); }
