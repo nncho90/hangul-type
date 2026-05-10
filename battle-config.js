@@ -60,12 +60,12 @@
     // Used by buildMonsterEl. Boss is largest; tier 1 is smallest. These
     // intentionally match the existing CSS font-size scale for emoji fallback.
     tierSizePx: {
-      1: 101,
-      2: 119,
-      3: 137,
-      4: 155,
-      5: 180,
-      boss: 234
+      1: 303,
+      2: 357,
+      3: 411,
+      4: 465,
+      5: 540,
+      boss: 702
     },
 
     // ─── XP curve ───────────────────────────────────────────────────────────
