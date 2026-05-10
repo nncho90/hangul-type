@@ -594,7 +594,7 @@
     align-items: flex-end;
     gap: 0;
   }
-  .player .player-main { font-size: 36px; line-height: 1; }
+  .player .player-main { font-size: 72px; line-height: 1; }
   .player .player-equip {
     font-size: 32px;
     margin-left: -8px;
@@ -1419,7 +1419,7 @@
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
     .player { font-size: 70px; bottom: 4%; }
-    .player .player-main { font-size: 35px; }
+    .player .player-main { font-size: 70px; }
     .player .player-equip { font-size: 30px; }
     /* Shrink the actual player sprite img on mobile — the inline width/height
        baked by spriteHtml() needs !important to override. The sprite img is
@@ -3390,7 +3390,7 @@ function renderPlayerSprite(lv) {
   // Battle stage uses the back-view sprite (Pokemon-style — player faces up
   // toward the descending enemies). The new tier sprites have the weapon baked
   // in, so no separate equip emoji is needed.
-  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 79)}</span>`;
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 158)}</span>`;
 }
 
 // Preload all 4-frame attack sprites so the first hit doesn't flash. Also
@@ -4599,8 +4599,12 @@ function buildMonsterEl(m) {
     const idleSuffix = m.tier === 'boss' ? ''      : '-walk-1';
     const stepSuffix = m.tier === 'boss' ? '-step' : '-walk-3';
     const idleHtml = spriteHtml(m.spriteFile + idleSuffix, m.sprite, sizePx);
+    // Step image's onerror normally falls back to the emoji text, which then
+    // sits on top of the IDLE PNG (the "two stacked sprites" bug). For the
+    // step layer we'd rather just hide it — IDLE remains as the only frame.
     const stepHtml = spriteHtml(m.spriteFile + stepSuffix, m.sprite, sizePx)
-      .replace('class="sprite-img"', 'class="sprite-img sprite-step"');
+      .replace('class="sprite-img"', 'class="sprite-img sprite-step"')
+      .replace(/onerror="[^"]*"/, 'onerror="this.remove()"');
     sprite.innerHTML = idleHtml + stepHtml;
     // Randomize per-monster phase so a wave of demons doesn't bob in lockstep.
     const phase = (-Math.random() * 2).toFixed(2) + 's';
@@ -5425,7 +5429,7 @@ let _playerHomePending = null;
 // Tier → CSS font-size of the monster sprite (mirrors the .monster.tier-N
 // .sprite { font-size: ... } block in CSS). Used to land the player flush
 // against the monster's right edge regardless of how big the demon is.
-const MONSTER_BASE_PX = { 1: 303, 2: 357, 3: 411, 4: 465, 5: 540, boss: 702 };
+const MONSTER_BASE_PX = { 1: 151, 2: 178, 3: 205, 4: 232, 5: 270, boss: 351 };
 
 function teleportPlayerTo(x, y, monster) {
   // Smoke at current position (departure puff)
