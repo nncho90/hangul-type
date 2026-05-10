@@ -1124,6 +1124,31 @@
     box-shadow: 4px 4px 0 rgba(15, 23, 42, 0.35);
     animation: modal-rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+  /* Game-over modal: pin Retry above the fold by making the leaderboard the
+     only scrolling region. Header (badge/title/stats/tabs) stays at top,
+     actions stay at bottom, leaderboard takes the leftover height. */
+  #gameOverModal .modal-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 22px 28px 18px;
+    gap: 10px;
+  }
+  #gameOverModal .modal-card .badge { margin-bottom: 0; }
+  #gameOverModal .modal-card h1 { font-size: 28px; margin: 0; }
+  #gameOverModal .modal-card .subtitle { display: none; }
+  #gameOverModal .modal-card .stat-grid { margin: 4px 0 6px; gap: 8px; }
+  #gameOverModal .modal-card .stat-grid > div { padding: 8px; }
+  #gameOverModal .modal-card .stat-grid .v { font-size: 18px; margin-top: 2px; }
+  #gameOverModal .modal-card #newHighSign:not([style*="none"]) { margin: 0; }
+  #gameOverModal .modal-card .battle-lb-toolbar { margin: 0; flex-shrink: 0; }
+  #gameOverModal .modal-card .battle-lb {
+    flex: 1 1 auto;
+    min-height: 120px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  #gameOverModal .modal-card .actions { margin-top: 6px; flex-shrink: 0; }
   @keyframes modal-rise {
     0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -4726,30 +4751,62 @@ function applyTheme(theme) {
   if (typeof Bgm !== 'undefined') Bgm.setTheme(theme);
 }
 
-// ─── BGM (per-theme ambient layer) ────────────────────────────────────────
+// ─── BGM (per-theme Korean lofi-hiphop loops) ─────────────────────────────
 // Procedural so the game ships zero music files. Each theme gets a distinct
-// drone + arpeggio voiced from a Korean-pentatonic-ish scale, scheduled via
-// WebAudio. If a real loop drops at bgm/{theme}.mp3, that overrides the synth.
+// chord progression voiced from a Korean-pentatonic-ish scale plus a soft
+// kick/snare/hat lofi groove, all scheduled via WebAudio. If a real mp3
+// drops at bgm/{theme}.mp3, that overrides the synth.
+//
+// Each preset = { root, chords (semitone-offset arrays), melody (motif),
+// bpm, lowpass cutoff (mojo) }. Tempo stays in the lofi pocket (60–82 bpm).
 const BGM_PRESETS = {
-  // root note Hz, scale degrees (semitone offsets), wave, tempo (bpm),
-  // padGain (continuous drone), arpGain (rhythmic notes), filterHz
-  village:     { root: 220.00, scale: [0, 3, 5, 7, 10], wave: 'sine',     bpm: 60, padGain: 0.05, arpGain: 0.04, filter: 1200 },
-  forest:      { root: 146.83, scale: [0, 3, 5, 7, 10], wave: 'triangle', bpm: 72, padGain: 0.04, arpGain: 0.05, filter:  900 },
-  study:       { root: 261.63, scale: [0, 2, 4, 7,  9], wave: 'sine',     bpm: 54, padGain: 0.04, arpGain: 0.03, filter: 1800 },
-  courtyard:   { root: 185.00, scale: [0, 3, 5, 7, 10], wave: 'triangle', bpm: 84, padGain: 0.05, arpGain: 0.04, filter: 1100 },
-  camp:        { root: 130.81, scale: [0, 2, 5, 7, 10], wave: 'sawtooth', bpm: 96, padGain: 0.04, arpGain: 0.05, filter:  700 },
-  battlefield: { root: 110.00, scale: [0, 2, 5, 7, 10], wave: 'sawtooth', bpm: 112, padGain: 0.05, arpGain: 0.06, filter:  600 },
-  palace:      { root: 146.83, scale: [0, 4, 7, 11, 14], wave: 'triangle', bpm: 78, padGain: 0.06, arpGain: 0.04, filter: 1600 }
+  // village — bright, hopeful morning. C major-pentatonic. 72 bpm.
+  village:     { root: 261.63, bpm: 72,
+                 chords: [[0,4,7,11], [-2,3,7,10], [-4,0,5,9], [-5,2,5,9]],
+                 melody: [12, 14, 17, 14, 12, 9, 7, 9],
+                 cutoff: 1500 },
+  // forest — mellow, woodsy. A minor-pentatonic. 76 bpm.
+  forest:      { root: 220.00, bpm: 76,
+                 chords: [[0,3,7,10], [-3,0,5,9], [-7,0,3,7], [-2,3,7,10]],
+                 melody: [12, 10, 7, 5, 7, 10, 12, 15],
+                 cutoff: 1200 },
+  // study — quiet, contemplative. F major7 / Dm7. 64 bpm.
+  study:       { root: 174.61, bpm: 64,
+                 chords: [[0,4,7,11], [-3,2,5,9], [2,5,9,12], [-5,0,4,7]],
+                 melody: [16, 14, 12, 9, 12, 14, 16, 19],
+                 cutoff: 1700 },
+  // courtyard — formal, warm. G major. 78 bpm.
+  courtyard:   { root: 196.00, bpm: 78,
+                 chords: [[0,4,7,11], [-5,0,4,7], [-3,2,5,9], [-7,-2,2,5]],
+                 melody: [12, 11, 9, 7, 9, 11, 12, 14],
+                 cutoff: 1400 },
+  // camp — military readiness, slightly tense. E minor. 80 bpm.
+  camp:        { root: 164.81, bpm: 80,
+                 chords: [[0,3,7,10], [-2,3,7,10], [-5,0,3,7], [-7,-3,0,5]],
+                 melody: [12, 10, 7, 10, 12, 15, 12, 10],
+                 cutoff: 1100 },
+  // battlefield — moody, low-end heavy. D minor. 82 bpm.
+  battlefield: { root: 146.83, bpm: 82,
+                 chords: [[0,3,7,10], [-5,0,3,7], [-2,3,5,10], [-7,-3,0,5]],
+                 melody: [12, 15, 10, 12, 10, 7, 10, 15],
+                 cutoff:  900 },
+  // palace — regal, shimmery, bittersweet. A major. 70 bpm.
+  palace:      { root: 220.00, bpm: 70,
+                 chords: [[0,4,7,11], [-3,0,4,7], [2,5,9,12], [-5,-1,2,7]],
+                 melody: [12, 14, 16, 19, 16, 14, 12, 9],
+                 cutoff: 1800 }
 };
 
 const Bgm = (function () {
   let currentTheme = null;
   let masterGain = null;
-  let padOsc = null, padLfo = null, padFilter = null;
-  let arpTimer = null;
-  let arpStep = 0;
+  let lpFilter = null;
+  let stepTimer = null;
+  let step = 0;
   let muted = false;
   let mp3El = null;
+  let activePreset = null;
+  let vinylNoise = null;
 
   function ctx() { return ac(); }
 
@@ -4758,73 +4815,146 @@ const Bgm = (function () {
     const c = ctx();
     masterGain = c.createGain();
     masterGain.gain.value = 0;
-    masterGain.connect(c.destination);
+    // Master lowpass for that lofi muffled feel
+    lpFilter = c.createBiquadFilter();
+    lpFilter.type = 'lowpass';
+    lpFilter.frequency.value = 1400;
+    lpFilter.Q.value = 0.6;
+    masterGain.connect(lpFilter);
+    lpFilter.connect(c.destination);
     return masterGain;
   }
 
   function tearDown() {
-    if (arpTimer) { clearInterval(arpTimer); arpTimer = null; }
-    [padOsc, padLfo].forEach(n => { if (n) try { n.stop(); n.disconnect(); } catch (_) {} });
-    [padFilter].forEach(n => { if (n) try { n.disconnect(); } catch (_) {} });
-    padOsc = padLfo = padFilter = null;
+    if (stepTimer) { clearInterval(stepTimer); stepTimer = null; }
+    if (vinylNoise) { try { vinylNoise.stop(); vinylNoise.disconnect(); } catch (_) {} vinylNoise = null; }
     if (mp3El) { try { mp3El.pause(); mp3El.src = ''; } catch (_) {} mp3El = null; }
+    activePreset = null;
   }
 
   function noteHz(rootHz, semitone) {
     return rootHz * Math.pow(2, semitone / 12);
   }
 
-  function buildSynth(preset) {
+  // ── Voice helpers ──
+  function pluck(rootHz, semi, t0, dur, gain, type) {
     const c = ctx();
-    const m = ensureMaster();
-    // Drone pad — root note with slow LFO on filter cutoff
-    padFilter = c.createBiquadFilter();
-    padFilter.type = 'lowpass';
-    padFilter.frequency.value = preset.filter;
-    padFilter.Q.value = 1.5;
-    padFilter.connect(m);
+    const o = c.createOscillator();
+    o.type = type || 'triangle';
+    o.frequency.value = noteHz(rootHz, semi);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(masterGain);
+    o.start(t0);
+    o.stop(t0 + dur + 0.05);
+  }
 
-    const padGain = c.createGain();
-    padGain.gain.value = preset.padGain;
-    padGain.connect(padFilter);
+  function chordPad(rootHz, semis, t0, dur, gain) {
+    semis.forEach(s => pluck(rootHz, s, t0, dur, gain, 'sine'));
+  }
 
-    padOsc = c.createOscillator();
-    padOsc.type = preset.wave;
-    padOsc.frequency.value = preset.root;
-    padOsc.connect(padGain);
-    padOsc.start();
+  function kick(t0) {
+    const c = ctx();
+    const o = c.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(120, t0);
+    o.frequency.exponentialRampToValueAtTime(40, t0 + 0.12);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.001, t0);
+    g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.20);
+    o.connect(g); g.connect(masterGain);
+    o.start(t0); o.stop(t0 + 0.22);
+  }
 
-    // LFO modulating filter cutoff for slow movement
-    padLfo = c.createOscillator();
-    padLfo.frequency.value = 0.12;
-    const lfoGain = c.createGain();
-    lfoGain.gain.value = preset.filter * 0.35;
-    padLfo.connect(lfoGain);
-    lfoGain.connect(padFilter.frequency);
-    padLfo.start();
+  function snare(t0) {
+    const c = ctx();
+    // Noise burst through bandpass
+    const len = c.sampleRate * 0.18;
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const f = c.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 1800;
+    f.Q.value = 0.7;
+    const g = c.createGain();
+    g.gain.value = 0.06;
+    src.connect(f); f.connect(g); g.connect(masterGain);
+    src.start(t0);
+  }
 
-    // Arpeggio — random notes from the scale at the preset's tempo
-    const stepMs = 60000 / preset.bpm / 2; // 8th notes
-    arpStep = 0;
-    arpTimer = setInterval(() => {
-      if (muted) return;
-      // Sparse — only 50% of steps trigger so it stays ambient, not melodic
-      if (Math.random() > 0.5) { arpStep++; return; }
-      const degree = preset.scale[arpStep % preset.scale.length];
-      const oct = (arpStep % 8 < 4) ? 1 : 2; // alternate octaves for movement
-      const f = noteHz(preset.root, degree + oct * 12);
-      arpStep++;
-      const o = c.createOscillator();
-      o.type = preset.wave === 'sawtooth' ? 'triangle' : preset.wave;
-      o.frequency.value = f;
-      const g = c.createGain();
-      const t0 = c.currentTime;
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(preset.arpGain, t0 + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
-      o.connect(g); g.connect(padFilter);
-      o.start(t0);
-      o.stop(t0 + 0.7);
+  function hat(t0, open) {
+    const c = ctx();
+    const len = c.sampleRate * (open ? 0.10 : 0.04);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const f = c.createBiquadFilter();
+    f.type = 'highpass';
+    f.frequency.value = 6000;
+    const g = c.createGain();
+    g.gain.value = open ? 0.025 : 0.018;
+    src.connect(f); f.connect(g); g.connect(masterGain);
+    src.start(t0);
+  }
+
+  function startVinylCrackle() {
+    const c = ctx();
+    // 2-second loop of pinkish noise (cheap pink-ish via filtered white)
+    const len = Math.floor(c.sampleRate * 2);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      // Sparse crackle: low background noise + occasional pops
+      data[i] = (Math.random() * 2 - 1) * 0.10;
+      if (Math.random() < 0.0008) data[i] = (Math.random() > 0.5 ? 1 : -1) * 0.55;
+    }
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const f = c.createBiquadFilter();
+    f.type = 'highpass';
+    f.frequency.value = 1500;
+    const g = c.createGain();
+    g.gain.value = 0.025;
+    src.connect(f); f.connect(g); g.connect(masterGain);
+    src.start();
+    vinylNoise = src;
+  }
+
+  function buildSynth(preset) {
+    activePreset = preset;
+    const c = ctx();
+    ensureMaster();
+    startVinylCrackle();
+    // Step length: 8th notes = lofi half-time feel
+    const stepMs = 60000 / preset.bpm / 2;
+    step = 0;
+    stepTimer = setInterval(() => {
+      if (muted) { step++; return; }
+      const t0 = c.currentTime + 0.03;
+      const beat = step % 8;             // 8 sixteenth-positions per "bar"
+      const bar = Math.floor(step / 8);  // chord index
+      const chord = preset.chords[bar % preset.chords.length];
+      // Chord pad on beat 0 (every bar) — quiet sustain
+      if (beat === 0) chordPad(preset.root, chord, t0, 1.6, 0.025);
+      // Drums: kick on 1+5, snare on 3+7, hats on every step (closed) + open on 4
+      if (beat === 0 || beat === 4) kick(t0);
+      if (beat === 2 || beat === 6) snare(t0);
+      hat(t0, beat === 4);
+      // Melody motif: trigger a note every other 8th, alternating notes
+      if (beat % 2 === 0) {
+        const idx = (beat / 2 + bar * 4) % preset.melody.length;
+        pluck(preset.root, preset.melody[idx], t0, 0.45, 0.045, 'triangle');
+      }
+      step++;
     }, stepMs);
   }
 
@@ -4838,7 +4968,6 @@ const Bgm = (function () {
   }
 
   function tryMp3(theme) {
-    // If bgm/{theme}.mp3 exists, prefer it. HEAD probe via fetch; on 404, fall back to synth.
     return fetch(`bgm/${theme}.mp3`, { method: 'HEAD' })
       .then(r => r.ok)
       .catch(() => false);
@@ -4874,7 +5003,6 @@ const Bgm = (function () {
 
   function isMuted() { return muted; }
 
-  // Restore mute state from localStorage
   try {
     const stored = localStorage.getItem('hangul-type-bgm-muted');
     if (stored === '1') muted = true;
@@ -5212,8 +5340,8 @@ function clamp01(n) {
 const DEPTH = {
   horizonPct: 30,   // % from top — vanishing line
   floorPct:    4,   // % from bottom — closest plane
-  nearScale:  1.0,  // sprite scale at the floor (nearest)
-  farScale:   0.45, // sprite scale at the horizon (farthest)
+  nearScale:  1.45, // sprite scale at the floor (nearest)
+  farScale:   0.30, // sprite scale at the horizon (farthest)
   bossScale:  1.18  // bosses stay slightly larger than the curve at any depth
 };
 
@@ -5274,12 +5402,14 @@ function teleportPlayerTo(x, y) {
   // Move + arrival animation. Inline styles override the .player breathe rules.
   PLAYER_EL.classList.remove('teleporting','arriving');
   void PLAYER_EL.offsetWidth;
-  // Side-step right of monster sprite so the slash visually crosses the demon
-  const targetX = x + 60;
-  const targetY = y + 24;
   // Apply the same depth scale used for monsters so the player visibly
-  // shrinks when jumping to a far-away (high-Y) target.
-  const jumpScale = depthScaleAtPx(targetY).toFixed(3);
+  // shrinks when jumping to a far-away (high-Y) target. Scale the side-step
+  // offsets too — at depth 0.4 a 60px gap is huge relative to the small
+  // monster, so the slash misses entirely otherwise.
+  const jumpScaleNum = depthScaleAtPx(y);
+  const jumpScale = jumpScaleNum.toFixed(3);
+  const targetX = x + 60 * jumpScaleNum;
+  const targetY = y + 24 * jumpScaleNum;
   PLAYER_EL.style.bottom = 'auto';
   PLAYER_EL.style.left = targetX + 'px';
   PLAYER_EL.style.top  = targetY + 'px';
