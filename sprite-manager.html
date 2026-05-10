@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sprite Manager · Type Hangeul</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
+    --bd: #e2e8f0;   --bdhi: #cbd5e1;
+    --thi: #0f172a;  --tmd: #475569;   --tlo: #94a3b8;
+    --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
+    --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--thi);
+  }
+  .topbar {
+    height: 52px;
+    padding: 0 20px;
+    background: var(--l1);
+    border-bottom: 1px solid var(--bd);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .topbar .brand { font-weight: 800; font-size: 15px; }
+  .topbar .meta { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--tmd); margin-left: auto; }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px 0;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--bd);
+    background: var(--l1);
+    color: var(--tmd);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tab.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+  }
+  .filter {
+    padding: 0 20px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .filter input {
+    flex: 1 1 0;
+    padding: 8px 12px;
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    background: var(--l1);
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .filter .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--tmd);
+    white-space: nowrap;
+  }
+  .grid {
+    padding: 0 20px 80px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: var(--l1);
+    border: 1px solid var(--bd);
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: border-color 0.1s, transform 0.1s;
+  }
+  .card:hover { border-color: var(--blue); transform: translateY(-1px); }
+  .card .thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: repeating-conic-gradient(#e2e8f0 0% 25%, #f8fafc 0% 50%) 50% / 16px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .card .thumb img { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+  .card .name {
+    margin-top: 6px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--tmd);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Detail modal */
+  .veil {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+  .veil.open { display: flex; }
+  .modal {
+    background: var(--l1);
+    border-radius: 16px;
+    width: min(900px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+  }
+  @media (max-width: 720px) { .modal { grid-template-columns: 1fr; } }
+  .modal h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+  }
+  .modal .pathline {
+    font-size: 11px;
+    color: var(--tlo);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 14px;
+  }
+  .canvas-wrap {
+    background: repeating-conic-gradient(#e2e8f0 0% 25%, #f8fafc 0% 50%) 50% / 18px 18px;
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .canvas-wrap canvas {
+    max-width: 100%;
+    image-rendering: pixelated;
+    cursor: grab;
+    user-select: none;
+  }
+  .canvas-wrap canvas.dragging { cursor: grabbing; }
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .ctrl-block {
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--l2);
+  }
+  .ctrl-block h3 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--tmd);
+  }
+  .ctrl-block label {
+    display: block;
+    font-size: 11px;
+    color: var(--tmd);
+    margin-bottom: 4px;
+  }
+  .ctrl-block input[type="range"] {
+    width: 100%;
+    margin: 0;
+  }
+  .ctrl-block .row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .ctrl-block .row .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--thi);
+    min-width: 36px;
+    text-align: right;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    flex: 1 1 auto;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--bd);
+    background: var(--l1);
+    color: var(--thi);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn:hover { border-color: var(--bdhi); background: var(--l2); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: white; }
+  .btn.primary:hover { background: #1d4ed8; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .help {
+    font-size: 11px;
+    color: var(--tlo);
+    line-height: 1.4;
+  }
+  .help code { background: var(--l3); padding: 1px 4px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; }
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--tlo);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🎨 Sprite Manager</span>
+  <span class="meta" id="totalCount">— sprites</span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="filter">
+  <input id="filterInput" type="text" placeholder="Filter by filename…">
+  <span class="count" id="filterCount">0 shown</span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<!-- Detail modal -->
+<div class="veil" id="modal">
+  <div class="modal">
+    <div>
+      <h2 id="mTitle">name.png</h2>
+      <div class="pathline" id="mPath"></div>
+      <div class="canvas-wrap">
+        <canvas id="mCanvas" width="256" height="256"></canvas>
+      </div>
+      <div class="help" style="margin-top:10px;">
+        Drag the sprite inside the frame to reposition it. The slider below recomputes alpha (transparent background) on the fly. <strong>Save</strong> downloads a PNG; drop it into <code>sprites/&lt;cat&gt;/</code> to replace the original.
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ctrl-block">
+        <h3>Reposition</h3>
+        <div class="row"><label style="margin:0;flex:1;">X offset</label><span class="num" id="dxNum">0px</span></div>
+        <input id="dxRange" type="range" min="-128" max="128" value="0">
+        <div class="row" style="margin-top:8px;"><label style="margin:0;flex:1;">Y offset</label><span class="num" id="dyNum">0px</span></div>
+        <input id="dyRange" type="range" min="-128" max="128" value="0">
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn" id="btnRecenter">Auto-center</button>
+          <button class="btn" id="btnReset">Reset</button>
+        </div>
+      </div>
+      <div class="ctrl-block">
+        <h3>Alpha threshold</h3>
+        <label>Background brightness</label>
+        <div class="row"><input id="alphaRange" type="range" min="120" max="250" value="200" style="flex:1;"><span class="num" id="alphaNum">200</span></div>
+        <label style="margin-top:8px;">Soft-edge near distance</label>
+        <div class="row"><input id="nearRange" type="range" min="0" max="40" value="12" style="flex:1;"><span class="num" id="nearNum">12</span></div>
+        <label style="margin-top:8px;">Soft-edge far distance</label>
+        <div class="row"><input id="farRange" type="range" min="20" max="120" value="55" style="flex:1;"><span class="num" id="farNum">55</span></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btnSave">⬇ Save PNG</button>
+        <button class="btn" id="btnClose">Close</button>
+      </div>
+      <div class="ctrl-block">
+        <h3>Regenerate via OpenAI</h3>
+        <div class="help">
+          <strong>gpt-image-1</strong> supports image edits (inpainting) at <code>/v1/images/edits</code>. Wire a small Python endpoint in <code>tools/curate_server.py</code> that takes the current PNG + an optional mask + a text prompt, calls OpenAI, and writes the result back to disk. Until that lands, use the existing <code>image-gen-chatgpt</code> Playwright pipeline for full regenerations.
+        </div>
+        <button class="btn" disabled style="margin-top:10px;">Regenerate (needs backend)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+let manifest = null;
+let activeCategory = null;
+
+async function init() {
+  const res = await fetch('sprites/index.json?_=' + Date.now());
+  manifest = await res.json();
+  const cats = Object.keys(manifest);
+  const tabsEl = document.getElementById('tabs');
+  cats.forEach((cat, i) => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (i === 0 ? ' active' : '');
+    b.textContent = `${cat} (${manifest[cat].length})`;
+    b.dataset.cat = cat;
+    b.addEventListener('click', () => selectCategory(cat));
+    tabsEl.appendChild(b);
+  });
+  document.getElementById('filterInput').addEventListener('input', renderGrid);
+  document.getElementById('totalCount').textContent =
+    `${cats.reduce((s, c) => s + manifest[c].length, 0)} sprites · ${cats.length} categories`;
+  selectCategory(cats[0]);
+}
+
+function selectCategory(cat) {
+  activeCategory = cat;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+  renderGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const filter = document.getElementById('filterInput').value.toLowerCase();
+  const items = (manifest[activeCategory] || []).filter(f => !filter || f.toLowerCase().includes(filter));
+  document.getElementById('filterCount').textContent = `${items.length} shown`;
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty">No sprites match.</div>';
+    return;
+  }
+  grid.innerHTML = items.map(f => `
+    <button class="card" data-file="${f}">
+      <div class="thumb"><img src="sprites/${activeCategory}/${f}?_=${Date.now()}" alt="${f}"></div>
+      <div class="name">${f}</div>
+    </button>
+  `).join('');
+  grid.querySelectorAll('.card').forEach(c => {
+    c.addEventListener('click', () => openSprite(activeCategory, c.dataset.file));
+  });
+}
+
+// ─── Detail modal ──────────────────────────────────────────────────────
+const _state = {
+  img: null,
+  imgData: null,
+  category: null,
+  filename: null,
+  dx: 0, dy: 0,
+  alphaThreshold: 200,
+  near: 12,
+  far: 55,
+  drag: null
+};
+
+async function openSprite(category, filename) {
+  _state.category = category;
+  _state.filename = filename;
+  _state.dx = 0; _state.dy = 0;
+  _state.alphaThreshold = 200; _state.near = 12; _state.far = 55;
+  document.getElementById('mTitle').textContent = filename;
+  document.getElementById('mPath').textContent = `sprites/${category}/${filename}`;
+  document.getElementById('dxRange').value = 0;
+  document.getElementById('dyRange').value = 0;
+  document.getElementById('alphaRange').value = 200;
+  document.getElementById('nearRange').value = 12;
+  document.getElementById('farRange').value = 55;
+  syncNums();
+  // Load the image
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  await new Promise((res, rej) => {
+    img.onload = res; img.onerror = rej;
+    img.src = `sprites/${category}/${filename}?_=` + Date.now();
+  });
+  _state.img = img;
+  // Adjust the canvas to the image's aspect, capped at 512px on the long side.
+  const cv = document.getElementById('mCanvas');
+  const maxSide = 512;
+  const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+  cv.width = Math.round(img.naturalWidth * scale);
+  cv.height = Math.round(img.naturalHeight * scale);
+  // Cache imageData at canvas resolution so the alpha pass is fast on slider drag.
+  const tmp = document.createElement('canvas');
+  tmp.width = cv.width; tmp.height = cv.height;
+  tmp.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+  _state.imgData = tmp.getContext('2d').getImageData(0, 0, cv.width, cv.height);
+  document.getElementById('modal').classList.add('open');
+  redraw();
+}
+
+function syncNums() {
+  document.getElementById('dxNum').textContent = `${_state.dx}px`;
+  document.getElementById('dyNum').textContent = `${_state.dy}px`;
+  document.getElementById('alphaNum').textContent = String(_state.alphaThreshold);
+  document.getElementById('nearNum').textContent = String(_state.near);
+  document.getElementById('farNum').textContent = String(_state.far);
+}
+
+function applyAlpha(srcImageData) {
+  // Flood-fill from corners, then ramp alpha by distance from canonical bg.
+  const W = srcImageData.width, H = srcImageData.height;
+  const out = new ImageData(new Uint8ClampedArray(srcImageData.data), W, H);
+  const data = out.data;
+  const LIBERAL = _state.alphaThreshold;
+  const isLight = (i) => data[i] >= LIBERAL && data[i+1] >= LIBERAL && data[i+2] >= LIBERAL;
+  const visited = new Uint8Array(W * H);
+  const stack = [];
+  // Seed from edges
+  for (let r = 0; r < H; r++) {
+    let i = (r * W) * 4;
+    if (isLight(i)) { stack.push(r * W); visited[r * W] = 1; }
+    i = (r * W + W - 1) * 4;
+    if (isLight(i)) { stack.push(r * W + W - 1); visited[r * W + W - 1] = 1; }
+  }
+  for (let c = 0; c < W; c++) {
+    let i = c * 4;
+    if (isLight(i)) { stack.push(c); visited[c] = 1; }
+    i = ((H - 1) * W + c) * 4;
+    if (isLight(i)) { stack.push((H - 1) * W + c); visited[(H - 1) * W + c] = 1; }
+  }
+  // BFS flood
+  while (stack.length) {
+    const idx = stack.pop();
+    const x = idx % W, y = (idx / W) | 0;
+    const neighbors = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    for (const [dx, dy] of neighbors) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+      const ni = ny * W + nx;
+      if (visited[ni]) continue;
+      const di = ni * 4;
+      if (isLight(di)) {
+        visited[ni] = 1;
+        stack.push(ni);
+      }
+    }
+  }
+  // Soft alpha ramp on outer-bg pixels
+  const NEAR = _state.near, FAR = _state.far;
+  const BG_R = 240, BG_G = 240, BG_B = 240;
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    if (!visited[p]) continue;
+    const dr = data[i] - BG_R, dg = data[i+1] - BG_G, db = data[i+2] - BG_B;
+    const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+    let a = 0;
+    if (dist > FAR) a = 255;
+    else if (dist <= NEAR) a = 0;
+    else a = Math.round(((dist - NEAR) / (FAR - NEAR)) * 255);
+    data[i + 3] = a;
+  }
+  return out;
+}
+
+function redraw() {
+  const cv = document.getElementById('mCanvas');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!_state.imgData) return;
+  // Apply alpha pass
+  const processed = applyAlpha(_state.imgData);
+  // Draw with offset
+  const off = document.createElement('canvas');
+  off.width = cv.width; off.height = cv.height;
+  off.getContext('2d').putImageData(processed, 0, 0);
+  ctx.drawImage(off, _state.dx, _state.dy);
+}
+
+document.getElementById('dxRange').addEventListener('input', e => { _state.dx = +e.target.value; syncNums(); redraw(); });
+document.getElementById('dyRange').addEventListener('input', e => { _state.dy = +e.target.value; syncNums(); redraw(); });
+document.getElementById('alphaRange').addEventListener('input', e => { _state.alphaThreshold = +e.target.value; syncNums(); redraw(); });
+document.getElementById('nearRange').addEventListener('input', e => { _state.near = +e.target.value; syncNums(); redraw(); });
+document.getElementById('farRange').addEventListener('input', e => { _state.far = +e.target.value; syncNums(); redraw(); });
+
+document.getElementById('btnRecenter').addEventListener('click', () => {
+  // Compute centroid of opaque pixels and shift to canvas center.
+  if (!_state.imgData) return;
+  const processed = applyAlpha(_state.imgData);
+  const W = processed.width, H = processed.height;
+  let sumX = 0, sumY = 0, count = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const a = processed.data[(y * W + x) * 4 + 3];
+      if (a > 32) { sumX += x; sumY += y; count++; }
+    }
+  }
+  if (!count) return;
+  const cx = sumX / count, cy = sumY / count;
+  _state.dx = Math.round(W / 2 - cx);
+  _state.dy = Math.round(H / 2 - cy);
+  document.getElementById('dxRange').value = _state.dx;
+  document.getElementById('dyRange').value = _state.dy;
+  syncNums(); redraw();
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  _state.dx = 0; _state.dy = 0;
+  document.getElementById('dxRange').value = 0;
+  document.getElementById('dyRange').value = 0;
+  syncNums(); redraw();
+});
+
+document.getElementById('btnClose').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('open');
+});
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') document.getElementById('modal').classList.remove('open');
+});
+
+document.getElementById('btnSave').addEventListener('click', () => {
+  const cv = document.getElementById('mCanvas');
+  cv.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = _state.filename;
+    link.href = url;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }, 'image/png');
+});
+
+// Drag to reposition
+const cv = document.getElementById('mCanvas');
+cv.addEventListener('pointerdown', e => {
+  cv.classList.add('dragging');
+  cv.setPointerCapture(e.pointerId);
+  _state.drag = { startX: e.clientX, startY: e.clientY, baseDx: _state.dx, baseDy: _state.dy };
+});
+cv.addEventListener('pointermove', e => {
+  if (!_state.drag) return;
+  const scale = cv.width / cv.getBoundingClientRect().width;
+  _state.dx = _state.drag.baseDx + Math.round((e.clientX - _state.drag.startX) * scale);
+  _state.dy = _state.drag.baseDy + Math.round((e.clientY - _state.drag.startY) * scale);
+  document.getElementById('dxRange').value = Math.max(-128, Math.min(128, _state.dx));
+  document.getElementById('dyRange').value = Math.max(-128, Math.min(128, _state.dy));
+  syncNums(); redraw();
+});
+cv.addEventListener('pointerup', () => { _state.drag = null; cv.classList.remove('dragging'); });
+cv.addEventListener('pointercancel', () => { _state.drag = null; cv.classList.remove('dragging'); });
+
+init().catch(e => {
+  document.getElementById('grid').innerHTML = `<div class="empty">Failed to load <code>sprites/index.json</code> — run <code>tools/build-sprite-index.py</code> to (re)generate.</div>`;
+});
+</script>
+</body>
+</html>
