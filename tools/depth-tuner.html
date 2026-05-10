@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Depth Tuner · Type Hangeul Battle</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: rgba(255,255,255,0.06);
+    --bd: rgba(255,255,255,0.12);
+    --thi: #f1f5f9;
+    --tmd: #94a3b8;
+    --tlo: #64748b;
+    --blue: #3b82f6;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font: 13px/1.45 'Inter', system-ui, sans-serif;
+    background: linear-gradient(180deg, #0b1225 0%, #1e293b 100%);
+    color: var(--thi);
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    overflow: hidden;
+  }
+
+  /* ───── Side panel ───── */
+  aside.panel {
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(8px);
+    border-right: 1px solid var(--bd);
+    padding: 18px 18px 24px;
+    overflow-y: auto;
+  }
+  h1 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    color: var(--tmd);
+    font-size: 12px;
+    margin: 0 0 16px;
+    line-height: 1.45;
+  }
+  fieldset {
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 12px 14px 14px;
+    margin: 0 0 12px;
+  }
+  legend {
+    color: var(--tmd);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0 6px;
+  }
+  .row { display: grid; grid-template-columns: 1fr 56px; gap: 8px; align-items: center; margin: 8px 0; }
+  .row label { font-size: 11px; color: var(--tmd); }
+  .row .val {
+    font: 600 11px/1 'JetBrains Mono', monospace;
+    color: var(--thi);
+    text-align: right;
+    padding: 4px 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--bd);
+    border-radius: 5px;
+  }
+  input[type=range] { width: 100%; accent-color: var(--blue); }
+  select {
+    width: 100%;
+    padding: 6px 8px;
+    background: rgba(255,255,255,0.04);
+    color: var(--thi);
+    border: 1px solid var(--bd);
+    border-radius: 6px;
+    font: inherit;
+  }
+  .actions { display: flex; gap: 8px; margin-top: 14px; }
+  button {
+    flex: 1;
+    padding: 9px 12px;
+    font: 600 12px 'Inter', system-ui;
+    background: var(--blue);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button.ghost {
+    background: transparent;
+    border: 1px solid var(--bd);
+    color: var(--thi);
+  }
+  button:hover { filter: brightness(1.1); }
+
+  pre.config {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.32);
+    border: 1px solid var(--bd);
+    border-radius: 6px;
+    font: 11px/1.45 'JetBrains Mono', monospace;
+    color: #cbd5e1;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* ───── Stage ───── */
+  main.stage-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+  .stage {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, #1d2a44 0%, #2c3e60 var(--horizon-pct, 30%), #5a7a9b var(--horizon-pct, 30%), #b0c4d4 100%);
+    perspective: 800px;
+    perspective-origin: 50% 40%;
+  }
+  /* Visible horizon line */
+  .horizon {
+    position: absolute;
+    left: 0; right: 0;
+    top: var(--horizon-pct, 30%);
+    border-top: 1px dashed rgba(255,255,255,0.35);
+    z-index: 4;
+    pointer-events: none;
+  }
+  .horizon::after {
+    content: 'horizon';
+    position: absolute;
+    top: -16px;
+    right: 8px;
+    font: 10px 'JetBrains Mono', monospace;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* Depth grid: lines that get tighter near the horizon to imply distance */
+  .grid {
+    position: absolute;
+    left: 0; right: 0;
+    top: var(--horizon-pct, 30%);
+    bottom: 0;
+    background-image:
+      linear-gradient(180deg,
+        rgba(255,255,255,0.06) 0,
+        rgba(255,255,255,0.06) 1px,
+        transparent 1px,
+        transparent calc(100% / 18)
+      );
+    transform-origin: 50% 0;
+    transform: perspective(800px) rotateX(72deg);
+    transform-style: preserve-3d;
+    z-index: 1;
+  }
+
+  /* Sprites */
+  .sprite {
+    position: absolute;
+    left: var(--x, 50%);
+    top: var(--y, 90%);
+    transform: translate(-50%, -100%) scale(var(--depth-scale, 1));
+    transform-origin: 50% 100%;
+    transition: transform 0.18s ease, opacity 0.18s;
+    z-index: 5;
+    cursor: grab;
+    user-select: none;
+    will-change: transform;
+  }
+  .sprite:active { cursor: grabbing; }
+  .sprite .body {
+    font-size: var(--base-size, 110px);
+    line-height: 1;
+    text-align: center;
+    filter:
+      drop-shadow(0 calc(6px + 18px * (1 - var(--depth-t, 0))) calc(8px + 12px * (1 - var(--depth-t, 0))) rgba(0,0,0,calc(0.45 * (1 - var(--depth-t, 0)))));
+  }
+  .sprite .label {
+    margin-top: 4px;
+    font: 600 10px 'JetBrains Mono', monospace;
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.45);
+    padding: 2px 6px;
+    border-radius: 3px;
+    pointer-events: none;
+  }
+  .sprite.player .label { background: rgba(59, 130, 246, 0.55); }
+
+  /* Floor surface marker */
+  .floor {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: var(--floor-bottom, 4%);
+    border-top: 2px solid rgba(255,255,255,0.18);
+    z-index: 3;
+    pointer-events: none;
+  }
+  .floor::after {
+    content: 'floor';
+    position: absolute;
+    left: 8px; top: -16px;
+    font: 10px 'JetBrains Mono', monospace;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* HUD overlay */
+  .hud {
+    position: absolute;
+    top: 12px; right: 12px;
+    z-index: 20;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font: 11px/1.45 'JetBrains Mono', monospace;
+    border: 1px solid var(--bd);
+    pointer-events: none;
+  }
+  .hud b { color: var(--amber); font-weight: 600; }
+  .legend {
+    position: absolute;
+    bottom: 12px; left: 12px;
+    z-index: 20;
+    background: rgba(0,0,0,0.45);
+    color: rgba(255,255,255,0.85);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font: 11px/1.45 'Inter', system-ui;
+    border: 1px solid var(--bd);
+    pointer-events: none;
+    max-width: 280px;
+  }
+</style>
+</head>
+<body>
+  <aside class="panel">
+    <h1>🎯 Depth Tuner</h1>
+    <p class="sub">Drag any sprite up/down. Higher = farther = smaller. Tune the curve here, then paste the config into <code>game.html</code>.</p>
+
+    <fieldset>
+      <legend>Horizon</legend>
+      <div class="row">
+        <label for="horizon">Y position (% from top)</label>
+        <span class="val" id="horizonVal">30</span>
+      </div>
+      <input type="range" id="horizon" min="10" max="60" step="1" value="30" />
+
+      <div class="row">
+        <label for="floor">Floor (% from bottom)</label>
+        <span class="val" id="floorVal">4</span>
+      </div>
+      <input type="range" id="floor" min="0" max="20" step="1" value="4" />
+    </fieldset>
+
+    <fieldset>
+      <legend>Depth scale</legend>
+      <div class="row">
+        <label for="near">Near scale (at floor)</label>
+        <span class="val" id="nearVal">1.00</span>
+      </div>
+      <input type="range" id="near" min="0.8" max="1.6" step="0.02" value="1.0" />
+
+      <div class="row">
+        <label for="far">Far scale (at horizon)</label>
+        <span class="val" id="farVal">0.45</span>
+      </div>
+      <input type="range" id="far" min="0.15" max="0.9" step="0.02" value="0.45" />
+
+      <div class="row">
+        <label for="curve">Curve</label>
+        <select id="curve">
+          <option value="linear">Linear</option>
+          <option value="ease-out" selected>Ease-out (more aggressive near floor)</option>
+          <option value="ease-in">Ease-in (more aggressive near horizon)</option>
+          <option value="sqrt">Square-root (filmic)</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Sizes</legend>
+      <div class="row">
+        <label for="playerSize">Player base font (px)</label>
+        <span class="val" id="playerSizeVal">110</span>
+      </div>
+      <input type="range" id="playerSize" min="40" max="180" step="2" value="110" />
+
+      <div class="row">
+        <label for="monsterSize">Monster base font (px)</label>
+        <span class="val" id="monsterSizeVal">96</span>
+      </div>
+      <input type="range" id="monsterSize" min="40" max="160" step="2" value="96" />
+    </fieldset>
+
+    <div class="actions">
+      <button id="resetBtn" class="ghost">Reset</button>
+      <button id="exportBtn">Copy config</button>
+    </div>
+
+    <pre class="config" id="cfgPreview"></pre>
+  </aside>
+
+  <main class="stage-wrap">
+    <div class="stage" id="stage">
+      <div class="grid"></div>
+      <div class="horizon"></div>
+      <div class="floor"></div>
+
+      <div class="sprite player" id="player" style="--x: 50%; --y: 88%; --base-size: 110px;">
+        <div class="body">🥷</div>
+        <div class="label">player</div>
+      </div>
+
+      <div class="sprite" data-tier="1" style="--x: 18%; --y: 86%; --base-size: 96px;">
+        <div class="body">👺</div>
+        <div class="label">tier 1</div>
+      </div>
+      <div class="sprite" data-tier="2" style="--x: 30%; --y: 70%; --base-size: 96px;">
+        <div class="body">👹</div>
+        <div class="label">tier 2</div>
+      </div>
+      <div class="sprite" data-tier="3" style="--x: 70%; --y: 56%; --base-size: 96px;">
+        <div class="body">🧟</div>
+        <div class="label">tier 3</div>
+      </div>
+      <div class="sprite" data-tier="4" style="--x: 82%; --y: 44%; --base-size: 96px;">
+        <div class="body">🐲</div>
+        <div class="label">tier 4</div>
+      </div>
+      <div class="sprite" data-tier="5" style="--x: 50%; --y: 36%; --base-size: 96px;">
+        <div class="body">🦇</div>
+        <div class="label">tier 5 (boss)</div>
+      </div>
+    </div>
+
+    <div class="hud" id="hud"></div>
+    <div class="legend">
+      <strong>Drag sprites</strong> to set their Y. Player + monsters share the same depth function so tuning one tunes them all.
+      <br><br>
+      <span style="color: var(--amber)">depthT</span> = 0 at floor, 1 at horizon.
+      <br><span style="color: var(--amber)">scale</span> = lerp(near, far, curve(depthT))
+    </div>
+  </main>
+
+<script>
+'use strict';
+
+const stage = document.getElementById('stage');
+const hud = document.getElementById('hud');
+const cfgPreview = document.getElementById('cfgPreview');
+
+const inputs = {
+  horizon:    document.getElementById('horizon'),
+  floor:      document.getElementById('floor'),
+  near:       document.getElementById('near'),
+  far:        document.getElementById('far'),
+  curve:      document.getElementById('curve'),
+  playerSize: document.getElementById('playerSize'),
+  monsterSize: document.getElementById('monsterSize')
+};
+const vals = {
+  horizon:    document.getElementById('horizonVal'),
+  floor:      document.getElementById('floorVal'),
+  near:       document.getElementById('nearVal'),
+  far:        document.getElementById('farVal'),
+  playerSize: document.getElementById('playerSizeVal'),
+  monsterSize: document.getElementById('monsterSizeVal')
+};
+
+const DEFAULTS = {
+  horizon: 30, floor: 4, near: 1.0, far: 0.45,
+  curve: 'ease-out', playerSize: 110, monsterSize: 96
+};
+
+function curveFn(name, t) {
+  t = Math.min(1, Math.max(0, t));
+  switch (name) {
+    case 'linear':   return t;
+    case 'ease-in':  return t * t;
+    case 'ease-out': return 1 - (1 - t) * (1 - t);
+    case 'sqrt':     return Math.sqrt(t);
+    default:         return t;
+  }
+}
+
+function depthScaleAt(yPct) {
+  // yPct is the sprite's top Y as % of stage height (0 = top, 100 = bottom).
+  const horizon = +inputs.horizon.value; // % from top
+  const floorBottom = +inputs.floor.value; // % from bottom
+  const floorY = 100 - floorBottom;        // % from top
+  // depthT: 0 when sprite is at the floor (closest), 1 when at the horizon (farthest).
+  const denom = Math.max(0.0001, floorY - horizon);
+  let depthT = (floorY - yPct) / denom;
+  depthT = Math.min(1, Math.max(0, depthT));
+  const near = +inputs.near.value;
+  const far  = +inputs.far.value;
+  const eased = curveFn(inputs.curve.value, depthT);
+  const scale = near + (far - near) * eased;
+  return { scale, depthT };
+}
+
+function applyAll() {
+  // Push horizon/floor to CSS so the visuals match
+  stage.style.setProperty('--horizon-pct', inputs.horizon.value + '%');
+  stage.style.setProperty('--floor-bottom', inputs.floor.value + '%');
+  // Update value labels
+  vals.horizon.textContent = inputs.horizon.value;
+  vals.floor.textContent = inputs.floor.value;
+  vals.near.textContent = (+inputs.near.value).toFixed(2);
+  vals.far.textContent = (+inputs.far.value).toFixed(2);
+  vals.playerSize.textContent = inputs.playerSize.value;
+  vals.monsterSize.textContent = inputs.monsterSize.value;
+  // Push base sizes
+  document.getElementById('player').style.setProperty('--base-size', inputs.playerSize.value + 'px');
+  document.querySelectorAll('.sprite[data-tier]').forEach(s => {
+    s.style.setProperty('--base-size', inputs.monsterSize.value + 'px');
+  });
+  // Update each sprite's depth-scale
+  document.querySelectorAll('.sprite').forEach(s => {
+    const yStr = s.style.getPropertyValue('--y') || '90%';
+    const yPct = parseFloat(yStr);
+    const { scale, depthT } = depthScaleAt(yPct);
+    s.style.setProperty('--depth-scale', scale.toFixed(3));
+    s.style.setProperty('--depth-t', depthT.toFixed(3));
+  });
+  refreshHud();
+  refreshConfig();
+}
+
+function refreshHud() {
+  const p = document.getElementById('player');
+  const yStr = p.style.getPropertyValue('--y') || '88%';
+  const yPct = parseFloat(yStr);
+  const { scale, depthT } = depthScaleAt(yPct);
+  hud.innerHTML = `
+    player Y: <b>${yPct.toFixed(1)}%</b><br>
+    depthT:   <b>${depthT.toFixed(3)}</b><br>
+    scale:    <b>${scale.toFixed(3)}</b><br>
+    eff. font: <b>${(+inputs.playerSize.value * scale).toFixed(0)}px</b>
+  `;
+}
+
+function refreshConfig() {
+  const cfg = {
+    horizonPct: +inputs.horizon.value,
+    floorPct: +inputs.floor.value,
+    nearScale: +inputs.near.value,
+    farScale: +inputs.far.value,
+    curve: inputs.curve.value,
+    playerBasePx: +inputs.playerSize.value,
+    monsterBasePx: +inputs.monsterSize.value
+  };
+  cfgPreview.textContent = `// Paste into game.html as the depth config:
+const DEPTH = ${JSON.stringify(cfg, null, 2)};
+
+function depthScaleAt(yPct) {
+  const floorY = 100 - DEPTH.floorPct;
+  const t = Math.min(1, Math.max(0, (floorY - yPct) / Math.max(0.0001, floorY - DEPTH.horizonPct)));
+  const eased = ${({
+    'linear': 't',
+    'ease-in': 't * t',
+    'ease-out': '1 - (1 - t) * (1 - t)',
+    'sqrt': 'Math.sqrt(t)'
+  })[inputs.curve.value]};
+  return DEPTH.nearScale + (DEPTH.farScale - DEPTH.nearScale) * eased;
+}`;
+}
+
+// Drag handling — all sprites are draggable along Y
+let dragTarget = null;
+let dragOffsetY = 0;
+function onPointerDown(e) {
+  const sprite = e.target.closest('.sprite');
+  if (!sprite) return;
+  dragTarget = sprite;
+  dragOffsetY = e.clientY - sprite.getBoundingClientRect().bottom;
+  sprite.setPointerCapture(e.pointerId);
+}
+function onPointerMove(e) {
+  if (!dragTarget) return;
+  const rect = stage.getBoundingClientRect();
+  const newY = ((e.clientY - rect.top - dragOffsetY) / rect.height) * 100;
+  // Clamp between horizon and floor
+  const horizon = +inputs.horizon.value;
+  const floorY = 100 - +inputs.floor.value;
+  const clamped = Math.min(floorY, Math.max(horizon, newY));
+  dragTarget.style.setProperty('--y', clamped + '%');
+  applyAll();
+}
+function onPointerUp(e) {
+  if (dragTarget) try { dragTarget.releasePointerCapture(e.pointerId); } catch {}
+  dragTarget = null;
+}
+stage.addEventListener('pointerdown', onPointerDown);
+window.addEventListener('pointermove', onPointerMove);
+window.addEventListener('pointerup', onPointerUp);
+
+Object.values(inputs).forEach(input => input.addEventListener('input', applyAll));
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  Object.entries(DEFAULTS).forEach(([k, v]) => {
+    if (inputs[k]) inputs[k].value = v;
+  });
+  applyAll();
+});
+
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(cfgPreview.textContent);
+    const btn = document.getElementById('exportBtn');
+    const old = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  } catch (e) {
+    alert('Clipboard blocked: select and copy manually from the preview below.');
+  }
+});
+
+applyAll();
+</script>
+</body>
+</html>

@@ -5046,19 +5046,46 @@ function clamp01(n) {
   return Math.max(0, Math.min(1, n));
 }
 
-function monsterDepth(m) {
+// Unified depth function — tuned in tools/depth-tuner.html.
+// Higher up the screen = farther away = smaller. Same curve drives both
+// monster scaling and the player's mid-jump scale, so the world reads
+// consistently no matter who's at what Y.
+const DEPTH = {
+  horizonPct: 30,   // % from top — vanishing line
+  floorPct:    4,   // % from bottom — closest plane
+  nearScale:  1.0,  // sprite scale at the floor (nearest)
+  farScale:   0.45, // sprite scale at the horizon (farthest)
+  bossScale:  1.18  // bosses stay slightly larger than the curve at any depth
+};
+
+function depthScaleAtPx(yPx) {
   const rect = getStageRect();
-  const horizon = 18;
-  const homeLine = rect.height * 0.92;
-  return clamp01((((m && Number(m.y)) || 0) - horizon) / Math.max(1, homeLine - horizon));
+  if (!rect || !rect.height) return DEPTH.nearScale;
+  const horizonY = rect.height * (DEPTH.horizonPct / 100);
+  const floorY   = rect.height * (1 - DEPTH.floorPct / 100);
+  const denom = Math.max(1, floorY - horizonY);
+  // depthT: 0 at floor (close/big), 1 at horizon (far/small)
+  const t = clamp01((floorY - yPx) / denom);
+  const eased = 1 - (1 - t) * (1 - t); // ease-out
+  return DEPTH.nearScale + (DEPTH.farScale - DEPTH.nearScale) * eased;
+}
+
+function monsterDepth(m) {
+  // Kept for callers that read d in [0..1]; reuses the unified curve so the
+  // shadow/zIndex math stays consistent with the scale.
+  const rect = getStageRect();
+  if (!rect || !rect.height) return 1;
+  const horizonY = rect.height * (DEPTH.horizonPct / 100);
+  const floorY   = rect.height * (1 - DEPTH.floorPct / 100);
+  const yPx = (m && Number(m.y)) || 0;
+  return clamp01((yPx - horizonY) / Math.max(1, floorY - horizonY));
 }
 
 function renderMonsterDepth(m) {
   if (!m || !m.el) return;
-  const d = monsterDepth(m);
-  const base = m.isBoss ? 0.82 : 0.72;
-  const grow = m.isBoss ? 0.34 : 0.46;
-  const scale = base + d * grow;
+  const d = monsterDepth(m);                  // 0 at horizon, 1 at floor
+  let scale = depthScaleAtPx(Number(m.y) || 0);
+  if (m.isBoss) scale *= DEPTH.bossScale;
   const x = Math.round(m.x || 0);
   const y = Math.round(m.y || 0);
   m.el.style.transform = `translate3d(${x}px, ${y}px, 0) translateX(-50%) scale(${scale.toFixed(3)})`;
@@ -5091,10 +5118,13 @@ function teleportPlayerTo(x, y) {
   // Side-step right of monster sprite so the slash visually crosses the demon
   const targetX = x + 60;
   const targetY = y + 24;
+  // Apply the same depth scale used for monsters so the player visibly
+  // shrinks when jumping to a far-away (high-Y) target.
+  const jumpScale = depthScaleAtPx(targetY).toFixed(3);
   PLAYER_EL.style.bottom = 'auto';
   PLAYER_EL.style.left = targetX + 'px';
   PLAYER_EL.style.top  = targetY + 'px';
-  PLAYER_EL.style.transform = 'translate(-50%, -50%)';
+  PLAYER_EL.style.transform = `translate(-50%, -50%) scale(${jumpScale})`;
   PLAYER_EL.style.animation = 'none';   // disable the bottom-anchored breathe while teleported
   PLAYER_EL.classList.add('arriving');
   setTimeout(() => spawnTeleportDust(targetX, targetY), 24);
