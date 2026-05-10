@@ -2519,6 +2519,7 @@
       <span class="stat-value combo zero" id="hudCombo">×1</span>
     </div>
     <button class="audio-toggle" id="btnAudio" title="Toggle Korean pronunciation audio">🔊</button>
+    <button class="audio-toggle" id="btnBgm" title="Toggle background music">🎵</button>
     <button class="menu-btn" id="btnMenu">⏸ Pause</button>
   </div>
 </header>
@@ -4722,7 +4723,165 @@ function applyTheme(theme) {
   const body = document.body;
   ALL_THEMES.forEach(t => body.classList.remove('theme-' + t));
   body.classList.add('theme-' + theme);
+  if (typeof Bgm !== 'undefined') Bgm.setTheme(theme);
 }
+
+// ─── BGM (per-theme ambient layer) ────────────────────────────────────────
+// Procedural so the game ships zero music files. Each theme gets a distinct
+// drone + arpeggio voiced from a Korean-pentatonic-ish scale, scheduled via
+// WebAudio. If a real loop drops at bgm/{theme}.mp3, that overrides the synth.
+const BGM_PRESETS = {
+  // root note Hz, scale degrees (semitone offsets), wave, tempo (bpm),
+  // padGain (continuous drone), arpGain (rhythmic notes), filterHz
+  village:     { root: 220.00, scale: [0, 3, 5, 7, 10], wave: 'sine',     bpm: 60, padGain: 0.05, arpGain: 0.04, filter: 1200 },
+  forest:      { root: 146.83, scale: [0, 3, 5, 7, 10], wave: 'triangle', bpm: 72, padGain: 0.04, arpGain: 0.05, filter:  900 },
+  study:       { root: 261.63, scale: [0, 2, 4, 7,  9], wave: 'sine',     bpm: 54, padGain: 0.04, arpGain: 0.03, filter: 1800 },
+  courtyard:   { root: 185.00, scale: [0, 3, 5, 7, 10], wave: 'triangle', bpm: 84, padGain: 0.05, arpGain: 0.04, filter: 1100 },
+  camp:        { root: 130.81, scale: [0, 2, 5, 7, 10], wave: 'sawtooth', bpm: 96, padGain: 0.04, arpGain: 0.05, filter:  700 },
+  battlefield: { root: 110.00, scale: [0, 2, 5, 7, 10], wave: 'sawtooth', bpm: 112, padGain: 0.05, arpGain: 0.06, filter:  600 },
+  palace:      { root: 146.83, scale: [0, 4, 7, 11, 14], wave: 'triangle', bpm: 78, padGain: 0.06, arpGain: 0.04, filter: 1600 }
+};
+
+const Bgm = (function () {
+  let currentTheme = null;
+  let masterGain = null;
+  let padOsc = null, padLfo = null, padFilter = null;
+  let arpTimer = null;
+  let arpStep = 0;
+  let muted = false;
+  let mp3El = null;
+
+  function ctx() { return ac(); }
+
+  function ensureMaster() {
+    if (masterGain) return masterGain;
+    const c = ctx();
+    masterGain = c.createGain();
+    masterGain.gain.value = 0;
+    masterGain.connect(c.destination);
+    return masterGain;
+  }
+
+  function tearDown() {
+    if (arpTimer) { clearInterval(arpTimer); arpTimer = null; }
+    [padOsc, padLfo].forEach(n => { if (n) try { n.stop(); n.disconnect(); } catch (_) {} });
+    [padFilter].forEach(n => { if (n) try { n.disconnect(); } catch (_) {} });
+    padOsc = padLfo = padFilter = null;
+    if (mp3El) { try { mp3El.pause(); mp3El.src = ''; } catch (_) {} mp3El = null; }
+  }
+
+  function noteHz(rootHz, semitone) {
+    return rootHz * Math.pow(2, semitone / 12);
+  }
+
+  function buildSynth(preset) {
+    const c = ctx();
+    const m = ensureMaster();
+    // Drone pad — root note with slow LFO on filter cutoff
+    padFilter = c.createBiquadFilter();
+    padFilter.type = 'lowpass';
+    padFilter.frequency.value = preset.filter;
+    padFilter.Q.value = 1.5;
+    padFilter.connect(m);
+
+    const padGain = c.createGain();
+    padGain.gain.value = preset.padGain;
+    padGain.connect(padFilter);
+
+    padOsc = c.createOscillator();
+    padOsc.type = preset.wave;
+    padOsc.frequency.value = preset.root;
+    padOsc.connect(padGain);
+    padOsc.start();
+
+    // LFO modulating filter cutoff for slow movement
+    padLfo = c.createOscillator();
+    padLfo.frequency.value = 0.12;
+    const lfoGain = c.createGain();
+    lfoGain.gain.value = preset.filter * 0.35;
+    padLfo.connect(lfoGain);
+    lfoGain.connect(padFilter.frequency);
+    padLfo.start();
+
+    // Arpeggio — random notes from the scale at the preset's tempo
+    const stepMs = 60000 / preset.bpm / 2; // 8th notes
+    arpStep = 0;
+    arpTimer = setInterval(() => {
+      if (muted) return;
+      // Sparse — only 50% of steps trigger so it stays ambient, not melodic
+      if (Math.random() > 0.5) { arpStep++; return; }
+      const degree = preset.scale[arpStep % preset.scale.length];
+      const oct = (arpStep % 8 < 4) ? 1 : 2; // alternate octaves for movement
+      const f = noteHz(preset.root, degree + oct * 12);
+      arpStep++;
+      const o = c.createOscillator();
+      o.type = preset.wave === 'sawtooth' ? 'triangle' : preset.wave;
+      o.frequency.value = f;
+      const g = c.createGain();
+      const t0 = c.currentTime;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(preset.arpGain, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
+      o.connect(g); g.connect(padFilter);
+      o.start(t0);
+      o.stop(t0 + 0.7);
+    }, stepMs);
+  }
+
+  function fadeMaster(targetGain, ms) {
+    const c = ctx();
+    const m = ensureMaster();
+    const t0 = c.currentTime;
+    m.gain.cancelScheduledValues(t0);
+    m.gain.setValueAtTime(m.gain.value || 0.0001, t0);
+    m.gain.linearRampToValueAtTime(targetGain, t0 + ms / 1000);
+  }
+
+  function tryMp3(theme) {
+    // If bgm/{theme}.mp3 exists, prefer it. HEAD probe via fetch; on 404, fall back to synth.
+    return fetch(`bgm/${theme}.mp3`, { method: 'HEAD' })
+      .then(r => r.ok)
+      .catch(() => false);
+  }
+
+  function setTheme(theme) {
+    if (theme === currentTheme) return;
+    const preset = BGM_PRESETS[theme];
+    if (!preset) return;
+    currentTheme = theme;
+    fadeMaster(0, 600);
+    setTimeout(() => {
+      tearDown();
+      tryMp3(theme).then(hasMp3 => {
+        if (hasMp3) {
+          mp3El = new Audio(`bgm/${theme}.mp3`);
+          mp3El.loop = true;
+          mp3El.volume = muted ? 0 : 0.35;
+          mp3El.play().catch(() => {});
+        } else {
+          buildSynth(preset);
+          fadeMaster(muted ? 0 : 1, 1200);
+        }
+      });
+    }, 650);
+  }
+
+  function setMuted(v) {
+    muted = !!v;
+    if (mp3El) mp3El.volume = muted ? 0 : 0.35;
+    fadeMaster(muted ? 0 : (currentTheme ? 1 : 0), 240);
+  }
+
+  function isMuted() { return muted; }
+
+  // Restore mute state from localStorage
+  try {
+    const stored = localStorage.getItem('hangul-type-bgm-muted');
+    if (stored === '1') muted = true;
+  } catch (_) {}
+
+  return { setTheme, setMuted, isMuted };
+})();
 
 // ─── Story acts (level-milestone narrative beats) ─────────────────────────
 const LEVEL_ACTS = {
@@ -6558,6 +6717,30 @@ document.getElementById('shareNative').addEventListener('click', async () => {
 document.getElementById('btnBack').addEventListener('click', () => location.href = 'index.html');
 document.getElementById('btnMenu').addEventListener('click', () => state.running && togglePause());
 document.getElementById('btnAudio').addEventListener('click', toggleAudio);
+(function wireBgmToggle() {
+  const btn = document.getElementById('btnBgm');
+  if (!btn) return;
+  function render() {
+    const on = !Bgm.isMuted();
+    btn.textContent = on ? '🎵' : '🎶';
+    btn.classList.toggle('muted', !on);
+    btn.title = on ? 'Background music: ON (click to mute)' : 'Background music: OFF (click to play)';
+  }
+  btn.addEventListener('click', () => {
+    const wasMuted = Bgm.isMuted();
+    Bgm.setMuted(!wasMuted);
+    try { localStorage.setItem('hangul-type-bgm-muted', wasMuted ? '0' : '1'); } catch (_) {}
+    // Kick the current theme on un-mute (in case nothing is playing yet)
+    if (wasMuted && document.body.className.match(/theme-(\w+)/)) {
+      const t = document.body.className.match(/theme-(\w+)/)[1];
+      // Force re-trigger by clearing the cached theme via setTheme(null)-like trick:
+      // easiest path is to re-call setTheme on a different value first, then back.
+      Bgm.setTheme('__reset__'); Bgm.setTheme(t);
+    }
+    render();
+  });
+  render();
+})();
 renderAudioToggle();
 
 document.getElementById('introHigh').textContent = getHighScore().toLocaleString();
