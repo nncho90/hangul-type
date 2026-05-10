@@ -23,9 +23,12 @@
 <meta name="twitter:title" content="한글 BATTLE — Type Hangeul">
 <meta name="twitter:description" content="A typing game that teaches the 한글 keyboard. Defeat 한글 demons by typing Korean words.">
 <meta name="twitter:image" content="https://typehangeul.com/og-image.png">
-<link rel="icon" href="/favicon.ico" sizes="48x48">
-<link rel="icon" type="image/png" sizes="1024x1024" href="/logo.png">
-<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Hangeul Battle","url":"https://typehangeul.com/game.html","applicationCategory":"GameApplication","genre":"Educational","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Browser typing game where players defeat Korean 한글 demons by typing the Korean word floating above each one.","image":"https://typehangeul.com/og-image.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"],"isPartOf":{"@type":"WebApplication","name":"Type Hangeul","url":"https://typehangeul.com/","image":"https://typehangeul.com/og-image.png","logo":"https://typehangeul.com/logo.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"]},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
@@ -603,12 +606,16 @@
   /* Walking-in-place — Pokémon-style. The world scrolls; the character is
      animated to look like they're stepping forward. 4-step cycle so the legs
      "alternate" via the rocking motion. */
+  /* Vertical-only breathe. The previous version added a -1.5deg/+1.5deg rotate
+     that snapped back to its starting angle when the animation restarted on
+     teleport-home, which read as a "spin" on return. Lateral sway via translateX
+     is fine because the start and end x match. */
   @keyframes breathe {
-    0%   { transform: translateX(-50%) translateY(0)    rotate(-1.5deg); }
-    25%  { transform: translateX(-49%) translateY(-3px) rotate(0deg); }
-    50%  { transform: translateX(-50%) translateY(0)    rotate(1.5deg); }
-    75%  { transform: translateX(-51%) translateY(-3px) rotate(0deg); }
-    100% { transform: translateX(-50%) translateY(0)    rotate(-1.5deg); }
+    0%   { transform: translateX(-50%) translateY(0); }
+    25%  { transform: translateX(-49%) translateY(-3px); }
+    50%  { transform: translateX(-50%) translateY(0); }
+    75%  { transform: translateX(-51%) translateY(-3px); }
+    100% { transform: translateX(-50%) translateY(0); }
   }
   .player.hit { animation: shake 0.4s; filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.6)); }
   @keyframes shake {
@@ -1097,6 +1104,12 @@
     text-align: center;
     max-width: 520px;
     width: 100%;
+    /* Cap to viewport so the card never overflows; scroll inside instead.
+       Uses dvh so mobile browsers (with dynamic chrome) don't push it off. */
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     box-shadow: 4px 4px 0 rgba(15, 23, 42, 0.35);
     animation: modal-rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
@@ -1726,6 +1739,10 @@
   .profile-modal-card {
     width: 100%;
     max-width: 460px;
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--l1);
     border: 1px solid var(--bd);
     border-radius: 16px;
@@ -2423,14 +2440,18 @@
     user-select: none;
     -webkit-user-drag: none;
   }
-  /* Player breathes — gentle vertical lift + scale, slight tilt for character */
+  /* Player breathes — gentle vertical lift + scale. No rotate: when the player
+     teleports home, the inline `animation: none` is cleared and this keyframe
+     restarts from 0%; any rotate component snaps back to its starting angle on
+     that first frame, which read as a "spin" on return. Vertical-only avoids
+     that snap entirely while keeping the idle alive. */
   .player .sprite-img {
     animation: sprite-breathe-player 2.4s ease-in-out infinite;
     transform-origin: 50% 80%;
   }
   @keyframes sprite-breathe-player {
-    0%, 100% { transform: translateY(0)    scale(1)    rotate(-1deg); }
-    50%      { transform: translateY(-4px) scale(1.04) rotate(1deg); }
+    0%, 100% { transform: translateY(0)    scale(1); }
+    50%      { transform: translateY(-4px) scale(1.04); }
   }
   /* Monsters breathe — different timing/amplitude per tier so a screen full
      of demons doesn't look mechanically synchronized. Animation-delay is
@@ -2463,8 +2484,17 @@
   .monster.tier-3 .sprite-img { animation-duration: var(--tier3-anim, 1.25s); }
   .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 1.45s); }
   .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.10s); }
-  .monster.boss .sprite-img {
+  .monster.boss .sprite-img:not(.sprite-step) {
     animation: sprite-walk-boss 1.6s ease-in-out infinite;
+    transform-origin: 50% 95%;
+  }
+  /* Boss step image needs BOTH the boss walk transform AND the step opacity
+     flicker. Without this, .monster.boss .sprite-img above wins by specificity
+     and strips enemy-walk-step from the step image — both frames stay visible
+     simultaneously and the boss looks "doubled". */
+  .monster.boss .sprite .sprite-step {
+    animation: sprite-walk-boss 1.6s ease-in-out infinite,
+               enemy-walk-step 0.7s steps(2, jump-none) infinite;
     transform-origin: 50% 95%;
   }
   /* Boss step: heavier, slower, bigger sway. The +/-2deg roll keeps presence
@@ -2957,7 +2987,10 @@ function buildSyllableCanvas(syllableChar, fontSizePx) {
       const bucket = step.order === 1 ? 'initial' : step.order <= mKsEnd ? 'medial' : 'final';
       namedGroups[bucket].push(...stepPixels[i]);
     });
-    return { canvas, ctx, groups: { initial: new Uint32Array(namedGroups.initial), medial: new Uint32Array(namedGroups.medial), final: new Uint32Array(namedGroups.final) }, w: wCss, h: hCss };
+    // hasFinal must round-trip — paintSyllable destructures it and gates the
+    // final-consonant paint pass; missing it causes jongseong (e.g. ㄹ in 물)
+    // to render invisibly when a tuner-guide path is taken.
+    return { canvas, ctx, groups: { initial: new Uint32Array(namedGroups.initial), medial: new Uint32Array(namedGroups.medial), final: new Uint32Array(namedGroups.final) }, w: wCss, h: hCss, hasFinal };
   }
 
   const groups = { initial: [], medial: [], final: [] };
@@ -4272,17 +4305,43 @@ function renderProfilePreview() {
   countryEl.innerHTML = opts;
 }
 
-function openProfileModal() {
+function isProfileUnset() {
+  const p = getProgress();
+  const name = p && p.profile && p.profile.name;
+  return !name || name === 'Player';
+}
+
+function openProfileModal(opts) {
+  // Called both directly and as an event listener — strip the Event arg.
+  if (!opts || opts instanceof Event) opts = {};
+  const requireSetup = !!opts.requireSetup;
   progress = getProgress();
   const modal = document.getElementById('profileModal');
   if (!modal) return;
   const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
-  const name = (progress.profile && progress.profile.name) || 'Player';
+  const savedName = (progress.profile && progress.profile.name) || 'Player';
   const fandom = (progress.profile && progress.profile.fandom) || '';
   const nameInput = document.getElementById('profileNameInput');
   const countrySelect = document.getElementById('profileCountrySelect');
   const fandomSelect = document.getElementById('profileFandomSelect');
-  nameInput.value = name;
+  const titleEl = modal.querySelector('h3');
+  const descEl = modal.querySelector('p');
+  const cancelBtn = document.getElementById('profileCancel');
+  // First-time prompt: clear the default 'Player' so they have to type
+  // something, swap copy, and hide Cancel so they can't dismiss.
+  if (requireSetup) {
+    nameInput.value = '';
+    nameInput.placeholder = 'Type your display name…';
+    if (titleEl) titleEl.textContent = 'Pick a display name';
+    if (descEl) descEl.textContent = 'This shows up on the leaderboard. You can change it later via Edit profile.';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  } else {
+    nameInput.value = savedName;
+    nameInput.placeholder = '';
+    if (titleEl) titleEl.textContent = 'Your profile';
+    if (descEl) descEl.textContent = 'Pick a display name and default country. This is saved in your browser and reused the next time you play.';
+    if (cancelBtn) cancelBtn.style.display = '';
+  }
   countrySelect.innerHTML = Object.entries(COUNTRY_NAMES)
     .sort((a, b) => a[1].localeCompare(b[1]))
     .map(([code, label]) => `<option value="${code}" ${code === cc ? 'selected' : ''}>${flagEmoji(code)} ${label}</option>`)
@@ -4295,10 +4354,23 @@ function openProfileModal() {
   }
   modal.style.display = 'flex';
   const close = () => { modal.style.display = 'none'; };
-  const onBackdrop = (e) => { if (e.target === modal) close(); };
+  // In requireSetup mode, ignore backdrop clicks so the user must save.
+  const onBackdrop = (e) => { if (!requireSetup && e.target === modal) close(); };
   const onCancel = () => close();
   const onSave = () => {
-    const newName = (nameInput.value || 'Player').trim().slice(0, 24) || 'Player';
+    let newName = (nameInput.value || '').trim().slice(0, 24);
+    if (requireSetup && (!newName || newName.toLowerCase() === 'player')) {
+      // Reject the default; nudge the user to pick something.
+      nameInput.focus();
+      nameInput.style.borderColor = 'var(--red)';
+      nameInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.18)';
+      setTimeout(() => {
+        nameInput.style.borderColor = '';
+        nameInput.style.boxShadow = '';
+      }, 1200);
+      return;
+    }
+    if (!newName) newName = 'Player';
     const newCC = countrySelect.value || detectCountry();
     const newFandom = fandomSelect ? (fandomSelect.value || '') : '';
     const safeFandom = FANDOM_BY_ID[newFandom] ? newFandom : '';
@@ -4314,6 +4386,7 @@ function openProfileModal() {
       });
     });
     close();
+    if (typeof opts.afterSave === 'function') opts.afterSave();
   };
   modal.onclick = onBackdrop;
   document.getElementById('profileCancel').onclick = onCancel;
@@ -5694,7 +5767,10 @@ function playBossCutscene(profile) {
   cs.className = 'boss-cutscene';
   // BOSS_PROFILES is hardcoded today, but escape every interpolation so a
   // future migration of profile data to a feed/CMS doesn't open an XSS sink.
-  const spriteFile = String(profile.sprite || '').replace(/[^a-z0-9_]/gi, '');
+  // Match spriteHtml's allowlist (path-style names like "enemies/08-hangeulwang"
+  // need '/' and '-' to survive sanitizing). Block traversal attempts.
+  let spriteFile = String(profile.sprite || '').replace(/[^a-z0-9_/\-]/gi, '');
+  if (spriteFile.includes('..')) spriteFile = '';
   const emoji = escapeHtml(profile.emoji);
   const name = escapeHtml(profile.name);
   const subtitle = escapeHtml(profile.subtitle);
@@ -6218,6 +6294,18 @@ function beginGameAfterStory() {
 }
 
 function startGame() {
+  // First-play gate: require a real display name before the player ever
+  // hits the leaderboard. Default 'Player' was clogging it up.
+  if (isProfileUnset()) {
+    openProfileModal({
+      requireSetup: true,
+      afterSave: () => {
+        document.getElementById('introModal').style.display = 'none';
+        showStory();
+      }
+    });
+    return;
+  }
   // Always play the intro story so newcomers and returners share the same
   // narrative ramp. The Esc / Skip button on the story dialog drops straight
   // into the game for players who don't want to read it.
