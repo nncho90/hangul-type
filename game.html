@@ -631,9 +631,9 @@
   }
   .player.levelup { animation: levelup 1.1s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes levelup {
-    0%   { transform: translateX(-50%) scale(1); }
-    50%  { transform: translateX(-50%) scale(1.6) rotate(360deg); filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.6)); }
-    100% { transform: translateX(-50%) scale(1); }
+    0%   { transform: translateX(-50%) scale(1); filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
+    50%  { transform: translateX(-50%) scale(1.6); filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.6)); }
+    100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
   }
 
   /* Monsters */
@@ -703,9 +703,12 @@
     0%, 49.9% { opacity: 0; }
     50%, 100% { opacity: 1; }
   }
+  /* Monster idle bob — used to add a ±2° tilt that read as the monster
+     "spinning" when paired with the explode-on-death rotation. Now pure
+     vertical bob, matching the boss bobbob. */
   @keyframes bob {
-    0%, 100% { transform: translateY(0) rotate(-2deg); }
-    50%      { transform: translateY(-5px) rotate(2deg); }
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
   }
   /* Tier-progressive size + aura: lower tiers feel light and small, higher
      tiers feel heavy and dangerous via drop-shadow strength + colored aura.
@@ -768,11 +771,15 @@
     25%      { transform: translateX(-4px); }
     75%      { transform: translateX(4px); }
   }
-  .monster.dying .sprite { animation: explode 0.55s ease-out forwards; }
-  @keyframes explode {
-    0%   { transform: scale(1) rotate(0); opacity: 1; }
-    50%  { transform: scale(2.2) rotate(120deg); opacity: 1; filter: brightness(1.3) drop-shadow(0 0 40px rgba(245, 158, 11, 0.9)); }
-    100% { transform: scale(0) rotate(540deg); opacity: 0; }
+  .monster.dying .sprite { animation: monster-defeat 0.55s ease-out forwards; }
+  /* Defeat sequence: NO rotation. The killMonster JS swaps the sprite img to
+     the hit-2 (pain) frame at the moment of death, then this keyframe fades
+     it out with a brief brightness pulse so the monster visibly takes the
+     last hit and dissolves instead of spinning offscreen. */
+  @keyframes monster-defeat {
+    0%   { transform: scale(1);    opacity: 1;   filter: brightness(1.0) drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
+    35%  { transform: scale(1.08); opacity: 1;   filter: brightness(1.4) drop-shadow(0 0 18px rgba(245, 158, 11, 0.85)); }
+    100% { transform: scale(0.6);  opacity: 0;   filter: brightness(1.0) drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
   }
   .monster.teleport-flash { animation: tp-flash 0.32s ease-out; }
   @keyframes tp-flash {
@@ -4678,6 +4685,17 @@ function buildMonsterEl(m) {
 }
 
 function killMonster(m, byPlayer) {
+  // Swap to the pain frame so the monster visibly registers the last hit
+  // before the defeat fade. Both layers (idle + step) point at hit-2 so the
+  // CSS opacity flicker on .sprite-step doesn't reveal a walking pose
+  // mid-fade. Fall back silently if the sprite hasn't been built yet.
+  if (m.el && m.spriteFile) {
+    const base = `sprites/${m.spriteFile}`;
+    const idleImg = m.el.querySelector('img.sprite-img:not(.sprite-step)');
+    const stepImg = m.el.querySelector('img.sprite-img.sprite-step');
+    if (idleImg) idleImg.setAttribute('src', `${base}-hit-2.png`);
+    if (stepImg) stepImg.setAttribute('src', `${base}-hit-2.png`);
+  }
   m.el.classList.add('dying');
   particleBurst(m.x, m.y + 30, m.tier === 'boss' ? 30 : 10);
   if (byPlayer) {
