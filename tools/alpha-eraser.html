@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Sprite Alpha Eraser</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0f1115; --panel:#171a21; --panel2:#1f242d; --bd:#2b313c; --bdhi:#3a4150;
+    --tx:#e6e9ef; --tmd:#9aa3b2; --tlo:#5f6878; --accent:#5b9dff; --accent2:#4ade80;
+    --warn:#fbbf24; --bad:#f87171;
+  }
+  html,body { height:100%; }
+  body { background:var(--bg); color:var(--tx); font:13px/1.4 'Inter',system-ui,sans-serif; display:flex; overflow:hidden; }
+  /* ---- sidebar ---- */
+  #side { width:248px; flex:0 0 248px; background:var(--panel); border-right:1px solid var(--bd); display:flex; flex-direction:column; }
+  #side h1 { font-size:13px; font-weight:700; padding:12px 14px; letter-spacing:.3px; border-bottom:1px solid var(--bd); }
+  #side .filters { padding:10px 12px; display:flex; flex-direction:column; gap:8px; border-bottom:1px solid var(--bd); }
+  #side select, #side input[type=text] { width:100%; background:var(--panel2); color:var(--tx); border:1px solid var(--bd); border-radius:6px; padding:6px 8px; font:inherit; }
+  #list { flex:1; overflow:auto; padding:6px; }
+  #list .item { padding:6px 8px; border-radius:5px; cursor:pointer; font-size:11.5px; color:var(--tmd); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #list .item:hover { background:var(--panel2); color:var(--tx); }
+  #list .item.active { background:var(--accent); color:#08203f; font-weight:600; }
+  #list .item.dirty::after { content:" ●"; color:var(--warn); }
+  #list .group { font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--tlo); padding:10px 8px 4px; }
+  /* ---- main ---- */
+  #main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  #toolbar { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--bd); flex-wrap:wrap; }
+  #toolbar .grp { display:flex; align-items:center; gap:4px; padding:2px 8px; background:var(--panel2); border:1px solid var(--bd); border-radius:7px; }
+  #toolbar .grp.lbl::before { content:attr(data-l); font-size:9.5px; text-transform:uppercase; letter-spacing:.5px; color:var(--tlo); margin-right:4px; }
+  button { background:var(--panel2); color:var(--tx); border:1px solid var(--bd); border-radius:6px; padding:5px 9px; font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--bdhi); }
+  button.tool.on { background:var(--accent); color:#08203f; border-color:var(--accent); font-weight:600; }
+  button.primary { background:var(--accent2); color:#06250f; border-color:var(--accent2); font-weight:600; }
+  button:disabled { opacity:.4; cursor:default; }
+  input[type=range] { width:120px; }
+  label.inline { display:flex; align-items:center; gap:5px; color:var(--tmd); font-size:11.5px; user-select:none; }
+  #stage { flex:1; position:relative; overflow:hidden; background:
+      repeating-conic-gradient(#22262e 0 25%, #1a1d24 0 50%) 0 0/22px 22px; }
+  #wrap { position:absolute; left:0; top:0; transform-origin:0 0; }
+  #wrap canvas { position:absolute; left:0; top:0; image-rendering:pixelated; }
+  #checker { background:repeating-conic-gradient(#3a3f4a 0 25%, #2c313b 0 50%) 0 0/16px 16px; }
+  #cursorRing { position:absolute; border:1px solid #fff; border-radius:50%; pointer-events:none; mix-blend-mode:difference; display:none; }
+  #statusbar { display:flex; align-items:center; gap:16px; padding:6px 12px; background:var(--panel); border-top:1px solid var(--bd); font-size:11.5px; color:var(--tmd); }
+  #statusbar .path { color:var(--tx); font-weight:600; }
+  #statusbar .px { font-family:'JetBrains Mono',ui-monospace,monospace; }
+  #toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--bdhi); color:var(--tx); padding:9px 16px; border-radius:8px; font-size:12.5px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:9; }
+  #toast.show { opacity:1; }
+  #toast.ok { border-color:var(--accent2); }
+  #toast.err { border-color:var(--bad); }
+  .hint { font-size:11px; color:var(--tlo); padding:0 12px 8px; }
+  kbd { background:var(--panel2); border:1px solid var(--bd); border-bottom-width:2px; border-radius:4px; padding:0 4px; font-size:10.5px; font-family:inherit; }
+</style>
+</head>
+<body>
+  <div id="side">
+    <h1>🩹 Sprite Alpha Eraser</h1>
+    <div class="filters">
+      <select id="catSel">
+        <option value="player">player</option>
+        <option value="enemies">enemies</option>
+        <option value="vfx">vfx</option>
+        <option value="backgrounds">backgrounds</option>
+        <option value="__all">all</option>
+      </select>
+      <input id="search" type="text" placeholder="filter by name…" />
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <div id="main">
+    <div id="toolbar">
+      <div class="grp lbl" data-l="tool">
+        <button class="tool on" data-tool="wand" title="Magic wand — click to erase the connected region of similar colour (1)">Wand</button>
+        <button class="tool" data-tool="wandg" title="Global colour key — erase that colour everywhere in the image (2)">Key</button>
+        <button class="tool" data-tool="erase" title="Erase brush — drag to rub out pixels (3)">Erase</button>
+        <button class="tool" data-tool="restore" title="Restore brush — drag to bring pixels back from the original (4)">Restore</button>
+      </div>
+      <div class="grp lbl" data-l="tolerance"><input id="tol" type="range" min="0" max="120" value="32" /><span id="tolN" class="px">32</span></div>
+      <div class="grp lbl" data-l="brush"><input id="brush" type="range" min="1" max="60" value="14" /><span id="brushN" class="px">14</span></div>
+      <div class="grp">
+        <button id="undo" title="Undo (z)">↶</button>
+        <button id="redo" title="Redo (Z)">↷</button>
+        <button id="reset" title="Reset to the original file">Reset</button>
+      </div>
+      <div class="grp lbl" data-l="auto">
+        <button id="autoEdge" title="Flood-fill from the canvas border through transparent + pale pixels (kills a surrounding white box). Stops at the figure.">Clear edge bg</button>
+        <button id="defringe" title="Replace the RGB of partial-alpha pixels with the average of their opaque neighbours — kills white halos at the new edge.">Clean edges</button>
+      </div>
+      <label class="inline"><input type="checkbox" id="feather" /> feather 1px</label>
+      <div class="grp" style="margin-left:auto">
+        <button id="zoomOut">−</button><span id="zoomN" class="px">100%</span><button id="zoomIn">+</button><button id="zoomFit" title="Fit to view">Fit</button>
+      </div>
+      <button id="save" class="primary" disabled title="Save (s)">Save</button>
+    </div>
+    <div class="hint">Pick a sprite on the left. <kbd>Wand</kbd> click the white blob (between the legs, the box around it) to erase it. Mouse-wheel to zoom, <kbd>space</kbd>+drag (or middle-drag) to pan. <kbd>z</kbd>/<kbd>Z</kbd> undo/redo, <kbd>[</kbd>/<kbd>]</kbd> brush size, <kbd>s</kbd> save.</div>
+    <div id="stage">
+      <div id="wrap">
+        <canvas id="checker"></canvas>
+        <canvas id="cv"></canvas>
+      </div>
+      <div id="cursorRing"></div>
+    </div>
+    <div id="statusbar">
+      <span><span class="path" id="sbPath">— no sprite —</span> <span id="sbSize" class="px"></span></span>
+      <span id="sbPx" class="px"></span>
+      <span id="sbDirty"></span>
+      <span style="margin-left:auto" id="sbSaveMode" class="px"></span>
+    </div>
+  </div>
+  <div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const listEl=$('#list'), cv=$('#cv'), ck=$('#checker'), wrap=$('#wrap'), stage=$('#stage'), ring=$('#cursorRing');
+const ctx = cv.getContext('2d', { willReadFrequently:true });
+let state = {
+  path:null, w:0, h:0,
+  img:null,           // ImageData currently shown (mutable)
+  original:null,      // Uint8ClampedArray copy of the pristine file pixels
+  history:[], future:[],
+  tool:'wand', tol:32, brush:14, feather:false,
+  zoom:1, panX:0, panY:0,
+  dirty:false, files:[], saveMode:'?'
+};
+
+// ---------- toast ----------
+let toastT;
+function toast(msg, kind='') { const t=$('#toast'); t.textContent=msg; t.className='show '+kind; clearTimeout(toastT); toastT=setTimeout(()=>t.className=t.className.replace('show',''),2600); }
+
+// ---------- load sprite list ----------
+async function loadList() {
+  let idx;
+  try { idx = await (await fetch('/sprites/index.json',{cache:'no-store'})).json(); }
+  catch(e){ try { idx = await (await fetch('../sprites/index.json',{cache:'no-store'})).json(); } catch(e2){ toast('could not load sprites/index.json','err'); return; } }
+  const cat = $('#catSel').value, q = $('#search').value.trim().toLowerCase();
+  const cats = cat==='__all' ? Object.keys(idx) : [cat];
+  let html='';
+  for (const c of cats) {
+    const files = (idx[c]||[]).filter(f => !q || f.toLowerCase().includes(q));
+    if (!files.length) continue;
+    if (cats.length>1) html += `<div class="group">${c} · ${files.length}</div>`;
+    for (const f of files) {
+      const rel = `sprites/${c}/${f}`;
+      const cls = (rel===state.path?'active ':'') + (dirtySet.has(rel)?'dirty ':'');
+      html += `<div class="item ${cls}" data-path="${rel}">${f}</div>`;
+    }
+  }
+  listEl.innerHTML = html || '<div class="group">no matches</div>';
+}
+const dirtySet = new Set();
+$('#catSel').onchange = loadList;
+$('#search').oninput = loadList;
+listEl.onclick = e => { const it=e.target.closest('.item'); if(it) openSprite(it.dataset.path); };
+
+// ---------- open a sprite ----------
+async function openSprite(path) {
+  const im = new Image(); im.crossOrigin='anonymous';
+  im.onload = () => {
+    state.path=path; state.w=im.naturalWidth; state.h=im.naturalHeight;
+    cv.width=ck.width=state.w; cv.height=ck.height=state.h;
+    ck.getContext('2d').clearRect(0,0,state.w,state.h);   // checker shows through via CSS bg of #checker? -> draw nothing, css handles it
+    ctx.clearRect(0,0,state.w,state.h); ctx.drawImage(im,0,0);
+    state.img = ctx.getImageData(0,0,state.w,state.h);
+    state.original = new Uint8ClampedArray(state.img.data);
+    state.history=[]; state.future=[]; state.dirty=false;
+    fitView();
+    refreshUI(); loadList();
+    $('#sbPath').textContent=path; $('#sbSize').textContent=`${state.w}×${state.h}`;
+  };
+  im.onerror = ()=>toast('failed to load '+path,'err');
+  im.src = '/'+path+'?t='+Date.now();
+}
+
+// ---------- viewport ----------
+function fitView() {
+  const pad=40, sw=stage.clientWidth-pad, sh=stage.clientHeight-pad;
+  state.zoom = Math.max(0.25, Math.min(8, Math.min(sw/state.w, sh/state.h)));
+  state.panX = (stage.clientWidth - state.w*state.zoom)/2;
+  state.panY = (stage.clientHeight - state.h*state.zoom)/2;
+  applyView();
+}
+function applyView() {
+  wrap.style.transform = `translate(${state.panX}px,${state.panY}px) scale(${state.zoom})`;
+  $('#zoomN').textContent = Math.round(state.zoom*100)+'%';
+}
+$('#zoomIn').onclick =()=>{ zoomAt(stage.clientWidth/2,stage.clientHeight/2,1.25); };
+$('#zoomOut').onclick=()=>{ zoomAt(stage.clientWidth/2,stage.clientHeight/2,0.8); };
+$('#zoomFit').onclick=fitView;
+function zoomAt(cx,cy,f) {
+  const ix=(cx-state.panX)/state.zoom, iy=(cy-state.panY)/state.zoom;
+  state.zoom = Math.max(0.1, Math.min(24, state.zoom*f));
+  state.panX = cx - ix*state.zoom; state.panY = cy - iy*state.zoom;
+  applyView();
+}
+stage.addEventListener('wheel', e=>{ e.preventDefault(); zoomAt(e.offsetX,e.offsetY, e.deltaY<0?1.12:0.89); }, {passive:false});
+// panning
+let panning=false, spaceDown=false, lastX,lastY;
+window.addEventListener('keydown',e=>{ if(e.code==='Space'){ spaceDown=true; stage.style.cursor='grab'; } });
+window.addEventListener('keyup',  e=>{ if(e.code==='Space'){ spaceDown=false; stage.style.cursor=''; } });
+stage.addEventListener('mousedown', e=>{
+  if (e.button===1 || (spaceDown && e.button===0)) { panning=true; lastX=e.clientX; lastY=e.clientY; stage.style.cursor='grabbing'; e.preventDefault(); return; }
+});
+window.addEventListener('mousemove', e=>{
+  if (panning) { state.panX+=e.clientX-lastX; state.panY+=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; applyView(); }
+});
+window.addEventListener('mouseup', ()=>{ if(panning){ panning=false; stage.style.cursor=spaceDown?'grab':''; } });
+
+// ---------- coords ----------
+function evToPixel(e) {
+  const r = wrap.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left)/state.zoom);
+  const y = Math.floor((e.clientY - r.top)/state.zoom);
+  return [x,y];
+}
+
+// ---------- history ----------
+function pushHistory() { state.history.push(new Uint8ClampedArray(state.img.data)); if(state.history.length>40) state.history.shift(); state.future=[]; }
+function undo(){ if(!state.history.length) return; state.future.push(new Uint8ClampedArray(state.img.data)); state.img.data.set(state.history.pop()); commit(false); }
+function redo(){ if(!state.future.length) return; state.history.push(new Uint8ClampedArray(state.img.data)); state.img.data.set(state.future.pop()); commit(false); }
+function commit(markDirty=true) { ctx.putImageData(state.img,0,0); if(markDirty){ state.dirty=true; dirtySet.add(state.path);} refreshUI(); }
+
+// ---------- editing ops ----------
+function idxAt(x,y){ return (y*state.w+x)*4; }
+function colorDist(d,i,r,g,b){ const dr=d[i]-r,dg=d[i+1]-g,db=d[i+2]-b; return Math.max(Math.abs(dr),Math.abs(dg),Math.abs(db)); }
+
+function magicWand(sx,sy,global) {
+  if (sx<0||sy<0||sx>=state.w||sy>=state.h) return;
+  const d=state.img.data, i0=idxAt(sx,sy);
+  if (d[i0+3]===0) { toast('that pixel is already transparent'); return; }
+  const r=d[i0],g=d[i0+1],b=d[i0+2], tol=state.tol;
+  pushHistory();
+  if (global) {
+    for (let i=0;i<d.length;i+=4){ if(d[i+3]>0 && colorDist(d,i,r,g,b)<=tol) d[i+3]=0; }
+  } else {
+    const W=state.w,H=state.h, seen=new Uint8Array(W*H), st=[sx+sy*W]; seen[sx+sy*W]=1;
+    while(st.length){
+      const p=st.pop(), px=p%W, py=(p/W)|0, i=p*4;
+      if (d[i+3]===0 || colorDist(d,i,r,g,b)>tol) continue;
+      d[i+3]=0;
+      if(px+1<W && !seen[p+1]){seen[p+1]=1; st.push(p+1);}
+      if(px-1>=0 && !seen[p-1]){seen[p-1]=1; st.push(p-1);}
+      if(py+1<H && !seen[p+W]){seen[p+W]=1; st.push(p+W);}
+      if(py-1>=0 && !seen[p-W]){seen[p-W]=1; st.push(p-W);}
+    }
+  }
+  if (state.feather) feather1();
+  commit();
+}
+
+function paintBrush(cx,cy,restore) {
+  const d=state.img.data, orig=state.original, rad=state.brush/2, r2=rad*rad;
+  const x0=Math.max(0,Math.floor(cx-rad)), x1=Math.min(state.w-1,Math.ceil(cx+rad));
+  const y0=Math.max(0,Math.floor(cy-rad)), y1=Math.min(state.h-1,Math.ceil(cy+rad));
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+    const dx=x-cx, dy=y-cy; if(dx*dx+dy*dy>r2) continue;
+    const i=idxAt(x,y);
+    if(restore){ d[i]=orig[i]; d[i+1]=orig[i+1]; d[i+2]=orig[i+2]; d[i+3]=orig[i+3]; }
+    else d[i+3]=0;
+  }
+}
+
+function feather1() {
+  // any opaque pixel touching a transparent one -> alpha 128 (one-px soft rim)
+  const d=state.img.data, W=state.w, H=state.h, src=new Uint8ClampedArray(d);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const i=(y*W+x)*4; if(src[i+3]<255) continue;
+    let edge=false;
+    if(x>0&&src[i-4+3]===0)edge=true; else if(x<W-1&&src[i+4+3]===0)edge=true;
+    else if(y>0&&src[i-W*4+3]===0)edge=true; else if(y<H-1&&src[i+W*4+3]===0)edge=true;
+    if(edge) d[i+3]=140;
+  }
+}
+
+function defringe() {
+  pushHistory();
+  const d=state.img.data, W=state.w, H=state.h, src=new Uint8ClampedArray(d);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const i=(y*W+x)*4; const a=src[i+3]; if(a===0||a===255) continue;
+    let R=0,G=0,B=0,n=0;
+    for(let dy=-2;dy<=2;dy++) for(let dx=-2;dx<=2;dx++){ const nx=x+dx,ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H)continue; const j=(ny*W+nx)*4; if(src[j+3]===255){R+=src[j];G+=src[j+1];B+=src[j+2];n++;} }
+    if(n){ d[i]=R/n|0; d[i+1]=G/n|0; d[i+2]=B/n|0; }
+  }
+  commit();
+}
+
+function clearEdgeBg() {
+  // flood from the canvas border through transparent + pale (low-sat bright) pixels; clear pale ones reached.
+  pushHistory();
+  const d=state.img.data, W=state.w, H=state.h, N=W*H, reached=new Uint8Array(N), st=[];
+  const pale = i => { const r=d[i],g=d[i+1],b=d[i+2]; return Math.min(r,g,b)>150 && (Math.max(r,g,b)-Math.min(r,g,b))<46; };
+  const pass = i => d[i+3]===0 || pale(i) || (d[i+3]<250 && (0.299*d[i]+0.587*d[i+1]+0.114*d[i+2])>205);
+  for(let x=0;x<W;x++){ for(const y of [0,H-1]){ const p=x+y*W; if(!reached[p]&&pass(p*4)){reached[p]=1;st.push(p);} } }
+  for(let y=0;y<H;y++){ for(const x of [0,W-1]){ const p=x+y*W; if(!reached[p]&&pass(p*4)){reached[p]=1;st.push(p);} } }
+  while(st.length){ const p=st.pop(), px=p%W, py=(p/W)|0;
+    const tryp=q=>{ if(!reached[q]&&pass(q*4)){reached[q]=1;st.push(q);} };
+    if(px+1<W)tryp(p+1); if(px-1>=0)tryp(p-1); if(py+1<H)tryp(p+W); if(py-1>=0)tryp(p-W);
+  }
+  let cleared=0;
+  for(let p=0;p<N;p++){ if(!reached[p])continue; const i=p*4; if(d[i+3]===0)continue; if(pale(i)){ d[i+3]=0; cleared++; } }
+  if(state.feather) feather1();
+  commit();
+  toast(`cleared ${cleared} edge px`);
+}
+
+// ---------- canvas pointer ----------
+let drawing=false;
+cv.addEventListener('mousedown', e=>{
+  if (panning || spaceDown || e.button!==0) return;
+  const [x,y]=evToPixel(e);
+  if (state.tool==='wand')  return magicWand(x,y,false);
+  if (state.tool==='wandg') return magicWand(x,y,true);
+  drawing=true; pushHistory(); paintBrush(x,y, state.tool==='restore'); commit();
+});
+window.addEventListener('mousemove', e=>{
+  // cursor ring for brushes
+  const overCv = e.target===cv;
+  if ((state.tool==='erase'||state.tool==='restore') && overCv) {
+    const r=wrap.getBoundingClientRect(); const sz=state.brush*state.zoom;
+    ring.style.display='block'; ring.style.width=ring.style.height=sz+'px';
+    ring.style.left=(e.clientX-stage.getBoundingClientRect().left-sz/2)+'px';
+    ring.style.top=(e.clientY-stage.getBoundingClientRect().top-sz/2)+'px';
+  } else ring.style.display='none';
+  if (overCv) { const [x,y]=evToPixel(e); if(x>=0&&y>=0&&x<state.w&&y<state.h){ const i=idxAt(x,y),d=state.img?state.img.data:null; if(d) $('#sbPx').textContent=`(${x},${y})  rgba(${d[i]},${d[i+1]},${d[i+2]},${d[i+3]})`; } }
+  if (drawing) { const [x,y]=evToPixel(e); paintBrush(x,y, state.tool==='restore'); ctx.putImageData(state.img,0,0); }
+});
+window.addEventListener('mouseup', ()=>{ if(drawing){ drawing=false; if(state.feather) feather1(); commit(); } });
+
+// ---------- toolbar wiring ----------
+document.querySelectorAll('button.tool').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('button.tool').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); state.tool=b.dataset.tool;
+});
+$('#tol').oninput   = e=>{ state.tol=+e.target.value; $('#tolN').textContent=state.tol; };
+$('#brush').oninput = e=>{ state.brush=+e.target.value; $('#brushN').textContent=state.brush; };
+$('#feather').onchange = e=>state.feather=e.target.checked;
+$('#undo').onclick=undo; $('#redo').onclick=redo;
+$('#reset').onclick=()=>{ if(!state.original) return; if(!confirm('Discard all edits to this sprite?'))return; pushHistory(); state.img.data.set(state.original); commit(false); state.dirty=false; dirtySet.delete(state.path); refreshUI(); loadList(); };
+$('#autoEdge').onclick=clearEdgeBg;
+$('#defringe').onclick=defringe;
+$('#save').onclick=save;
+
+function refreshUI() {
+  $('#undo').disabled=!state.history.length; $('#redo').disabled=!state.future.length;
+  $('#save').disabled=!state.path;
+  $('#sbDirty').textContent = state.dirty ? '● unsaved' : '';
+  $('#sbDirty').style.color = state.dirty ? 'var(--warn)' : '';
+}
+
+// ---------- save ----------
+async function save() {
+  if (!state.path) return;
+  ctx.putImageData(state.img,0,0);
+  const dataUrl = cv.toDataURL('image/png');
+  // try server first
+  let savedViaServer=false;
+  try {
+    const res = await fetch('/api/save-sprite', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ path: state.path, data: dataUrl }) });
+    if (res.ok) { const j=await res.json(); if(j.ok){ savedViaServer=true; toast('saved → '+j.wrote+(j.backup?'  (backup: '+j.backup+')':''),'ok'); } else throw new Error(j.error||'server refused'); }
+    else throw new Error('no save endpoint (status '+res.status+')');
+  } catch(e) {
+    // fallback: download
+    const a=document.createElement('a'); a.href=dataUrl; a.download=state.path.split('/').pop(); document.body.appendChild(a); a.click(); a.remove();
+    toast('downloaded '+a.download+' — move it into '+state.path.replace(/\/[^/]+$/,'/'),'');
+  }
+  if (savedViaServer) { state.dirty=false; dirtySet.delete(state.path); refreshUI(); loadList(); }
+}
+
+// detect save mode (is the python server running?)
+(async()=>{ try { const r=await fetch('/api/save-sprite',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); state.saveMode = r.status===400 || r.status===200 ? 'server (writes to disk + backs up)' : 'download'; } catch(e){ state.saveMode='download'; } $('#sbSaveMode').textContent='save: '+state.saveMode; })();
+
+// ---------- keyboard ----------
+window.addEventListener('keydown', e=>{
+  if (e.target.tagName==='INPUT') return;
+  if (e.key==='z' && !e.shiftKey){ e.preventDefault(); undo(); }
+  else if (e.key==='Z' || (e.key==='z'&&e.shiftKey)){ e.preventDefault(); redo(); }
+  else if (e.key==='1'){ pick('wand'); } else if(e.key==='2'){ pick('wandg'); }
+  else if (e.key==='3'){ pick('erase'); } else if(e.key==='4'){ pick('restore'); }
+  else if (e.key===']'){ $('#brush').value=Math.min(60,state.brush+2); $('#brush').oninput({target:$('#brush')}); }
+  else if (e.key==='['){ $('#brush').value=Math.max(1,state.brush-2); $('#brush').oninput({target:$('#brush')}); }
+  else if (e.key==='s'){ e.preventDefault(); save(); }
+});
+function pick(t){ const b=document.querySelector(`button.tool[data-tool="${t}"]`); if(b)b.click(); }
+
+// ---------- init ----------
+window.addEventListener('resize', ()=>{ if(state.path) applyView(); });
+loadList();
+$('#search').value='attack';     // the reported problem frames; user can clear it
+loadList();
+</script>
+</body>
+</html>
