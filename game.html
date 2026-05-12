@@ -713,13 +713,13 @@
      the .sprite-step flicker to read as an extra ghosted layer.
      Higher tiers used to also get a colored aura via a second filter;
      re-add via a separate .glow class later if we miss the tier read. */
-  .monster.tier-1 .sprite { font-size: var(--tier1-font, 474px); }
-  .monster.tier-2 .sprite { font-size: var(--tier2-font, 582px); }
-  .monster.tier-3 .sprite { font-size: var(--tier3-font, 672px); }
-  .monster.tier-4 .sprite { font-size: var(--tier4-font, 780px); }
-  .monster.tier-5 .sprite { font-size: var(--tier5-font, 906px); }
+  .monster.tier-1 .sprite { font-size: var(--tier1-font, 711px); }
+  .monster.tier-2 .sprite { font-size: var(--tier2-font, 873px); }
+  .monster.tier-3 .sprite { font-size: var(--tier3-font, 1008px); }
+  .monster.tier-4 .sprite { font-size: var(--tier4-font, 1170px); }
+  .monster.tier-5 .sprite { font-size: var(--tier5-font, 1359px); }
   .monster.boss .sprite {
-    font-size: 960px;
+    font-size: 480px;
     animation: bossbob 1.4s ease-in-out infinite;
   }
   @keyframes bossbob {
@@ -1402,12 +1402,12 @@
        dimensions need to move together. */
     .player .sprite-img { width: 100px !important; height: 100px !important; }
     .monster .sprite { font-size: 79px; }
-    .monster.tier-1 .sprite { font-size: 390px; }
-    .monster.tier-2 .sprite { font-size: 474px; }
-    .monster.tier-3 .sprite { font-size: 540px; }
-    .monster.tier-4 .sprite { font-size: 606px; }
-    .monster.tier-5 .sprite { font-size: 690px; }
-    .monster.boss .sprite { font-size: 720px; }
+    .monster.tier-1 .sprite { font-size: 585px; }
+    .monster.tier-2 .sprite { font-size: 711px; }
+    .monster.tier-3 .sprite { font-size: 810px; }
+    .monster.tier-4 .sprite { font-size: 909px; }
+    .monster.tier-5 .sprite { font-size: 1035px; }
+    .monster.boss .sprite { font-size: 360px; }
     .monster .word {
       padding: 6px 10px;
       max-width: calc(100vw - 32px);
@@ -3365,7 +3365,7 @@ function renderPlayerSprite(lv) {
   // Battle stage uses the back-view sprite (Pokemon-style — player faces up
   // toward the descending enemies). The new tier sprites have the weapon baked
   // in, so no separate equip emoji is needed.
-  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 158)}</span>`;
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 237)}</span>`;
 }
 
 // Preload all 4-frame attack sprites so the first hit doesn't flash. Also
@@ -5350,9 +5350,9 @@ function clamp01(n) {
 const DEPTH = {
   horizonPct: 12,    // % from top — matches the regenerated background horizon lines
   floorPct:    8,    // % from bottom — player's feet plane (player sits at bottom:8%)
-  farScale:   0.38,  // scale at the horizon (smallest)
-  nearScale:  1.55,  // scale at the floor (largest; was 1.0) — makes monsters loom
-  bossScale:  1.05   // bosses ignore the curve; render at this fixed absolute scale
+  farScale:   0.50,  // scale at the horizon (smallest) — raised so far monsters are visible earlier
+  nearScale:  1.30,  // scale at the floor (largest)
+  bossScale:  0.525  // bosses ignore the curve; ~half of current render size (351×0.525≈184px)
 };
 
 function depthScaleAtPx(yPx) {
@@ -5362,10 +5362,10 @@ function depthScaleAtPx(yPx) {
   const floorY   = rect.height * (1 - DEPTH.floorPct / 100);
   // u: 0 at horizon (far/tiny), 1 at floor (near/big)
   const u = clamp01((yPx - horizonY) / Math.max(1, floorY - horizonY));
-  // Perspective-correct: interpolate 1/scale linearly → growth explodes near floor
-  const invFar  = 1 / DEPTH.farScale;
-  const invNear = 1 / DEPTH.nearScale;
-  return 1 / (invFar + u * (invNear - invFar));
+  // Power curve (u^0.65): grows fast early so monsters visibly enlarge throughout
+  // their descent, not just right before reaching the player.
+  const eased = Math.pow(u, 0.65);
+  return DEPTH.farScale + eased * (DEPTH.nearScale - DEPTH.farScale);
 }
 
 function monsterDepth(m) {
@@ -5408,7 +5408,7 @@ let _bgZoom = 1;   // lerp target for backdrop parallax; updated every frame
 // Tier → CSS font-size of the monster sprite (mirrors the .monster.tier-N
 // .sprite { font-size: ... } block in CSS). Used to land the player flush
 // against the monster's right edge regardless of how big the demon is.
-const MONSTER_BASE_PX = { 1: 151, 2: 178, 3: 205, 4: 232, 5: 270, boss: 351 };
+const MONSTER_BASE_PX = { 1: 227, 2: 267, 3: 308, 4: 348, 5: 405, boss: 351 };
 
 function teleportPlayerTo(x, y, monster) {
   // Smoke at current position (departure puff)
