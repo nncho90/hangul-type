@@ -68,6 +68,9 @@
     background-size: cover;
     background-position: center bottom;
     transition: opacity 1.2s ease;
+    transform: scale(var(--bg-zoom, 1));
+    transform-origin: 50% 14%;  /* near the horizon so ground pushes toward viewer */
+    will-change: transform;
   }
   .backdrop::after {
     content: '';
@@ -201,14 +204,14 @@
   body.theme-palace .backdrop::before     { background-image: url('sprites/backgrounds/07-palace.png');      }
   /* Tinted gradient base (fallback if image missing). Each tier picks a
      dominant tone matching the painted scene. */
-  body.theme-study .backdrop      { background: linear-gradient(180deg, #fef3c7 0%, #fde68a 60%, #fbbf24 100%); }
+  body.theme-study .backdrop      { background: linear-gradient(180deg, #fde68a 0%, #fef9f0 14%, #e9eef5 42%, #cdd9e8 100%); }
   body.theme-courtyard .backdrop  { background: linear-gradient(180deg, #fce7f3 0%, #f9a8d4 50%, #c084fc 100%); }
   body.theme-camp .backdrop       { background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
   body.theme-battlefield .backdrop{ background: linear-gradient(180deg, #7c2d12 0%, #ea580c 50%, #1f2937 100%); }
   body.theme-study {
-    --floor-a: rgba(254, 243, 199, 0.50);
-    --floor-b: rgba(217, 119, 6, 0.16);
-    --floor-line: rgba(146, 64, 14, 0.22);
+    --floor-a: rgba(209, 226, 241, 0.50);
+    --floor-b: rgba(100, 130, 160, 0.16);
+    --floor-line: rgba(80, 110, 150, 0.22);
   }
   body.theme-courtyard {
     --floor-a: rgba(249, 168, 212, 0.38);
@@ -3722,6 +3725,7 @@ function sfxBossWarn() { for (let i = 0; i < 3; i++) setTimeout(() => tone({ fre
 
 const STAGE = document.getElementById('stage');
 const PLAYER_EL = document.getElementById('player');
+const BACKDROP_EL = document.querySelector('.backdrop');
 const LIVE_EL = document.getElementById('liveOut');
 const HUD_LEVEL = document.getElementById('hudLevel');
 const HUD_SCORE = document.getElementById('hudScore');
@@ -5336,19 +5340,19 @@ function clamp01(n) {
   return Math.max(0, Math.min(1, n));
 }
 
-// Unified depth function — tuned in tools/depth-tuner.html.
-// Higher up the screen = farther away = smaller. Same curve drives both
-// monster scaling and the player's mid-jump scale, so the world reads
-// consistently no matter who's at what Y.
+// Unified depth system — anchored to the regenerated backgrounds' horizon line.
+// horizonPct matches the ~12%-from-top horizon in all 7 battle backgrounds.
+// floorPct aligns with the player's home position (bottom:8%).
+// depthScaleAtPx uses perspective-correct (reciprocal) interpolation so growth
+// accelerates near the player's feet, matching how real-perspective foreshortening works.
+// Bosses bypass the curve entirely and render at a fixed bossScale.
+// Tunable interactively via tools/depth-tuner.html.
 const DEPTH = {
-  horizonPct: 10,   // % from top — vanishing line. Kept high (close to the
-                    //   top) so a monster spawned at y=16px is already
-                    //   inside the depth zone, then visibly grows as it
-                    //   descends instead of being clamped at far scale.
-  floorPct:    4,   // % from bottom — closest plane
-  nearScale:  1.0,  // sprite scale at the floor (nearest)
-  farScale:   0.50, // sprite scale at the horizon (farthest) — clean 2× growth
-  bossScale:  1.18  // bosses stay slightly larger than the curve at any depth
+  horizonPct: 12,    // % from top — matches the regenerated background horizon lines
+  floorPct:    8,    // % from bottom — player's feet plane (player sits at bottom:8%)
+  farScale:   0.38,  // scale at the horizon (smallest)
+  nearScale:  1.55,  // scale at the floor (largest; was 1.0) — makes monsters loom
+  bossScale:  1.05   // bosses ignore the curve; render at this fixed absolute scale
 };
 
 function depthScaleAtPx(yPx) {
@@ -5356,18 +5360,19 @@ function depthScaleAtPx(yPx) {
   if (!rect || !rect.height) return DEPTH.nearScale;
   const horizonY = rect.height * (DEPTH.horizonPct / 100);
   const floorY   = rect.height * (1 - DEPTH.floorPct / 100);
-  const denom = Math.max(1, floorY - horizonY);
-  // depthT: 0 at floor (close/big), 1 at horizon (far/small)
-  const t = clamp01((floorY - yPx) / denom);
-  const eased = 1 - (1 - t) * (1 - t); // ease-out
-  return DEPTH.nearScale + (DEPTH.farScale - DEPTH.nearScale) * eased;
+  // u: 0 at horizon (far/tiny), 1 at floor (near/big)
+  const u = clamp01((yPx - horizonY) / Math.max(1, floorY - horizonY));
+  // Perspective-correct: interpolate 1/scale linearly → growth explodes near floor
+  const invFar  = 1 / DEPTH.farScale;
+  const invNear = 1 / DEPTH.nearScale;
+  return 1 / (invFar + u * (invNear - invFar));
 }
 
 function monsterDepth(m) {
-  // Kept for callers that read d in [0..1]; reuses the unified curve so the
-  // shadow/zIndex math stays consistent with the scale.
+  // Returns u in [0..1]: 0 at horizon (far), 1 at floor (near).
+  // Used for zIndex, shadow vars, and the parallax system.
   const rect = getStageRect();
-  if (!rect || !rect.height) return 1;
+  if (!rect || !rect.height) return 0;
   const horizonY = rect.height * (DEPTH.horizonPct / 100);
   const floorY   = rect.height * (1 - DEPTH.floorPct / 100);
   const yPx = (m && Number(m.y)) || 0;
@@ -5376,16 +5381,17 @@ function monsterDepth(m) {
 
 function renderMonsterDepth(m) {
   if (!m || !m.el) return;
-  const d = monsterDepth(m);                  // 0 at horizon, 1 at floor
-  let scale = depthScaleAtPx(Number(m.y) || 0);
-  if (m.isBoss) scale *= DEPTH.bossScale;
+  const u = monsterDepth(m);
+  // Bosses are framed at a fixed scale (they spawn near y=18 — at the horizon —
+  // and never descend, so the curve would leave them tiny).
+  const scale = m.isBoss ? DEPTH.bossScale : depthScaleAtPx(Number(m.y) || 0);
   const x = Math.round(m.x || 0);
   const y = Math.round(m.y || 0);
   m.el.style.transform = `translate3d(${x}px, ${y}px, 0) translateX(-50%) scale(${scale.toFixed(3)})`;
-  m.el.style.zIndex = String(38 + Math.round(d * 48) + (m.isBoss ? 4 : 0));
-  m.el.style.setProperty('--depth-shadow', (d * 16).toFixed(1) + 'px');
-  m.el.style.setProperty('--shadow-alpha', (0.16 + d * 0.16).toFixed(3));
-  m.el.style.setProperty('--shadow-scale', (0.72 + d * 0.86).toFixed(3));
+  m.el.style.zIndex = String(38 + Math.round(u * 48) + (m.isBoss ? 4 : 0));
+  m.el.style.setProperty('--depth-shadow', (u * 16).toFixed(1) + 'px');
+  m.el.style.setProperty('--shadow-alpha', (0.16 + u * 0.16).toFixed(3));
+  m.el.style.setProperty('--shadow-scale', (0.72 + u * 0.86).toFixed(3));
 }
 
 function pulseBattleCamera(kind) {
@@ -5398,6 +5404,7 @@ function pulseBattleCamera(kind) {
 }
 
 let _playerHomePending = null;
+let _bgZoom = 1;   // lerp target for backdrop parallax; updated every frame
 // Tier → CSS font-size of the monster sprite (mirrors the .monster.tier-N
 // .sprite { font-size: ... } block in CSS). Used to land the player flush
 // against the monster's right edge regardless of how big the demon is.
@@ -5413,9 +5420,9 @@ function teleportPlayerTo(x, y, monster) {
   // Move + arrival animation. Inline styles override the .player breathe rules.
   PLAYER_EL.classList.remove('teleporting','arriving');
   void PLAYER_EL.offsetWidth;
-  // Apply the same depth scale used for monsters so the player visibly
-  // shrinks when jumping to a far-away (high-Y) target.
-  const jumpScaleNum = depthScaleAtPx(y);
+  // Player jumps to the monster's apparent depth. Bosses are framed at a
+  // fixed scale (DEPTH.bossScale) regardless of y, so the player matches that.
+  const jumpScaleNum = (monster && monster.isBoss) ? 1.0 : depthScaleAtPx(y);
   const jumpScale = jumpScaleNum.toFixed(3);
   // Land flush against the monster's right edge AND vertically centered on
   // its body. monster.y is the top edge — the player center needs to drop
@@ -5423,7 +5430,7 @@ function teleportPlayerTo(x, y, monster) {
   // the demon's torso instead of floating above its head.
   const tierKey = monster && monster.isBoss ? 'boss' : (monster && monster.tier) || 1;
   const baseFont = MONSTER_BASE_PX[tierKey] || MONSTER_BASE_PX[1];
-  const monsterScale = jumpScaleNum * (monster && monster.isBoss ? DEPTH.bossScale : 1);
+  const monsterScale = (monster && monster.isBoss) ? DEPTH.bossScale : jumpScaleNum;
   const monsterRendered = baseFont * monsterScale;
   // 0.32 puts the player slightly inside the demon's right silhouette so the
   // sword crosses the body cleanly. 0.50 places the player vertically at the
@@ -5453,12 +5460,15 @@ function teleportPlayerHome(immediate) {
       const sr = getStageRect();
       spawnTeleportDust((r.left + r.width / 2) - sr.left, (r.top + r.height / 2) - sr.top);
     }
-    PLAYER_EL.classList.remove('arriving','swinging','teleporting');
+    PLAYER_EL.style.transition = 'none';   // kill the transform tween so the
+    PLAYER_EL.classList.remove('arriving','swinging','teleporting'); // scale snap-home doesn't zoom
     PLAYER_EL.style.bottom = '';
     PLAYER_EL.style.top  = '';
     PLAYER_EL.style.left = '';
     PLAYER_EL.style.transform = '';
     PLAYER_EL.style.animation = '';
+    void PLAYER_EL.offsetWidth;            // commit the reset before restoring
+    PLAYER_EL.style.transition = '';      // restore stylesheet transition
     state.playerTeleported = false;
     _playerHomePending = null;
     if (wasTeleported && combatStyle(state.level) === 'melee') triggerJumpPose('in');
@@ -6494,6 +6504,22 @@ function loop(t) {
         }
       }
     }
+  }
+  // Backdrop parallax: zoom gently toward viewer as the engaged monster approaches.
+  // Prefer the locked monster; fall back to the nearest (lowest) monster; ease to 1 if none.
+  {
+    let depthU = 0;
+    if (state.lockId != null) {
+      const lm = state.monsters.find(m => m.id === state.lockId);
+      if (lm) depthU = monsterDepth(lm);
+    } else if (state.monsters.length > 0) {
+      let best = state.monsters[0];
+      for (const m of state.monsters) if (m.y > best.y) best = m;
+      depthU = monsterDepth(best);
+    }
+    const bgTarget = 1 + Math.min(depthU, 1) * 0.06;
+    _bgZoom += (bgTarget - _bgZoom) * 0.08;
+    if (BACKDROP_EL) BACKDROP_EL.style.setProperty('--bg-zoom', _bgZoom.toFixed(4));
   }
   requestAnimationFrame(loop);
 }
