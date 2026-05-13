@@ -92,7 +92,7 @@
 
   /* lv 1-4 — 마을 (Village): cherry-blossom dawn, hanok rooftops */
   body.theme-village .backdrop {
-    background: linear-gradient(180deg, #fff1f7 0%, #fde2e9 30%, #fbcfe8 60%, #f9a8d4 100%);
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   }
   body.theme-village {
     --floor-a: rgba(254, 205, 211, 0.55);
@@ -205,7 +205,7 @@
   /* Tinted gradient base (fallback if image missing). Each tier picks a
      dominant tone matching the painted scene. */
   body.theme-study .backdrop      { background: linear-gradient(180deg, #fde68a 0%, #fef9f0 14%, #e9eef5 42%, #cdd9e8 100%); }
-  body.theme-courtyard .backdrop  { background: linear-gradient(180deg, #fce7f3 0%, #f9a8d4 50%, #c084fc 100%); }
+  body.theme-courtyard .backdrop  { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
   body.theme-camp .backdrop       { background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
   body.theme-battlefield .backdrop{ background: linear-gradient(180deg, #7c2d12 0%, #ea580c 50%, #1f2937 100%); }
   body.theme-study {
@@ -592,7 +592,11 @@
     z-index: 60;
     filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.15));
     animation: breathe 0.7s ease-in-out infinite;
-    transition: filter 0.4s, transform 0.2s;
+    /* No `transform` here on purpose: the teleport-strike sets an inline
+       scale() per jump; if `transform` were transitioned, snapping that
+       inline scale away on teleport-home animated a "zoom" the user hated.
+       Visible teleport motion is sold by the smoke puffs + jump-pose frames. */
+    transition: filter 0.4s;
     display: inline-flex;
     align-items: flex-end;
     gap: 0;
@@ -646,7 +650,11 @@
     flex-direction: column;
     align-items: center;
     transition: filter 0.2s;
-    transform-origin: 50% 95%;
+    /* Origin at the TOP edge: monster.y is the sprite's top, so a freshly
+       spawned monster sits right at the horizon line and grows DOWNWARD as it
+       descends (perspective). The old 50% 95% origin pulled small far-away
+       monsters way down the screen — the "monsters spawn too low" complaint. */
+    transform-origin: 50% 0%;
     will-change: transform;
     pointer-events: none;
   }
@@ -2529,7 +2537,7 @@
 <div class="stage" id="stage">
   <div class="battle-depth battle-floor" aria-hidden="true"></div>
   <div class="battle-depth battle-foreground" aria-hidden="true"></div>
-  <div class="player" id="player">🥷</div>
+  <div class="player" id="player"></div>
 </div>
 
 <input class="shield" id="shield" tabindex="-1" aria-hidden="true" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -3385,6 +3393,14 @@ function renderPlayerSprite(lv) {
         im.src = `sprites/${sp.spriteBack}-${suf}.png`;
       }
     }
+  }
+})();
+
+// Preload all 7 background PNGs so level changes never hit an uncached image
+// and the village-pink fallback gradient never flashes through the veil.
+(function preloadBackgrounds() {
+  for (const n of ['01-village','02-forest','03-study','04-courtyard','05-camp','06-battlefield','07-palace']) {
+    const im = new Image(); im.src = 'sprites/backgrounds/' + n + '.png';
   }
 })();
 
@@ -4411,9 +4427,12 @@ function scoreForKill(tier, comboBonus) {
 let monsterId = 0;
 
 function monsterSpawnY(tier) {
-  // Stage clips overflow, so negative spawn positions make large sprites look
-  // like they are being cut by an invisible top bar.
-  return tier === 'boss' ? 18 : 16;
+  // monster.y is the sprite's TOP edge (.monster transform-origin is 50% 0%),
+  // so spawn it just above the horizon line (~12% from the top) and let it
+  // descend into view. Stage-relative so it scales with the viewport.
+  const r = getStageRect();
+  const h = (r && r.height) ? r.height : 600;
+  return Math.round(h * (tier === 'boss' ? 0.05 : 0.07));
 }
 
 // Heart-pickup monster — spawns very rarely, drops +1 life when typed.
@@ -5352,7 +5371,7 @@ const DEPTH = {
   floorPct:    8,    // % from bottom — player's feet plane (player sits at bottom:8%)
   farScale:   0.50,  // scale at the horizon (smallest) — raised so far monsters are visible earlier
   nearScale:  1.30,  // scale at the floor (largest)
-  bossScale:  0.525  // bosses ignore the curve; ~half of current render size (351×0.525≈184px)
+  bossScale:  0.79   // bosses ignore the curve; ~1.5× the prior render size (351×0.79≈277px)
 };
 
 function depthScaleAtPx(yPx) {
@@ -5405,10 +5424,15 @@ function pulseBattleCamera(kind) {
 
 let _playerHomePending = null;
 let _bgZoom = 1;   // lerp target for backdrop parallax; updated every frame
-// Tier → CSS font-size of the monster sprite (mirrors the .monster.tier-N
-// .sprite { font-size: ... } block in CSS). Used to land the player flush
-// against the monster's right edge regardless of how big the demon is.
-const MONSTER_BASE_PX = { 1: 227, 2: 267, 3: 308, 4: 348, 5: 405, boss: 351 };
+// Player back-view sprite render size (the px passed to spriteHtml in
+// renderPlayerSprite). Everything monster-sized is expressed relative to this.
+const PLAYER_BASE_PX = 237;
+// Tier → monster sprite render px at scale 1 (mirrors battle-config.js
+// tierSizePx). Sized relative to the player: tier 1 (imp) ≈ half the player
+// (reaches his stomach when they stand together), tier 2 (gumiho) a touch
+// bigger, tier 4 (jeoseung) ≈ the player's height, tier 5 a touch bigger.
+// Used to land the player flush against the monster regardless of its size.
+const MONSTER_BASE_PX = { 1: 119, 2: 150, 3: 190, 4: 237, 5: 270, boss: 351 };
 
 function teleportPlayerTo(x, y, monster) {
   // Smoke at current position (departure puff)
@@ -5417,26 +5441,27 @@ function teleportPlayerTo(x, y, monster) {
   const fromX = (r.left + r.width / 2) - sr.left;
   const fromY = (r.top + r.height / 2)  - sr.top;
   spawnTeleportDust(fromX, fromY);
-  // Move + arrival animation. Inline styles override the .player breathe rules.
+  // Instant jump — the smoke puffs (departure above + arrival below) sell the
+  // teleport. No `.arriving` keyframe: it forced an opacity flicker and a
+  // scale-pop that fought the depth scale we set inline here.
   PLAYER_EL.classList.remove('teleporting','arriving');
-  void PLAYER_EL.offsetWidth;
-  // Player jumps to the monster's apparent depth. Bosses are framed at a
-  // fixed scale (DEPTH.bossScale) regardless of y, so the player matches that.
-  const jumpScaleNum = (monster && monster.isBoss) ? 1.0 : depthScaleAtPx(y);
+  // Player jumps to the monster's apparent depth, so he shrinks when he leaps
+  // toward a far-away (high) monster and stays big leaping to a near one — the
+  // same depthScaleAtPx() curve the monster itself uses, so they always match
+  // size. Bosses are framed at a fixed scale, so the player matches that.
+  const jumpScaleNum = (monster && monster.isBoss) ? DEPTH.bossScale : depthScaleAtPx(y);
   const jumpScale = jumpScaleNum.toFixed(3);
-  // Land flush against the monster's right edge AND vertically centered on
-  // its body. monster.y is the top edge — the player center needs to drop
-  // by ~half the monster's rendered height (baseFont * scale) to align with
-  // the demon's torso instead of floating above its head.
+  // monster.y is the sprite's TOP edge (origin 50% 0%); its feet are at
+  // y + baseFont*monsterScale. Land the player so HIS feet meet the monster's
+  // feet (same ground line) — since .player uses translate(-50%,-50%), the
+  // target Y is the player's CENTER = monsterFeet - playerRendered/2.
   const tierKey = monster && monster.isBoss ? 'boss' : (monster && monster.tier) || 1;
   const baseFont = MONSTER_BASE_PX[tierKey] || MONSTER_BASE_PX[1];
   const monsterScale = (monster && monster.isBoss) ? DEPTH.bossScale : jumpScaleNum;
-  const monsterRendered = baseFont * monsterScale;
-  // 0.32 puts the player slightly inside the demon's right silhouette so the
-  // sword crosses the body cleanly. 0.50 places the player vertically at the
-  // monster's center.
-  const sideOffset = monsterRendered * 0.297;
-  const verticalOffset = monsterRendered * 1.965;
+  const verticalOffset = (baseFont * monsterScale) - (PLAYER_BASE_PX * jumpScaleNum) / 2;
+  // Slide the player into the monster's right silhouette so the weapon crosses
+  // the body: half the monster's width + a sliver of the player's, ×0.75 overlap.
+  const sideOffset = (baseFont * monsterScale * 0.5 + PLAYER_BASE_PX * jumpScaleNum * 0.42) * 0.78;
   const targetX = x + sideOffset;
   const targetY = y + verticalOffset;
   PLAYER_EL.style.bottom = 'auto';
@@ -5444,7 +5469,6 @@ function teleportPlayerTo(x, y, monster) {
   PLAYER_EL.style.top  = targetY + 'px';
   PLAYER_EL.style.transform = `translate(-50%, -50%) scale(${jumpScale})`;
   PLAYER_EL.style.animation = 'none';   // disable the bottom-anchored breathe while teleported
-  PLAYER_EL.classList.add('arriving');
   setTimeout(() => spawnTeleportDust(targetX, targetY), 24);
   state.playerTeleported = true;
   if (combatStyle(state.level) === 'melee') triggerJumpPose('out');

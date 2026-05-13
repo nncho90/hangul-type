@@ -57,14 +57,17 @@
     ],
 
     // ─── Per-tier sprite sizes (px) on the battle stage ─────────────────────
-    // Used by buildMonsterEl. Boss is largest; tier 1 is smallest. These
-    // intentionally match the existing CSS font-size scale for emoji fallback.
+    // Used by buildMonsterEl. Sized RELATIVE TO THE PLAYER back-view sprite
+    // (renderPlayerSprite renders it at 237px): tier 1 (imp) ≈ half the player
+    // — reaches his stomach when they stand together; tier 2 (gumiho) a touch
+    // bigger; tier 4 (jeoseung "floating guy") ≈ the player's full height;
+    // tier 5 a touch bigger. Keep this in sync with MONSTER_BASE_PX in game.html.
     tierSizePx: {
-      1: 227,
-      2: 267,
-      3: 308,
-      4: 348,
-      5: 405,
+      1: 119,
+      2: 150,
+      3: 190,
+      4: 237,
+      5: 270,
       boss: 351
     },
 

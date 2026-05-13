@@ -10,6 +10,11 @@
 #   - Middle ~76% is an OPEN WALKING LANE: ground/path receding to horizon, at most
 #     small flat ground details (tufts, pebbles, ruts) — NOTHING tall, no buildings.
 #   - This matches DEPTH.horizonPct = 12 in game.html so the depth curve aligns.
+#
+# NOTE: ChatGPT ignores the 1920x600 ask and returns ~3.2:1 banners. After
+# regenerating, run `python3 tools/pad-backgrounds.py` to vertically pad
+# 01-village / 03-study / 04-courtyard to 16:9 (the other 4 are ~2:1 and crop
+# only marginally). Raw pre-pad renders end up in _pre-vertical-2026-05-13/.
 
 set -e
 BG_DIR=/Users/nelsoncho/projects/hangul-type/sprites/backgrounds
