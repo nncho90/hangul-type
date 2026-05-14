@@ -701,9 +701,17 @@
     animation: sprite-walk-monster 1.8s ease-in-out infinite,
                enemy-walk-step 0.7s steps(2, jump-none) infinite;
   }
+  .monster:not(.boss) .sprite .sprite-img:not(.sprite-step) {
+    animation: sprite-walk-monster 1.8s ease-in-out infinite,
+               enemy-walk-idle 0.7s steps(2, jump-none) infinite;
+  }
   @keyframes enemy-walk-step {
     0%, 49.9% { opacity: 0; }
     50%, 100% { opacity: 1; }
+  }
+  @keyframes enemy-walk-idle {
+    0%, 49.9% { opacity: 1; }
+    50%, 100% { opacity: 0; }
   }
   /* Monster idle bob — used to add a ±2° tilt that read as the monster
      "spinning" when paired with the explode-on-death rotation. Now pure
@@ -1993,8 +2001,6 @@
     z-index: 290;
     pointer-events: none;
     background: radial-gradient(ellipse at center, rgba(15,23,42,0) 0%, rgba(15,23,42,0.55) 80%);
-    backdrop-filter: saturate(1.4) brightness(0.85) hue-rotate(-12deg);
-    -webkit-backdrop-filter: saturate(1.4) brightness(0.85) hue-rotate(-12deg);
     animation: freeze-in 180ms ease-out forwards;
   }
   .special-freeze.exit { animation: freeze-out 320ms ease-in forwards; }
@@ -2029,8 +2035,7 @@
     pointer-events: none;
     height: 6px;
     background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(254, 240, 138, 0.95) 30%, rgba(254, 249, 195, 1) 60%, rgba(255,255,255,0) 100%);
-    filter: blur(0.5px);
-    box-shadow: 0 0 14px rgba(254, 240, 138, 0.85), 0 0 28px rgba(244, 114, 182, 0.5);
+    box-shadow: 0 0 10px rgba(254, 240, 138, 0.7);
     transform-origin: 0 50%;
   }
   .special-trail.zip { animation: trail-zip 220ms ease-out forwards; }
@@ -2052,7 +2057,7 @@
     left: -90px; top: -3px;
     width: 180px; height: 6px;
     background: linear-gradient(90deg, transparent, white 40%, white 60%, transparent);
-    box-shadow: 0 0 18px white, 0 0 36px rgba(254, 240, 138, 0.9);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.9);
     transform: rotate(28deg) scaleX(0.2);
     opacity: 0;
     animation: slash-flash 280ms ease-out forwards;
@@ -3611,7 +3616,7 @@ const ADMIN_DEFAULTS = {
   tier: {
     "1":    { speedMul: 0.80, motion: "straight", fontPx: 79,  animS: 1.6 },
     "2":    { speedMul: 0.95, motion: "straight", fontPx: 97,  animS: 1.8 },
-    "3":    { speedMul: 0.95, motion: "zigzag",   fontPx: 112, animS: 2.0 },
+    "3":    { speedMul: 0.65, motion: "zigzag",   fontPx: 112, animS: 2.0 },
     "4":    { speedMul: 0.90, motion: "dive",     fontPx: 130, animS: 2.2 },
     "5":    { speedMul: 1.05, motion: "tracker",  fontPx: 151, animS: 1.5 },
     "boss": { speedMul: 0.55, motion: "teleport", fontPx: 173, animS: 2.5 }
@@ -4432,7 +4437,13 @@ function monsterSpawnY(tier) {
   // descend into view. Stage-relative so it scales with the viewport.
   const r = getStageRect();
   const h = (r && r.height) ? r.height : 600;
-  return Math.round(h * (tier === 'boss' ? 0.05 : 0.07));
+  return Math.round(h * (tier === 'boss' ? 0.035 : 0.07));
+}
+
+function bossFloorY() {
+  const r = getStageRect();
+  const h = (r && r.height) ? r.height : 600;
+  return Math.round(h * 0.50);
 }
 
 // Heart-pickup monster — spawns very rarely, drops +1 life when typed.
@@ -4560,12 +4571,14 @@ function spawnBoss() {
   const id = ++monsterId;
   const ks = wordToKeystrokes(word.ko);
   const startX = window.innerWidth / 2;
+  const beh = behaviorForTier('boss');
+  const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul;
   const monster = {
     id, sprite, spriteFile, name: profile.name,
     word: word.ko, en: word.en, tier: 'boss',
     ks, hp: ks.length, maxHp: ks.length,
-    speed: 0,
-    motion: 'hold',
+    speed: bossSpeed,
+    motion: 'bossAdvance',
     x: startX, originX: startX,
     y: monsterSpawnY('boss'),
     zigT: 0, zigAmp: 0, zigFreq: 0,
@@ -5364,14 +5377,12 @@ function clamp01(n) {
 // floorPct aligns with the player's home position (bottom:8%).
 // depthScaleAtPx uses perspective-correct (reciprocal) interpolation so growth
 // accelerates near the player's feet, matching how real-perspective foreshortening works.
-// Bosses bypass the curve entirely and render at a fixed bossScale.
 // Tunable interactively via tools/depth-tuner.html.
 const DEPTH = {
   horizonPct: 12,    // % from top — matches the regenerated background horizon lines
   floorPct:    8,    // % from bottom — player's feet plane (player sits at bottom:8%)
   farScale:   0.50,  // scale at the horizon (smallest) — raised so far monsters are visible earlier
-  nearScale:  1.30,  // scale at the floor (largest)
-  bossScale:  0.79   // bosses ignore the curve; ~1.5× the prior render size (351×0.79≈277px)
+  nearScale:  1.30   // scale at the floor (largest)
 };
 
 function depthScaleAtPx(yPx) {
@@ -5401,9 +5412,7 @@ function monsterDepth(m) {
 function renderMonsterDepth(m) {
   if (!m || !m.el) return;
   const u = monsterDepth(m);
-  // Bosses are framed at a fixed scale (they spawn near y=18 — at the horizon —
-  // and never descend, so the curve would leave them tiny).
-  const scale = m.isBoss ? DEPTH.bossScale : depthScaleAtPx(Number(m.y) || 0);
+  const scale = depthScaleAtPx(Number(m.y) || 0);
   const x = Math.round(m.x || 0);
   const y = Math.round(m.y || 0);
   m.el.style.transform = `translate3d(${x}px, ${y}px, 0) translateX(-50%) scale(${scale.toFixed(3)})`;
@@ -5448,8 +5457,8 @@ function teleportPlayerTo(x, y, monster) {
   // Player jumps to the monster's apparent depth, so he shrinks when he leaps
   // toward a far-away (high) monster and stays big leaping to a near one — the
   // same depthScaleAtPx() curve the monster itself uses, so they always match
-  // size. Bosses are framed at a fixed scale, so the player matches that.
-  const jumpScaleNum = (monster && monster.isBoss) ? DEPTH.bossScale : depthScaleAtPx(y);
+  // size.
+  const jumpScaleNum = depthScaleAtPx(y);
   const jumpScale = jumpScaleNum.toFixed(3);
   // monster.y is the sprite's TOP edge (origin 50% 0%); its feet are at
   // y + baseFont*monsterScale. Land the player so HIS feet meet the monster's
@@ -5457,7 +5466,7 @@ function teleportPlayerTo(x, y, monster) {
   // target Y is the player's CENTER = monsterFeet - playerRendered/2.
   const tierKey = monster && monster.isBoss ? 'boss' : (monster && monster.tier) || 1;
   const baseFont = MONSTER_BASE_PX[tierKey] || MONSTER_BASE_PX[1];
-  const monsterScale = (monster && monster.isBoss) ? DEPTH.bossScale : jumpScaleNum;
+  const monsterScale = jumpScaleNum;
   const verticalOffset = (baseFont * monsterScale) - (PLAYER_BASE_PX * jumpScaleNum) / 2;
   // Slide the player into the monster's right silhouette so the weapon crosses
   // the body: half the monster's width + a sliver of the player's, ×0.75 overlap.
@@ -5812,15 +5821,12 @@ function _drawSpecialTrail(toX, toY) {
   const dist = Math.sqrt(dx * dx + dy * dy);
   const angle = Math.atan2(dy, dx) * 180 / Math.PI;
   const trail = document.createElement('div');
-  trail.className = 'special-trail';
+  trail.className = 'special-trail zip';
   trail.style.left  = fromX + 'px';
   trail.style.top   = fromY + 'px';
   trail.style.width = dist + 'px';
   trail.style.setProperty('--ang', angle + 'deg');
   document.body.appendChild(trail);
-  // Force reflow then add the animation class so each strike re-runs the keyframes.
-  void trail.offsetWidth;
-  trail.classList.add('zip');
   setTimeout(() => trail.remove(), 260);
 }
 
@@ -5839,12 +5845,14 @@ async function triggerSpecialMove() {
   const victims = state.monsters.slice();
 
   // Backdrop + flash stack
-  const freeze = document.createElement('div'); freeze.className = 'special-freeze'; document.body.appendChild(freeze);
-  const hyper  = document.createElement('div'); hyper.className  = 'special-hyperbg'; document.body.appendChild(hyper);
-  const flash  = document.createElement('div'); flash.className  = 'nuke-flash';      document.body.appendChild(flash);
-  const arc    = document.createElement('div'); arc.className    = 'nuke-arc';        document.body.appendChild(arc);
-  const kanji  = document.createElement('div'); kanji.className  = 'nuke-kanji special-kanji'; kanji.textContent = '필살'; document.body.appendChild(kanji);
-  spawnSakura(36);
+  const fxFrag = document.createDocumentFragment();
+  const freeze = document.createElement('div'); freeze.className = 'special-freeze'; fxFrag.appendChild(freeze);
+  const hyper  = document.createElement('div'); hyper.className  = 'special-hyperbg'; fxFrag.appendChild(hyper);
+  const flash  = document.createElement('div'); flash.className  = 'nuke-flash';      fxFrag.appendChild(flash);
+  const arc    = document.createElement('div'); arc.className    = 'nuke-arc';        fxFrag.appendChild(arc);
+  const kanji  = document.createElement('div'); kanji.className  = 'nuke-kanji special-kanji'; kanji.textContent = '필살'; fxFrag.appendChild(kanji);
+  document.body.appendChild(fxFrag);
+  spawnSakura(18);
 
   // Stinger
   noiseBurst({ dur: 0.40, gain: 0.10, freq: 400 });
@@ -5950,7 +5958,9 @@ document.addEventListener('keyup', (e) => {
 window.addEventListener('blur', () => setFastFall(false));
 
 function spawnSakura(count) {
-  for (let i = 0; i < count; i++) {
+  const frag = document.createDocumentFragment();
+  const total = Math.min(18, count);
+  for (let i = 0; i < total; i++) {
     const p = document.createElement('div');
     p.className = 'sakura-petal';
     p.style.left = (Math.random() * 100) + 'vw';
@@ -5958,9 +5968,10 @@ function spawnSakura(count) {
     p.style.animationDelay = (Math.random() * 0.4) + 's';
     p.style.transform = `rotate(${Math.random() * 360}deg) scale(${0.7 + Math.random() * 0.9})`;
     p.style.background = `radial-gradient(ellipse at 30% 30%, #fce7f3, ${Math.random() < 0.5 ? '#f9a8d4' : '#fbcfe8'} 60%, ${Math.random() < 0.5 ? '#ec4899' : '#db2777'})`;
-    document.body.appendChild(p);
+    frag.appendChild(p);
     setTimeout(() => p.remove(), 6000);
   }
+  document.body.appendChild(frag);
 }
 
 // ─── Power-up drops ────────────────────────────────────────────────────────
@@ -6489,6 +6500,8 @@ function loop(t) {
         m.y += m.diveSpeed * dts;
       } else if (m.motion === 'hold') {
         // Boss stays framed in place; the cutscene and attack VFX carry the beat.
+      } else if (m.motion === 'bossAdvance') {
+        m.y = Math.min(bossFloorY(), m.y + m.speed * dts);
       } else if (m.motion === 'tracker') {
         m.y += m.speed * dts;
         const targetX = window.innerWidth / 2; // player is centered at bottom
