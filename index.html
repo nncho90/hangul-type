@@ -5772,6 +5772,85 @@ function renderJamoGrid() {
 }
 
 // ============================================================
+// Wongoji widget
+// ============================================================
+
+const WG = { committed: '' };
+
+function wgInit() {
+  const grid = document.getElementById('wgGrid');
+  const rowNums = document.getElementById('wgRowNums');
+  if (!grid || !rowNums) return;
+  for (let r = 1; r <= 10; r++) {
+    const d = document.createElement('div');
+    d.className = 'wg-row-num';
+    d.textContent = r;
+    rowNums.appendChild(d);
+  }
+  for (let i = 0; i < 200; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'wongoji-cell';
+    grid.appendChild(cell);
+  }
+  wgRefresh('');
+}
+
+// composing: in-progress word being typed. Pass '' on word completion
+// to avoid double-counting with state.ime.display.
+function wgRefresh(composing) {
+  if (composing === undefined) composing = (state && state.ime && state.ime.display) || '';
+  const live = WG.committed + composing;
+  const cells = document.querySelectorAll('.wongoji-cell');
+  cells.forEach((cell, i) => {
+    if (i < live.length) {
+      const ch = live[i];
+      if (ch === ' ') {
+        cell.className = 'wongoji-cell wc-space';
+        cell.textContent = '';
+      } else {
+        cell.className = 'wongoji-cell wc-typed';
+        cell.textContent = ch;
+      }
+    } else if (i === live.length && live.length < 200) {
+      cell.className = 'wongoji-cell wc-cursor';
+      cell.textContent = '';
+    } else {
+      cell.className = 'wongoji-cell';
+      cell.textContent = '';
+    }
+  });
+  const count = live.length;
+  const countEl = document.getElementById('wgCount');
+  const barEl   = document.getElementById('wgBar');
+  const pctEl   = document.getElementById('wgPct');
+  const card    = document.getElementById('wongoji-card');
+  if (countEl) countEl.textContent = count;
+  if (barEl)   barEl.style.width = Math.min((count / 200) * 100, 100) + '%';
+  if (pctEl)   pctEl.textContent = Math.min(Math.round((count / 200) * 100), 100) + '%';
+  if (card) {
+    if (count >= 200) {
+      card.classList.add('wg-done');
+      if (countEl) countEl.style.color = '#16a34a';
+    } else {
+      card.classList.remove('wg-done');
+      if (countEl) countEl.style.color = '';
+    }
+  }
+}
+
+function wgWordDone(word) {
+  const remaining = 200 - WG.committed.length;
+  if (remaining <= 0) return;
+  const append = word.length < remaining ? word + ' ' : word.slice(0, remaining);
+  WG.committed += append;
+}
+
+function wgReset() {
+  WG.committed = '';
+  wgRefresh('');
+}
+
+// ============================================================
 // Input handling
 // ============================================================
 
