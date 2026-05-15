@@ -5921,15 +5921,18 @@ function afterCorrectKeystroke() {
         renderAvatarBlob({ bump: true });
         setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 700);
       }
+      wgWordDone(target);
       updateStats();
     } else {
       setDiag('err', `<span class="label">Almost.</span> Expected <span class="ko">${target}</span>, got <span class="ko">${displayed}</span>. Try again.`);
       setTimeout(() => loadWord(state.wordIdx), 1100);
     }
+    wgRefresh('');
     return;
   }
 
   // Per-keystroke "Hit." messages were noise — the keyboard highlight + canvas color already say it.
+  wgRefresh();
   setDiag('', '');
   highlightNextKey();
 }
@@ -6075,6 +6078,7 @@ function attachInput() {
         updateTargetJamoStates();
         updateProgress();
         highlightNextKey();
+        wgRefresh();
         if (shiftArmed) setShift(false);
         return;
       }
@@ -6151,6 +6155,7 @@ function attachInput() {
       updateTargetJamoStates();
       updateProgress();
       highlightNextKey();
+      wgRefresh();
       return;
     }
     if (e.key === ' ' || e.code === 'Space' || e.key === 'Spacebar') {
@@ -6325,6 +6330,7 @@ function boot() {
     renderStreak();
     updateStats();
     loadWord(0);
+    wgReset();
   });
 
   // Per-jamo accuracy collapse toggle
@@ -6389,6 +6395,8 @@ window.addEventListener('resize', () => {
     }
   }, 150);
 });
+
+wgInit();
 </script>
 </body>
 </html>
