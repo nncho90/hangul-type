@@ -4345,13 +4345,20 @@ function openProfileModal(opts) {
     nameInput.placeholder = 'Type your display name…';
     if (titleEl) titleEl.textContent = 'Pick a display name';
     if (descEl) descEl.textContent = 'This shows up on the leaderboard. You can change it later via Edit profile.';
-    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (cancelBtn) { cancelBtn.style.display = 'none'; cancelBtn.textContent = 'Cancel'; }
+  } else if (opts.soft) {
+    // Arcade-style soft prompt at game over — shown but skippable.
+    nameInput.value = savedName === 'Player' ? '' : savedName;
+    nameInput.placeholder = 'Your display name…';
+    if (titleEl) titleEl.textContent = 'Your score is on the board!';
+    if (descEl) descEl.textContent = 'Add your name and pick a fandom so people know it\'s you. Hit Skip to keep "Player".';
+    if (cancelBtn) { cancelBtn.style.display = ''; cancelBtn.textContent = 'Skip'; }
   } else {
     nameInput.value = savedName;
     nameInput.placeholder = '';
     if (titleEl) titleEl.textContent = 'Your profile';
     if (descEl) descEl.textContent = 'Pick a display name and default country. This is saved in your browser and reused the next time you play.';
-    if (cancelBtn) cancelBtn.style.display = '';
+    if (cancelBtn) { cancelBtn.style.display = ''; cancelBtn.textContent = 'Cancel'; }
   }
   countrySelect.innerHTML = Object.entries(COUNTRY_NAMES)
     .sort((a, b) => a[1].localeCompare(b[1]))
@@ -6254,6 +6261,9 @@ function gameOver() {
   // Analytics: every game-over counts as an attempt (separate from the leaderboard).
   logBattleAttempt(state.level, state.score);
   document.getElementById('gameOverModal').style.display = 'flex';
+  // Arcade-style soft prompt on new high score or unset profile, like classic initials entry.
+  // Fires after a short delay so the score panel is visible first.
+  if (newHigh || isProfileUnset()) setTimeout(() => openProfileModal({ soft: true }), 600);
   // Submit, then render. submitBattleScore invalidates the cache so render fetches fresh.
   submitBattleScore(state.level, state.score).finally(() => {
     renderActiveLeaderboard('battleLbContainer');
