@@ -5830,7 +5830,7 @@ function wgRefresh(composing) {
   if (card) {
     if (count >= 200) {
       card.classList.add('wg-done');
-      if (countEl) countEl.style.color = '#16a34a';
+      if (countEl) countEl.style.color = 'var(--green)';
     } else {
       card.classList.remove('wg-done');
       if (countEl) countEl.style.color = '';
