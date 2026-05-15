@@ -96,7 +96,7 @@
 
   /* lv 1-4 — 마을 (Village): cherry-blossom dawn, hanok rooftops */
   body.theme-village .backdrop {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    background-image: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   }
   body.theme-village {
     --floor-a: rgba(254, 205, 211, 0.55);
@@ -115,7 +115,7 @@
 
   /* lv 5-8 — 대숲 (Bamboo Forest): jade green, vertical bamboo, mist */
   body.theme-forest .backdrop {
-    background: linear-gradient(180deg, #d1fae5 0%, #6ee7b7 30%, #10b981 70%, #047857 100%);
+    background-image: linear-gradient(180deg, #d1fae5 0%, #6ee7b7 30%, #10b981 70%, #047857 100%);
   }
   body.theme-forest {
     --floor-a: rgba(110, 231, 183, 0.38);
@@ -135,7 +135,7 @@
 
   /* lv 9-13 — 산사 (Mountain Shrine): indigo dusk, peaks, paper lanterns */
   body.theme-shrine .backdrop {
-    background: linear-gradient(180deg, #1e1b4b 0%, #4338ca 25%, #7c3aed 60%, #c026d3 100%);
+    background-image: linear-gradient(180deg, #1e1b4b 0%, #4338ca 25%, #7c3aed 60%, #c026d3 100%);
   }
   body.theme-shrine .backdrop::before {
     background:
@@ -151,7 +151,7 @@
 
   /* lv 14-18 — 사찰 (Buddhist Temple): red/gold 단청 dancheong, painted eaves */
   body.theme-temple .backdrop {
-    background: linear-gradient(180deg, #7c2d12 0%, #b91c1c 25%, #dc2626 55%, #f59e0b 100%);
+    background-image: linear-gradient(180deg, #7c2d12 0%, #b91c1c 25%, #dc2626 55%, #f59e0b 100%);
   }
   body.theme-temple .backdrop::before {
     background:
@@ -168,7 +168,7 @@
 
   /* lv 19-22 — 궁궐 (Royal Palace): regal blue/jade, Gyeongbokgung */
   body.theme-palace .backdrop {
-    background: linear-gradient(180deg, #0c4a6e 0%, #0369a1 30%, #0891b2 65%, #06b6d4 100%);
+    background-image: linear-gradient(180deg, #0c4a6e 0%, #0369a1 30%, #0891b2 65%, #06b6d4 100%);
   }
   body.theme-palace .backdrop::before {
     background:
@@ -208,10 +208,10 @@
   body.theme-palace .backdrop::before     { background-image: url('sprites/backgrounds/07-palace.png');      }
   /* Tinted gradient base (fallback if image missing). Each tier picks a
      dominant tone matching the painted scene. */
-  body.theme-study .backdrop      { background: linear-gradient(180deg, #fde68a 0%, #fef9f0 14%, #e9eef5 42%, #cdd9e8 100%); }
-  body.theme-courtyard .backdrop  { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
-  body.theme-camp .backdrop       { background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
-  body.theme-battlefield .backdrop{ background: linear-gradient(180deg, #7c2d12 0%, #ea580c 50%, #1f2937 100%); }
+  body.theme-study .backdrop      { background-image: linear-gradient(180deg, #fde68a 0%, #fef9f0 14%, #e9eef5 42%, #cdd9e8 100%); }
+  body.theme-courtyard .backdrop  { background-image: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
+  body.theme-camp .backdrop       { background-image: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
+  body.theme-battlefield .backdrop{ background-image: linear-gradient(180deg, #7c2d12 0%, #ea580c 50%, #1f2937 100%); }
   body.theme-study {
     --floor-a: rgba(209, 226, 241, 0.50);
     --floor-b: rgba(100, 130, 160, 0.16);
@@ -239,7 +239,7 @@
   }
   /* lv 23+ — 별나라 (Cosmos): deep night, constellations, nebula */
   body.theme-cosmos .backdrop {
-    background: radial-gradient(ellipse at 50% 30%, #312e81 0%, #1e1b4b 40%, #0f0c29 80%, #000 100%);
+    background-image: radial-gradient(ellipse at 50% 30%, #312e81 0%, #1e1b4b 40%, #0f0c29 80%, #000 100%);
   }
   body.theme-cosmos .backdrop::before {
     background:
