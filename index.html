@@ -330,7 +330,6 @@
   }
   .wg-grid-wrap {
     display: flex;
-    gap: 3px;
     align-items: stretch;
   }
   .wg-row-nums {
@@ -338,6 +337,8 @@
     flex-direction: column;
     width: 12px;
     flex-shrink: 0;
+    margin-right: 5px;
+    padding-top: 1px;
   }
   .wg-row-num {
     flex: 1;
@@ -353,21 +354,26 @@
   .wg-grid {
     display: grid;
     grid-template-columns: repeat(20, 1fr);
-    border: 1.5px solid rgba(96,165,250,0.6);
+    border: 1.5px solid rgba(96,165,250,0.55);
+    border-radius: 4px;
+    overflow: hidden;
     flex: 1;
   }
   .wongoji-cell {
     aspect-ratio: 1;
-    border-right: 1px solid rgba(96,165,250,0.25);
-    border-bottom: 1px solid rgba(96,165,250,0.25);
+    border-right: 1px solid rgba(96,165,250,0.2);
+    border-bottom: 1px solid rgba(96,165,250,0.2);
     font-family: 'Gaegu', cursive;
-    font-size: 11px;
+    font-weight: 700;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
     box-sizing: border-box;
   }
+  .wongoji-cell:nth-child(20n)        { border-right: none; }
+  .wongoji-cell:nth-last-child(-n+20) { border-bottom: none; }
   .wongoji-cell:nth-child(n+81):nth-child(-n+100) {
     border-bottom: 1.5px solid rgba(96,165,250,0.45);
   }
@@ -380,6 +386,7 @@
   }
   .wongoji-cell.wc-cursor {
     box-shadow: inset 0 0 0 1.5px rgba(37,99,235,0.5);
+    background: rgba(37,99,235,0.05);
   }
   .wg-footer {
     margin-top: 8px;
@@ -410,12 +417,12 @@
     text-align: right;
   }
   .wg-rule {
-    margin-top: 6px;
-    font-size: 9px;
-    color: rgba(37,99,235,0.5);
-    font-family: 'JetBrains Mono', monospace;
-    text-align: center;
-    letter-spacing: 0.02em;
+    margin-top: 8px;
+    font-size: 10px;
+    color: #94a3b8;
+    border-top: 1px solid rgba(96,165,250,0.18);
+    padding-top: 6px;
+    font-family: 'Noto Sans KR', sans-serif;
   }
 
   .card h2 {
@@ -476,36 +483,6 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 6px;
-  }
-  .practice-side .topic-pill.big {
-    padding: 10px 12px;
-    font-size: 12px;
-    border-radius: 10px;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
-  }
-  .practice-side .topic-pill.big .t-icon { font-size: 16px; margin-right: 6px; }
-  .practice-side .topic-pill.big .count {
-    margin-left: auto;
-    font-size: 10px;
-  }
-  .practice-side .topic-pill.big {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    cursor: pointer;
-  }
-  .practice-side .topic-pill.big > * {
-    position: relative;
-    z-index: 1;
-  }
-  .practice-side .topic-pill.big .fill {
-    position: absolute;
-    inset: 0 auto 0 0;
-    background: rgba(37, 99, 235, 0.08);
-    z-index: 0;
-    transition: width 0.25s ease;
   }
 
   /* Subcategory progress tracker — single column inside sidebar */
@@ -881,12 +858,43 @@
   }
   .panel-buttons { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
 
-  /* Practice grid — content visually centered, sidebar pinned right (off-balance, like an add-on) */
-  .practice-grid {
-    display: grid;
-    grid-template-columns: 1fr 250px;
-    gap: 22px;
-    align-items: start;
+  /* Topics shelf — horizontal scroll below the practice area */
+  .topics-shelf {
+    max-width: 1120px;
+    margin: 12px auto 0;
+    padding: 0 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .topics-shelf::-webkit-scrollbar { display: none; }
+  .topics-shelf .topics {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding-bottom: 4px;
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+  .topics-shelf .topics-row {
+    display: contents;
+  }
+  .topics-shelf .topic-pill.big {
+    flex: 0 0 auto;
+    min-width: 140px;
+    max-width: 200px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .topics-shelf .subtopic-tracker {
+    display: contents;
+  }
+  .topics-shelf .subtopic-chip {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
   .practice-content {
     max-width: 780px;
@@ -914,23 +922,11 @@
     gap: 6px;
   }
   @media (max-width: 900px) {
-    .practice-grid {
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
     .practice-content {
       max-width: none;
     }
     .practice-content > .topics .subtopic-tracker {
       grid-template-columns: 1fr;
-    }
-    .practice-side {
-      grid-column: auto;
-      grid-row: auto;
-      opacity: 1;
-    }
-    .practice-side .side-footer {
-      margin-top: 0;
     }
     .topics-row,
     .subtopic-tracker {
@@ -945,137 +941,6 @@
     .target .word.sm { font-size: 20px; gap: 5px; }
     .keyboard { display: block; }
     .kb-mobile-hint { display: none; }
-  }
-  .practice-side {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    grid-column: 2;
-    grid-row: 1;
-    padding-left: 16px;
-    border-left: 1px dashed var(--bd);
-    font-size: 12px;
-    color: var(--tlo);
-    opacity: 0.88;
-    transition: opacity 0.2s;
-    position: sticky;
-    top: 18px;
-  }
-  .practice-side:hover { opacity: 1; }
-  @media (max-width: 900px) {
-    .practice-side { padding-left: 0; border-left: 0; padding-top: 12px; border-top: 1px solid var(--bd); position: static; top: auto; }
-  }
-  @media (max-width: 700px) {
-    .practice-side {
-      position: fixed;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 920;
-      width: min(86vw, 340px);
-      padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
-      background: var(--l1);
-      border-top: 0;
-      border-left: 1px solid var(--bd);
-      box-shadow: -18px 0 44px rgba(15, 23, 42, 0.18);
-      transform: translateX(100%);
-      transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
-      overflow-y: auto;
-      opacity: 1;
-    }
-    .practice-side.open { transform: translateX(0); }
-    .practice-side .side-head {
-      position: sticky;
-      top: -18px;
-      background: var(--l1);
-      padding: 0 0 12px;
-      z-index: 1;
-    }
-    .practice-side .side-head::before {
-      content: "Rows";
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--tlo);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .practice-side .side-footer { padding-bottom: 8px; }
-    .mobile-vocab-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      width: 100%;
-      min-height: 40px;
-      margin-bottom: 8px;
-      background: var(--l1);
-      border: 1px solid var(--bd);
-      border-radius: 10px;
-      color: var(--thi);
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-  }
-  .practice-side .side-head {
-    display: none;
-  }
-  .practice-side .topics {
-    margin: 0;
-    padding-bottom: 0;
-    border-bottom: 0;
-    gap: 8px;
-  }
-  .practice-side .picker-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .practice-side .picker-title {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--tlo);
-  }
-  .practice-side .topics-row {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .practice-side .topic-pill.big {
-    width: 100%;
-    min-height: 34px;
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-  .practice-side .topic-pill.big .count {
-    font-size: 11px;
-  }
-  .practice-side .topic-pill.big .t-icon {
-    font-size: 14px;
-    margin-right: 5px;
-  }
-  .practice-side .subtopic-tracker {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-  .practice-side .subtopic-tracker .subtopic-chip {
-    width: 100%;
-  }
-  .practice-side .subtopic-chip {
-    min-height: 32px;
-    padding: 7px 8px;
-    font-size: 11px;
-  }
-  .practice-side .side-footer {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
-    position: relative;
-    display: flex;
-    justify-content: flex-end;
   }
   .icon-btn {
     background: var(--l1);
@@ -2363,24 +2228,7 @@
 
     <!-- Practice -->
     <section class="card practice-card">
-      <div class="practice-grid">
-        <aside class="practice-side" id="practiceSide" aria-label="Character rows">
-          <div class="topics" id="topics"></div>
-
-          <div class="side-footer">
-            <div class="settings-wrap" id="settingsWrap">
-              <button class="icon-btn" id="btnSettings" title="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
-              <div class="settings-menu" id="settingsMenu" hidden>
-                <button class="setting-row" id="btnAudio">🔊 Audio: ON</button>
-                <button class="setting-row" id="btnRomanize" title="Show romanization">🅰️ Romanize: OFF</button>
-                <button class="setting-row danger" id="btnReset">Reset stats</button>
-              </div>
-            </div>
-          </div>
-        </aside>
-
         <div class="practice-content">
-          <button id="mobileVocabBtn" class="mobile-vocab-toggle" type="button" aria-expanded="false" aria-controls="practiceSide">Rows</button>
           <div id="topikReadiness" class="topik-readiness" aria-label="TOPIK readiness">
             <div class="tr-row">
               <div class="tr-hero">
@@ -2448,8 +2296,16 @@
               </div>
             </div>
           </section>
+
+          <div class="settings-wrap" id="settingsWrap">
+            <button class="icon-btn" id="btnSettings" title="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
+            <div class="settings-menu" id="settingsMenu" hidden>
+              <button class="setting-row" id="btnAudio">🔊 Audio: ON</button>
+              <button class="setting-row" id="btnRomanize" title="Show romanization">🅰️ Romanize: OFF</button>
+              <button class="setting-row danger" id="btnReset">Reset stats</button>
+            </div>
+          </div>
         </div>
-      </div>
 
       <!-- Hidden stubs: legacy renderers may still touch these -->
       <div id="diag" class="legacy-stub" hidden></div>
@@ -2479,6 +2335,11 @@
     </aside>
 
   </main>
+
+  <!-- Topics shelf — horizontal scroll row -->
+  <div class="topics-shelf">
+    <div class="topics" id="topics"></div>
+  </div>
 
   <div class="help">
     Press <kbd>Esc</kbd> to skip · Type with QWERTY, no IME needed.
