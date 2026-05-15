@@ -1288,18 +1288,18 @@
     font-weight: 600;
   }
   .key.target { background: var(--blue); border-color: var(--blue); }
-  .key.target.f-pinky  { background: #a855f7; border-color: #a855f7; }
-  .key.target.f-ring   { background: #0ea5e9; border-color: #0ea5e9; }
-  .key.target.f-middle { background: #f59e0b; border-color: #f59e0b; }
-  .key.target.f-index  { background: #ec4899; border-color: #ec4899; }
+  .key.target.f-pinky  { background: #9d8ee0; border-color: #9d8ee0; }
+  .key.target.f-ring   { background: #de85a8; border-color: #de85a8; }
+  .key.target.f-middle { background: #62b882; border-color: #62b882; }
+  .key.target.f-index  { background: #c9a040; border-color: #c9a040; }
   .key.target .jamo, .key.target .qwerty, .key.target .shift {
     color: white;
   }
   .key.shifted { background: var(--orange); border-color: var(--orange); }
-  .key.shifted.f-pinky  { background: #a855f7; border-color: #a855f7; }
-  .key.shifted.f-ring   { background: #0ea5e9; border-color: #0ea5e9; }
-  .key.shifted.f-middle { background: #f59e0b; border-color: #f59e0b; }
-  .key.shifted.f-index  { background: #ec4899; border-color: #ec4899; }
+  .key.shifted.f-pinky  { background: #9d8ee0; border-color: #9d8ee0; }
+  .key.shifted.f-ring   { background: #de85a8; border-color: #de85a8; }
+  .key.shifted.f-middle { background: #62b882; border-color: #62b882; }
+  .key.shifted.f-index  { background: #c9a040; border-color: #c9a040; }
   .key.shifted .jamo, .key.shifted .qwerty, .key.shifted .shift { color: white; }
   .key.target, .key.shifted, .key.hit { transform: none; }
   /* Quick color tick on hit — no scale, so the row never shifts */
@@ -1357,10 +1357,10 @@
   .fbar-f[data-f$="-ring"]   { height: 28px; }
   .fbar-f[data-f$="-middle"] { height: 33px; }
   .fbar-f[data-f$="-index"]  { height: 26px; }
-  .fbar-f.active[data-f$="-pinky"]  { background: #a855f7; box-shadow: 0 2px 10px #a855f760; transform: none; }
-  .fbar-f.active[data-f$="-ring"]   { background: #0ea5e9; box-shadow: 0 2px 10px #0ea5e960; transform: none; }
-  .fbar-f.active[data-f$="-middle"] { background: #f59e0b; box-shadow: 0 2px 10px #f59e0b60; transform: none; }
-  .fbar-f.active[data-f$="-index"]  { background: #ec4899; box-shadow: 0 2px 10px #ec489960; transform: none; }
+  .fbar-f.active[data-f$="-pinky"]  { background: #9d8ee0; box-shadow: 0 2px 10px #9d8ee060; transform: none; }
+  .fbar-f.active[data-f$="-ring"]   { background: #de85a8; box-shadow: 0 2px 10px #de85a860; transform: none; }
+  .fbar-f.active[data-f$="-middle"] { background: #62b882; box-shadow: 0 2px 10px #62b88260; transform: none; }
+  .fbar-f.active[data-f$="-index"]  { background: #c9a040; box-shadow: 0 2px 10px #c9a04060; transform: none; }
   @media (max-width: 700px) {
     .keyboard {
       padding: 10px 8px;
@@ -4501,10 +4501,10 @@ const STATE_COLORS = {
   now3:     '#60a5fa',
   err:      '#ef4444',
   pending:  '#cbd5e1',
-  'f-pinky':  '#a855f7',
-  'f-ring':   '#0ea5e9',
-  'f-middle': '#f59e0b',
-  'f-index':  '#ec4899',
+  'f-pinky':  '#9d8ee0',
+  'f-ring':   '#de85a8',
+  'f-middle': '#62b882',
+  'f-index':  '#c9a040',
 };
 
 const SYL_CACHE = new Map(); // key: `${char}|${px}` -> rendered syllable segmentation
