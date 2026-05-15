@@ -129,16 +129,25 @@ All existing features are preserved unchanged:
 - Finger-color keyboard highlighting (`.key.target.f-*`, `.key.shifted.f-*`)
 - Finger bar diagram below the keyboard (`.fbar-f.active[data-f$="*"]`)
 
-Only the 4 finger hue values change. New palette is harmonized with the wongoji blue (`#60a5fa`, HSL 213°, 93%, 65%) — same saturation and lightness tier, evenly spread across the hue wheel:
+Only the 4 finger hue values change. New palette: muted, harmonized with wongoji blue, spread across the hue wheel. Assignment: index=yellow, middle=green, ring=pink, pinky=purple.
 
 | Finger | Old | New | Hue |
 |---|---|---|---|
-| pinky | `#a855f7` | `#c084fc` | 270° violet |
-| ring | `#0ea5e9` | `#34d399` | 160° emerald (previously too close to site blue) |
-| middle | `#f59e0b` | `#fb923c` | 24° orange-amber |
-| index | `#ec4899` | `#f472b6` | 330° rose-pink |
+| pinky | `#a855f7` | `#9d8ee0` | 252° muted violet |
+| ring  | `#0ea5e9` | `#de85a8` | 338° muted dusty rose |
+| middle| `#f59e0b` | `#62b882` | 143° muted sage green |
+| index | `#ec4899` | `#c9a040` | 42°  muted warm gold |
 
-Each value appears in 4 places in index.html (`.key.target`, `.key.shifted`, `.fbar-f.active` × 2 box-shadow variants). Replace all 4 occurrences per finger color as a batch.
+**The per-jamo canvas segmentation system is untouched.** Colors are read from `STATE_COLORS` — only the 4 hex values change. The pixel-splitting, tuner guides, and jamo region logic are identical.
+
+Exact change locations in index.html:
+
+| What | Lines | Count |
+|---|---|---|
+| `STATE_COLORS` JS map | ~4500-4503 | 4 values |
+| `.key.target.f-*` CSS | ~1287-1290 | 4 rules |
+| `.key.shifted.f-*` CSS | ~1295-1298 | 4 rules |
+| `.fbar-f.active[data-f$="*"]` CSS | ~1356-1359 | 4 rules (bg + box-shadow each) |
 
 ---
 
