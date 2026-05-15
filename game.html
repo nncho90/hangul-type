@@ -3860,6 +3860,7 @@ const BATTLE_RATE_LIMIT_KEY = 'hangul-battle-last-submit-v1';
 // Versioned so future schema changes can invalidate without breaking older clients.
 // Documented as the contract that a future service-worker offline mode will inherit.
 const BATTLE_LB_CACHE_KEY = 'hangul-battle-lb-cache-v1';
+const FANDOM_LB_CACHE_KEY  = 'hangul-fandom-lb-cache-v1';
 // Queue of submits that failed because the network was down. Flushed on next load.
 const BATTLE_SUBMIT_QUEUE_KEY = 'hangul-battle-submit-queue-v1';
 
@@ -3881,6 +3882,24 @@ function _writeLbCache(payload) {
       rows: payload.rows || [],
       stats: payload.stats || {},
       rank: payload.rank || null,
+      cachedAt: Date.now()
+    }));
+  } catch (e) {}
+}
+function _readFandomLbCache() {
+  try {
+    const raw = localStorage.getItem(FANDOM_LB_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.rows)) return null;
+    return parsed;
+  } catch (e) { return null; }
+}
+function _writeFandomLbCache(data) {
+  try {
+    localStorage.setItem(FANDOM_LB_CACHE_KEY, JSON.stringify({
+      rows: data.rows || [],
+      rank: data.rank || null,
       cachedAt: Date.now()
     }));
   } catch (e) {}
@@ -3987,11 +4006,10 @@ async function submitBattleScore(level, points) {
     // Network errors (offline, DNS, timeout) hit the catch block and DO get queued for next load.
     if (!res.ok && res.status >= 500) _enqueueSubmit({ body });
     _battleLbCache = null;
+    _fandomLbCache = null;  // clear now so the .finally() render fetches fresh fandom data
     // Mirror the player's local fandom selection to their server row, so the
-    // fandom leaderboard aggregate stays accurate. Fire-and-forget; the call
-    // is a no-op if the migration hasn't been applied yet.
-    const fandomId = (progress.profile && progress.profile.fandom) || '';
-    if (fandomId !== undefined) setBattleFandom(fandomId);
+    // fandom leaderboard aggregate stays accurate. Fire-and-forget.
+    setBattleFandom((progress.profile && progress.profile.fandom) || '');
   } catch (e) {
     _enqueueSubmit({ body });
   }
@@ -4176,7 +4194,11 @@ let _fandomLbCache = null;
 let _fandomLbCacheAt = 0;
 
 async function fetchFandomLeaderboard(force) {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    const cached = _readFandomLbCache();
+    if (cached) return cached;
+    return null;
+  }
   const now = Date.now();
   if (!force && _fandomLbCache && now - _fandomLbCacheAt < 60000) return _fandomLbCache;
   const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' };
@@ -4198,8 +4220,11 @@ async function fetchFandomLeaderboard(force) {
       rank: (Array.isArray(rank) && rank[0]) || null
     };
     _fandomLbCacheAt = now;
+    _writeFandomLbCache(_fandomLbCache);
     return _fandomLbCache;
   } catch (e) {
+    const cached = _readFandomLbCache();
+    if (cached) return cached;
     return null;
   }
 }
@@ -4211,7 +4236,7 @@ async function renderFandomLeaderboard(containerId) {
   container.innerHTML = '<div class="battle-lb-loading">Loading fandom rankings…</div>';
   const data = await fetchFandomLeaderboard();
   if (!data) {
-    container.innerHTML = '<div class="battle-lb-empty">Fandom rankings will appear once the migration is applied. Pick a fandom in your profile to be on it!</div>';
+    container.innerHTML = '<div class="battle-lb-empty">Could not load fandom rankings. Check your connection and try again.</div>';
     return;
   }
   const { rows, rank } = data;
