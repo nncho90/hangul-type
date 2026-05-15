@@ -32,7 +32,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Type Hangeul","url":"https://typehangeul.com/","applicationCategory":"EducationalApplication","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Free Korean typing practice on a QWERTY keyboard with TOPIK 1 and TOPIK 2 vocabulary, per-jamo accuracy tracking, and a 60-second WPM sprint. Designed for TOPIK IBT candidates who need to type Korean essays online.","image":"https://typehangeul.com/og-image.png","logo":"https://typehangeul.com/logo.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"keywords":"TOPIK IBT typing, TOPIK online exam, Korean keyboard practice, learn to type Korean, TOPIK 2 writing"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does the TOPIK online exam require typing in Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. The TOPIK IBT (Internet-Based Test) writing section requires candidates to type Korean characters directly into a text field. The long essay (Question 53/54) requires 400–500 characters typed in Korean. There is no handwriting or pen-and-paper component in the online format."}},{"@type":"Question","name":"How fast do I need to type Korean for TOPIK IBT?","acceptedAnswer":{"@type":"Answer","text":"Aim for at least 30–40 Korean characters per minute to write comfortably within the time limit. Type Hangeul's 60-second WPM sprint uses TOPIK-level vocabulary so you can benchmark your speed before exam day."}},{"@type":"Question","name":"How do I type Korean on a QWERTY keyboard for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"South Korea uses the 2-set (두벌식) keyboard layout, where each QWERTY key maps to one Korean jamo (consonant or vowel). Type Hangeul shows the full key map live as you practice, and its built-in composition engine means no IME installation is required. Just open the site and start typing."}},{"@type":"Question","name":"How long does it take to learn Korean typing for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"Most learners who can already read Hangeul reach a functional typing speed within 5–10 hours of deliberate practice. The 2-set layout has 24 jamo across 24 keys, so the learning curve is shorter than it appears."}},{"@type":"Question","name":"Can I practice TOPIK 2 vocabulary while learning to type Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. Type Hangeul includes separate word lists for TOPIK Level 1 and TOPIK Level 2, covering verbs, adjectives, nouns, and phrases. Select TOPIK 2 from the topic panel and the spaced-repetition system drills the most relevant vocabulary for the intermediate exam level."}}]}</script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&family=Gaegu&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: inherit; }
@@ -113,8 +113,19 @@
   .practice-main {
     max-width: 1120px;
     margin: 0 auto;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
   }
-  .practice-card { padding: 28px 36px; }
+  .practice-card {
+    padding: 28px 36px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  @media (max-width: 700px) {
+    .practice-main { flex-direction: column; }
+    .wongoji-card  { width: 100%; }
+  }
 
   /* Hide legacy stubs unconditionally; they exist only so render calls don't throw */
   .legacy-stub, [hidden].legacy-stub { display: none !important; }
@@ -285,6 +296,128 @@
     border-radius: 14px;
     padding: 22px;
   }
+
+  /* ---- Wongoji widget ---- */
+  .wongoji-card {
+    background: rgba(255,255,255,0.92);
+    border: 1.5px solid rgba(96,165,250,0.5);
+    border-radius: 14px;
+    padding: 14px 16px;
+    width: 280px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+  .wongoji-card.wg-done {
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.35);
+  }
+  .wg-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .wg-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(37,99,235,0.8);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+  .wg-count {
+    font-size: 11px;
+    color: var(--tmd);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .wg-grid-wrap {
+    display: flex;
+    gap: 3px;
+    align-items: stretch;
+  }
+  .wg-row-nums {
+    display: flex;
+    flex-direction: column;
+    width: 12px;
+    flex-shrink: 0;
+  }
+  .wg-row-num {
+    flex: 1;
+    font-size: 7px;
+    color: rgba(59,130,246,0.55);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 1px;
+    line-height: 1;
+  }
+  .wg-grid {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    border: 1.5px solid rgba(96,165,250,0.6);
+    flex: 1;
+  }
+  .wongoji-cell {
+    aspect-ratio: 1;
+    border-right: 1px solid rgba(96,165,250,0.25);
+    border-bottom: 1px solid rgba(96,165,250,0.25);
+    font-family: 'Gaegu', cursive;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+  .wongoji-cell:nth-child(n+81):nth-child(-n+100) {
+    border-bottom: 1.5px solid rgba(96,165,250,0.45);
+  }
+  .wongoji-cell.wc-typed {
+    background: rgba(219,234,254,0.4);
+    color: #1e40af;
+  }
+  .wongoji-cell.wc-space {
+    background: rgba(219,234,254,0.15);
+  }
+  .wongoji-cell.wc-cursor {
+    box-shadow: inset 0 0 0 1.5px rgba(37,99,235,0.5);
+  }
+  .wg-footer {
+    margin-top: 8px;
+  }
+  .wg-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .wg-progress-track {
+    flex: 1;
+    height: 4px;
+    background: rgba(96,165,250,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .wg-progress-fill {
+    height: 100%;
+    background: rgba(37,99,235,0.5);
+    border-radius: 2px;
+    transition: width 0.1s;
+  }
+  .wg-pct {
+    font-size: 9px;
+    color: var(--tlo);
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 28px;
+    text-align: right;
+  }
+  .wg-rule {
+    margin-top: 6px;
+    font-size: 9px;
+    color: rgba(37,99,235,0.5);
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
   .card h2 {
     margin: 0 0 4px;
     font-size: 13px; font-weight: 600;
@@ -2325,6 +2458,25 @@
       <button id="btnSkip" class="legacy-stub" hidden></button>
 
     </section>
+
+    <!-- Wongoji live widget -->
+    <aside class="wongoji-card" id="wongoji-card">
+      <div class="wg-header">
+        <span class="wg-title">원고지</span>
+        <span class="wg-count"><span id="wgCount">0</span>&nbsp;/ 200자</span>
+      </div>
+      <div class="wg-grid-wrap">
+        <div class="wg-row-nums" id="wgRowNums"></div>
+        <div class="wg-grid" id="wgGrid"></div>
+      </div>
+      <div class="wg-footer">
+        <div class="wg-progress-wrap">
+          <div class="wg-progress-track"><div class="wg-progress-fill" id="wgBar" style="width:0%"></div></div>
+          <span class="wg-pct" id="wgPct">0%</span>
+        </div>
+        <div class="wg-rule">한 칸에 한 글자 &middot; 띄어쓰기는 빈 칸</div>
+      </div>
+    </aside>
 
   </main>
 
