@@ -107,17 +107,55 @@ A new card in the sidebar (right column of the existing `.grid` layout). Does no
 
 ---
 
+## Part 3: Widget Font
+
+The characters rendered inside 원고지 cells use a handwritten Korean Google Font to evoke actually writing on manuscript paper.
+
+**Font:** `Nanum Pen Script` (Google Fonts) — lightest-weight handwritten Korean font, legible at small sizes.
+
+```html
+<!-- Add to both pages' <head> alongside existing font imports -->
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+```
+
+Apply only to `.wongoji-cell` text content, not to the widget labels/count (those stay JetBrains Mono).
+
+---
+
+## Part 4: Finger Color Re-tune
+
+All existing features are preserved unchanged:
+- Jamo coloring on the target word
+- Finger-color keyboard highlighting (`.key.target.f-*`, `.key.shifted.f-*`)
+- Finger bar diagram below the keyboard (`.fbar-f.active[data-f$="*"]`)
+
+Only the 4 finger hue values change. New palette is harmonized with the wongoji blue (`#60a5fa`, HSL 213°, 93%, 65%) — same saturation and lightness tier, evenly spread across the hue wheel:
+
+| Finger | Old | New | Hue |
+|---|---|---|---|
+| pinky | `#a855f7` | `#c084fc` | 270° violet |
+| ring | `#0ea5e9` | `#34d399` | 160° emerald (previously too close to site blue) |
+| middle | `#f59e0b` | `#fb923c` | 24° orange-amber |
+| index | `#ec4899` | `#f472b6` | 330° rose-pink |
+
+Each value appears in 4 places in index.html (`.key.target`, `.key.shifted`, `.fbar-f.active` × 2 box-shadow variants). Replace all 4 occurrences per finger color as a batch.
+
+---
+
 ## Acceptance Criteria
 
 1. Both pages have the soft blue 18px grid on the body background.
 2. Existing card `background: #fff` → `background: rgba(255,255,255,0.92)` so grid shows through.
 3. 원고지 widget appears in index.html sidebar, below or instead of any existing sidebar stub.
 4. Widget grid is exactly 20 cols × 10 rows; row numbers 1–10 visible on left.
-5. Typing a character fills the next cell; space fills a blank cell; backspace reverts.
-6. Character count label and progress bar update on every keystroke.
-7. Session reset (new word set / game restart) clears the widget.
-8. No visual regression on mobile (375px): widget stacks below the practice card, grid cells stay square.
-9. No regression in game.html layout — background only, no widget added.
+5. Widget cell characters render in Nanum Pen Script; labels/count stay in JetBrains Mono.
+6. Typing a character fills the next cell live; space fills a blank cell; backspace reverts.
+7. Character count label and progress bar update on every keystroke.
+8. Session reset (new word set / game restart) clears the widget.
+9. Finger colors updated to new palette in all 4 CSS locations per finger; box-shadow colors match.
+10. Jamo coloring on target word and finger bar diagram visually unchanged (just recolored).
+11. No visual regression on mobile (375px): widget stacks below the practice card, grid cells stay square.
+12. No regression in game.html layout — background only, no widget or color changes added.
 
 ---
 
