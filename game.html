@@ -3413,6 +3413,25 @@ function renderPlayerSprite(lv) {
   }
 })();
 
+// Preload all enemy walk + hit frames at module load so sprite swaps never blink.
+// Reads from BATTLE_CONFIG (same source the game uses) so adding a new enemy type
+// automatically gets its frames preloaded without touching this code.
+(function preloadEnemyFrames() {
+  const cfg = window.BATTLE_CONFIG || {};
+  // Non-boss tiers: idle (walk-1), step (walk-3), hit-1, hit-2.
+  for (const file of Object.values(cfg.enemyTiers || {})) {
+    for (const suf of ['-walk-1', '-walk-3', '-hit-1', '-hit-2']) {
+      const im = new Image(); im.src = `sprites/${file}${suf}.png`;
+    }
+  }
+  // Boss pool: base idle frame + step frame.
+  for (const boss of (cfg.bossPool || [])) {
+    if (!boss.sprite) continue;
+    const im1 = new Image(); im1.src = `sprites/${boss.sprite}.png`;
+    const im2 = new Image(); im2.src = `sprites/${boss.sprite}-step.png`;
+  }
+})();
+
 // Play the 4-frame attack animation. Called from advanceLock() on every
 // successful keystroke that lands an attack. Each tier auto-advances through
 // its sequence over ~200ms (4 × 50ms). Sustained typing replays the sequence;
