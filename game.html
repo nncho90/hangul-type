@@ -27,7 +27,6 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-180.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Hangeul Battle","url":"https://typehangeul.com/game.html","applicationCategory":"GameApplication","genre":"Educational","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Browser typing game where players defeat Korean 한글 demons by typing the Korean word floating above each one.","image":"https://typehangeul.com/og-image.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"],"isPartOf":{"@type":"WebApplication","name":"Type Hangeul","url":"https://typehangeul.com/","image":"https://typehangeul.com/og-image.png","logo":"https://typehangeul.com/logo.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"]},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
@@ -3563,6 +3562,15 @@ function triggerStrikePose() {
   playFrame();
 }
 
+function clearPlayerAnimationTimers() {
+  if (state._strikeTimer) { clearTimeout(state._strikeTimer); state._strikeTimer = null; }
+  if (state._strikeDefer) { clearTimeout(state._strikeDefer); state._strikeDefer = null; }
+  if (state._jumpTimers) { state._jumpTimers.forEach(t => clearTimeout(t)); state._jumpTimers = null; }
+  state._strikeRunning = false;
+  state._strikePending = false;
+  state._jumpUntil = 0;
+}
+
 // Play a brief 2-frame "got hit" reaction on a monster. Called from advanceLock
 // every time the player lands a keystroke. Sets BOTH the idle and step layers
 // to the hit frame (otherwise the CSS opacity flicker on .sprite-step would
@@ -3822,7 +3830,6 @@ function noiseBurst({ dur=0.08, gain=0.05, freq=1200 }) {
   src.start();
 }
 function sfxShoot()   { tone({ freq: 1200, type:'sine',     dur:0.04, gain:0.03, slide:1700 }); }
-function sfxHit()     { tone({ freq: 600,  type:'sine',     dur:0.05, gain:0.03 }); }
 function sfxKill()    { tone({ freq: 880,  type:'sine',     dur:0.16, gain:0.05 }); noiseBurst({ dur:0.12, gain:0.03, freq:1200 }); }
 function sfxMiss()    { tone({ freq: 200,  type:'square',   dur:0.08, gain:0.03 }); }
 function sfxLevelUp() {
@@ -4394,21 +4401,6 @@ document.addEventListener('click', (e) => {
   if (container) container.setAttribute('data-tab', tabName);
   renderActiveLeaderboard(lbId);
 });
-
-function renderProfilePreview() {
-  progress = getProgress();
-  const nameEl = document.getElementById('profileNameInput');
-  const countryEl = document.getElementById('profileCountrySelect');
-  if (!nameEl || !countryEl) return;
-  const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
-  const name = (progress.profile && progress.profile.name) || 'Player';
-  nameEl.value = name;
-  const opts = Object.entries(COUNTRY_NAMES)
-    .sort((a, b) => a[1].localeCompare(b[1]))
-    .map(([code, label]) => `<option value="${code}" ${code === cc ? 'selected' : ''}>${flagEmoji(code)} ${label}</option>`)
-    .join('');
-  countryEl.innerHTML = opts;
-}
 
 function isProfileUnset() {
   const p = getProgress();
@@ -6221,7 +6213,11 @@ function renderPowerupHud() {
   if (a.shield) chips.push(`<span class="powerup-chip shield"><span class="ico">🛡️</span> SHIELD</span>`);
   if (a.slowmo > 0) chips.push(`<span class="powerup-chip slowmo"><span class="ico">⏳</span> ${Math.ceil(a.slowmo/1000)}s</span>`);
   if (a.xp > 0)     chips.push(`<span class="powerup-chip xp"><span class="ico">✨</span> 2×XP ${Math.ceil(a.xp/1000)}s</span>`);
-  hud.innerHTML = chips.join('');
+  const html = chips.join('');
+  if (hud.dataset.renderedHtml !== html) {
+    hud.innerHTML = html;
+    hud.dataset.renderedHtml = html;
+  }
 }
 
 // ─── Boss intro cutscene + named bosses ───────────────────────────────────
@@ -6258,7 +6254,7 @@ function playBossCutscene(profile) {
   // Replace inline onerror=… (attribute-injection prone) with a safe handler.
   const img = cs.querySelector('.sprite-img');
   if (img) img.addEventListener('error', () => {
-    img.outerHTML = profile.emoji;     // textContent of a sibling, NOT an attribute
+    img.replaceWith(document.createTextNode(profile.emoji || ''));
   }, { once: true });
   document.body.appendChild(cs);
   setTimeout(() => cs.remove(), 1550);
@@ -6352,6 +6348,7 @@ function damagePlayer() {
 
 function gameOver() {
   state.running = false;
+  clearPlayerAnimationTimers();
   cancelAllSpeech();
   sfxGameOver();
   const high = getHighScore();
@@ -6846,6 +6843,7 @@ function startGame() {
 
 function doStartGame() {
   state.running = true; state.paused = false;
+  clearPlayerAnimationTimers();
   state.lives = ADMIN.player.lives; state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
   state.combo = 0; state.bestCombo = 0;
   state.startedAt = Date.now();
