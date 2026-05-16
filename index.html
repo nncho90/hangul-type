@@ -32,7 +32,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Type Hangeul","url":"https://typehangeul.com/","applicationCategory":"EducationalApplication","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Free Korean typing practice on a QWERTY keyboard with TOPIK 1 and TOPIK 2 vocabulary, per-jamo accuracy tracking, and a 60-second WPM sprint. Designed for TOPIK IBT candidates who need to type Korean essays online.","image":"https://typehangeul.com/og-image.png","logo":"https://typehangeul.com/logo.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"keywords":"TOPIK IBT typing, TOPIK online exam, Korean keyboard practice, learn to type Korean, TOPIK 2 writing"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does the TOPIK online exam require typing in Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. The TOPIK IBT (Internet-Based Test) writing section requires candidates to type Korean characters directly into a text field. The long essay (Question 53/54) requires 400–500 characters typed in Korean. There is no handwriting or pen-and-paper component in the online format."}},{"@type":"Question","name":"How fast do I need to type Korean for TOPIK IBT?","acceptedAnswer":{"@type":"Answer","text":"Aim for at least 30–40 Korean characters per minute to write comfortably within the time limit. Type Hangeul's 60-second WPM sprint uses TOPIK-level vocabulary so you can benchmark your speed before exam day."}},{"@type":"Question","name":"How do I type Korean on a QWERTY keyboard for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"South Korea uses the 2-set (두벌식) keyboard layout, where each QWERTY key maps to one Korean jamo (consonant or vowel). Type Hangeul shows the full key map live as you practice, and its built-in composition engine means no IME installation is required. Just open the site and start typing."}},{"@type":"Question","name":"How long does it take to learn Korean typing for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"Most learners who can already read Hangeul reach a functional typing speed within 5–10 hours of deliberate practice. The 2-set layout has 24 jamo across 24 keys, so the learning curve is shorter than it appears."}},{"@type":"Question","name":"Can I practice TOPIK 2 vocabulary while learning to type Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. Type Hangeul includes separate word lists for TOPIK Level 1 and TOPIK Level 2, covering verbs, adjectives, nouns, and phrases. Select TOPIK 2 from the topic panel and the spaced-repetition system drills the most relevant vocabulary for the intermediate exam level."}}]}</script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&family=Gaegu&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: inherit; }
@@ -121,10 +121,13 @@
     padding: 28px 36px;
     flex: 1 1 0;
     min-width: 0;
+    background-image:
+      linear-gradient(rgba(96,165,250,0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(96,165,250,0.10) 1px, transparent 1px);
+    background-size: 18px 18px;
   }
   @media (max-width: 700px) {
     .practice-main { flex-direction: column; }
-    .wongoji-card  { width: 100%; }
   }
 
   /* Hide legacy stubs unconditionally; they exist only so render calls don't throw */
@@ -298,132 +301,6 @@
   }
 
   /* ---- Wongoji widget ---- */
-  .wongoji-card {
-    background: rgba(255,255,255,0.92);
-    border: 1.5px solid rgba(96,165,250,0.5);
-    border-radius: 14px;
-    padding: 14px 16px;
-    width: 280px;
-    flex-shrink: 0;
-    box-sizing: border-box;
-  }
-  .wongoji-card.wg-done {
-    box-shadow: 0 0 0 2px rgba(37,99,235,0.35);
-  }
-  .wg-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  .wg-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(37,99,235,0.8);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.04em;
-  }
-  .wg-count {
-    font-size: 11px;
-    color: var(--tmd);
-    font-family: 'JetBrains Mono', monospace;
-  }
-  .wg-grid-wrap {
-    display: flex;
-    align-items: stretch;
-  }
-  .wg-row-nums {
-    display: flex;
-    flex-direction: column;
-    width: 12px;
-    flex-shrink: 0;
-    margin-right: 5px;
-    padding-top: 1px;
-  }
-  .wg-row-num {
-    flex: 1;
-    font-size: 7px;
-    color: rgba(59,130,246,0.55);
-    font-family: 'JetBrains Mono', monospace;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 1px;
-    line-height: 1;
-  }
-  .wg-grid {
-    display: grid;
-    grid-template-columns: repeat(20, 1fr);
-    border: 1.5px solid rgba(96,165,250,0.55);
-    border-radius: 4px;
-    overflow: hidden;
-    flex: 1;
-  }
-  .wongoji-cell {
-    aspect-ratio: 1;
-    border-right: 1px solid rgba(96,165,250,0.2);
-    border-bottom: 1px solid rgba(96,165,250,0.2);
-    font-family: 'Gaegu', cursive;
-    font-weight: 700;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    box-sizing: border-box;
-  }
-  .wongoji-cell:nth-child(20n)        { border-right: none; }
-  .wongoji-cell:nth-last-child(-n+20) { border-bottom: none; }
-  .wongoji-cell:nth-child(n+81):nth-child(-n+100) {
-    border-bottom: 1.5px solid rgba(96,165,250,0.45);
-  }
-  .wongoji-cell.wc-typed {
-    background: rgba(219,234,254,0.4);
-    color: #1e40af;
-  }
-  .wongoji-cell.wc-space {
-    background: rgba(219,234,254,0.15);
-  }
-  .wongoji-cell.wc-cursor {
-    box-shadow: inset 0 0 0 1.5px rgba(37,99,235,0.5);
-    background: rgba(37,99,235,0.05);
-  }
-  .wg-footer {
-    margin-top: 8px;
-  }
-  .wg-progress-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .wg-progress-track {
-    flex: 1;
-    height: 4px;
-    background: rgba(96,165,250,0.15);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  .wg-progress-fill {
-    height: 100%;
-    background: rgba(37,99,235,0.5);
-    border-radius: 2px;
-    transition: width 0.1s;
-  }
-  .wg-pct {
-    font-size: 9px;
-    color: var(--tlo);
-    font-family: 'JetBrains Mono', monospace;
-    min-width: 28px;
-    text-align: right;
-  }
-  .wg-rule {
-    margin-top: 8px;
-    font-size: 10px;
-    color: #94a3b8;
-    border-top: 1px solid rgba(96,165,250,0.18);
-    padding-top: 6px;
-    font-family: 'Noto Sans KR', sans-serif;
-  }
 
   .card h2 {
     margin: 0 0 4px;
@@ -858,44 +735,122 @@
   }
   .panel-buttons { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
 
-  /* Topics shelf — horizontal scroll below the practice area */
+  /* Topics shelf — single-row curriculum with section tabs */
   .topics-shelf {
     max-width: 1120px;
     margin: 12px auto 0;
-    padding: 0 4px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    padding: 0 8px 16px;
   }
-  .topics-shelf::-webkit-scrollbar { display: none; }
-  .topics-shelf .topics {
+  .cr-tabs {
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 10px;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .cr-tab {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--bd);
+    background: rgba(255,255,255,0.7);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--tmd);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .cr-tab:hover { border-color: var(--bdhi); color: var(--thi); }
+  .cr-tab.on {
+    border-color: var(--blue);
+    background: rgba(37,99,235,0.08);
+    color: var(--blue);
+  }
+  .cr-track {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
     padding-bottom: 4px;
-    margin-bottom: 0;
-    border-bottom: none;
+    -webkit-overflow-scrolling: touch;
+    align-items: stretch;
   }
-  .topics-shelf .topics-row {
-    display: contents;
-  }
-  .topics-shelf .topic-pill.big {
+  .cr-track::-webkit-scrollbar { display: none; }
+  .cr-card {
     flex: 0 0 auto;
-    min-width: 140px;
-    max-width: 200px;
-    padding: 12px 16px;
-    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 13px;
+    min-width: 108px;
+    border-radius: 10px;
+    border: 1.5px solid var(--bd);
+    background: rgba(255,255,255,0.92);
+    cursor: pointer;
     text-align: left;
+    opacity: 1;
+    transition: border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
+  }
+  .cr-card:hover { border-color: var(--bdhi); }
+  .cr-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: rgba(37,99,235,0.07);
+    z-index: 0;
+    transition: width 0.3s ease;
+  }
+  .cr-next-label {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(37,99,235,0.45);
+    position: relative; z-index: 1;
+    margin-bottom: 1px;
+  }
+  .cr-ico  { font-size: 15px; line-height: 1; position: relative; z-index: 1; }
+  .cr-name {
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--thi);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative; z-index: 1;
   }
-  .topics-shelf .subtopic-tracker {
-    display: contents;
+  .cr-prog {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--tlo);
+    position: relative; z-index: 1;
   }
-  .topics-shelf .subtopic-chip {
-    flex: 0 0 auto;
-    white-space: nowrap;
+  .cr-unit-num {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--thi);
+    position: relative; z-index: 1;
   }
+  /* Done: muted */
+  .cr-card.cr-done { opacity: 0.45; }
+  .cr-card.cr-done .cr-name::after { content: ' ✓'; color: var(--green); }
+  /* Active: blue glow */
+  .cr-card.cr-active {
+    border-color: var(--blue);
+    background: rgba(37,99,235,0.06);
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.2), 0 4px 14px rgba(37,99,235,0.13);
+  }
+  .cr-card.cr-active .cr-fill { background: rgba(37,99,235,0.14); }
+  .cr-card.cr-active .cr-name { color: var(--blue); font-weight: 700; }
+  .cr-card.cr-active .cr-unit-num { color: var(--blue); }
+  .cr-card.cr-active .cr-prog { color: rgba(37,99,235,0.55); }
+  /* Next: soft blue border, slightly elevated */
+  .cr-card.cr-next {
+    border-color: rgba(96,165,250,0.55);
+    background: rgba(219,234,254,0.18);
+    box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+  }
+  .cr-card.cr-next .cr-fill { background: rgba(37,99,235,0.05); }
   .practice-content {
     max-width: 780px;
     margin: 0 auto;
@@ -1103,6 +1058,10 @@
     display: inline-block;
     position: relative;
     vertical-align: bottom;
+    border: 1.5px solid rgba(96,165,250,0.38);
+    border-radius: 3px;
+    background: rgba(219,234,254,0.12);
+    padding: 3px;
   }
   .target .word .syl canvas {
     display: block;
@@ -1133,103 +1092,6 @@
     50% { opacity: 0.5; }
   }
 
-  /* TOPIK Readiness header card — sits at the top of the practice content
-     pane. The hero is the big "words mastered" count on the left; on the
-     right is the player's current 한글-rank title plus the corresponding
-     TOPIK 급. The meter underneath shows progress to the next 급. */
-  .topik-readiness {
-    margin: 0 0 18px;
-    padding: 16px 20px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(37,99,235,0.07), rgba(139,92,246,0.07));
-    border: 1px solid var(--bd);
-  }
-  .topik-readiness .tr-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-  .topik-readiness .tr-hero { display: flex; flex-direction: column; gap: 0; min-width: 0; }
-  .topik-readiness .tr-count {
-    font-family: 'Black Han Sans', 'Inter', system-ui, sans-serif;
-    font-size: 44px;
-    font-weight: 900;
-    color: var(--thi);
-    line-height: 1;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--blue), var(--purple));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .topik-readiness .tr-count-label {
-    margin-top: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--tmd);
-  }
-  .topik-readiness .tr-rank {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    min-width: 0;
-    text-align: right;
-  }
-  .topik-readiness .tr-rank-title {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--thi);
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-  }
-  .topik-readiness .tr-rank-tag {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--blue);
-  }
-  .topik-readiness .tr-meter {
-    height: 10px;
-    background: var(--l3);
-    border-radius: 5px;
-    overflow: hidden;
-  }
-  .topik-readiness .tr-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--blue), var(--purple));
-    width: 0%;
-    transition: width 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
-  }
-  .topik-readiness .tr-sub {
-    margin-top: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--tmd);
-  }
-  /* Mobile: stack hero + rank on top of each other */
-  @media (max-width: 700px) {
-    .topik-readiness { padding: 14px 16px; }
-    .topik-readiness .tr-row { gap: 8px; }
-    .topik-readiness .tr-rank { align-items: flex-start; text-align: left; }
-    .topik-readiness .tr-count { font-size: 36px; }
-    .topik-readiness .tr-rank-title { font-size: 18px; }
-  }
-  /* Level-up flash when the readiness number ticks up to a new 급. */
-  .topik-readiness.level-up {
-    animation: tr-pulse 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes tr-pulse {
-    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.0); }
-    35%  { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(139, 92, 246, 0.18); }
-    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.0); }
-  }
 
   /* (Cumulative progress bar removed — TOPIK readiness card + per-jamo
      coloring on the target word already convey progress.) */
@@ -1259,8 +1121,8 @@
     height: 50px;
     min-height: 50px;
     max-height: 50px;
-    background: var(--l1);
-    border: 1px solid var(--bdhi);
+    background: rgba(248,252,255,0.96);
+    border: 1px solid rgba(96,165,250,0.38);
     border-radius: 6px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     font-size: 11px; color: var(--tmd);
@@ -2229,20 +2091,7 @@
     <!-- Practice -->
     <section class="card practice-card">
         <div class="practice-content">
-          <div id="topikReadiness" class="topik-readiness" aria-label="TOPIK readiness">
-            <div class="tr-row">
-              <div class="tr-hero">
-                <div class="tr-count" id="trCount">0</div>
-                <div class="tr-count-label">words mastered</div>
-              </div>
-              <div class="tr-rank">
-                <div class="tr-rank-title">한글 Newcomer</div>
-                <div class="tr-rank-tag">Just getting started</div>
-              </div>
-            </div>
-            <div class="tr-meter"><div class="tr-fill"></div></div>
-            <div class="tr-sub">60 words to TOPIK 1 · 1급</div>
-          </div>
+
           <div class="target">
             <div class="gloss" id="gloss">hello</div>
             <div class="char-row">
@@ -2315,24 +2164,6 @@
 
     </section>
 
-    <!-- Wongoji live widget -->
-    <aside class="wongoji-card" id="wongoji-card">
-      <div class="wg-header">
-        <span class="wg-title">원고지</span>
-        <span class="wg-count"><span id="wgCount">0</span>&nbsp;/ 200자</span>
-      </div>
-      <div class="wg-grid-wrap">
-        <div class="wg-row-nums" id="wgRowNums"></div>
-        <div class="wg-grid" id="wgGrid"></div>
-      </div>
-      <div class="wg-footer">
-        <div class="wg-progress-wrap">
-          <div class="wg-progress-track"><div class="wg-progress-fill" id="wgBar" style="width:0%"></div></div>
-          <span class="wg-pct" id="wgPct">0%</span>
-        </div>
-        <div class="wg-rule">한 칸에 한 글자 &middot; 띄어쓰기는 빈 칸</div>
-      </div>
-    </aside>
 
   </main>
 
@@ -5253,168 +5084,123 @@ function _saveAccordionOpen(state) {
 
 function buildTopicsPicker() {
   const el = document.getElementById('topics');
-  const inCharMode = isCharTopic(state.activeTopic);
-  const activeCharId = inCharMode ? state.activeTopic : null;
-
-  // Subtopic chips for each section ────────────────────────────────────────
-  const inLessonMode = isLessonId(state.activeTopic);
-  // Group the 60 lessons into 12 nested "Units" of 5 so the sidebar isn't a
-  // single 60-item scroll. Each unit auto-collapses unless it contains the
-  // active lesson; the user can manually open any unit. Per-unit progress
-  // (lessons completed / 5) is shown in the unit header.
-  const UNIT_SIZE = 5;
-  const UNIT_TAGS = [
-    'TOPIK 1 · 1급 prep',  // Unit 1 (L1-5)
-    'TOPIK 1 · 1급 prep',  // Unit 2 (L6-10)
-    'TOPIK 1 · 1급 ready', // Unit 3 (L11-15)
-    'TOPIK 1 · 2급 prep',  // Unit 4 (L16-20)
-    'TOPIK 1 · 2급 prep',  // Unit 5 (L21-25)
-    'TOPIK 1 · 2급 ready', // Unit 6 (L26-30)
-    'TOPIK 2 · 3급 prep',  // Unit 7 (L31-35)
-    'TOPIK 2 · 3급 ready', // Unit 8 (L36-40)
-    'TOPIK 2 · 4급 prep',  // Unit 9 (L41-45)
-    'TOPIK 2 · 4급 ready', // Unit 10 (L46-50)
-    'TOPIK 2 · 5급 prep',  // Unit 11 (L51-55)
-    'TOPIK 2 · 6급 path'   // Unit 12 (L56-60)
-  ];
-  const lessonUnits = [];
-  for (let i = 0; i < LESSONS.length; i += UNIT_SIZE) lessonUnits.push(LESSONS.slice(i, i + UNIT_SIZE));
-  const activeUnitIdx = inLessonMode
-    ? Math.floor(LESSONS.findIndex(l => l.id === state.activeTopic) / UNIT_SIZE)
-    : -1;
-  const lessonChips = lessonUnits.map((chunk, ui) => {
-    const startN = chunk[0].number, endN = chunk[chunk.length - 1].number;
-    const lessonsDone = chunk.filter(l => lessonDone(l.id) >= l.words.length && l.words.length > 0).length;
-    const wordsDoneInUnit = chunk.reduce((s, l) => s + lessonDone(l.id), 0);
-    const wordsTotalInUnit = chunk.reduce((s, l) => s + l.words.length, 0);
-    const unitPct = wordsTotalInUnit ? Math.round((wordsDoneInUnit / wordsTotalInUnit) * 100) : 0;
-    const isUnitOpen = activeUnitIdx === ui;
-    const isUnitComplete = lessonsDone === chunk.length;
-    const tag = UNIT_TAGS[ui] || `Lessons ${startN}–${endN}`;
-    const chipsHtml = chunk.map(l => {
-      const done = lessonDone(l.id);
-      const total = l.words.length;
-      const pct = total ? Math.round((done / total) * 100) : 0;
-      const isActive = state.activeTopic === l.id;
-      const isComplete = done >= total && total > 0;
-      const cls = (isActive ? 'on ' : '') + (isComplete ? 'complete ' : '');
-      const jamo = l.jamoIntroduced && l.jamoIntroduced.length
-        ? `<small class="lesson-jamo">${escapeHtml(l.jamoIntroduced.join(' '))}</small>`
-        : '';
-      return `<button class="subtopic-chip ${cls}" data-topic="${l.id}" type="button" title="${escapeHtml(l.label)} — ${done}/${total} words">
-        <span class="fill" style="width:${pct}%"></span>
-        <span class="label"><span class="ico">📚</span> ${escapeHtml(l.label)} ${jamo}</span>
-        <span class="count">${done}/${total}</span>
-      </button>`;
-    }).join('');
-    return `<details class="lesson-unit ${isUnitOpen ? 'has-active' : ''} ${isUnitComplete ? 'complete' : ''}" ${isUnitOpen ? 'open' : ''}>
-      <summary class="lesson-unit-head">
-        <span class="lu-fill" style="width:${unitPct}%"></span>
-        <span class="lu-num">Unit ${ui + 1}</span>
-        <span class="lu-tag">${escapeHtml(tag)}</span>
-        <span class="lu-count">${lessonsDone}/${chunk.length}</span>
-        <span class="lu-caret" aria-hidden="true">▾</span>
-      </summary>
-      <div class="lesson-unit-body">${chipsHtml}</div>
-    </details>`;
-  }).join('');
-
-  const charChips = CHAR_TOPICS.map(t => {
-    const done = charTopicDone(t.id);
-    const pct = Math.round((done / CHAR_SESSION_SIZE) * 100);
-    return `<button class="subtopic-chip ${activeCharId === t.id ? 'on' : ''}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)}">
-      <span class="fill" style="width:${pct}%"></span>
-      <span class="label"><span class="ico">${t.icon}</span> ${escapeHtml(t.name)}</span>
-      <span class="count">${done}/${CHAR_SESSION_SIZE}</span>
-    </button>`;
-  }).join('');
-
-  function buildLevelChips(level) {
-    const subs = TOPICS.filter(t => (t.topikLevel || 1) === level);
-    return subs.map(t => {
-      const done = (progress.topicCompleted[t.id] || []).length;
-      const total = t.words.length;
-      const pct = total ? Math.round((done / total) * 100) : 0;
-      const cls = (state.activeTopic === t.id ? 'on ' : '') + (done >= total && total > 0 ? 'complete ' : '');
-      const ico = TOPIC_ICONS[t.id] || '·';
-      const mastery = topicMasteryStored(t.id).level;
-      const masteryIcon = MASTERY_ICONS[mastery] || MASTERY_ICONS[1];
-      return `<button class="subtopic-chip ${cls}" data-topic="${t.id}" type="button" title="${escapeHtml(t.name)} — ${done}/${total} typed · mastery Lv ${mastery}. Click to pin/unpin.">
-        <span class="fill" style="width:${pct}%"></span>
-        <span class="label"><span class="ico">${ico}</span> ${escapeHtml(t.name.replace(/^TOPIK \d · /, ''))}</span>
-        <span class="mastery">${masteryIcon}</span>
-        <span class="count">${done}/${total}</span>
-      </button>`;
-    }).join('');
-  }
-
-  // Header progress totals ──────────────────────────────────────────────────
-  const t1Count = wordsForLevel(1).length;
-  const t2Count = wordsForLevel(2).length;
-  const t1Done = uniqueDoneForLevel(1);
-  const t2Done = uniqueDoneForLevel(2);
-  const t1Pct = t1Count ? Math.round((t1Done / t1Count) * 100) : 0;
-  const t2Pct = t2Count ? Math.round((t2Done / t2Count) * 100) : 0;
-  const charTotalDone = CHAR_TOPICS.reduce((s, t) => s + charTopicDone(t.id), 0);
-  const charTotalGoal = CHAR_TOPICS.length * CHAR_SESSION_SIZE;
-  const charPct = charTotalGoal ? Math.round((charTotalDone / charTotalGoal) * 100) : 0;
-  const lessonsDoneN = lessonsTotalDone();
-  const lessonsGoalN = lessonsTotalGoal();
-  const lessonsPct = lessonsGoalN ? Math.round((lessonsDoneN / lessonsGoalN) * 100) : 0;
-
-  // Force the active section open; otherwise honor the user's saved preference.
-  const open = _loadAccordionOpen();
+  const activeTopic = state.activeTopic;
+  const inLessonMode = isLessonId(activeTopic);
+  const inCharMode = isCharTopic(activeTopic);
   const activeLvl = inCharMode || inLessonMode ? 0 : activeLevel();
-  if (inLessonMode)    open.lessons = true;
-  if (activeLvl === 1) open.topik1 = true;
-  if (activeLvl === 2) open.topik2 = true;
-  if (inCharMode)      open.positions = true;
-  _saveAccordionOpen(open);
 
-  function section(key, ico, label, doneN, totalN, pct, bodyHtml, isActive) {
-    return `<details class="topic-section ${isActive ? 'has-active' : ''}" data-section="${key}" ${open[key] ? 'open' : ''}>
-      <summary class="topic-section-head">
-        <span class="fill" style="width:${pct}%"></span>
-        <span class="ico">${ico}</span>
-        <span class="label">${label}</span>
-        <span class="count">${doneN}/${totalN}</span>
-        <span class="caret" aria-hidden="true">▾</span>
-      </summary>
-      <div class="topic-section-body">${bodyHtml}</div>
-    </details>`;
+  const activeSection = inLessonMode ? 'lessons'
+    : inCharMode ? 'position'
+    : activeLvl === 2 ? 'topik2' : 'topik1';
+
+  const UNIT_TAGS = [
+    '1급 prep', '1급 prep', '1급 ready',
+    '2급 prep', '2급 prep', '2급 ready',
+    '3급 prep', '3급 ready', '4급 prep',
+    '4급 ready', '5급 prep', '6급 path'
+  ];
+
+  function buildCards(section) {
+    if (section === 'topik1' || section === 'topik2') {
+      const level = section === 'topik1' ? 1 : 2;
+      const topics = TOPICS.filter(t => (t.topikLevel || 1) === level);
+      const activeIdx = topics.findIndex(t => t.id === activeTopic);
+      return topics.map((t, i) => {
+        const done = (progress.topicCompleted[t.id] || []).length;
+        const total = t.words.length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const isActive = activeTopic === t.id;
+        const isDone = done >= total && total > 0;
+        const isNext = !isActive && !isDone && (activeIdx < 0 ? i === 0 : i === activeIdx + 1);
+        const cls = isActive ? 'cr-active' : isDone ? 'cr-done' : isNext ? 'cr-next' : '';
+        const name = t.name.replace(/^TOPIK \d · /, '');
+        return `<button class="cr-card ${cls}" data-topic="${t.id}" type="button">
+          <span class="cr-fill" style="width:${pct}%"></span>
+          ${isNext ? '<span class="cr-next-label">Up next</span>' : ''}
+          <span class="cr-ico">${TOPIC_ICONS[t.id] || '·'}</span>
+          <span class="cr-name">${escapeHtml(name)}</span>
+          <span class="cr-prog">${done}/${total}</span>
+        </button>`;
+      }).join('');
+    }
+
+    if (section === 'lessons') {
+      const UNIT_SIZE = 5;
+      const units = [];
+      for (let i = 0; i < LESSONS.length; i += UNIT_SIZE) units.push(LESSONS.slice(i, i + UNIT_SIZE));
+      const activeUnitIdx = inLessonMode
+        ? Math.floor(LESSONS.findIndex(l => l.id === activeTopic) / UNIT_SIZE) : -1;
+      return units.map((chunk, ui) => {
+        const done = chunk.filter(l => lessonDone(l.id) >= l.words.length && l.words.length > 0).length;
+        const isActive = activeUnitIdx === ui;
+        const isDone = done === chunk.length;
+        const isNext = !isActive && !isDone && (activeUnitIdx < 0 ? ui === 0 : ui === activeUnitIdx + 1);
+        const cls = isActive ? 'cr-active' : isDone ? 'cr-done' : isNext ? 'cr-next' : '';
+        const pct = Math.round((done / chunk.length) * 100);
+        const firstIncomplete = chunk.find(l => lessonDone(l.id) < l.words.length) || chunk[0];
+        const targetId = isActive ? activeTopic : firstIncomplete.id;
+        return `<button class="cr-card ${cls}" data-topic="${targetId}" type="button">
+          <span class="cr-fill" style="width:${pct}%"></span>
+          ${isNext ? '<span class="cr-next-label">Up next</span>' : ''}
+          <span class="cr-unit-num">Unit ${ui + 1}</span>
+          <span class="cr-name">${escapeHtml(UNIT_TAGS[ui] || '')}</span>
+          <span class="cr-prog">${done}/${chunk.length} lessons</span>
+        </button>`;
+      }).join('');
+    }
+
+    if (section === 'position') {
+      const activeIdx = CHAR_TOPICS.findIndex(t => t.id === activeTopic);
+      return CHAR_TOPICS.map((t, i) => {
+        const done = charTopicDone(t.id);
+        const isDone = done >= CHAR_SESSION_SIZE;
+        const isActive = activeTopic === t.id;
+        const isNext = !isActive && !isDone && (activeIdx < 0 ? i === 0 : i === activeIdx + 1);
+        const pct = Math.round((done / CHAR_SESSION_SIZE) * 100);
+        const cls = isActive ? 'cr-active' : isDone ? 'cr-done' : isNext ? 'cr-next' : '';
+        return `<button class="cr-card ${cls}" data-topic="${t.id}" type="button">
+          <span class="cr-fill" style="width:${pct}%"></span>
+          ${isNext ? '<span class="cr-next-label">Up next</span>' : ''}
+          <span class="cr-ico">${t.icon}</span>
+          <span class="cr-name">${escapeHtml(t.name)}</span>
+          <span class="cr-prog">${done}/${CHAR_SESSION_SIZE}</span>
+        </button>`;
+      }).join('');
+    }
+    return '';
   }
 
-  const lessonsBlock = LESSONS.length
-    ? section('lessons', '📚', 'Lessons', lessonsDoneN, lessonsGoalN, lessonsPct, lessonChips, inLessonMode)
-    : '';
-  const html = `
-    <div class="picker-section">
-      <div class="topic-accordion" aria-label="Practice topics">
-        ${lessonsBlock}
-        ${section('topik1',    '📗', 'TOPIK 1',           t1Done,        t1Count,       t1Pct,   buildLevelChips(1), activeLvl === 1)}
-        ${section('topik2',    '📘', 'TOPIK 2',           t2Done,        t2Count,       t2Pct,   buildLevelChips(2), activeLvl === 2)}
-        ${section('positions', '⌨️', 'Position',          charTotalDone, charTotalGoal, charPct, charChips,          inCharMode)}
-      </div>
-    </div>`;
+  const TABS = [
+    { key: 'lessons',  ico: '📚', label: 'Lessons'  },
+    { key: 'topik1',   ico: '📗', label: 'TOPIK 1'  },
+    { key: 'topik2',   ico: '📘', label: 'TOPIK 2'  },
+    { key: 'position', ico: '⌨️', label: 'Position' },
+  ];
 
-  el.innerHTML = html;
+  const tabsHtml = TABS.filter(t => t.key !== 'lessons' || LESSONS.length > 0).map(t =>
+    `<button class="cr-tab ${activeSection === t.key ? 'on' : ''}" data-section="${t.key}" type="button">${t.ico} ${t.label}</button>`
+  ).join('');
 
-  // Subtopic chip click → activate that topic for practice. The accordion
-  // stays open so the user keeps the same browse context.
-  el.querySelectorAll('.subtopic-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const id = chip.dataset.topic || state.activeTopic || CHAR_TOPICS[0].id;
-      setTopic(id);
+  el.innerHTML = `<div class="cr-shelf">
+    <div class="cr-tabs">${tabsHtml}</div>
+    <div class="cr-track" id="crTrack">${buildCards(activeSection)}</div>
+  </div>`;
+
+  function wireCards(container) {
+    container.querySelectorAll('.cr-card').forEach(c => {
+      c.addEventListener('click', () => { if (c.dataset.topic) setTopic(c.dataset.topic); });
     });
-  });
+  }
 
-  // Persist accordion open state whenever the user toggles a header.
-  el.querySelectorAll('details.topic-section').forEach(d => {
-    d.addEventListener('toggle', () => {
-      const key = d.getAttribute('data-section');
-      const cur = _loadAccordionOpen();
-      cur[key] = d.open;
-      _saveAccordionOpen(cur);
+  wireCards(el);
+
+  el.querySelectorAll('.cr-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      el.querySelectorAll('.cr-tab').forEach(t => t.classList.remove('on'));
+      tab.classList.add('on');
+      const track = document.getElementById('crTrack');
+      track.innerHTML = buildCards(tab.dataset.section);
+      wireCards(track);
     });
   });
 }
@@ -5632,84 +5418,10 @@ function renderJamoGrid() {
   `).join('');
 }
 
-// ============================================================
-// Wongoji widget
-// ============================================================
-
-const WG = { committed: '' };
-
-function wgInit() {
-  const grid = document.getElementById('wgGrid');
-  const rowNums = document.getElementById('wgRowNums');
-  if (!grid || !rowNums) return;
-  for (let r = 1; r <= 10; r++) {
-    const d = document.createElement('div');
-    d.className = 'wg-row-num';
-    d.textContent = r;
-    rowNums.appendChild(d);
-  }
-  for (let i = 0; i < 200; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'wongoji-cell';
-    grid.appendChild(cell);
-  }
-  wgRefresh('');
-}
-
-// composing: in-progress word being typed. Pass '' on word completion
-// to avoid double-counting with state.ime.display.
-function wgRefresh(composing) {
-  if (composing === undefined) composing = (state && state.ime && state.ime.display) || '';
-  const live = WG.committed + composing;
-  const cells = document.querySelectorAll('.wongoji-cell');
-  cells.forEach((cell, i) => {
-    if (i < live.length) {
-      const ch = live[i];
-      if (ch === ' ') {
-        cell.className = 'wongoji-cell wc-space';
-        cell.textContent = '';
-      } else {
-        cell.className = 'wongoji-cell wc-typed';
-        cell.textContent = ch;
-      }
-    } else if (i === live.length && live.length < 200) {
-      cell.className = 'wongoji-cell wc-cursor';
-      cell.textContent = '';
-    } else {
-      cell.className = 'wongoji-cell';
-      cell.textContent = '';
-    }
-  });
-  const count = live.length;
-  const countEl = document.getElementById('wgCount');
-  const barEl   = document.getElementById('wgBar');
-  const pctEl   = document.getElementById('wgPct');
-  const card    = document.getElementById('wongoji-card');
-  if (countEl) countEl.textContent = count;
-  if (barEl)   barEl.style.width = Math.min((count / 200) * 100, 100) + '%';
-  if (pctEl)   pctEl.textContent = Math.min(Math.round((count / 200) * 100), 100) + '%';
-  if (card) {
-    if (count >= 200) {
-      card.classList.add('wg-done');
-      if (countEl) countEl.style.color = 'var(--green)';
-    } else {
-      card.classList.remove('wg-done');
-      if (countEl) countEl.style.color = '';
-    }
-  }
-}
-
-function wgWordDone(word) {
-  const remaining = 200 - WG.committed.length;
-  if (remaining <= 0) return;
-  const append = word.length < remaining ? word + ' ' : word.slice(0, remaining);
-  WG.committed += append;
-}
-
-function wgReset() {
-  WG.committed = '';
-  wgRefresh('');
-}
+function wgInit() {}
+function wgRefresh() {}
+function wgWordDone() {}
+function wgReset() {}
 
 // ============================================================
 // Input handling

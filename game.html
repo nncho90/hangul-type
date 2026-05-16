@@ -1245,14 +1245,77 @@
     margin-bottom: 10px;
   }
 
-  /* Story dialog (Pokemon-style) */
+  /* Story dialog — Pokemon-style with character portraits */
   .story-dialog {
     position: fixed;
     left: 0; right: 0; bottom: 0;
     z-index: 600;
-    padding: 24px 24px 32px;
-    background: linear-gradient(to top, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.3));
+    padding: 140px 24px 32px;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.5) 55%, transparent 100%);
     animation: fade-in 0.3s ease;
+  }
+  /* Portrait base — circular, positioned absolutely within the dialog */
+  .story-portrait-player,
+  .story-portrait-teacher,
+  .story-portrait-demon {
+    position: absolute;
+    width: 128px; height: 128px;
+    border-radius: 50%;
+    background-size: 180%;
+    background-position: 50% 8%;
+    background-repeat: no-repeat;
+    background-color: #0f172a;
+    border: 3px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.06);
+    transition: filter 0.38s ease, opacity 0.38s ease, border-color 0.38s ease, box-shadow 0.38s ease;
+    z-index: 2;
+  }
+  /* Player: left side, anchored off the card's left edge */
+  .story-portrait-player {
+    left: max(28px, calc(50% - 338px));
+    bottom: 152px;
+    background-image: url('sprites/player/01-baegui-front.png');
+    background-size: 220%;
+    background-position: 48% 5%;
+  }
+  /* Teacher: right of player, slightly higher — flanking look */
+  .story-portrait-teacher {
+    left: max(28px, calc(50% - 220px));
+    bottom: 182px;
+    background-image: url('sprites/portraits/teacher.png');
+  }
+  /* Demon: right side, mirrored so they face the player */
+  .story-portrait-demon {
+    right: max(28px, calc(50% - 338px));
+    bottom: 152px;
+    transform: scaleX(-1);
+    background-image: url('sprites/portraits/hangeulwang.png');
+  }
+  /* Active speaker: full brightness, blue ring */
+  .story-portrait-player.sp-active,
+  .story-portrait-teacher.sp-active,
+  .story-portrait-demon.sp-active {
+    filter: brightness(1.15);
+    border-color: var(--blue);
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6), 0 0 0 3px var(--blue), 0 0 18px rgba(37, 99, 235, 0.5);
+    opacity: 1;
+  }
+  /* Inactive: dimmed and desaturated */
+  .story-portrait-player.sp-inactive,
+  .story-portrait-teacher.sp-inactive,
+  .story-portrait-demon.sp-inactive {
+    filter: brightness(0.45) saturate(0.35);
+    opacity: 0.75;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  /* Narrator beats: everyone at medium dim (no single speaker) */
+  .story-portrait-player.sp-narrator,
+  .story-portrait-teacher.sp-narrator,
+  .story-portrait-demon.sp-narrator {
+    filter: brightness(0.75) saturate(0.7);
+    opacity: 0.85;
+    border-color: rgba(255, 255, 255, 0.15);
   }
   .story-card {
     max-width: 720px;
@@ -1261,8 +1324,9 @@
     border: 2px solid var(--blue);
     border-radius: 14px;
     padding: 20px 28px 28px;
-    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.35);
+    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.45);
     position: relative;
+    z-index: 1;
   }
   .story-speaker {
     font-size: 11px; font-weight: 800;
@@ -2639,6 +2703,9 @@
       <button class="menu-btn" id="profileCancel">Cancel</button>
       <button class="primary" id="profileSave">Save</button>
     </div>
+    <div style="text-align:center;margin-top:12px;">
+      <button type="button" id="profileReplayIntro" style="background:none;border:none;color:var(--tlo);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 8px;">Watch intro story again</button>
+    </div>
   </div>
 </div>
 
@@ -2659,6 +2726,9 @@
 </div>
 
 <div id="storyDialog" class="story-dialog" style="display:none;">
+  <div class="story-portrait-player" id="storyPortraitPlayer"></div>
+  <div class="story-portrait-teacher" id="storyPortraitTeacher" style="display:none;"></div>
+  <div class="story-portrait-demon"  id="storyPortraitDemon"   style="display:none;"></div>
   <div class="story-card">
     <div class="story-speaker" id="storySpeaker">Narrator</div>
     <div class="story-text" id="storyText"></div>
@@ -3414,22 +3484,23 @@ function renderPlayerSprite(lv) {
 })();
 
 // Preload all enemy walk + hit frames at module load so sprite swaps never blink.
-// Reads from BATTLE_CONFIG (same source the game uses) so adding a new enemy type
-// automatically gets its frames preloaded without touching this code.
-(function preloadEnemyFrames() {
+// Stored at module scope so GC cannot drop the Image objects before load completes.
+const _preloadedSprites = (function preloadEnemyFrames() {
+  const imgs = [];
   const cfg = window.BATTLE_CONFIG || {};
-  // Non-boss tiers: idle (walk-1), step (walk-3), hit-1, hit-2.
   for (const file of Object.values(cfg.enemyTiers || {})) {
     for (const suf of ['-walk-1', '-walk-3', '-hit-1', '-hit-2']) {
       const im = new Image(); im.src = `sprites/${file}${suf}.png`;
+      imgs.push(im);
     }
   }
-  // Boss pool: base idle frame + step frame.
-  for (const boss of (cfg.bossPool || [])) {
+  for (const boss of (cfg.bosses || [])) {
     if (!boss.sprite) continue;
     const im1 = new Image(); im1.src = `sprites/${boss.sprite}.png`;
     const im2 = new Image(); im2.src = `sprites/${boss.sprite}-step.png`;
+    imgs.push(im1, im2);
   }
+  return imgs;
 })();
 
 // Play the 4-frame attack animation. Called from advanceLock() on every
@@ -4669,6 +4740,17 @@ function buildMonsterEl(m) {
       .replace('class="sprite-img"', 'class="sprite-img sprite-step"')
       .replace(/onerror="[^"]*"/, 'onerror="this.remove()"');
     sprite.innerHTML = idleHtml + stepHtml;
+    // When the step frame 404s, its onerror removes it — leaving the idle frame
+    // alone with enemy-walk-idle (opacity 1→0 blink). Override onerror to also
+    // neutralize the idle blink so the sprite stays solid.
+    const stepEl = sprite.querySelector('.sprite-step');
+    if (stepEl) {
+      stepEl.onerror = function() {
+        const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
+        this.remove();
+        if (idleEl) idleEl.style.animation = 'sprite-walk-monster 1.8s ease-in-out infinite';
+      };
+    }
     // Randomize per-monster phase so a wave of demons doesn't bob in lockstep.
     const phase = (-Math.random() * 2).toFixed(2) + 's';
     sprite.querySelectorAll('.sprite-img').forEach(img => {
@@ -6626,14 +6708,22 @@ function loop(t) {
 const STORY_KEY = 'hangul-battle-saw-intro-v2';
 
 const STORY = [
-  { speaker: 'Narrator',          text: 'Long ago, King Sejong sealed the chaos demons of pre-Hangeul speech behind a wall of letters.' },
-  { speaker: 'Narrator',          text: 'Centuries passed. The seal weakened. Tonight it broke.' },
-  { speaker: 'Narrator',          text: 'You wake without a name, without power. Just a hand, a keyboard, and a flickering breath of <span class="ko">한</span>.' },
-  { speaker: '선생님 · Teacher',  text: '"You. Yes, you. The seal will not hold without help. Take this syllable. Speak it true. Aim true."' },
-  { speaker: 'Narrator',          text: 'A demon emerges from the dark. Above its head: a Korean word. Type it correctly to defeat it.' },
-  { speaker: 'Narrator',          text: 'Each victory restores one letter to the seal. Words you master in practice flow back here as power.' },
-  { speaker: 'Narrator',          text: '1,000 letters lie scattered. Restore them all to face the Demon King <span class="ko">한글왕</span>.' },
-  { speaker: '선생님 · Teacher',  text: '"Ready your fingers. Begin."' }
+  { speaker: 'Narrator',         activeSpeaker: 'narrator', demon: null,
+    text: 'Long ago, King Sejong sealed the chaos demons of pre-Hangeul speech behind a wall of letters.' },
+  { speaker: 'Narrator',         activeSpeaker: 'narrator', demon: null,
+    text: 'Centuries passed. The seal weakened. Tonight it broke.' },
+  { speaker: 'Narrator',         activeSpeaker: 'player',   demon: null,
+    text: 'You wake without a name, without power. Just a hand, a keyboard, and a flickering breath of <span class="ko">한</span>.' },
+  { speaker: '선생님 · Teacher', activeSpeaker: 'teacher',  demon: null,
+    text: '"You. Yes, you. The seal will not hold without help. Take this syllable. Speak it true. Aim true."' },
+  { speaker: 'Narrator',         activeSpeaker: 'demon',    demon: 'cheonyeo',
+    text: 'A demon emerges from the dark. Above its head: a Korean word. Type it correctly to defeat it.' },
+  { speaker: 'Narrator',         activeSpeaker: 'demon',    demon: 'dokkaebi',
+    text: 'Each victory restores one letter to the seal. Words you master in practice flow back here as power.' },
+  { speaker: 'Narrator',         activeSpeaker: 'demon',    demon: 'hangeulwang',
+    text: '1,000 letters lie scattered. Restore them all to face the Demon King <span class="ko">한글왕</span>.' },
+  { speaker: '선생님 · Teacher', activeSpeaker: 'teacher',  demon: null,
+    text: '"Ready your fingers. Begin."' }
 ];
 
 let storyIdx = 0;
@@ -6648,6 +6738,35 @@ function showStory(force) {
 function showStoryBeat() {
   if (storyIdx >= STORY.length) { closeStory(); return; }
   const beat = STORY[storyIdx];
+
+  // Portrait switching — show/dim each slot based on who is speaking this beat
+  const pPlayer  = document.getElementById('storyPortraitPlayer');
+  const pTeacher = document.getElementById('storyPortraitTeacher');
+  const pDemon   = document.getElementById('storyPortraitDemon');
+
+  pTeacher.style.display = beat.activeSpeaker === 'teacher' ? 'block' : 'none';
+
+  if (beat.demon) {
+    pDemon.style.backgroundImage = `url('sprites/portraits/${beat.demon}.png')`;
+    pDemon.style.display = 'block';
+  } else {
+    pDemon.style.display = 'none';
+  }
+
+  [pPlayer, pTeacher, pDemon].forEach(el => el.classList.remove('sp-active', 'sp-inactive', 'sp-narrator'));
+  const speakerMap = { player: pPlayer, teacher: pTeacher, demon: pDemon };
+  const activePortrait = speakerMap[beat.activeSpeaker];
+  if (activePortrait && activePortrait.style.display !== 'none') {
+    activePortrait.classList.add('sp-active');
+    [pPlayer, pTeacher, pDemon].forEach(el => {
+      if (el !== activePortrait && el.style.display !== 'none') el.classList.add('sp-inactive');
+    });
+  } else {
+    [pPlayer, pTeacher, pDemon].forEach(el => {
+      if (el.style.display !== 'none') el.classList.add('sp-narrator');
+    });
+  }
+
   document.getElementById('storySpeaker').textContent = beat.speaker;
   const textEl = document.getElementById('storyText');
   textEl.innerHTML = '';
@@ -6691,12 +6810,21 @@ function advanceStory() {
 function closeStory() {
   document.getElementById('storyDialog').style.display = 'none';
   if (storyTyping) { clearInterval(storyTyping); storyTyping = null; }
+  localStorage.setItem(STORY_KEY, '1');
   beginGameAfterStory();
 }
 
 function beginGameAfterStory() {
   document.getElementById('introModal').style.display = 'none';
   doStartGame();
+}
+
+function playIntroIfNeeded() {
+  if (localStorage.getItem(STORY_KEY) === '1') {
+    beginGameAfterStory();
+  } else {
+    showStory();
+  }
 }
 
 function startGame() {
@@ -6707,16 +6835,13 @@ function startGame() {
       requireSetup: true,
       afterSave: () => {
         document.getElementById('introModal').style.display = 'none';
-        showStory();
+        playIntroIfNeeded();
       }
     });
     return;
   }
-  // Always play the intro story so newcomers and returners share the same
-  // narrative ramp. The Esc / Skip button on the story dialog drops straight
-  // into the game for players who don't want to read it.
   document.getElementById('introModal').style.display = 'none';
-  showStory();
+  playIntroIfNeeded();
 }
 
 function doStartGame() {
@@ -6745,6 +6870,12 @@ function doStartGame() {
   state.lastWaveLevel = 1;
   state.levelWordHistory = [];
   renderPlayerSprite(1);
+  // Restart breathe animation from frame 0 so the player is centered from the
+  // first frame. Without this, the animation is mid-cycle (started on page load)
+  // and the sprite appears 1% off-center until swingSword() does the same reset.
+  PLAYER_EL.style.animation = 'none';
+  void PLAYER_EL.offsetWidth;
+  PLAYER_EL.style.animation = '';
   applyTheme(themeForLevel(1));    // open with the village backdrop
   LIVE_EL.textContent = '';
   document.getElementById('introModal').style.display = 'none';
@@ -6772,6 +6903,10 @@ function togglePause() {
 document.getElementById('btnStart').addEventListener('click', startGame);
 document.getElementById('btnEditProfile').addEventListener('click', openProfileModal);
 document.getElementById('btnEditProfileIntro').addEventListener('click', openProfileModal);
+document.getElementById('profileReplayIntro').addEventListener('click', () => {
+  localStorage.removeItem(STORY_KEY);
+  document.getElementById('profileModal').style.display = 'none';
+});
 // Skip button (Esc-equivalent) on the story dialog. The Esc key already
 // works via the global keydown handler — the button is for click discoverability.
 document.getElementById('storySkip').addEventListener('click', (e) => {
