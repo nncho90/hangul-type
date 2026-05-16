@@ -4732,22 +4732,40 @@ function buildMonsterEl(m) {
       .replace('class="sprite-img"', 'class="sprite-img sprite-step"')
       .replace(/onerror="[^"]*"/, 'onerror="this.remove()"');
     sprite.innerHTML = idleHtml + stepHtml;
-    // When the step frame 404s, its onerror removes it — leaving the idle frame
-    // alone with enemy-walk-idle (opacity 1→0 blink). Override onerror to also
-    // neutralize the idle blink so the sprite stays solid.
-    const stepEl = sprite.querySelector('.sprite-step');
-    if (stepEl) {
-      stepEl.onerror = function() {
-        const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
-        this.remove();
-        if (idleEl) idleEl.style.animation = 'sprite-walk-monster 1.8s ease-in-out infinite';
-      };
+    {
+      const stepEl = sprite.querySelector('.sprite-step');
+      const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
+      const spawnTime = Date.now();
+      const phase = (-Math.random() * 1.8).toFixed(3) + 's';
+      const blinkPhaseMs = Math.random() * 700;
+      const blinkPhase = (-blinkPhaseMs / 1000).toFixed(3) + 's';
+
+      // Start idle solid — no opacity blink until step frame is confirmed loaded.
+      if (idleEl) {
+        idleEl.style.animation = 'sprite-walk-monster 1.8s ease-in-out infinite';
+        idleEl.style.animationDelay = phase;
+      }
+      if (stepEl) {
+        stepEl.style.opacity = '0';
+        stepEl.style.animationDelay = `${phase}, ${blinkPhase}`;
+
+        const enableBlink = () => {
+          if (!idleEl || !idleEl.parentNode) return;
+          const elapsed = Date.now() - spawnTime;
+          const pos = (blinkPhaseMs + elapsed) % 700;
+          idleEl.style.animation = 'sprite-walk-monster 1.8s ease-in-out infinite, enemy-walk-idle 0.7s steps(2, jump-none) infinite';
+          idleEl.style.animationDelay = `${phase}, ${(-pos / 1000).toFixed(3)}s`;
+          if (stepEl.parentNode) stepEl.style.opacity = '';
+        };
+
+        stepEl.onerror = function() { this.remove(); };
+        if (stepEl.complete && stepEl.naturalWidth > 0) {
+          enableBlink();
+        } else {
+          stepEl.addEventListener('load', enableBlink, { once: true });
+        }
+      }
     }
-    // Randomize per-monster phase so a wave of demons doesn't bob in lockstep.
-    const phase = (-Math.random() * 2).toFixed(2) + 's';
-    sprite.querySelectorAll('.sprite-img').forEach(img => {
-      img.style.animationDelay = phase;
-    });
   } else {
     sprite.textContent = m.sprite;
   }
@@ -5623,7 +5641,7 @@ function teleportPlayerHome(immediate) {
       spawnTeleportDust((r.left + r.width / 2) - sr.left, (r.top + r.height / 2) - sr.top);
     }
     PLAYER_EL.style.transition = 'none';   // kill the transform tween so the
-    PLAYER_EL.classList.remove('arriving','swinging','teleporting'); // scale snap-home doesn't zoom
+    PLAYER_EL.classList.remove('arriving','swinging','teleporting','levelup'); // scale snap-home doesn't zoom
     PLAYER_EL.style.bottom = '';
     PLAYER_EL.style.top  = '';
     PLAYER_EL.style.left = '';
