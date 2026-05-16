@@ -705,8 +705,7 @@
                enemy-walk-step 0.7s steps(2, jump-none) infinite;
   }
   .monster:not(.boss) .sprite .sprite-img:not(.sprite-step) {
-    animation: sprite-walk-monster 1.8s ease-in-out infinite,
-               enemy-walk-idle 0.7s steps(2, jump-none) infinite;
+    animation: sprite-walk-monster 1.8s ease-in-out infinite;
   }
   @keyframes enemy-walk-step {
     0%, 49.9% { opacity: 0; }
@@ -4732,40 +4731,16 @@ function buildMonsterEl(m) {
       .replace('class="sprite-img"', 'class="sprite-img sprite-step"')
       .replace(/onerror="[^"]*"/, 'onerror="this.remove()"');
     sprite.innerHTML = idleHtml + stepHtml;
-    {
-      const stepEl = sprite.querySelector('.sprite-step');
-      const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
-      const spawnTime = Date.now();
-      const phase = (-Math.random() * 1.8).toFixed(3) + 's';
-      const blinkPhaseMs = Math.random() * 700;
-      const blinkPhase = (-blinkPhaseMs / 1000).toFixed(3) + 's';
-
-      // Start idle solid — no opacity blink until step frame is confirmed loaded.
-      if (idleEl) {
-        idleEl.style.animation = 'sprite-walk-monster 1.8s ease-in-out infinite';
-        idleEl.style.animationDelay = phase;
-      }
-      if (stepEl) {
-        stepEl.style.opacity = '0';
-        stepEl.style.animationDelay = `${phase}, ${blinkPhase}`;
-
-        const enableBlink = () => {
-          if (!idleEl || !idleEl.parentNode) return;
-          const elapsed = Date.now() - spawnTime;
-          const pos = (blinkPhaseMs + elapsed) % 700;
-          idleEl.style.animation = 'sprite-walk-monster 1.8s ease-in-out infinite, enemy-walk-idle 0.7s steps(2, jump-none) infinite';
-          idleEl.style.animationDelay = `${phase}, ${(-pos / 1000).toFixed(3)}s`;
-          if (stepEl.parentNode) stepEl.style.opacity = '';
-        };
-
-        stepEl.onerror = function() { this.remove(); };
-        if (stepEl.complete && stepEl.naturalWidth > 0) {
-          enableBlink();
-        } else {
-          stepEl.addEventListener('load', enableBlink, { once: true });
-        }
-      }
-    }
+    // Idle frame has no opacity animation — it stays solid at all times.
+    // Step frame overlays via enemy-walk-step (opacity 0→1) so alternation
+    // happens without the idle ever going invisible. Eliminates blink completely.
+    const stepEl = sprite.querySelector('.sprite-step');
+    if (stepEl) stepEl.onerror = function() { this.remove(); };
+    const walkPhase  = (-Math.random() * 1.8).toFixed(3) + 's';
+    const blinkPhase = (-Math.random() * 0.7).toFixed(3) + 's';
+    const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
+    if (idleEl) idleEl.style.animationDelay = walkPhase;
+    if (stepEl) stepEl.style.animationDelay  = `${walkPhase}, ${blinkPhase}`;
   } else {
     sprite.textContent = m.sprite;
   }
