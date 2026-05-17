@@ -699,14 +699,11 @@
     position: absolute;
     top: 0; left: 0;
     transform-origin: 50% 95%;
-    /* Layer two animations: keep the inherited transform-walk so step pose
-       shifts in sync with idle, AND alternate visibility for the 2-frame cycle. */
-    animation: sprite-walk-monster 1.8s ease-in-out infinite,
-               enemy-walk-step 0.7s steps(2, jump-none) infinite;
+    opacity: 0; /* JS controls swap — starts hidden */
+    animation: sprite-walk-monster 1.8s ease-in-out infinite;
   }
   .monster:not(.boss) .sprite .sprite-img:not(.sprite-step) {
-    animation: sprite-walk-monster 1.8s ease-in-out infinite,
-               enemy-walk-idle 0.7s steps(2, jump-none) infinite;
+    animation: sprite-walk-monster 1.8s ease-in-out infinite;
   }
   @keyframes enemy-walk-step {
     0%, 49.9% { opacity: 0; }
@@ -2519,17 +2516,13 @@
   .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 1.45s); }
   .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.10s); }
   .monster.boss .sprite-img:not(.sprite-step) {
-    animation: sprite-walk-boss 1.6s ease-in-out infinite,
-               enemy-walk-idle 0.7s steps(2, jump-none) infinite;
+    animation: sprite-walk-boss 1.6s ease-in-out infinite;
     transform-origin: 50% 95%;
   }
-  /* Boss step image needs BOTH the boss walk transform AND the step opacity
-     flicker. Without this, .monster.boss .sprite-img above wins by specificity
-     and strips enemy-walk-step from the step image — both frames stay visible
-     simultaneously and the boss looks "doubled". */
+  /* Boss step: JS controls opacity swap atomically with idle. Only needs the
+     walk transform here — opacity is driven by setInterval in buildMonsterEl. */
   .monster.boss .sprite .sprite-step {
-    animation: sprite-walk-boss 1.6s ease-in-out infinite,
-               enemy-walk-step 0.7s steps(2, jump-none) infinite;
+    animation: sprite-walk-boss 1.6s ease-in-out infinite;
     transform-origin: 50% 95%;
   }
   /* Boss step: heavier, slower, bigger sway. The +/-2deg roll keeps presence
@@ -4738,16 +4731,31 @@ function buildMonsterEl(m) {
       .replace('class="sprite-img"', 'class="sprite-img sprite-step"')
       .replace(/onerror="[^"]*"/, 'onerror="this.remove()"');
     sprite.innerHTML = idleHtml + stepHtml;
-    // Idle and step alternate via enemy-walk-idle / enemy-walk-step at the same blinkPhase,
-    // Step frame overlays via enemy-walk-step (opacity 0→1) so alternation
-    // happens without the idle ever going invisible. Eliminates blink completely.
     const stepEl = sprite.querySelector('.sprite-step');
-    if (stepEl) stepEl.onerror = function() { this.remove(); };
-    const walkPhase  = (-Math.random() * 1.8).toFixed(3) + 's';
-    const blinkPhase = (-Math.random() * 0.7).toFixed(3) + 's';
     const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
-    if (idleEl) idleEl.style.animationDelay = `${walkPhase}, ${blinkPhase}`;
-    if (stepEl) stepEl.style.animationDelay  = `${walkPhase}, ${blinkPhase}`;
+    const walkPhase = (-Math.random() * 1.8).toFixed(3) + 's';
+    if (idleEl) idleEl.style.animationDelay = walkPhase;
+    if (stepEl) {
+      stepEl.style.animationDelay = walkPhase;
+      // JS-driven atomic opacity swap: both opacities set in one callback so
+      // there is no frame where both are 0 (CSS animation drift caused the blink).
+      const _stepReady = { ok: false };
+      if (stepEl.complete && stepEl.naturalWidth > 0) {
+        _stepReady.ok = true;
+      } else {
+        stepEl.addEventListener('load',  () => { _stepReady.ok = true; },  { once: true });
+        stepEl.addEventListener('error', () => { stepEl.remove(); },       { once: true });
+      }
+      let _showStep = false;
+      const _interval = setInterval(() => {
+        if (!el.isConnected) { clearInterval(_interval); return; }
+        _showStep = !_showStep;
+        const s = _showStep && _stepReady.ok && stepEl.isConnected;
+        if (idleEl) idleEl.style.opacity = s ? '0' : '1';
+        if (stepEl.isConnected) stepEl.style.opacity = s ? '1' : '0';
+      }, 350);
+      m._walkInterval = _interval;
+    }
   } else {
     sprite.textContent = m.sprite;
   }
@@ -4807,12 +4815,7 @@ function buildMonsterEl(m) {
 }
 
 function killMonster(m, byPlayer) {
-  // Swap to the pain frame so the monster visibly registers the last hit
-  // before the defeat fade. Both layers (idle + step) point at hit-2 so the
-  // CSS opacity flicker on .sprite-step doesn't reveal a walking pose
-  // mid-fade. Fall back silently if the sprite hasn't been built yet.
-  // Bosses ship without hit-2 frames, so skip the swap or both <img> tags
-  // 404 and onerror replaces each with the emoji → two 🐉 stack on top.
+  if (m._walkInterval) { clearInterval(m._walkInterval); m._walkInterval = null; }
   if (m.el && m.spriteFile && m.tier !== 'boss') {
     const base = `sprites/${m.spriteFile}`;
     const idleImg = m.el.querySelector('img.sprite-img:not(.sprite-step)');
@@ -6858,7 +6861,7 @@ function doStartGame() {
   state.lives = ADMIN.player.lives; state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
   state.combo = 0; state.bestCombo = 0;
   state.startedAt = Date.now();
-  state.monsters.forEach(m => m.el && m.el.remove());
+  state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
   state.monsters = [];
   state.spawnTimer = 0; state.spawnInterval = ADMIN.pace.initialSpawnMs;
   state.bossActive = false; state.bossNextLevel = 5;
