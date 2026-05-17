@@ -705,7 +705,8 @@
                enemy-walk-step 0.7s steps(2, jump-none) infinite;
   }
   .monster:not(.boss) .sprite .sprite-img:not(.sprite-step) {
-    animation: sprite-walk-monster 1.8s ease-in-out infinite;
+    animation: sprite-walk-monster 1.8s ease-in-out infinite,
+               enemy-walk-idle 0.7s steps(2, jump-none) infinite;
   }
   @keyframes enemy-walk-step {
     0%, 49.9% { opacity: 0; }
@@ -2518,7 +2519,8 @@
   .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 1.45s); }
   .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.10s); }
   .monster.boss .sprite-img:not(.sprite-step) {
-    animation: sprite-walk-boss 1.6s ease-in-out infinite;
+    animation: sprite-walk-boss 1.6s ease-in-out infinite,
+               enemy-walk-idle 0.7s steps(2, jump-none) infinite;
     transform-origin: 50% 95%;
   }
   /* Boss step image needs BOTH the boss walk transform AND the step opacity
@@ -3442,7 +3444,7 @@ function spriteHtml(file, emoji, sizePx) {
   if (safeFile.includes('..')) safeFile = '';
   const safeEmoji = String(emoji || '').replace(/['"\\<>&]/g, '');
   const px = Math.max(16, Math.min(512, Number(sizePx) || 72));
-  return `<img class="sprite-img" src="sprites/${safeFile}.png" alt="" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${safeEmoji}'">`;
+  return `<img class="sprite-img" src="sprites/${safeFile}.png" alt="" decoding="async" fetchpriority="high" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${safeEmoji}'">`;
 }
 
 function renderPlayerSprite(lv) {
@@ -4090,7 +4092,8 @@ async function submitBattleScore(level, points) {
     p_name: String(name).slice(0, 24),
     p_country: String(country).slice(0, 2).toUpperCase(),
     p_level: clampLevel(level),
-    p_points: clampPoints(points)
+    p_points: clampPoints(points),
+    p_fandom: (progress.profile && progress.profile.fandom) || null
   };
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_battle_score`, {
@@ -4109,7 +4112,8 @@ async function submitBattleScore(level, points) {
     _fandomLbCache = null;  // clear now so the .finally() render fetches fresh fandom data
     // Mirror the player's local fandom selection to their server row, so the
     // fandom leaderboard aggregate stays accurate. Fire-and-forget.
-    setBattleFandom((progress.profile && progress.profile.fandom) || '');
+    const _fid = progress.profile && progress.profile.fandom;
+    if (_fid) setBattleFandom(_fid);
   } catch (e) {
     _enqueueSubmit({ body });
   }
@@ -4483,10 +4487,13 @@ function openProfileModal(opts) {
     updateBattleProfile(newName, newCC).finally(() => {
       // Mirror fandom to the server row so the fandom leaderboard aggregates
       // pick it up. Safe to call even when the player has no row yet.
-      setBattleFandom(safeFandom).finally(() => {
+      if (safeFandom) setBattleFandom(safeFandom).finally(() => {
         renderActiveLeaderboard('battleLbContainer');
         renderActiveLeaderboard('battleLbIntroContainer');
-      });
+      }); else {
+        renderActiveLeaderboard('battleLbContainer');
+        renderActiveLeaderboard('battleLbIntroContainer');
+      }
     });
     close();
     if (typeof opts.afterSave === 'function') opts.afterSave();
@@ -4731,7 +4738,7 @@ function buildMonsterEl(m) {
       .replace('class="sprite-img"', 'class="sprite-img sprite-step"')
       .replace(/onerror="[^"]*"/, 'onerror="this.remove()"');
     sprite.innerHTML = idleHtml + stepHtml;
-    // Idle frame has no opacity animation — it stays solid at all times.
+    // Idle and step alternate via enemy-walk-idle / enemy-walk-step at the same blinkPhase,
     // Step frame overlays via enemy-walk-step (opacity 0→1) so alternation
     // happens without the idle ever going invisible. Eliminates blink completely.
     const stepEl = sprite.querySelector('.sprite-step');
@@ -4739,7 +4746,7 @@ function buildMonsterEl(m) {
     const walkPhase  = (-Math.random() * 1.8).toFixed(3) + 's';
     const blinkPhase = (-Math.random() * 0.7).toFixed(3) + 's';
     const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
-    if (idleEl) idleEl.style.animationDelay = walkPhase;
+    if (idleEl) idleEl.style.animationDelay = `${walkPhase}, ${blinkPhase}`;
     if (stepEl) stepEl.style.animationDelay  = `${walkPhase}, ${blinkPhase}`;
   } else {
     sprite.textContent = m.sprite;
@@ -4907,9 +4914,19 @@ const ALL_THEMES = ['village','forest','study','courtyard','camp','battlefield',
                     /* legacy, removed but cleaned for safety: */ 'shrine','temple','cosmos'];
 function applyTheme(theme) {
   const body = document.body;
-  ALL_THEMES.forEach(t => body.classList.remove('theme-' + t));
-  body.classList.add('theme-' + theme);
-  if (typeof Bgm !== 'undefined') Bgm.setTheme(theme);
+  body.className = body.className.replace(/\btheme-\S+/g, '').trim() + ' theme-' + theme;
+  if (typeof Bgm !== 'undefined') (window.requestIdleCallback || requestAnimationFrame)(() => Bgm.setTheme(theme));
+}
+function prewarmNextTheme(lv) {
+  const next = themeForLevel(lv + 1);
+  if (next === themeForLevel(lv)) return;
+  const names = { village: '01-village', forest: '02-forest', study: '03-study',
+                  courtyard: '04-courtyard', camp: '05-camp',
+                  battlefield: '06-battlefield', palace: '07-palace' };
+  if (!names[next]) return;
+  const img = new Image();
+  img.src = 'sprites/backgrounds/' + names[next] + '.png';
+  if (img.decode) img.decode().catch(() => {});
 }
 
 // ─── BGM (per-theme Korean lofi-hiphop loops) ─────────────────────────────
@@ -5276,6 +5293,7 @@ function onLevelUp() {
   if (state.level >= 5  && state.lives === 3) unlockAchievement('no_damage_lv5');
   if (state.level >= 10) unlockAchievement('reach_lv10');
   if (state.level >= 20) unlockAchievement('reach_lv20');
+  prewarmNextTheme(state.level);
 }
 
 function flashCenterText(txt) {
@@ -6906,6 +6924,7 @@ document.getElementById('storySkip').addEventListener('click', (e) => {
 });
 // Drain any queued submits left over from a prior offline session, then
 // surface the leaderboard on the intro modal as well as game-over.
+window.addEventListener('online', flushBattleSubmitQueue);
 flushBattleSubmitQueue();
 renderActiveLeaderboard('battleLbIntroContainer');
 document.getElementById('storyDialog').addEventListener('click', advanceStory);
