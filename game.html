@@ -663,8 +663,7 @@
   }
   /* depth-billboard's drop-shadow filter was the per-depth ground-shadow
      under each monster — removed so the silhouette doesn't get a dark
-     halo that the .sprite-step flicker turned into a ghosted second
-     layer. */
+     halo that reads as a ghosted second layer. */
   .monster.depth-billboard { /* shadow filter intentionally absent */ }
   /* Soft fade on appear so a fresh wave doesn't pop in jarringly. Opacity-only
      so it doesn't fight the inline translateX(-50%) the JS sets per monster. */
@@ -686,33 +685,13 @@
     animation: bob 1.8s ease-in-out infinite;
   }
   /* Removed: the .sprite::after pseudo-element used to draw a dark blurred
-     ellipse beneath every monster as a ground shadow. Combined with the
-     opacity-flicker on .sprite-step it read as "another png layered on
-     top" — a recurring user complaint. The new sprite PNGs have no built-
-     in drop shadow, so nothing should render here. */
+     ellipse beneath every monster as a ground shadow. It read as "another
+     png layered on top" — a recurring user complaint. The new sprite PNGs
+     have no built-in drop shadow, so nothing should render here. */
   .monster .sprite .sprite-img { display: block; }
-  /* 2-frame walk cycle for enemies. The step-pose image is stacked over the
-     idle image and its opacity flickers on/off, producing the step. Pairs with
-     the existing sprite-walk-monster transform animation for a multi-cue feel. */
+  /* 2-frame walk cycle: JS swaps img.src between idle and step frames via
+     setInterval — one element per monster, always opacity 1, no crossfade drift. */
   .monster .sprite { position: relative; }
-  .monster .sprite .sprite-step {
-    position: absolute;
-    top: 0; left: 0;
-    transform-origin: 50% 95%;
-    opacity: 0; /* JS controls swap — starts hidden */
-    animation: sprite-walk-monster 1.8s ease-in-out infinite;
-  }
-  .monster:not(.boss) .sprite .sprite-img:not(.sprite-step) {
-    animation: sprite-walk-monster 1.8s ease-in-out infinite;
-  }
-  @keyframes enemy-walk-step {
-    0%, 49.9% { opacity: 0; }
-    50%, 100% { opacity: 1; }
-  }
-  @keyframes enemy-walk-idle {
-    0%, 49.9% { opacity: 1; }
-    50%, 100% { opacity: 0; }
-  }
   /* Monster idle bob — used to add a ±2° tilt that read as the monster
      "spinning" when paired with the explode-on-death rotation. Now pure
      vertical bob, matching the boss bobbob. */
@@ -725,10 +704,10 @@
      Sprite art is the same 7 PNGs today; the visual progression here gives
      the existing roster a clearer "this is a stronger demon" read. */
   /* Per-tier sprite size only. Drop-shadow filters were stripped —
-     they painted a dark halo around the silhouette that combined with
-     the .sprite-step flicker to read as an extra ghosted layer.
-     Higher tiers used to also get a colored aura via a second filter;
-     re-add via a separate .glow class later if we miss the tier read. */
+     they painted a dark halo around the silhouette that read as an extra
+     ghosted layer. Higher tiers used to also get a colored aura via a
+     second filter; re-add via a separate .glow class later if we miss
+     the tier read. */
   .monster.tier-1 .sprite { font-size: var(--tier1-font, 711px); }
   .monster.tier-2 .sprite { font-size: var(--tier2-font, 873px); }
   .monster.tier-3 .sprite { font-size: var(--tier3-font, 1008px); }
@@ -2275,7 +2254,7 @@
   }
   .boss-cutscene .boss-name {
     font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
-    font-size: 56px;
+    font-size: 88px;
     color: #fee2e2;
     letter-spacing: 4px;
     margin-top: 8px;
@@ -2497,8 +2476,8 @@
   }
   /* 8-key step cycle. Each step has windup → peak lift → plant → recoil,
      producing a more natural "lift / shift / land / brace" walk feel than a
-     simple sinusoidal bob. Pairs with the .sprite-step opacity flicker so
-     the alternate pose lines up with the down-beat plant phases. */
+     simple sinusoidal bob. The JS src-swap toggles the pose frame in sync with
+     the down-beat plant phases. */
   @keyframes sprite-walk-monster {
     0%   { transform: translate(-3px,  0)   scale(1)    rotate(-4deg); }
     12%  { transform: translate(-1px, -2px) scale(1.01) rotate(-1deg); }
@@ -2515,13 +2494,7 @@
   .monster.tier-3 .sprite-img { animation-duration: var(--tier3-anim, 1.25s); }
   .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 1.45s); }
   .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.10s); }
-  .monster.boss .sprite-img:not(.sprite-step) {
-    animation: sprite-walk-boss 1.6s ease-in-out infinite;
-    transform-origin: 50% 95%;
-  }
-  /* Boss step: JS controls opacity swap atomically with idle. Only needs the
-     walk transform here — opacity is driven by setInterval in buildMonsterEl. */
-  .monster.boss .sprite .sprite-step {
+  .monster.boss .sprite-img {
     animation: sprite-walk-boss 1.6s ease-in-out infinite;
     transform-origin: 50% 95%;
   }
@@ -3566,64 +3539,49 @@ function clearPlayerAnimationTimers() {
 }
 
 // Play a brief 2-frame "got hit" reaction on a monster. Called from advanceLock
-// every time the player lands a keystroke. Sets BOTH the idle and step layers
-// to the hit frame (otherwise the CSS opacity flicker on .sprite-step would
-// keep showing the walk-3 pose half the time). Skipped if the monster is
-// already in its dying explode animation.
+// every time the player lands a keystroke. Pauses the walk-cycle src-swap,
+// sequences hit-1 → hit-2 on the single sprite img, then restores walk-1 and
+// resumes. Skipped if the monster is already in its dying explode animation.
 function triggerMonsterHit(m) {
   if (!m || !m.el || !m.spriteFile) return;
   if (m.el.classList.contains('dying')) return;
   const spriteEl = m.el.querySelector('.sprite');
   if (!spriteEl) return;
-  // CSS-driven red glow + shake. Applied to every tier including boss so
-  // the hit always reads visually, even when no hit-frame PNG is available.
+  // CSS-driven red glow + shake — applies to every tier including boss.
   spriteEl.classList.add('monster-hitflash');
-  // Bosses ship as <base>.png + <base>-step.png only — no hit-1/hit-2/walk-N
-  // frames. Swapping the <img> src to those non-existent paths fires the
-  // spriteHtml onerror on BOTH layers (idle + step), each replacing its
-  // <img> with the emoji fallback → two 🐉 stack on top of the sprite.
-  // Skip the source swap for bosses but still hide the step layer for the
-  // duration of the hit so the boss freezes in its idle pose during the
-  // flash, then restore the walk-step alternation after.
+  if (m._hitToken) {
+    clearTimeout(m._hitToken[0]);
+    clearTimeout(m._hitToken[1]);
+  }
+  // Bosses ship as <base>.png + <base>-step.png only (no hit frames).
+  // Just flash the hitflash class and restore; no src swap needed.
   if (m.tier === 'boss') {
-    const stepImgBoss = spriteEl.querySelector('img.sprite-img.sprite-step');
-    if (stepImgBoss) stepImgBoss.style.opacity = '0';
-    if (m._hitToken) {
-      clearTimeout(m._hitToken[0]);
-      clearTimeout(m._hitToken[1]);
-    }
     const tBoss = setTimeout(() => {
       if (!m.el) return;
       spriteEl.classList.remove('monster-hitflash');
-      if (stepImgBoss) stepImgBoss.style.opacity = '';
       m._hitToken = null;
     }, 280);
     m._hitToken = [tBoss, tBoss];
     return;
   }
-  const idleImg = spriteEl.querySelector('img.sprite-img:not(.sprite-step)');
-  const stepImg = spriteEl.querySelector('img.sprite-img.sprite-step');
-  if (!idleImg) return;
+  // Single img: pause the walk-cycle interval, swap through hit-1 → hit-2,
+  // then restore to walk-1 and resume. One element; nothing can stack.
+  const img = spriteEl.querySelector('img.sprite-img');
+  if (!img) return;
   const base = `sprites/${m.spriteFile}`;
-  const setBoth = (src) => {
-    if (idleImg && idleImg.parentNode) idleImg.setAttribute('src', src);
-    if (stepImg && stepImg.parentNode) stepImg.setAttribute('src', src);
-  };
-  if (m._hitToken) {
-    clearTimeout(m._hitToken[0]);
-    clearTimeout(m._hitToken[1]);
-  }
-  setBoth(`${base}-hit-1.png`);
+  m._walkPaused = true;
+  img.setAttribute('src', `${base}-hit-1.png`);
   const t1 = setTimeout(() => {
     if (!m.el || m.el.classList.contains('dying')) return;
-    setBoth(`${base}-hit-2.png`);
+    img.setAttribute('src', `${base}-hit-2.png`);
   }, 110);
   const t2 = setTimeout(() => {
     if (!m.el) return;
     spriteEl.classList.remove('monster-hitflash');
-    if (m.el.classList.contains('dying')) return;
-    if (idleImg && idleImg.parentNode) idleImg.setAttribute('src', `${base}-walk-1.png`);
-    if (stepImg && stepImg.parentNode) stepImg.setAttribute('src', `${base}-walk-3.png`);
+    if (!m.el.classList.contains('dying')) {
+      img.setAttribute('src', `${base}-walk-1.png`);
+      m._walkPaused = false;
+    }
     m._hitToken = null;
   }, 280);
   m._hitToken = [t1, t2];
@@ -3652,15 +3610,35 @@ function triggerJumpPose(phase) {
     }, 130);
     state._jumpTimers = [t1];
   } else if (phase === 'in') {
+    // Land frames have extra transparent padding at the bottom vs the idle frame,
+    // causing the character to appear to float. Shift the img DOWN per character
+    // to keep feet at the ground line. Values measured from PNG alpha bounds.
+    const LAND_OFFSETS = {
+      baegui:   [32, 30],
+      namukkun: [40, 40],
+      seonbi:   [38, 38],
+      yangban:  [38, 37],
+      mugwan:   [32, 28],
+      janggun:  [32, 32],
+      daewang:  [27, 28],
+    };
+    const charKey = Object.keys(LAND_OFFSETS).find(k => base.includes(k)) || 'baegui';
+    const [off1, off2] = LAND_OFFSETS[charKey];
     img.setAttribute('src', `${base}-land-1.png`);
+    img.style.animation = 'none';
+    img.style.transform = `translateY(${off1}px)`;
     const t1 = setTimeout(() => {
-      if (img.parentNode) img.setAttribute('src', `${base}-land-2.png`);
+      if (img.parentNode) {
+        img.setAttribute('src', `${base}-land-2.png`);
+        img.style.transform = `translateY(${off2}px)`;
+      }
     }, 130);
     const t2 = setTimeout(() => {
       if (!img.parentNode) return;
-      // Don't overwrite an in-progress strike sequence.
       if (state._strikeRunning) return;
       img.setAttribute('src', `${base}.png`);
+      img.style.animation = '';
+      img.style.transform = '';
     }, 260);
     state._jumpTimers = [t1, t2];
   }
@@ -4718,41 +4696,25 @@ function buildMonsterEl(m) {
   // Live in battle-config.js so the workshop previews at game-accurate sizes.
   const sizePx = (window.BATTLE_CONFIG.tierSizePx && window.BATTLE_CONFIG.tierSizePx[m.tier]) || 101;
   if (m.spriteFile) {
-    // Bosses ship as <base>.png + <base>-step.png (2 frames, no walk row).
-    // Standard enemies have a 4-frame walk row; we sample frames 1 and 3
-    // (opposite legs forward) for the cheapest visible step cycle.
+    // Single-img src-swap walk cycle: one <img> per monster, always opacity 1.
+    // JS setInterval toggles img.src between idle and step frames — no second
+    // element means no crossfade drift (blink) and no overlay stacking.
+    // Both frame PNGs are preloaded at startup so the swap is visually gapless.
     const idleSuffix = m.tier === 'boss' ? ''      : '-walk-1';
     const stepSuffix = m.tier === 'boss' ? '-step' : '-walk-3';
-    const idleHtml = spriteHtml(m.spriteFile + idleSuffix, m.sprite, sizePx);
-    // Step image's onerror normally falls back to the emoji text, which then
-    // sits on top of the IDLE PNG (the "two stacked sprites" bug). For the
-    // step layer we'd rather just hide it — IDLE remains as the only frame.
-    const stepHtml = spriteHtml(m.spriteFile + stepSuffix, m.sprite, sizePx)
-      .replace('class="sprite-img"', 'class="sprite-img sprite-step"')
-      .replace(/onerror="[^"]*"/, 'onerror="this.remove()"');
-    sprite.innerHTML = idleHtml + stepHtml;
-    const stepEl = sprite.querySelector('.sprite-step');
-    const idleEl = sprite.querySelector('.sprite-img:not(.sprite-step)');
+    sprite.innerHTML = spriteHtml(m.spriteFile + idleSuffix, m.sprite, sizePx);
+    const imgEl = sprite.querySelector('.sprite-img');
     const walkPhase = (-Math.random() * 1.8).toFixed(3) + 's';
-    if (idleEl) idleEl.style.animationDelay = walkPhase;
-    if (stepEl) {
-      stepEl.style.animationDelay = walkPhase;
-      // JS-driven atomic opacity swap: both opacities set in one callback so
-      // there is no frame where both are 0 (CSS animation drift caused the blink).
-      const _stepReady = { ok: false };
-      if (stepEl.complete && stepEl.naturalWidth > 0) {
-        _stepReady.ok = true;
-      } else {
-        stepEl.addEventListener('load',  () => { _stepReady.ok = true; },  { once: true });
-        stepEl.addEventListener('error', () => { stepEl.remove(); },       { once: true });
-      }
+    if (imgEl) imgEl.style.animationDelay = walkPhase;
+    if (imgEl) {
+      const idleSrc = `sprites/${m.spriteFile}${idleSuffix}.png`;
+      const stepSrc = `sprites/${m.spriteFile}${stepSuffix}.png`;
       let _showStep = false;
       const _interval = setInterval(() => {
-        if (!el.isConnected) { clearInterval(_interval); return; }
+        if (!el.isConnected || !imgEl.isConnected) { clearInterval(_interval); return; }
+        if (m._walkPaused) return;
         _showStep = !_showStep;
-        const s = _showStep && _stepReady.ok && stepEl.isConnected;
-        if (idleEl) idleEl.style.opacity = s ? '0' : '1';
-        if (stepEl.isConnected) stepEl.style.opacity = s ? '1' : '0';
+        imgEl.setAttribute('src', _showStep ? stepSrc : idleSrc);
       }, 350);
       m._walkInterval = _interval;
     }
@@ -4818,10 +4780,8 @@ function killMonster(m, byPlayer) {
   if (m._walkInterval) { clearInterval(m._walkInterval); m._walkInterval = null; }
   if (m.el && m.spriteFile && m.tier !== 'boss') {
     const base = `sprites/${m.spriteFile}`;
-    const idleImg = m.el.querySelector('img.sprite-img:not(.sprite-step)');
-    const stepImg = m.el.querySelector('img.sprite-img.sprite-step');
-    if (idleImg) idleImg.setAttribute('src', `${base}-hit-2.png`);
-    if (stepImg) stepImg.setAttribute('src', `${base}-hit-2.png`);
+    const img = m.el.querySelector('img.sprite-img');
+    if (img) img.setAttribute('src', `${base}-hit-2.png`);
   }
   m.el.classList.add('dying');
   particleBurst(m.x, m.y + 30, m.tier === 'boss' ? 30 : 10);
@@ -6682,6 +6642,7 @@ function loop(t) {
       renderMonsterDepth(m);
       if (m.y > baseY - 50) {
         damagePlayer();
+        if (m._walkInterval) { clearInterval(m._walkInterval); m._walkInterval = null; }
         m.el.classList.add('dying');
         setTimeout(() => m.el.remove(), 550);
         state.monsters = state.monsters.filter(x => x.id !== m.id);
