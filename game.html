@@ -36,7 +36,7 @@
   :root {
     --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
     --bd: #e2e8f0;   --bdhi: #cbd5e1;
-    --thi: #0f172a;  --tmd: #475569;   --tlo: #94a3b8;
+    --thi: #0f172a;  --tmd: #475569;   --tlo: #64748b; /* slate-500: 4.6:1 on white, WCAG AA */
     --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
     --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
     --korean: 'Noto Sans KR', 'Inter', sans-serif;
@@ -1588,6 +1588,12 @@
       border-color: var(--orange);
       color: white;
     }
+    .battle-kb .key.kb-hint-correct {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: white;
+      transition: background 0.1s, border-color 0.1s;
+    }
   }
   @media (max-width: 400px) {
     .stage { inset: 54px 0 calc(46px + 200px + env(safe-area-inset-bottom)) 0; }
@@ -2561,6 +2567,10 @@
       <span class="special-pip"></span>
       <span class="special-pip"></span>
     </div>
+    <div class="stat" id="hudDailyTimer" style="display:none;text-align:right;">
+      <span class="stat-label">🗓️ Time</span>
+      <span class="stat-value" id="hudDailyTime" style="font-variant-numeric:tabular-nums;">1:30</span>
+    </div>
     <div class="stat" style="text-align: right;">
       <span class="stat-label">Combo</span>
       <span class="stat-value combo zero" id="hudCombo">×1</span>
@@ -2581,14 +2591,23 @@
 
 <input class="shield" id="shield" tabindex="-1" aria-hidden="true" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
-<div id="introModal" class="modal-veil">
+<div id="introModal" class="modal-veil" role="dialog" aria-modal="true" aria-labelledby="introModalTitle">
   <div class="modal-card">
     <div class="badge">⚔️ Battle Mode</div>
-    <h1>한글 전투</h1>
-    <p class="subtitle">Defeat the invading 한글 demons by typing the Korean word floating above each one. Early levels: teleport-strike with the Hwarang sword. Higher levels evolve into magic, ninja stars, and dragon fire. Build combo, type 한글 to unleash 필살기.</p>
+    <h1 id="introModalTitle">한글 전투</h1>
+    <p class="subtitle">Type the Korean word above each demon to defeat it. Build combo and unleash 필살기 to clear the screen.</p>
     <div class="stat-grid">
       <div><div class="k">High Score</div><div class="v" id="introHigh">0</div></div>
-      <div><div class="k">Best Wave</div><div class="v" id="introBest">0</div></div>
+      <div><div class="k">Best Level</div><div class="v" id="introBest">–</div></div>
+    </div>
+    <div style="margin:10px 0 4px;text-align:center;">
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--tmd);">
+        <input type="checkbox" id="slowModeToggle" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
+        🌱 Slow mode for beginners (0.6× speed, points halved on leaderboard)
+      </label>
+    </div>
+    <div style="margin:6px 0 10px;text-align:center;font-size:12px;">
+      <a href="index.html" style="color:var(--blue);text-decoration:none;">New to Korean typing? Learn the keys first →</a>
     </div>
     <div class="battle-lb-toolbar">
       <div class="lb-tabs" data-lb="battleLbIntroContainer">
@@ -2600,14 +2619,16 @@
     <div id="battleLbIntroContainer" class="battle-lb" data-tab="players">
       <div class="battle-lb-loading">Loading battle rankings…</div>
     </div>
+    <div id="introStreak" style="display:none;text-align:center;font-size:13px;color:var(--orange);margin:6px 0;font-weight:600;"></div>
     <div class="actions">
       <button class="primary" id="btnStart">Start Battle</button>
+      <button id="btnDailyRun">🗓️ Daily Run</button>
       <button id="btnBack">← Back to practice</button>
     </div>
   </div>
 </div>
 
-<div id="gameOverModal" class="modal-veil" style="display:none;">
+<div id="gameOverModal" class="modal-veil" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
   <div class="modal-card">
     <div class="badge danger">Game Over</div>
     <h1 id="gameOverTitle">전사 — Fallen</h1>
@@ -2629,8 +2650,11 @@
     <div id="battleLbContainer" class="battle-lb" data-tab="players">
       <div class="battle-lb-loading">Loading battle rankings…</div>
     </div>
+    <div id="overCheckpointNote" style="display:none;font-size:12px;color:var(--tlo);text-align:center;margin-top:8px;">checkpoint run: leaderboard off</div>
+    <div id="overSlowModeNote" style="display:none;font-size:12px;color:var(--tlo);text-align:center;margin-top:4px;">slow mode: points halved on leaderboard</div>
     <div class="actions">
       <button class="primary" id="btnRetry">Retry</button>
+      <button id="btnCheckpointRetry" style="display:none;">Restart from Chapter</button>
       <button id="btnShareResult">📸 Share my result</button>
       <button id="btnHome">Back to practice</button>
     </div>
@@ -2709,88 +2733,14 @@
 
 <!-- Extra vocab loaded synchronously so window.BATTLE_VOCAB is ready when the
      main script merges it into VOCAB. Falls back gracefully if the file 404s. -->
+<script src="hangul-ime.js"></script>
+<script src="shared.js"></script>
 <script src="vocab.js"></script>
 <script src="default-guides.js"></script>
 <script src="battle-config.js"></script>
 
 <script>
 'use strict';
-
-// ============================================================
-// Hangul IME (mirrors index.html)
-// ============================================================
-
-const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const MEDIALS  = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-const FINALS   = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const KEYMAP = {
-  'q':'ㅂ','w':'ㅈ','e':'ㄷ','r':'ㄱ','t':'ㅅ','y':'ㅛ','u':'ㅕ','i':'ㅑ','o':'ㅐ','p':'ㅔ',
-  'a':'ㅁ','s':'ㄴ','d':'ㅇ','f':'ㄹ','g':'ㅎ','h':'ㅗ','j':'ㅓ','k':'ㅏ','l':'ㅣ',
-  'z':'ㅋ','x':'ㅌ','c':'ㅊ','v':'ㅍ','b':'ㅠ','n':'ㅜ','m':'ㅡ',
-  'Q':'ㅃ','W':'ㅉ','E':'ㄸ','R':'ㄲ','T':'ㅆ','O':'ㅒ','P':'ㅖ'
-};
-const VOWEL_COMPOUND = { 'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ','ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ','ㅡㅣ':'ㅢ' };
-const FINAL_COMPOUND = { 'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ','ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ','ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ','ㅂㅅ':'ㅄ' };
-const FINAL_DECOMPOSE = { 'ㄳ':['ㄱ','ㅅ'],'ㄵ':['ㄴ','ㅈ'],'ㄶ':['ㄴ','ㅎ'],'ㄺ':['ㄹ','ㄱ'],'ㄻ':['ㄹ','ㅁ'],'ㄼ':['ㄹ','ㅂ'],'ㄽ':['ㄹ','ㅅ'],'ㄾ':['ㄹ','ㅌ'],'ㄿ':['ㄹ','ㅍ'],'ㅀ':['ㄹ','ㅎ'],'ㅄ':['ㅂ','ㅅ'] };
-const VOWEL_DECOMPOSE = { 'ㅘ':['ㅗ','ㅏ'],'ㅙ':['ㅗ','ㅐ'],'ㅚ':['ㅗ','ㅣ'],'ㅝ':['ㅜ','ㅓ'],'ㅞ':['ㅜ','ㅔ'],'ㅟ':['ㅜ','ㅣ'],'ㅢ':['ㅡ','ㅣ'] };
-const CONSONANTS = new Set('ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split(''));
-const VOWELS_BASIC = new Set('ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅛㅜㅠㅡㅣ'.split(''));
-
-function composeSyllable(i, m, f) {
-  const ii = INITIALS.indexOf(i), mi = MEDIALS.indexOf(m), fi = FINALS.indexOf(f || '');
-  if (ii < 0 || mi < 0) return (i || '') + (m || '') + (f || '');
-  return String.fromCharCode(0xAC00 + ii * 588 + mi * 28 + fi);
-}
-function syllableToKeystrokes(syl) {
-  const code = syl.charCodeAt(0);
-  if (code < 0xAC00 || code > 0xD7A3) return [syl];
-  const x = code - 0xAC00;
-  const i = INITIALS[Math.floor(x / 588)];
-  const m = MEDIALS[Math.floor((x % 588) / 28)];
-  const f = FINALS[x % 28];
-  const ks = [i];
-  if (VOWEL_DECOMPOSE[m]) ks.push(...VOWEL_DECOMPOSE[m]); else ks.push(m);
-  if (f) { if (FINAL_DECOMPOSE[f]) ks.push(...FINAL_DECOMPOSE[f]); else ks.push(f); }
-  return ks;
-}
-function wordToKeystrokes(word) {
-  const ks = [];
-  for (const ch of word) { if (ch === ' ') ks.push(' '); else ks.push(...syllableToKeystrokes(ch)); }
-  return ks;
-}
-
-class HangulIME {
-  constructor() { this.reset(); }
-  reset() { this.committed = ''; this.buf = { initial:'', medial:'', final:'' }; }
-  get display() { let o = this.committed; if (this.buf.initial || this.buf.medial || this.buf.final) o += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final); return o; }
-  commitBuffer() { if (this.buf.initial || this.buf.medial || this.buf.final) this.committed += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final); this.buf = { initial:'', medial:'', final:'' }; }
-  type(j) {
-    const c = CONSONANTS.has(j), v = VOWELS_BASIC.has(j);
-    if (!c && !v) return;
-    if (c) this._con(j); else this._vow(j);
-  }
-  _con(c) {
-    const b = this.buf;
-    if (!b.initial && !b.medial && !b.final) b.initial = c;
-    else if (b.initial && !b.medial) { this.commitBuffer(); this.buf.initial = c; }
-    else if (b.initial && b.medial && !b.final) { if (FINALS.includes(c)) b.final = c; else { this.commitBuffer(); this.buf.initial = c; } }
-    else if (b.initial && b.medial && b.final) { const cmp = FINAL_COMPOUND[b.final + c]; if (cmp) b.final = cmp; else { this.commitBuffer(); this.buf.initial = c; } }
-  }
-  _vow(v) {
-    const b = this.buf;
-    if (!b.initial && !b.medial) { this.committed += v; return; }
-    if (b.initial && !b.medial) { b.medial = v; return; }
-    if (b.initial && b.medial && !b.final) { const cmp = VOWEL_COMPOUND[b.medial + v]; if (cmp) b.medial = cmp; else { this.commitBuffer(); this.committed += v; } return; }
-    if (b.initial && b.medial && b.final) {
-      const dec = FINAL_DECOMPOSE[b.final] || [b.final];
-      const newI = dec[dec.length - 1];
-      const rest = dec.length > 1 ? dec.slice(0, -1).join('') : '';
-      let rf = ''; if (rest.length === 1) rf = rest; else if (rest.length > 1) rf = FINAL_COMPOUND[rest] || rest[0];
-      this.committed += composeSyllable(b.initial, b.medial, rf);
-      this.buf = { initial: newI, medial: v, final: '' };
-    }
-  }
-}
 
 // ============================================================
 // Canvas-based per-jamo renderer (mirrors index.html)
@@ -3666,10 +3616,14 @@ function activeFirstJamos() {
   return new Set(state.monsters.map(m => m.ks && m.ks[0]).filter(Boolean));
 }
 
+// Returns a random float in [0,1). Uses state.rng (seeded PRNG) for daily runs
+// so word selection is deterministic per date; falls back to Math.random otherwise.
+function gameRand() { return (state && state.rng) ? state.rng() : Math.random(); }
+
 function pickAvailableWord(pool, blockedFirstJamos) {
   const available = pool.filter(w => !blockedFirstJamos.has(firstKeystrokeForWord(w)));
   if (!available.length) return null;
-  return available[Math.floor(Math.random() * available.length)];
+  return available[Math.floor(gameRand() * available.length)];
 }
 
 function pickWordForLevel(lv, blockedFirstJamos) {
@@ -3678,7 +3632,7 @@ function pickWordForLevel(lv, blockedFirstJamos) {
   // On the final level of a tier, 30% chance to spawn the next tier as a "scout"
   let chosen = tier;
   const previewLevels = { 4: 2, 8: 3, 13: 4, 18: 5 };
-  if (previewLevels[lv] && Math.random() < 0.25) chosen = previewLevels[lv];
+  if (previewLevels[lv] && gameRand() < 0.25) chosen = previewLevels[lv];
   const pool = VOCAB['tier' + chosen] || VOCAB.tier1;
   const word = pickAvailableWord(pool, blocked);
   if (!word) return null;
@@ -3828,10 +3782,11 @@ const HUD_COMBO = document.getElementById('hudCombo');
 const XP_FILL = document.getElementById('xpFill');
 
 const HIGH_KEY = 'hangul-battle-highscore-v1';
+const BEST_LEVEL_KEY = 'hangul-battle-bestlevel-v1';
+const CHECKPOINT_KEY = 'hangul-type-battle-checkpoint';
 const PROGRESS_KEY = 'hangul-type-progress-v1';
 
-const SUPABASE_URL      = 'https://yugrqnocdrfvpmkrddya.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_xKJO3LJAlU1qkEigRBvTRg_wTlwFVjP';
+// SUPABASE_URL, SUPABASE_ANON_KEY: now in shared.js
 
 // ── Player identity (shared with main app via localStorage) ──
 // Curated K-pop fandom list. Players opt in once via the profile modal; the
@@ -3863,50 +3818,34 @@ function getProgress() {
   // and type-checked here. Belt-and-suspenders alongside escapeHtml at sinks.
   try {
     const raw = JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {};
-    const out = {};
-    if (typeof raw.playerId === 'string' && raw.playerId.length <= 64) out.playerId = raw.playerId;
-    if (typeof raw.xp === 'number' && Number.isFinite(raw.xp) && raw.xp >= 0) out.xp = raw.xp;
+    // The key is SHARED with practice mode (streak, SRS schedule, lesson
+    // progress live here too), so pass unknown fields through untouched: a
+    // battle-side save can never wipe practice history.
+    const out = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? { ...raw } : {};
+    if (!(typeof out.playerId === 'string' && out.playerId.length <= 64)) delete out.playerId;
+    if (!(typeof out.xp === 'number' && Number.isFinite(out.xp) && out.xp >= 0)) delete out.xp;
     if (raw.profile && typeof raw.profile === 'object') {
       const name = (typeof raw.profile.name === 'string' ? raw.profile.name : '').slice(0, 24).trim();
       const cc   = (typeof raw.profile.countryCode === 'string' ? raw.profile.countryCode : '').slice(0, 2).toUpperCase();
       const fid  = (typeof raw.profile.fandom === 'string' ? raw.profile.fandom : '').slice(0, 16);
       const safeFandom = FANDOM_BY_ID[fid] ? fid : '';
-      out.profile = { name: name || 'Player', countryCode: cc || 'US', fandom: safeFandom };
+      out.profile = { ...raw.profile, name: name || 'Player', countryCode: cc || 'US', fandom: safeFandom };
+    } else {
+      delete out.profile;
     }
     return out;
   } catch (e) { return {}; }
 }
-const COUNTRY_BY_TZ = {
-  'Asia/Seoul':'KR','Asia/Tokyo':'JP','Asia/Shanghai':'CN','Asia/Singapore':'SG',
-  'America/New_York':'US','America/Los_Angeles':'US','America/Chicago':'US',
-  'Europe/London':'GB','Europe/Paris':'FR','Europe/Berlin':'DE',
-  'Australia/Sydney':'AU','Pacific/Auckland':'NZ'
-};
-function detectCountry() {
-  try { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (tz && COUNTRY_BY_TZ[tz]) return COUNTRY_BY_TZ[tz]; } catch (e) {}
-  return 'US';
-}
-function flagEmoji(cc) {
-  if (!cc || cc.length !== 2) return '🏳️';
-  const B = 0x1F1E6 - 'A'.charCodeAt(0);
-  return String.fromCodePoint(cc.charCodeAt(0) + B) + String.fromCodePoint(cc.charCodeAt(1) + B);
-}
-
-const COUNTRY_NAMES = {
-  KR:'South Korea',KP:'North Korea',JP:'Japan',CN:'China',HK:'Hong Kong',TW:'Taiwan',SG:'Singapore',
-  MY:'Malaysia',TH:'Thailand',ID:'Indonesia',PH:'Philippines',VN:'Vietnam',IN:'India',AE:'UAE',
-  SA:'Saudi Arabia',IR:'Iran',PK:'Pakistan',BD:'Bangladesh',MM:'Myanmar',KZ:'Kazakhstan',UZ:'Uzbekistan',
-  GB:'United Kingdom',IE:'Ireland',FR:'France',DE:'Germany',ES:'Spain',IT:'Italy',NL:'Netherlands',
-  BE:'Belgium',PT:'Portugal',AT:'Austria',CH:'Switzerland',SE:'Sweden',NO:'Norway',DK:'Denmark',
-  FI:'Finland',PL:'Poland',CZ:'Czechia',HU:'Hungary',GR:'Greece',RO:'Romania',BG:'Bulgaria',
-  RU:'Russia',TR:'Turkey',UA:'Ukraine',US:'United States',CA:'Canada',MX:'Mexico',BR:'Brazil',
-  AR:'Argentina',CL:'Chile',PE:'Peru',CO:'Colombia',VE:'Venezuela',CU:'Cuba',PA:'Panama',
-  EG:'Egypt',ZA:'South Africa',NG:'Nigeria',KE:'Kenya',MA:'Morocco',DZ:'Algeria',TN:'Tunisia',
-  GH:'Ghana',ET:'Ethiopia',AU:'Australia',NZ:'New Zealand',FJ:'Fiji'
-};
+// COUNTRY_BY_TZ, COUNTRY_NAMES, detectCountry, flagEmoji: now in shared.js
 
 function saveProgress(p) {
-  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
+  // Merge-not-clobber: practice mode stores its own fields under this key.
+  try {
+    let existing = {};
+    try { existing = JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; } catch (e) {}
+    if (!existing || typeof existing !== 'object' || Array.isArray(existing)) existing = {};
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...existing, ...p }));
+  } catch (e) {}
 }
 
 let progress = getProgress();
@@ -3915,13 +3854,7 @@ if (!progress.playerId) {
   saveProgress(progress);
 }
 
-function generatePlayerId() {
-  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+// generatePlayerId: now in shared.js
 
 // ── Battle leaderboard: Supabase-backed ──
 // Schema: supabase/migrations/0002_battle.sql
@@ -4020,11 +3953,7 @@ async function flushBattleSubmitQueue() {
   if (remaining.length === 0) _battleLbCache = null;
 }
 
-function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/[<>&"']/g, c => (
-    { '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c]
-  ));
-}
+// escapeHtml now lives in shared.js
 
 function clampLevel(n)  { n = Math.round(Number(n) || 1); return Math.max(1, Math.min(99, n)); }
 function clampPoints(n) { n = Math.round(Number(n) || 0); return Math.max(0, Math.min(1500000, n)); }
@@ -4503,11 +4432,103 @@ const state = {
   // Within-level spaced repetition: words spawned this level are tracked
   // here, then re-spawned as recall-mode monsters once we're past the
   // halfway point of the level's XP threshold.
-  levelWordHistory: []
+  levelWordHistory: [],
+  // Checkpoint run: started from a chapter checkpoint, not leaderboard-eligible.
+  checkpointRun: false,
+  // Rubber-band assist multiplier (1.0 = full speed, <1.0 = slowed down)
+  assistMul: 1.0,
+  // Leaks in the current level (monsters reaching damage line)
+  levelLeaks: 0,
+  // Slow mode: player opted in via intro toggle
+  slowMode: false
 };
 
 function getHighScore() { try { return Number(localStorage.getItem(HIGH_KEY)) || 0; } catch (e) { return 0; } }
 function setHighScore(n) { try { localStorage.setItem(HIGH_KEY, String(n)); } catch (e) {} }
+function getBestLevel() { try { return Number(localStorage.getItem(BEST_LEVEL_KEY)) || 0; } catch (e) { return 0; } }
+function setBestLevel(n) { try { localStorage.setItem(BEST_LEVEL_KEY, String(n)); } catch (e) {} }
+function getCheckpoint() { try { return Number(localStorage.getItem(CHECKPOINT_KEY)) || 0; } catch (e) { return 0; } }
+function setCheckpoint(n) { try { localStorage.setItem(CHECKPOINT_KEY, String(n)); } catch (e) {} }
+const SLOW_MODE_KEY = 'hangul-battle-slowmode-v1';
+function getSlowMode() { try { return localStorage.getItem(SLOW_MODE_KEY) === '1'; } catch (e) { return false; } }
+function setSlowMode(on) { try { localStorage.setItem(SLOW_MODE_KEY, on ? '1' : '0'); } catch (e) {} }
+
+const DAILY_STREAK_KEY = 'hangul-type-daily-streak';
+const DAILY_DURATION_MS = 90 * 1000;  // 90-second daily run
+
+// Mulberry32 PRNG seeded from date string for deterministic word selection
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function dailyDateStr() {
+  const d = new Date();
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+}
+function dailySeed(dateStr) {
+  let h = 0;
+  for (let i = 0; i < dateStr.length; i++) { h = Math.imul(31, h) + dateStr.charCodeAt(i) | 0; }
+  return h;
+}
+function getDailyStreak() {
+  try { return JSON.parse(localStorage.getItem(DAILY_STREAK_KEY)) || { lastDay: null, streak: 0 }; } catch (e) { return { lastDay: null, streak: 0 }; }
+}
+function updateDailyStreak() {
+  const today = dailyDateStr();
+  let data = getDailyStreak();
+  if (data.lastDay === today) return data;  // already played today
+  const yesterday = (() => {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  })();
+  data.streak = (data.lastDay === yesterday) ? (data.streak || 0) + 1 : 1;
+  data.lastDay = today;
+  try { localStorage.setItem(DAILY_STREAK_KEY, JSON.stringify(data)); } catch (e) {}
+  return data;
+}
+
+async function submitDailyScore(points) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+  const pid = (progress && progress.playerId) || null;
+  if (!pid) return false;
+  const name = (progress.profile && progress.profile.name) || 'Player';
+  const country = (progress.profile && progress.profile.countryCode) || detectCountry();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_daily_score`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_id: pid,
+        p_name: String(name).slice(0, 24),
+        p_country: String(country).slice(0, 2).toUpperCase(),
+        p_points: points
+      })
+    });
+    return res.ok;
+  } catch (e) { return false; }
+}
+
+async function fetchDailyTop10() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return [];
+  const today = dailyDateStr();
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/battle_daily?select=name,country,points&day=eq.${today}&order=points.desc&limit=10`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) { return []; }
+}
 
 function xpThresholdForLevel(lv) {
   const x = (window.BATTLE_CONFIG && window.BATTLE_CONFIG.xp) || { base: 90, step: 70, lateDiscount: { levels: [12, 13], factor: 0.70 } };
@@ -4624,7 +4645,9 @@ function spawnMonster(forceBoss) {
   const id = ++monsterId;
   const ks = wordToKeystrokes(word.ko);
   const beh = behaviorForTier(tier);
-  const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(tier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul;
+  const _assistMul = state.assistMul || 1.0;
+  const _slowMul = state.slowMode ? 0.6 : 1.0;
+  const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(tier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * _assistMul * _slowMul;
   // Reserve enough horizontal margin for the word bubble (max 720px wide,
   // centered above the sprite) so it doesn't get clipped or wrap when the
   // monster spawns near a screen edge. Falls back to a tighter margin on
@@ -4667,7 +4690,7 @@ function spawnBoss() {
   const ks = wordToKeystrokes(word.ko);
   const startX = window.innerWidth / 2;
   const beh = behaviorForTier('boss');
-  const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul;
+  const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * (state.assistMul || 1.0) * (state.slowMode ? 0.6 : 1.0);
   const monster = {
     id, sprite, spriteFile, name: profile.name,
     word: word.ko, en: word.en, tier: 'boss',
@@ -5235,7 +5258,19 @@ function onLevelUp() {
   const sp = playerForLevel(state.level);
   renderPlayerSprite(state.level);
   flashCenterText('Lv. ' + state.level + ' · ' + sp.label);
-  state.spawnInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - state.level * ADMIN.pace.spawnIntervalLevelStep);
+  // Rubber-band: adjust assistMul based on leaks in the level that just ended.
+  // >=2 leaks: slow down slightly. 0 leaks: relax back toward 1.0.
+  const leaks = state.levelLeaks || 0;
+  if (leaks >= 2) {
+    state.assistMul = Math.max(0.6, (state.assistMul || 1.0) * 0.85);
+  } else if (leaks === 0) {
+    state.assistMul = Math.min(1.0, (state.assistMul || 1.0) / 0.85);
+  }
+  state.levelLeaks = 0;
+  const baseInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - state.level * ADMIN.pace.spawnIntervalLevelStep);
+  const intervalAssist = leaks >= 2 ? 1.15 : 1.0;
+  const intervalSlow = state.slowMode ? 1.4 : 1.0;
+  state.spawnInterval = baseInterval * intervalAssist * intervalSlow;
   // Theme transition — applies on each level so the band-boundary level
   // smoothly fades into the new gradient.
   applyTheme(themeForLevel(state.level));
@@ -5335,15 +5370,30 @@ function setAudioEnabled(on) {
 }
 
 function findKoreanVoice() {
-  if (_koreanVoice !== undefined) return _koreanVoice;
+  // Only cache a positive result; never permanently cache false since
+  // getVoices() is often empty on first call (async load on Chrome/Edge).
+  if (_koreanVoice) return _koreanVoice;
   if (!_ttsSupported) { _koreanVoice = false; return false; }
   const voices = speechSynthesis.getVoices() || [];
   const pick = voices.find(v => /^ko[-_]?KR$/i.test(v.lang)) ||
                voices.find(v => /korean/i.test(v.name)) ||
                voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ko')) ||
                null;
-  _koreanVoice = pick || false;
-  return _koreanVoice;
+  if (pick) {
+    _koreanVoice = pick;
+  } else if (voices.length === 0) {
+    // Voices not loaded yet; attach a one-time listener to re-probe
+    const retry = () => {
+      speechSynthesis.removeEventListener('voiceschanged', retry);
+      _koreanVoice = undefined;
+      findKoreanVoice();
+    };
+    speechSynthesis.addEventListener('voiceschanged', retry);
+  } else {
+    // Voices loaded but no Korean voice found; cache false so we stop trying
+    _koreanVoice = false;
+  }
+  return _koreanVoice || false;
 }
 
 function speakKoreanWord(text) {
@@ -5402,9 +5452,8 @@ function toggleAudio() {
 }
 
 if (_ttsSupported) {
-  // Voices may load async on Chrome; refresh cache when the list arrives.
-  speechSynthesis.addEventListener('voiceschanged', () => { _koreanVoice = undefined; findKoreanVoice(); });
-  // Trigger an initial probe so getVoices() is populated before first lock.
+  // Trigger an initial probe. findKoreanVoice() now self-registers a one-time
+  // voiceschanged listener when the list is empty, so no permanent listener needed.
   findKoreanVoice();
 }
 
@@ -6312,6 +6361,9 @@ function damagePlayer() {
   }
   state.lives--;
   state.perfectWave = false;
+  // Losing a life must also break combo (a life lost should never be cheaper
+  // than a wrong keystroke).
+  breakCombo();
   PLAYER_EL.classList.remove('hit');
   void PLAYER_EL.offsetWidth;
   PLAYER_EL.classList.add('hit');
@@ -6328,24 +6380,47 @@ function gameOver() {
   const high = getHighScore();
   const newHigh = state.score > high;
   if (newHigh) setHighScore(state.score);
+  if (state.level > getBestLevel()) setBestLevel(state.level);
+  // Update chapter checkpoint: highest act-break level the player has cleared
+  const actLevels = Object.keys(LEVEL_ACTS).map(Number).sort((a, b) => a - b);
+  const clearedActs = actLevels.filter(lv => state.level >= lv);
+  if (clearedActs.length > 0) {
+    const highestAct = clearedActs[clearedActs.length - 1];
+    if (highestAct > getCheckpoint()) setCheckpoint(highestAct);
+  }
   document.getElementById('overScore').textContent = state.score.toLocaleString();
   document.getElementById('overLevel').textContent = state.level;
   document.getElementById('overKills').textContent = state.kills;
   document.getElementById('overCombo').textContent = state.bestCombo;
   document.getElementById('newHighSign').style.display = newHigh ? 'block' : 'none';
+  // Render checkpoint restart button if a checkpoint is available
+  renderCheckpointButton();
+  // Show checkpoint-run note if applicable
+  const cpNote = document.getElementById('overCheckpointNote');
+  if (cpNote) cpNote.style.display = state.checkpointRun ? 'block' : 'none';
+  // Show slow-mode note if applicable
+  const smNote = document.getElementById('overSlowModeNote');
+  if (smNote) smNote.style.display = state.slowMode ? 'block' : 'none';
+  // Hide any daily-run result panel left over from an earlier daily run.
+  const dailyPanel = document.getElementById('overDailyResult');
+  if (dailyPanel && !state.dailyRun) dailyPanel.style.display = 'none';
   progress = getProgress();
   // Analytics: every game-over counts as an attempt (separate from the leaderboard).
   logBattleAttempt(state.level, state.score);
   document.getElementById('gameOverModal').style.display = 'flex';
-  // Arcade-style soft prompt on new high score or unset profile, like classic initials entry.
-  // Fires after a short delay so the score panel is visible first.
-  if (newHigh || isProfileUnset()) setTimeout(() => openProfileModal({ soft: true }), 600);
-  // Submit, then render. submitBattleScore invalidates the cache so render fetches fresh.
-  submitBattleScore(state.level, state.score).finally(() => {
+  // Only submit to leaderboard for full non-checkpoint, non-daily runs.
+  // Slow mode submits but halves points (applied at submit site below).
+  if (!state.checkpointRun && !state.dailyRun) {
+    // Arcade-style soft prompt on new high score or unset profile.
+    if (newHigh || isProfileUnset()) setTimeout(() => openProfileModal({ soft: true }), 600);
+    // Submit, then render. submitBattleScore invalidates the cache so render fetches fresh.
+    const submitPoints = state.slowMode ? Math.floor(state.score * 0.5) : state.score;
+    submitBattleScore(state.level, submitPoints).finally(() => {
+      renderActiveLeaderboard('battleLbContainer');
+    });
+    // Optimistic first paint while the network round-trip lands.
     renderActiveLeaderboard('battleLbContainer');
-  });
-  // Optimistic first paint while the network round-trip lands.
-  renderActiveLeaderboard('battleLbContainer');
+  }
   // Sync XP back to main app
   try {
     const raw = localStorage.getItem(PROGRESS_KEY);
@@ -6372,6 +6447,65 @@ function updateHud() {
 // ============================================================
 
 const SHIELD = document.getElementById('shield');
+
+// ── Per-jamo miss tracking (shared with practice mode stats store) ────────
+const JAMO_STATS_KEY = 'hangul-type-stats-v1';
+function recordJamoAttempt(jamo, correct) {
+  if (!jamo || jamo === ' ') return;
+  try {
+    let store = {};
+    try { store = JSON.parse(localStorage.getItem(JAMO_STATS_KEY)) || {}; } catch (e) {}
+    if (!store.perJamo) store.perJamo = {};
+    if (!store.perJamo[jamo]) store.perJamo[jamo] = { tries: 0, hits: 0 };
+    store.perJamo[jamo].tries++;
+    if (correct) store.perJamo[jamo].hits++;
+    localStorage.setItem(JAMO_STATS_KEY, JSON.stringify(store));
+  } catch (e) {}
+}
+
+// Flash the current expected jamo red on the locked monster's word row for ~300ms,
+// then restore. Also highlights the correct key on the mobile on-screen keyboard.
+function flashErrJamo(m, expectedJamo) {
+  if (!m || !m.syllables) return;
+  // Temporarily paint the current jamo position with the err color
+  const pos = state.lockPosKs;
+  for (const syl of m.syllables) {
+    if (syl.isSpace || !syl.cached) continue;
+    const stateMap = {
+      initial: positionsStateAt(syl.iPos, pos),
+      medial:  positionsStateAt(syl.mPos, pos),
+      final:   syl.fPos.length ? positionsStateAt(syl.fPos, pos) : 'pending'
+    };
+    // Replace the 'now' state with 'err' for this paint
+    const errMap = {
+      initial: stateMap.initial === 'now' ? 'err' : stateMap.initial,
+      medial:  stateMap.medial  === 'now' ? 'err' : stateMap.medial,
+      final:   stateMap.final   === 'now' ? 'err' : stateMap.final
+    };
+    paintSyllable(syl.cached, errMap);
+  }
+  // Flash the correct key on the mobile on-screen keyboard if visible
+  const kbMq = window.matchMedia('(max-width: 720px)');
+  if (kbMq.matches && expectedJamo) {
+    const battleKb = document.getElementById('battleKb');
+    if (battleKb) {
+      for (const [k, j] of Object.entries(KEYMAP)) {
+        if (j === expectedJamo) {
+          const keyEl = battleKb.querySelector(`[data-key="${k.toLowerCase()}"]`);
+          if (keyEl) {
+            keyEl.classList.add('kb-hint-correct');
+            setTimeout(() => keyEl.classList.remove('kb-hint-correct'), 300);
+          }
+          break;
+        }
+      }
+    }
+  }
+  // Restore after 300ms
+  setTimeout(() => {
+    if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
+  }, 300);
+}
 
 function findTargetForChar(rawKey, isShift) {
   const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
@@ -6401,9 +6535,17 @@ function handleKey(rawKey, isShift) {
     }
     state.lockId = target.id;
     state.lockExpectedKs = target.ks.slice();
-    state.lockPosKs = 0;
+    // Restore prior progress if the player re-locks a monster they escaped from
+    state.lockPosKs = target.lockProgressKs || 0;
     state.ime.reset();
+    // Re-sync IME display to match restored progress (replay jamos silently)
+    for (let i = 0; i < state.lockPosKs; i++) state.ime.type(target.ks[i]);
     target.el.classList.add('locked');
+    // Restore the HP bar to reflect already-typed keystrokes
+    const restoredHp = Math.max(0, target.maxHp - state.lockPosKs);
+    target.hp = restoredHp;
+    if (target.el) target.el.querySelector('.hp-fill').style.width = (restoredHp / target.maxHp * 100) + '%';
+    if (target.syllables) repaintWordRow(target.syllables, state.lockPosKs);
     // Sword era (melee levels): teleport next to the locked monster so the
     // slashes land in place. Ranged levels stay home and fire projectiles.
     // killMonster + escapeLock both call teleportPlayerHome; the chain
@@ -6434,9 +6576,12 @@ function handleKey(rawKey, isShift) {
   // and we short-circuit the lock-advance for this keystroke.
   if (feedSpecialBuffer(jamo)) return;
   if (jamo === expected) {
+    recordJamoAttempt(expected, true);
     state.ime.type(jamo);
     advanceLock(m);
   } else {
+    recordJamoAttempt(expected, false);
+    flashErrJamo(m, expected);
     sfxMiss();
     breakCombo();
   }
@@ -6488,7 +6633,11 @@ function breakCombo() {
 function escapeLock() {
   if (state.lockId == null) return;
   const m = state.monsters.find(x => x.id === state.lockId);
-  if (m && m.el) m.el.classList.remove('locked');
+  if (m) {
+    // Persist typed progress so re-locking the same monster resumes from here
+    m.lockProgressKs = state.lockPosKs;
+    if (m.el) m.el.classList.remove('locked');
+  }
   state.lockId = null;
   state.lockPosKs = 0;
   state.lockExpectedKs = [];
@@ -6578,6 +6727,19 @@ function loop(t) {
     tickPowerups(dt);
     // Progressive recall hints (fade hidden syllables in over time)
     tickRecallReveals(t);
+    // Daily run: tick countdown timer and end run when it hits zero
+    if (state.dailyRun) {
+      state.dailyTimeLeft = (state.dailyTimeLeft || 0) - dt;
+      if (state.dailyTimeLeft <= 0) {
+        state.dailyTimeLeft = 0;
+        endDailyRun();
+        return;
+      }
+      if (state.dailyTimeEl) {
+        const secs = Math.ceil(state.dailyTimeLeft / 1000);
+        state.dailyTimeEl.textContent = Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
+      }
+    }
     // Slow-mo applies only to MONSTER motion, not the spawner / HUD / typing.
     const slowMul = (state.activePowerups && state.activePowerups.slowmo > 0) ? 0.55 : 1.0;
     // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
@@ -6641,6 +6803,7 @@ function loop(t) {
       if (m.x > maxX) m.x = maxX;
       renderMonsterDepth(m);
       if (m.y > baseY - 50) {
+        state.levelLeaks = (state.levelLeaks || 0) + 1;
         damagePlayer();
         if (m._walkInterval) { clearInterval(m._walkInterval); m._walkInterval = null; }
         m.el.classList.add('dying');
@@ -6824,7 +6987,19 @@ function doStartGame() {
   state.startedAt = Date.now();
   state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
   state.monsters = [];
-  state.spawnTimer = 0; state.spawnInterval = ADMIN.pace.initialSpawnMs;
+  state.spawnTimer = 0;
+  state.checkpointRun = false;
+  state.dailyRun = false;
+  state.rng = null;
+  state.dailyTimeLeft = 0;
+  state.dailyTimerEl = null;
+  state.dailyTimeEl = null;
+  const _timerHud = document.getElementById('hudDailyTimer');
+  if (_timerHud) _timerHud.style.display = 'none';
+  state.assistMul = 1.0;
+  state.levelLeaks = 0;
+  state.slowMode = getSlowMode();
+  state.spawnInterval = ADMIN.pace.initialSpawnMs * (state.slowMode ? 1.4 : 1.0);
   state.bossActive = false; state.bossNextLevel = 5;
   state.lockId = null; state.ime.reset();
   // Reset ninja state
@@ -6861,6 +7036,173 @@ function doStartGame() {
   ac().resume && ac().resume();
 }
 
+// Renders the "Restart from Chapter N" button on the game-over modal if a
+// chapter checkpoint is available. Hides the button otherwise.
+function renderCheckpointButton() {
+  const cpBtn = document.getElementById('btnCheckpointRetry');
+  if (!cpBtn) return;
+  const cp = getCheckpoint();
+  if (!cp) { cpBtn.style.display = 'none'; return; }
+  // Find which chapter this level corresponds to
+  const act = LEVEL_ACTS[cp];
+  const label = act ? act.chapter : ('Lv.' + cp);
+  cpBtn.textContent = 'Restart from ' + label + ' (Lv.' + cp + ')';
+  cpBtn.style.display = '';
+}
+
+function startCheckpointGame(startLevel) {
+  document.getElementById('gameOverModal').style.display = 'none';
+  document.getElementById('introModal').style.display = 'none';
+  clearPlayerAnimationTimers();
+  state.running = true; state.paused = false;
+  state.lives = ADMIN.player.lives;
+  state.level = startLevel;
+  state.xp = 0; state.score = 0; state.kills = 0;
+  state.combo = 0; state.bestCombo = 0;
+  state.startedAt = Date.now();
+  state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
+  state.monsters = [];
+  // Set spawn interval appropriate for the checkpoint level
+  state.spawnInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - startLevel * ADMIN.pace.spawnIntervalLevelStep);
+  state.spawnTimer = 0;
+  state.bossActive = false; state.bossNextLevel = 5;
+  state.lockId = null; state.ime.reset();
+  state.checkpointRun = true;
+  state.dailyRun = false;
+  state.rng = null;
+  state.dailyTimeLeft = 0;
+  state.dailyTimerEl = null;
+  state.dailyTimeEl = null;
+  const _cpTimerHud = document.getElementById('hudDailyTimer');
+  if (_cpTimerHud) _cpTimerHud.style.display = 'none';
+  state.assistMul = 1.0;
+  state.levelLeaks = 0;
+  state.slowMode = getSlowMode();
+  teleportPlayerHome(true);
+  state.specialCharges = 0;
+  state.specialMoveBurst = false;
+  resetSpecialBuffer();
+  cancelAllSpeech();
+  state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
+  PLAYER_EL.classList.remove('shielded');
+  (state.powerups || []).forEach(p => p.el && p.el.remove());
+  state.powerups = [];
+  state.lastWaveLevel = startLevel;
+  state.levelWordHistory = [];
+  renderPlayerSprite(startLevel);
+  PLAYER_EL.style.animation = 'none';
+  void PLAYER_EL.offsetWidth;
+  PLAYER_EL.style.animation = '';
+  applyTheme(themeForLevel(startLevel));
+  LIVE_EL.textContent = '';
+  updateHud();
+  if (typeof renderSpecialMeter === 'function') renderSpecialMeter();
+  if (typeof renderPowerupHud === 'function') renderPowerupHud();
+  lastT = 0;
+  requestAnimationFrame(loop);
+  ac().resume && ac().resume();
+}
+
+function startDailyGame() {
+  document.getElementById('introModal').style.display = 'none';
+  clearPlayerAnimationTimers();
+  state.running = true; state.paused = false;
+  state.lives = ADMIN.player.lives;
+  state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
+  state.combo = 0; state.bestCombo = 0;
+  state.startedAt = Date.now();
+  state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
+  state.monsters = [];
+  state.spawnTimer = 0; state.spawnInterval = ADMIN.pace.initialSpawnMs;
+  state.bossActive = false; state.bossNextLevel = 5;
+  state.lockId = null; state.ime.reset();
+  state.checkpointRun = false;
+  state.dailyRun = true;
+  state.assistMul = 1.0;
+  state.levelLeaks = 0;
+  state.slowMode = false;  // daily runs always at normal speed
+  // Seeded PRNG for deterministic word selection
+  state.rng = mulberry32(dailySeed(dailyDateStr()));
+  // Daily timer
+  state.dailyTimeLeft = DAILY_DURATION_MS;
+  state.dailyTimerEl = document.getElementById('hudDailyTimer');
+  state.dailyTimeEl = document.getElementById('hudDailyTime');
+  if (state.dailyTimerEl) state.dailyTimerEl.style.display = '';
+  teleportPlayerHome(true);
+  state.specialCharges = 0;
+  state.specialMoveBurst = false;
+  resetSpecialBuffer();
+  cancelAllSpeech();
+  state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
+  PLAYER_EL.classList.remove('shielded');
+  (state.powerups || []).forEach(p => p.el && p.el.remove());
+  state.powerups = [];
+  state.lastWaveLevel = 1;
+  state.levelWordHistory = [];
+  renderPlayerSprite(1);
+  PLAYER_EL.style.animation = 'none';
+  void PLAYER_EL.offsetWidth;
+  PLAYER_EL.style.animation = '';
+  applyTheme(themeForLevel(1));
+  LIVE_EL.textContent = '';
+  document.getElementById('gameOverModal').style.display = 'none';
+  updateHud();
+  if (typeof renderSpecialMeter === 'function') renderSpecialMeter();
+  if (typeof renderPowerupHud === 'function') renderPowerupHud();
+  lastT = 0;
+  requestAnimationFrame(loop);
+  ac().resume && ac().resume();
+}
+
+async function endDailyRun() {
+  state.running = false;
+  clearPlayerAnimationTimers();
+  cancelAllSpeech();
+  if (state.dailyTimerEl) state.dailyTimerEl.style.display = 'none';
+  sfxGameOver();
+  const points = state.score;
+  // Update streak
+  const streakData = updateDailyStreak();
+  // Submit score
+  const submitted = await submitDailyScore(points);
+  // Show game-over modal with daily run context
+  document.getElementById('overScore').textContent = points.toLocaleString();
+  document.getElementById('overLevel').textContent = state.level;
+  document.getElementById('overKills').textContent = state.kills;
+  document.getElementById('overCombo').textContent = state.bestCombo;
+  document.getElementById('newHighSign').style.display = 'none';
+  const cpNote = document.getElementById('overCheckpointNote');
+  if (cpNote) cpNote.style.display = 'none';
+  const smNote = document.getElementById('overSlowModeNote');
+  if (smNote) smNote.style.display = 'none';
+  // Daily run result area
+  let dailyResultEl = document.getElementById('overDailyResult');
+  if (dailyResultEl) dailyResultEl.style.display = '';
+  if (!dailyResultEl) {
+    dailyResultEl = document.createElement('div');
+    dailyResultEl.id = 'overDailyResult';
+    dailyResultEl.style.cssText = 'margin:10px 0;font-size:13px;color:var(--tmd);text-align:center;';
+    const actionsEl = document.querySelector('#gameOverModal .actions');
+    if (actionsEl) actionsEl.parentNode.insertBefore(dailyResultEl, actionsEl);
+  }
+  const streakTxt = streakData.streak > 1 ? ` | 🔥 ${streakData.streak}-day streak` : '';
+  const submitTxt = submitted ? '' : ' (offline, not submitted)';
+  dailyResultEl.innerHTML = `🗓️ Daily Run${submitTxt}${streakTxt}<br><div id="overDailyLb" style="margin-top:8px;font-size:12px;"></div>`;
+  // Fetch today's top 10
+  const top10 = await fetchDailyTop10();
+  const lbEl = document.getElementById('overDailyLb');
+  if (lbEl) {
+    if (top10.length === 0) {
+      lbEl.textContent = 'No scores yet today.';
+    } else {
+      lbEl.innerHTML = '<strong>Today\'s Top 10</strong><br>' +
+        top10.map((r, i) => `${i + 1}. ${escapeHtml(r.name)}: ${Number(r.points).toLocaleString()}`).join('<br>');
+    }
+  }
+  renderCheckpointButton();
+  document.getElementById('gameOverModal').style.display = 'flex';
+}
+
 function togglePause() {
   state.paused = !state.paused;
   if (state.paused) {
@@ -6893,6 +7235,23 @@ flushBattleSubmitQueue();
 renderActiveLeaderboard('battleLbIntroContainer');
 document.getElementById('storyDialog').addEventListener('click', advanceStory);
 document.getElementById('btnRetry').addEventListener('click', startGame);
+document.getElementById('btnCheckpointRetry').addEventListener('click', () => {
+  const cp = getCheckpoint();
+  if (cp) startCheckpointGame(cp);
+});
+document.getElementById('btnDailyRun').addEventListener('click', () => {
+  if (isProfileUnset()) {
+    openProfileModal({
+      requireSetup: true,
+      afterSave: () => {
+        document.getElementById('introModal').style.display = 'none';
+        startDailyGame();
+      }
+    });
+    return;
+  }
+  startDailyGame();
+});
 document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html');
 
 // ─── Shareable result card ────────────────────────────────────────────────
@@ -7126,7 +7485,60 @@ document.getElementById('btnAudio').addEventListener('click', toggleAudio);
 renderAudioToggle();
 
 document.getElementById('introHigh').textContent = getHighScore().toLocaleString();
-document.getElementById('introBest').textContent = getHighScore() ? Math.floor(getHighScore() / 200) : 0;
+(function() {
+  const bl = getBestLevel();
+  document.getElementById('introBest').textContent = bl ? bl : '–';
+})();
+
+// Slow mode toggle: persist preference and sync checkbox state on load
+(function() {
+  const toggle = document.getElementById('slowModeToggle');
+  if (!toggle) return;
+  toggle.checked = getSlowMode();
+  toggle.addEventListener('change', () => setSlowMode(toggle.checked));
+})();
+
+// Daily streak display on intro modal
+(function() {
+  const streakEl = document.getElementById('introStreak');
+  if (!streakEl) return;
+  const data = getDailyStreak();
+  if (data.streak > 0) {
+    streakEl.textContent = '🔥 ' + data.streak + '-day streak';
+    streakEl.style.display = '';
+  }
+})();
+
+// a11y focus management: move focus into modals on open, restore on close.
+// Uses a MutationObserver so focus moves whenever display changes regardless
+// of which code path opens/closes the modal.
+(function() {
+  let _prevFocus = null;
+  function trapFocusInModal(modal) {
+    _prevFocus = document.activeElement;
+    const focusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable) focusable.focus({ preventScroll: true });
+  }
+  function restoreFocus() {
+    if (_prevFocus && _prevFocus.focus) {
+      try { _prevFocus.focus({ preventScroll: true }); } catch (e) {}
+    }
+  }
+  const watchModals = ['introModal', 'gameOverModal'];
+  watchModals.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const obs = new MutationObserver(() => {
+      const visible = el.style.display !== 'none' && el.style.display !== '';
+      if (visible) trapFocusInModal(el);
+      else restoreFocus();
+    });
+    obs.observe(el, { attributes: true, attributeFilter: ['style'] });
+  });
+  // Escape closes the pause overlay only (intro/game-over Escape is already
+  // handled by the keydown listener which calls escapeLock or togglePause).
+  // The existing Escape handler at keydown is sufficient; nothing extra needed.
+})();
 
 // Mobile on-screen keyboard. Renders the same QWERTY-to-Hangul guide that
 // index.html uses but with tap handlers wired to handleKey, so phones can

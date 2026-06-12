@@ -3,34 +3,10 @@
 // at every keystroke position.
 // Run: node test-highlight.mjs
 
-const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const MEDIALS  = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-const FINALS   = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-
-const VOWEL_DECOMPOSE = {
-  'ㅘ':['ㅗ','ㅏ'], 'ㅙ':['ㅗ','ㅐ'], 'ㅚ':['ㅗ','ㅣ'],
-  'ㅝ':['ㅜ','ㅓ'], 'ㅞ':['ㅜ','ㅔ'], 'ㅟ':['ㅜ','ㅣ'],
-  'ㅢ':['ㅡ','ㅣ']
-};
-const FINAL_DECOMPOSE = {
-  'ㄳ':['ㄱ','ㅅ'], 'ㄵ':['ㄴ','ㅈ'], 'ㄶ':['ㄴ','ㅎ'],
-  'ㄺ':['ㄹ','ㄱ'], 'ㄻ':['ㄹ','ㅁ'], 'ㄼ':['ㄹ','ㅂ'], 'ㄽ':['ㄹ','ㅅ'],
-  'ㄾ':['ㄹ','ㅌ'], 'ㄿ':['ㄹ','ㅍ'], 'ㅀ':['ㄹ','ㅎ'],
-  'ㅄ':['ㅂ','ㅅ']
-};
-
-function syllableToKeystrokes(syl) {
-  const code = syl.charCodeAt(0);
-  if (code < 0xAC00 || code > 0xD7A3) return [syl];
-  const x = code - 0xAC00;
-  const i = INITIALS[Math.floor(x / 588)];
-  const m = MEDIALS[Math.floor((x % 588) / 28)];
-  const f = FINALS[x % 28];
-  const ks = [i];
-  ks.push(...(VOWEL_DECOMPOSE[m] || [m]));
-  if (f) ks.push(...(FINAL_DECOMPOSE[f] || [f]));
-  return ks;
-}
+// Imports the REAL shipped engine (hangul-ime.js): no inline copy.
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { syllableToKeystrokes } = require('./hangul-ime.js');
 
 function jamoStateClass(idx, posKs, errFlashIdx = -1) {
   if (idx < posKs) return 'done';

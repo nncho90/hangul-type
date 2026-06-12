@@ -38,7 +38,7 @@
   :root {
     --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
     --bd: #e2e8f0;   --bdhi: #cbd5e1;
-    --thi: #0f172a;  --tmd: #475569;   --tlo: #94a3b8;
+    --thi: #0f172a;  --tmd: #475569;   --tlo: #64748b; /* slate-500: 4.6:1 on white, WCAG AA */
     --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
     --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
     --korean: 'Noto Sans KR', 'Inter', sans-serif;
@@ -162,17 +162,6 @@
     font-size: 28px; line-height: 1; color: var(--tlo);
   }
   .jamo-modal-close:hover { color: var(--thi); }
-  .kb-mobile-hint {
-    display: none;
-    background: var(--l2);
-    border: 1px dashed var(--bd);
-    border-radius: 12px;
-    padding: 18px;
-    text-align: center;
-    color: var(--tmd);
-    font-size: 13px;
-    line-height: 1.55;
-  }
   .mobile-actions { display: none; }
   .mobile-menu-btn {
     display: none;
@@ -269,7 +258,7 @@
     .target .word.md { font-size: 26px; gap: 8px; }
     .target .word.sm { font-size: 22px; gap: 6px; }
     .keyboard { display: block; }
-    .kb-mobile-hint { display: none; }
+
     .btn { min-height: 36px; padding: 9px 14px; font-size: 13px; }
     .topic-pill { min-height: 36px; padding: 8px 14px; font-size: 12px; display: inline-flex; align-items: center; }
     .topics { gap: 8px; }
@@ -894,7 +883,7 @@
     .target .word.md { font-size: 22px; gap: 6px; }
     .target .word.sm { font-size: 20px; gap: 5px; }
     .keyboard { display: block; }
-    .kb-mobile-hint { display: none; }
+
   }
   .icon-btn {
     background: var(--l1);
@@ -1484,6 +1473,69 @@
     position: relative;
     cursor: default;
   }
+  .jamo-cell.drillable {
+    cursor: pointer;
+    outline: 2px solid transparent;
+    transition: outline 0.12s, transform 0.1s;
+  }
+  .jamo-cell.drillable:hover {
+    outline: 2px solid currentColor;
+    transform: scale(1.07);
+  }
+  .jamo-drill-hint {
+    font-size: 11px;
+    color: var(--tlo);
+    margin-top: 6px;
+    text-align: center;
+  }
+  /* Coachmark overlay (first-run onboarding) */
+  .coachmark-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.65);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 11000;
+    animation: fadeIn 0.25s ease;
+  }
+  .coachmark-card {
+    background: var(--l1);
+    border-radius: 18px;
+    padding: 32px 36px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 56px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  .coachmark-card .cm-emoji { font-size: 40px; margin-bottom: 12px; }
+  .coachmark-card h2 { font-size: 20px; font-weight: 800; color: var(--thi); margin: 0 0 10px; }
+  .coachmark-card p { font-size: 14px; color: var(--tmd); line-height: 1.6; margin: 0 0 20px; }
+  .coachmark-card button {
+    background: var(--blue); color: white; border: 0;
+    padding: 12px 28px; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    width: 100%;
+  }
+  .coachmark-card button:hover { background: #1d4ed8; }
+  /* Battle nudge toast (shown once per session after a lesson completes) */
+  .battle-nudge {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--l1);
+    border: 1px solid var(--bdhi);
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--thi);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 9500;
+    white-space: nowrap;
+    animation: fadeIn 0.25s ease;
+  }
+  .battle-nudge a { color: var(--blue); text-decoration: none; }
+  .battle-nudge a:hover { text-decoration: underline; }
   .jamo-cell .acc {
     position: absolute;
     bottom: 2px;
@@ -2126,7 +2178,7 @@
               </div>
             </div>
           </div>
-          <div class="kb-mobile-hint">Tap the word area and type on your phone keyboard.</div>
+
 
           <!-- Per-jamo accuracy heatmap — collapsed by default -->
           <section class="card jamo-card collapsed" id="jamoCard">
@@ -2135,7 +2187,7 @@
               <span class="jamo-toggle-caret">▾</span>
             </button>
             <div class="jamo-body">
-              <div class="csub">Where you struggle. Drilled words automatically target your weakest jamo.</div>
+              <div class="csub">Where you struggle. New words are prioritized toward your weakest jamo. Tap a red or yellow key to drill it directly.</div>
               <div id="jamoGrid"></div>
               <div class="legend">
                 <span><span class="dot weak"></span>&lt; 70%</span>
@@ -2243,253 +2295,12 @@
 
 <input type="text" class="input-shield" id="shield" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
+<script src="hangul-ime.js"></script>
+<script src="shared.js"></script>
 <script src="vocab.js"></script>
 <script src="default-guides.js"></script>
 <script>
 'use strict';
-
-// ============================================================
-// Hangul composition engine
-// ============================================================
-
-const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const MEDIALS  = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-const FINALS   = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-
-const KEYMAP = {
-  'q':'ㅂ','w':'ㅈ','e':'ㄷ','r':'ㄱ','t':'ㅅ','y':'ㅛ','u':'ㅕ','i':'ㅑ','o':'ㅐ','p':'ㅔ',
-  'a':'ㅁ','s':'ㄴ','d':'ㅇ','f':'ㄹ','g':'ㅎ','h':'ㅗ','j':'ㅓ','k':'ㅏ','l':'ㅣ',
-  'z':'ㅋ','x':'ㅌ','c':'ㅊ','v':'ㅍ','b':'ㅠ','n':'ㅜ','m':'ㅡ',
-  'Q':'ㅃ','W':'ㅉ','E':'ㄸ','R':'ㄲ','T':'ㅆ','O':'ㅒ','P':'ㅖ'
-};
-
-// Reverse: jamo -> {key, shift}
-const JAMO_TO_KEY = {};
-for (const [k, v] of Object.entries(KEYMAP)) {
-  JAMO_TO_KEY[v] = { key: k.toLowerCase(), shift: k !== k.toLowerCase() };
-}
-
-const VOWEL_COMPOUND = {
-  'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ',
-  'ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ',
-  'ㅡㅣ':'ㅢ'
-};
-const VOWEL_DECOMPOSE = {
-  'ㅘ':['ㅗ','ㅏ'],'ㅙ':['ㅗ','ㅐ'],'ㅚ':['ㅗ','ㅣ'],
-  'ㅝ':['ㅜ','ㅓ'],'ㅞ':['ㅜ','ㅔ'],'ㅟ':['ㅜ','ㅣ'],
-  'ㅢ':['ㅡ','ㅣ']
-};
-
-const FINAL_COMPOUND = {
-  'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ',
-  'ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ',
-  'ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ',
-  'ㅂㅅ':'ㅄ'
-};
-const FINAL_DECOMPOSE = {
-  'ㄳ':['ㄱ','ㅅ'],'ㄵ':['ㄴ','ㅈ'],'ㄶ':['ㄴ','ㅎ'],
-  'ㄺ':['ㄹ','ㄱ'],'ㄻ':['ㄹ','ㅁ'],'ㄼ':['ㄹ','ㅂ'],'ㄽ':['ㄹ','ㅅ'],
-  'ㄾ':['ㄹ','ㅌ'],'ㄿ':['ㄹ','ㅍ'],'ㅀ':['ㄹ','ㅎ'],
-  'ㅄ':['ㅂ','ㅅ']
-};
-
-const CONSONANTS = new Set('ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split(''));
-const VOWELS_BASIC = new Set('ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅛㅜㅠㅡㅣ'.split(''));
-
-function composeSyllable(initial, medial, final) {
-  const i = INITIALS.indexOf(initial);
-  const m = MEDIALS.indexOf(medial);
-  const f = FINALS.indexOf(final || '');
-  if (i < 0 || m < 0) return (initial || '') + (medial || '') + (final || '');
-  return String.fromCharCode(0xAC00 + i * 588 + m * 28 + f);
-}
-
-// Decompose a Hangul syllable to keystrokes (sequence of basic jamo from KEYMAP)
-function syllableToKeystrokes(syl) {
-  const code = syl.charCodeAt(0);
-  if (code < 0xAC00 || code > 0xD7A3) {
-    // Not a precomposed Hangul syllable — return as is
-    return [syl];
-  }
-  const x = code - 0xAC00;
-  const i = INITIALS[Math.floor(x / 588)];
-  const m = MEDIALS[Math.floor((x % 588) / 28)];
-  const f = FINALS[x % 28];
-
-  const ks = [i];
-  // Decompose medial if compound
-  if (VOWEL_DECOMPOSE[m]) {
-    ks.push(...VOWEL_DECOMPOSE[m]);
-  } else {
-    ks.push(m);
-  }
-  // Decompose final if compound
-  if (f) {
-    if (FINAL_DECOMPOSE[f]) {
-      ks.push(...FINAL_DECOMPOSE[f]);
-    } else {
-      ks.push(f);
-    }
-  }
-  return ks;
-}
-
-// Convert a Korean word into the expected basic-jamo sequence
-function wordToKeystrokes(word) {
-  const ks = [];
-  for (const ch of word) {
-    if (ch === ' ') { ks.push(' '); continue; }
-    ks.push(...syllableToKeystrokes(ch));
-  }
-  return ks;
-}
-
-// Same, but grouped per syllable, so the UI can show syllable boundaries
-function wordToSyllableKeystrokes(word) {
-  const out = [];
-  for (const ch of word) {
-    if (ch === ' ') { out.push([' ']); continue; }
-    out.push(syllableToKeystrokes(ch));
-  }
-  return out;
-}
-
-// ============================================================
-// IME state machine
-// ============================================================
-
-class HangulIME {
-  constructor() { this.reset(); }
-  reset() {
-    this.committed = '';
-    this.buf = { initial: '', medial: '', final: '' };
-  }
-
-  get display() {
-    let out = this.committed;
-    if (this.buf.initial || this.buf.medial || this.buf.final) {
-      out += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final);
-    }
-    return out;
-  }
-
-  // Returns the in-progress part separately so the UI can color it
-  get parts() {
-    let composing = '';
-    if (this.buf.initial || this.buf.medial || this.buf.final) {
-      composing = composeSyllable(this.buf.initial, this.buf.medial, this.buf.final);
-    }
-    return { committed: this.committed, composing };
-  }
-
-  commitBuffer() {
-    if (this.buf.initial || this.buf.medial || this.buf.final) {
-      this.committed += composeSyllable(this.buf.initial, this.buf.medial, this.buf.final);
-    }
-    this.buf = { initial: '', medial: '', final: '' };
-  }
-
-  type(jamo) {
-    const isCons = CONSONANTS.has(jamo);
-    const isVow = VOWELS_BASIC.has(jamo);
-    if (!isCons && !isVow) return;
-
-    if (isCons) this._typeConsonant(jamo);
-    else this._typeVowel(jamo);
-  }
-
-  _typeConsonant(c) {
-    const b = this.buf;
-    if (!b.initial && !b.medial && !b.final) {
-      b.initial = c;
-    } else if (b.initial && !b.medial) {
-      // Two consonants in a row, no vowel: commit first as orphan, start new
-      this.commitBuffer();
-      this.buf.initial = c;
-    } else if (b.initial && b.medial && !b.final) {
-      // Try to set as final
-      if (FINALS.includes(c)) {
-        b.final = c;
-      } else {
-        // ㄸ ㅃ ㅉ can't be finals
-        this.commitBuffer();
-        this.buf.initial = c;
-      }
-    } else if (b.initial && b.medial && b.final) {
-      // Try compound final
-      const compound = FINAL_COMPOUND[b.final + c];
-      if (compound) {
-        b.final = compound;
-      } else {
-        this.commitBuffer();
-        this.buf.initial = c;
-      }
-    }
-  }
-
-  _typeVowel(v) {
-    const b = this.buf;
-    if (!b.initial && !b.medial) {
-      // Orphan vowel
-      this.committed += v;
-      return;
-    }
-    if (b.initial && !b.medial) {
-      b.medial = v;
-      return;
-    }
-    if (b.initial && b.medial && !b.final) {
-      const compound = VOWEL_COMPOUND[b.medial + v];
-      if (compound) {
-        b.medial = compound;
-      } else {
-        // Commit current, then orphan vowel
-        this.commitBuffer();
-        this.committed += v;
-      }
-      return;
-    }
-    if (b.initial && b.medial && b.final) {
-      // Kick-out rule: last jamo of final moves to be initial of new syllable
-      const finalDecomposed = FINAL_DECOMPOSE[b.final] || [b.final];
-      const newInitial = finalDecomposed[finalDecomposed.length - 1];
-      const remainingFinal = finalDecomposed.length > 1 ? finalDecomposed.slice(0, -1).join('') : '';
-
-      // Re-compose remaining final (might still be compound after remove)
-      let rfFinal = '';
-      if (remainingFinal.length === 1) rfFinal = remainingFinal;
-      else if (remainingFinal.length > 1) rfFinal = FINAL_COMPOUND[remainingFinal] || remainingFinal[0];
-
-      // Commit syllable with reduced final
-      this.committed += composeSyllable(b.initial, b.medial, rfFinal);
-      this.buf = { initial: newInitial, medial: v, final: '' };
-    }
-  }
-
-  backspace() {
-    const b = this.buf;
-    if (b.final) {
-      // If compound final, remove last; else clear
-      const dec = FINAL_DECOMPOSE[b.final];
-      if (dec) b.final = dec[0];
-      else b.final = '';
-      return;
-    }
-    if (b.medial) {
-      const dec = VOWEL_DECOMPOSE[b.medial];
-      if (dec) b.medial = dec[0];
-      else b.medial = '';
-      return;
-    }
-    if (b.initial) {
-      b.initial = '';
-      return;
-    }
-    if (this.committed.length) {
-      this.committed = this.committed.slice(0, -1);
-    }
-  }
-}
 
 // ============================================================
 // Vocabulary — common TOPIK 1 words by topic
@@ -3032,14 +2843,21 @@ const STATS_KEY = 'hangul-type-stats-v1';
 const PROGRESS_KEY = 'hangul-type-progress-v1';
 
 // ============================================================
-// Supabase backend config
+// Supabase backend config: SUPABASE_URL/SUPABASE_ANON_KEY now in shared.js
 // ============================================================
-const SUPABASE_URL      = 'https://yugrqnocdrfvpmkrddya.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_xKJO3LJAlU1qkEigRBvTRg_wTlwFVjP';
 function loadStats() {
+  // localStorage is user-writable, so sanitize shape before anything renders it
+  // (same belt-and-suspenders approach as battle's getProgress).
   try {
     const raw = localStorage.getItem(STATS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && typeof s === 'object' && !Array.isArray(s)) {
+        s.perJamo = (s.perJamo && typeof s.perJamo === 'object' && !Array.isArray(s.perJamo)) ? s.perJamo : {};
+        s.history = Array.isArray(s.history) ? s.history : [];
+        return s;
+      }
+    }
   } catch (e) {}
   return { perJamo: {}, history: [] };
 }
@@ -3048,62 +2866,7 @@ function saveStats(s) {
 }
 let stats = loadStats();
 
-// Common IANA timezone → ISO 3166-1 alpha-2 country code
-const COUNTRY_BY_TZ = {
-  'Asia/Seoul':'KR','Asia/Pyongyang':'KP','Asia/Tokyo':'JP','Asia/Shanghai':'CN','Asia/Hong_Kong':'HK',
-  'Asia/Taipei':'TW','Asia/Singapore':'SG','Asia/Kuala_Lumpur':'MY','Asia/Bangkok':'TH','Asia/Jakarta':'ID',
-  'Asia/Manila':'PH','Asia/Ho_Chi_Minh':'VN','Asia/Saigon':'VN','Asia/Kolkata':'IN','Asia/Calcutta':'IN',
-  'Asia/Dubai':'AE','Asia/Riyadh':'SA','Asia/Tehran':'IR','Asia/Karachi':'PK','Asia/Dhaka':'BD',
-  'Asia/Yangon':'MM','Asia/Rangoon':'MM','Asia/Almaty':'KZ','Asia/Tashkent':'UZ','Asia/Yekaterinburg':'RU',
-  'Europe/London':'GB','Europe/Dublin':'IE','Europe/Paris':'FR','Europe/Berlin':'DE','Europe/Madrid':'ES',
-  'Europe/Rome':'IT','Europe/Amsterdam':'NL','Europe/Brussels':'BE','Europe/Lisbon':'PT','Europe/Vienna':'AT',
-  'Europe/Zurich':'CH','Europe/Stockholm':'SE','Europe/Oslo':'NO','Europe/Copenhagen':'DK','Europe/Helsinki':'FI',
-  'Europe/Warsaw':'PL','Europe/Prague':'CZ','Europe/Budapest':'HU','Europe/Athens':'GR','Europe/Bucharest':'RO',
-  'Europe/Sofia':'BG','Europe/Moscow':'RU','Europe/Istanbul':'TR','Europe/Kiev':'UA','Europe/Kyiv':'UA',
-  'America/New_York':'US','America/Chicago':'US','America/Denver':'US','America/Los_Angeles':'US',
-  'America/Phoenix':'US','America/Anchorage':'US','America/Adak':'US','America/Honolulu':'US',
-  'America/Toronto':'CA','America/Vancouver':'CA','America/Edmonton':'CA','America/Halifax':'CA',
-  'America/Mexico_City':'MX','America/Tijuana':'MX','America/Sao_Paulo':'BR','America/Rio_Branco':'BR',
-  'America/Buenos_Aires':'AR','America/Argentina/Buenos_Aires':'AR','America/Santiago':'CL','America/Lima':'PE',
-  'America/Bogota':'CO','America/Caracas':'VE','America/Havana':'CU','America/Panama':'PA',
-  'Africa/Cairo':'EG','Africa/Johannesburg':'ZA','Africa/Lagos':'NG','Africa/Nairobi':'KE','Africa/Casablanca':'MA',
-  'Africa/Algiers':'DZ','Africa/Tunis':'TN','Africa/Accra':'GH','Africa/Addis_Ababa':'ET',
-  'Australia/Sydney':'AU','Australia/Melbourne':'AU','Australia/Brisbane':'AU','Australia/Perth':'AU',
-  'Australia/Adelaide':'AU','Pacific/Auckland':'NZ','Pacific/Honolulu':'US','Pacific/Fiji':'FJ'
-};
-
-const COUNTRY_NAMES = {
-  KR:'South Korea',KP:'North Korea',JP:'Japan',CN:'China',HK:'Hong Kong',TW:'Taiwan',SG:'Singapore',
-  MY:'Malaysia',TH:'Thailand',ID:'Indonesia',PH:'Philippines',VN:'Vietnam',IN:'India',AE:'UAE',
-  SA:'Saudi Arabia',IR:'Iran',PK:'Pakistan',BD:'Bangladesh',MM:'Myanmar',KZ:'Kazakhstan',UZ:'Uzbekistan',
-  GB:'United Kingdom',IE:'Ireland',FR:'France',DE:'Germany',ES:'Spain',IT:'Italy',NL:'Netherlands',
-  BE:'Belgium',PT:'Portugal',AT:'Austria',CH:'Switzerland',SE:'Sweden',NO:'Norway',DK:'Denmark',
-  FI:'Finland',PL:'Poland',CZ:'Czechia',HU:'Hungary',GR:'Greece',RO:'Romania',BG:'Bulgaria',
-  RU:'Russia',TR:'Turkey',UA:'Ukraine',US:'United States',CA:'Canada',MX:'Mexico',BR:'Brazil',
-  AR:'Argentina',CL:'Chile',PE:'Peru',CO:'Colombia',VE:'Venezuela',CU:'Cuba',PA:'Panama',
-  EG:'Egypt',ZA:'South Africa',NG:'Nigeria',KE:'Kenya',MA:'Morocco',DZ:'Algeria',TN:'Tunisia',
-  GH:'Ghana',ET:'Ethiopia',AU:'Australia',NZ:'New Zealand',FJ:'Fiji'
-};
-
-function detectCountry() {
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz && COUNTRY_BY_TZ[tz]) return COUNTRY_BY_TZ[tz];
-  } catch (e) {}
-  try {
-    const lang = (navigator.language || '').toUpperCase();
-    const m = lang.match(/-([A-Z]{2})$/);
-    if (m && COUNTRY_NAMES[m[1]]) return m[1];
-    if (COUNTRY_NAMES[lang]) return lang;
-  } catch (e) {}
-  return 'US';
-}
-
-function flagEmoji(cc) {
-  if (!cc || cc.length !== 2) return '🏳️';
-  const A_BASE = 0x1F1E6 - 'A'.charCodeAt(0);
-  return String.fromCodePoint(cc.charCodeAt(0) + A_BASE) + String.fromCodePoint(cc.charCodeAt(1) + A_BASE);
-}
+// COUNTRY_BY_TZ, COUNTRY_NAMES, detectCountry, flagEmoji: now in shared.js
 
 const DEFAULT_PROGRESS = {
   streakDays: [],
@@ -3143,6 +2906,7 @@ function loadProgress() {
       // pre-fix first-keystroke spike (saw 12000 in the wild).
       const safeBestWPM = Math.min(Number(p.bestWPM) || 0, 220);
       return {
+        ...p, // key is shared with battle mode, so pass its fields through untouched
         streakDays: Array.isArray(p.streakDays) ? p.streakDays : [],
         bestWPM: safeBestWPM,
         topicCompleted: p.topicCompleted && typeof p.topicCompleted === 'object' ? p.topicCompleted : {},
@@ -3156,7 +2920,7 @@ function loadProgress() {
         streakFreezes: Number.isFinite(p.streakFreezes) ? p.streakFreezes : 1,
         lastFreezeGrantWeek: p.lastFreezeGrantWeek || null,
         profile: (p.profile && typeof p.profile === 'object')
-          ? { name: p.profile.name || 'Player', countryCode: p.profile.countryCode || detectCountry() }
+          ? { ...p.profile, name: p.profile.name || 'Player', countryCode: p.profile.countryCode || detectCountry() }
           : { name: 'Player', countryCode: detectCountry() },
         playerId: p.playerId || generatePlayerId(),
         wordSrs: (p.wordSrs && typeof p.wordSrs === 'object') ? p.wordSrs : {},
@@ -3173,14 +2937,7 @@ function loadProgress() {
   return fresh;
 }
 
-function generatePlayerId() {
-  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-  // Fallback for environments without crypto.randomUUID
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+// generatePlayerId: now in shared.js
 function saveProgress(p) {
   try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
 }
@@ -3454,6 +3211,29 @@ function getMistakeWords(limit) {
   return all.slice(0, limit);
 }
 
+// Feature A: returns 0 if fewer than 8 tries (insufficient data), else error rate.
+function jamoWeakness(jamo) {
+  const s = stats.perJamo[jamo];
+  if (!s || s.tries < 8) return 0;
+  return 1 - (s.hits / s.tries);
+}
+
+// Feature A: score a word by summing jamoWeakness over its unique jamo.
+// Higher score = more weak jamo = should be drilled sooner.
+function wordWeaknessScore(koWord) {
+  const ks = wordToKeystrokes(koWord);
+  const seen = new Set();
+  let score = 0;
+  for (const jamo of ks) {
+    if (jamo === ' ') continue;
+    if (!seen.has(jamo)) {
+      seen.add(jamo);
+      score += jamoWeakness(jamo);
+    }
+  }
+  return score;
+}
+
 function srsSelectIndex(words, currentIdx) {
   const now = Date.now();
   const due = [];
@@ -3474,6 +3254,9 @@ function srsSelectIndex(words, currentIdx) {
     return due[0].i;
   }
   if (fresh.length) {
+    // Feature A: bias fresh-word order toward words containing the user's weak jamo.
+    // Sort descending by weakness score; ties fall back to original order.
+    fresh.sort((a, b) => wordWeaknessScore(words[b].ko) - wordWeaknessScore(words[a].ko));
     for (const i of fresh) if (i !== currentIdx) return i;
     return fresh[0];
   }
@@ -3484,7 +3267,14 @@ function recordKeystroke(expectedJamo, actualJamo) {
   if (!stats.perJamo[expectedJamo]) stats.perJamo[expectedJamo] = { tries: 0, hits: 0 };
   const j = stats.perJamo[expectedJamo];
   j.tries++;
-  if (expectedJamo === actualJamo) j.hits++;
+  if (expectedJamo === actualJamo) {
+    j.hits++;
+  } else {
+    // Feature B: track which jamo the user typed instead of the expected one.
+    if (!stats.confusion) stats.confusion = {};
+    if (!stats.confusion[expectedJamo]) stats.confusion[expectedJamo] = {};
+    stats.confusion[expectedJamo][actualJamo] = (stats.confusion[expectedJamo][actualJamo] || 0) + 1;
+  }
   saveStats(stats);
 }
 
@@ -3888,12 +3678,34 @@ function battleSpriteForLevel(lv) {
   for (const p of BATTLE_SPRITES) if (lv >= p.lv) pick = p;
   return pick;
 }
+// Feature G: read battle high score from localStorage (key from game.html).
+const BATTLE_HIGH_KEY = 'hangul-battle-highscore-v1';
+function getBattleHighScore() {
+  try { return Number(localStorage.getItem(BATTLE_HIGH_KEY)) || 0; } catch (e) { return 0; }
+}
+
 function renderBattleChip() {
   const iconEl = document.getElementById('battleIcon');
   const textEl = document.getElementById('battleText');
   if (!iconEl || !textEl) return;
   iconEl.textContent = '⚔️';
-  textEl.textContent = 'Battle';
+  const high = getBattleHighScore();
+  textEl.textContent = high > 0 ? `Battle · best ${high}` : 'Battle';
+}
+
+// Feature G: show a one-line nudge toward battle mode after a lesson completes.
+// Only once per browser session (sessionStorage flag).
+const BATTLE_NUDGE_KEY = 'hangul-battle-nudge-shown';
+function maybeShowBattleNudge() {
+  try {
+    if (sessionStorage.getItem(BATTLE_NUDGE_KEY)) return;
+    sessionStorage.setItem(BATTLE_NUDGE_KEY, '1');
+  } catch (e) { return; }
+  const nudge = document.createElement('div');
+  nudge.className = 'battle-nudge';
+  nudge.innerHTML = 'Nice! Fight monsters with these words: <a href="game.html">⚔️ Battle</a>';
+  document.body.appendChild(nudge);
+  setTimeout(() => { nudge.style.transition = 'opacity 0.4s'; nudge.style.opacity = '0'; setTimeout(() => nudge.remove(), 450); }, 4000);
 }
 
 function renderProfileChip() {
@@ -3904,6 +3716,46 @@ function renderProfileChip() {
   el.querySelector('.profile-flag').textContent = flagEmoji(cc);
   el.querySelector('.profile-name').textContent = name;
   el.title = `${name} · ${COUNTRY_NAMES[cc] || cc} · click to edit`;
+}
+
+// ============================================================
+// Feature E: shared modal accessibility helpers
+// ============================================================
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// openModal: set ARIA attrs, move focus, close on Escape + backdrop.
+function openModal(el, opts) {
+  if (!el) return;
+  opts = opts || {};
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.style.display = opts.display || 'flex';
+  const prev = document.activeElement;
+  el._prevFocus = (prev && prev !== document.body) ? prev : null;
+  // Move focus to first focusable element inside the modal.
+  const firstFocusable = el.querySelector(FOCUSABLE);
+  if (firstFocusable) firstFocusable.focus();
+  // Escape closes; backdrop click closes.
+  function onKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeModal(el); }
+  }
+  function onBackdrop(e) {
+    if (e.target === el) closeModal(el);
+  }
+  el._onKey = onKey;
+  el._onBackdrop = onBackdrop;
+  document.addEventListener('keydown', onKey);
+  el.addEventListener('click', onBackdrop);
+}
+
+function closeModal(el) {
+  if (!el) return;
+  el.style.display = 'none';
+  if (el._onKey) { document.removeEventListener('keydown', el._onKey); el._onKey = null; }
+  if (el._onBackdrop) { el.removeEventListener('click', el._onBackdrop); el._onBackdrop = null; }
+  if (el._prevFocus && el._prevFocus.focus) el._prevFocus.focus();
+  el._prevFocus = null;
 }
 
 function openProfileModal() {
@@ -3933,9 +3785,9 @@ function openProfileModal() {
       </div>
     </div>
   `;
-  el.style.display = 'flex';
-  const close = () => { el.style.display = 'none'; };
-  el.onclick = (e) => { if (e.target === el) close(); };
+  // Feature E: use openModal for ARIA, focus management, Escape, and backdrop close.
+  openModal(el, { display: 'flex' });
+  const close = () => closeModal(el);
   document.getElementById('profileCancel').addEventListener('click', close);
   document.getElementById('profileSave').addEventListener('click', () => {
     const newName = (document.getElementById('profileNameInput').value || 'Player').trim().slice(0, 24) || 'Player';
@@ -3945,16 +3797,15 @@ function openProfileModal() {
     renderProfileChip();
     close();
   });
-  document.getElementById('profileNameInput').focus();
-  document.getElementById('profileNameInput').select();
+  // openModal moves focus to first focusable; refine to the name input specifically.
+  const nameInput = document.getElementById('profileNameInput');
+  if (nameInput) { nameInput.focus(); nameInput.select(); }
 }
 
 // ── Streak freeze logic ──
 // ── Daily quest ──
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
-}
+// escapeHtml: now in shared.js
 
 function relTime(iso) {
   try {
@@ -3988,6 +3839,19 @@ function _initialActiveTopic() {
   return LESSONS.length ? LESSONS[0].id : 'basics';
 }
 
+// Feature D: for brand-new users (intro flag absent + no lesson progress),
+// default romanization ON so the first session has training wheels.
+// Once they dismiss the intro the flag is set, so existing users keep their pref.
+const _isFirstRunSession = (() => {
+  try {
+    // Literal key: INTRO_FLAG is declared later in the file (TDZ at this point).
+    if (localStorage.getItem('hangul-type-seen-intro-v1')) return false;
+    const p2 = (() => { try { const r = localStorage.getItem(PROGRESS_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } })();
+    const hasProgress = p2 && p2.lessonsCompleted && Object.keys(p2.lessonsCompleted).some(k => (p2.lessonsCompleted[k] || []).length > 0);
+    return !hasProgress;
+  } catch (e) { return false; }
+})();
+
 const state = {
   wordIdx: 0,
   activeTopic: _initialActiveTopic(),
@@ -4004,7 +3868,8 @@ const state = {
   doneList: [],
   errFlashIdx: -1,         // briefly mark a jamo as err on the target word
   audioOn: lsBool(AUDIO_KEY, true),
-  romanizeOn: lsBool(ROMAN_KEY, false),
+  // Feature D: default romanize ON for first-run sessions; respect stored pref otherwise.
+  romanizeOn: _isFirstRunSession ? true : lsBool(ROMAN_KEY, false),
   srsOn: lsBool('hangul-type-srs-v1', true),
   // Gamification
   combo: 0,
@@ -4314,6 +4179,10 @@ function loadWord(i) {
   state.expectedSyllables = isCharTopic(state.activeTopic) ? [state.expectedKs.slice()] : wordToSyllableKeystrokes(w.ko);
   state.posKs = 0;
   state.errFlashIdx = -1;
+  // Snapshot session counters so per-word accuracy is a diff, not the
+  // session-cumulative average (which would contaminate every SRS rating).
+  state.wordHitSnap = state.hitKeys;
+  state.wordTotalSnap = state.totalKeys;
   state.ime = new HangulIME();
   renderTargetWord();
   document.getElementById('gloss').textContent = isCharTopic(state.activeTopic)
@@ -5329,13 +5198,35 @@ function setDiag(kind, html) {
   diag.style.display = (html && String(html).trim()) ? '' : 'none';
 }
 
+// Feature C: replay the keys typed so far plus the wrong key through a scratch
+// HangulIME and return the last 1-2 syllables of display output.
+function compositionPreview(posKs, wrongJamo) {
+  try {
+    const scratch = new HangulIME();
+    const replayKs = state.expectedKs.slice(0, posKs).concat([wrongJamo]);
+    for (const jamo of replayKs) {
+      if (jamo === ' ') { scratch.commitBuffer(); scratch.committed += ' '; }
+      else scratch.type(jamo);
+    }
+    const full = scratch.display;
+    if (!full) return '';
+    // Return at most the last 2 characters (syllables) to keep it compact.
+    return full.slice(-2);
+  } catch (e) {
+    return '';
+  }
+}
+
 function explainError(expectedJamo, actualJamo) {
   const expMap = JAMO_TO_KEY[expectedJamo];
-  const actMap = JAMO_TO_KEY[actualJamo];
-  const expIsCons = CONSONANTS.has(expectedJamo);
   const actIsCons = CONSONANTS.has(actualJamo);
+  const expIsCons = CONSONANTS.has(expectedJamo);
 
   let msg = '';
+  // Composition-class error: a valid jamo typed in the wrong position class
+  // (vs. a plain wrong letter).
+  const isCompositionError = (expIsCons !== actIsCons) && JAMO_TO_KEY[actualJamo] !== undefined;
+
   if (expIsCons && actIsCons) {
     msg = `You typed <span class="ko">${actualJamo}</span> but expected <span class="ko">${expectedJamo}</span>. `;
     if (expMap) msg += `Press <span class="key-hint">${expMap.shift ? 'Shift+' : ''}${expMap.key.toUpperCase()}</span>.`;
@@ -5343,12 +5234,25 @@ function explainError(expectedJamo, actualJamo) {
     msg = `Vowel mix-up: typed <span class="ko">${actualJamo}</span>, expected <span class="ko">${expectedJamo}</span>. `;
     if (expMap) msg += `Press <span class="key-hint">${expMap.key.toUpperCase()}</span>.`;
   } else if (expIsCons && !actIsCons) {
-    msg = `Hold up: you skipped a consonant. Expected <span class="ko">${expectedJamo}</span> as ${state.ime.buf.initial && state.ime.buf.medial ? 'a batchim (final)' : 'an initial'}. `;
+    const role = state.ime.buf.initial && state.ime.buf.medial ? 'a batchim (final)' : 'an initial';
+    msg = `Hold up: you skipped a consonant. Expected <span class="ko">${expectedJamo}</span> as ${role}. `;
     if (expMap) msg += `Press <span class="key-hint">${expMap.shift ? 'Shift+' : ''}${expMap.key.toUpperCase()}</span>.`;
   } else {
     msg = `Vowel needed before another consonant. Expected <span class="ko">${expectedJamo}</span>. `;
     if (expMap) msg += `Press <span class="key-hint">${expMap.key.toUpperCase()}</span>.`;
   }
+
+  // Feature C: for composition-class errors (consonant/vowel confusion), append
+  // a mini preview showing what the user's sequence would compose vs. what is correct.
+  if (isCompositionError && JAMO_TO_KEY[actualJamo] !== undefined) {
+    const wrongDisplay = compositionPreview(state.posKs, actualJamo);
+    const target = state.activeWords[state.wordIdx] && state.activeWords[state.wordIdx].ko;
+    const correctDisplay = target ? target.slice(0, Math.min(2, target.length)) : '';
+    if (wrongDisplay && correctDisplay && wrongDisplay !== correctDisplay) {
+      msg += ` <span class="ko">${wrongDisplay}</span> <span style="color:var(--red)">&#10008;</span> vs <span class="ko">${correctDisplay}</span> <span style="color:var(--green)">&#10003;</span>`;
+    }
+  }
+
   return msg;
 }
 
@@ -5405,7 +5309,10 @@ function renderJamoCell(j) {
     else cls = 'good';
   }
   const accLabel = acc === null ? '–' : (acc + '%');
-  return `<div class="jamo-cell ${cls}">${j}<div class="acc">${accLabel}</div></div>`;
+  // Feature A: weak/med cells become clickable drills; encode jamo in data attr.
+  const drillable = (cls === 'weak' || cls === 'med') ? ' drillable' : '';
+  const dataAttr = drillable ? ` data-drill-jamo="${j}"` : '';
+  return `<div class="jamo-cell ${cls}${drillable}"${dataAttr}>${j}<div class="acc">${accLabel}</div></div>`;
 }
 function renderJamoGrid() {
   const grid = document.getElementById('jamoGrid');
@@ -5414,7 +5321,48 @@ function renderJamoGrid() {
       <div class="jamo-group-label">${g.label}</div>
       <div class="jamo-grid">${g.jamos.map(renderJamoCell).join('')}</div>
     </div>
-  `).join('');
+  `).join('') + '<div class="jamo-drill-hint">Tap a weak key to drill it.</div>';
+
+  // Wire up click handlers for drillable cells.
+  grid.querySelectorAll('.jamo-cell.drillable').forEach(cell => {
+    cell.addEventListener('click', () => startJamoDrill(cell.dataset.drillJamo));
+  });
+}
+
+// Feature A: start a focused drill of up to 12 words from the full corpus
+// that contain the chosen jamo, weighted toward words with more occurrences.
+function startJamoDrill(jamo) {
+  if (!jamo) return;
+  // Build a pool from ALL TOPICS words containing this jamo.
+  const seen = new Set();
+  const candidates = [];
+  for (const t of TOPICS) {
+    for (const w of t.words) {
+      if (seen.has(w.ko)) continue;
+      seen.add(w.ko);
+      const ks = wordToKeystrokes(w.ko);
+      // Count occurrences of this jamo in the word's keystroke sequence.
+      const count = ks.filter(k => k === jamo).length;
+      if (count > 0) candidates.push({ ko: w.ko, en: w.en, count });
+    }
+  }
+  if (candidates.length === 0) return;
+  // Sort descending by occurrence count so words heavy with this jamo come first.
+  candidates.sort((a, b) => b.count - a.count);
+  const drillWords = candidates.slice(0, 12).map(c => ({ ko: c.ko, en: c.en }));
+
+  // Reuse the mistake-drill machinery: override activeWords with the drill pool.
+  state.activeWords = drillWords;
+  state.sessionGoal = drillWords.length;
+  state.wordIdx = 0;
+  state.wordsDone = 0;
+  state.totalKeys = 0;
+  state.hitKeys = 0;
+  state.startedAt = null;
+  buildTopicsPicker();
+  loadWord(0);
+  updateStats();
+  setDiag('ok', `<span class="label">Drill.</span> Focusing on <span class="ko">${jamo}</span> in ${drillWords.length} word${drillWords.length === 1 ? '' : 's'}. Keep going!`);
 }
 
 function wgInit() {}
@@ -5440,7 +5388,9 @@ function afterCorrectKeystroke() {
     const displayed = state.ime.display;
     if (displayed === target) {
       state.wordsDone++;
-      const wAcc = Math.round((state.hitKeys / Math.max(state.totalKeys, 1)) * 100);
+      const wordHits = state.hitKeys - (state.wordHitSnap || 0);
+      const wordTotal = state.totalKeys - (state.wordTotalSnap || 0);
+      const wAcc = Math.round((wordHits / Math.max(wordTotal, 1)) * 100);
       recordRecent(target, true, wAcc);
       recordDailyStreak();
       // Word-completion juice (kept lightweight; XP/level system removed)
@@ -5491,6 +5441,8 @@ function afterCorrectKeystroke() {
         saveProgress(progress);
         buildTopicsPicker();
         renderAvatarBlob({ bump: true });
+        // Feature G: nudge toward battle mode once per session after a word completes.
+        maybeShowBattleNudge();
         setTimeout(() => loadWord(pickNextWordIdx(state.wordIdx)), 700);
       }
       wgWordDone(target);
@@ -5748,6 +5700,48 @@ function attachInput() {
 }
 
 // ============================================================
+// ============================================================
+// Feature D: first-run onboarding coachmark
+// ============================================================
+
+const INTRO_FLAG = 'hangul-type-seen-intro-v1';
+
+function isFirstRun() {
+  try {
+    if (localStorage.getItem(INTRO_FLAG)) return false;
+    // Only treat as first run if no lesson progress exists yet.
+    const hasProgress = progress.lessonsCompleted && Object.keys(progress.lessonsCompleted).some(k => (progress.lessonsCompleted[k] || []).length > 0);
+    return !hasProgress;
+  } catch (e) { return false; }
+}
+
+function dismissIntro(overlay) {
+  try { localStorage.setItem(INTRO_FLAG, '1'); } catch (e) {}
+  overlay.remove();
+}
+
+function showCoachmark() {
+  const overlay = document.createElement('div');
+  overlay.className = 'coachmark-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Welcome to Type Hangeul');
+  overlay.innerHTML = `
+    <div class="coachmark-card">
+      <div class="cm-emoji">⌨️</div>
+      <h2>Welcome to Type Hangeul!</h2>
+      <p>Type the Korean word shown using your regular keyboard. The next key is always highlighted in orange. No Korean keyboard needed.</p>
+      <button id="coachmarkStart">Start typing</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const btn = overlay.querySelector('#coachmarkStart');
+  btn.focus();
+  btn.addEventListener('click', () => dismissIntro(overlay));
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); dismissIntro(overlay); } });
+}
+
+// ============================================================
 // Boot
 // ============================================================
 
@@ -5768,7 +5762,6 @@ function boot() {
   renderBattleChip();
   renderStreak();
   updateStats();
-  document.getElementById('profileChip').addEventListener('click', openProfileModal);
 
   // (per-jamo accuracy is now an always-visible section under the practice card)
 
@@ -5937,6 +5930,12 @@ function boot() {
       }
     });
   }
+
+  // Feature D: show coachmark on first run.
+  if (isFirstRun()) showCoachmark();
+
+  // Feature E: profile chip. openProfileModal now uses openModal internally.
+  document.getElementById('profileChip').addEventListener('click', openProfileModal);
 }
 
 boot();

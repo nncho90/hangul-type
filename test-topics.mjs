@@ -20,10 +20,17 @@ for (const id of t2Ids) {
   expect(`${id}: does not overwrite level back to 1`, !/\],\s*topikLevel:\s*1\s*}/.test(block));
 }
 
-expect('index loads shared vocab.js before inline script', /<script src="vocab\.js"><\/script>\s*<script>/.test(html));
+// Script load order: shared modules must all load before the inline app script.
+const inlineStart = html.search(/<script>\s*\n\s*'use strict';/);
+for (const src of ['hangul-ime.js', 'shared.js', 'vocab.js', 'default-guides.js']) {
+  const at = html.indexOf(`<script src="${src}"></script>`);
+  expect(`index loads ${src} before inline script`, at !== -1 && inlineStart !== -1 && at < inlineStart);
+}
 expect('shared vocab integration is called', /addSharedVocabTopics\(\);/.test(html));
-expect('shared TOPIK 1 bucket is declared', /shared_topik1/.test(html));
-expect('shared TOPIK 2 bucket is declared', /shared_topik2/.test(html));
+// Shared vocab is classified into themed + TOPIK-2 buckets (not the legacy
+// shared_topik1/2 dump buckets).
+expect('classifier routes TOPIK 2 adjectives/verbs', /'t2_adj'\s*:\s*'t2_verbs'/.test(html));
+expect('classifier routes TOPIK 2 nouns', /return entry\.topikLevel === 2 \? 't2_nouns' : 'basics';/.test(html));
 
 let pass = 0, fail = 0;
 for (const c of cases) {

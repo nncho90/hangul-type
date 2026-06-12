@@ -1,0 +1,41 @@
+# Dev tools, prototypes, and internal pages: keep in git, never deploy.
+# Production surface is: index.html, game.html, vocab.js, battle-config.js,
+# default-guides.js, hangul-ime.js, shared.js, audio/, sprites/, favicons,
+# logo/og images, robots.txt, sitemap.xml, llms.txt.
+
+# Internal consoles and tuners (admin.html has no auth gate: must not deploy)
+admin.html
+jamo-tuner.html
+sprite-manager.html
+sprite-redesign.html
+battle-workshop.html
+wongoji-preview.html
+
+# Stale prototypes
+v1.html
+concept-demo.html
+
+# Dev scripts, tests, docs
+audit.js
+test-*.mjs
+tests/
+playwright.config.js
+tools/
+supabase/
+docs/
+sprite-concepts/
+RESEARCH.md
+sprite-critique.md
+progress.txt
+
+# Local junk
+.tmp*
+tmp/
+logs/
+test-results/
+node_modules/
+package.json
+package-lock.json
+.superpowers/
+.omc/
+.claude/

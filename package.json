@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "test": "node test-engine.mjs && node test-highlight.mjs && node test-srs.mjs && node test-topics.mjs",
     "supabase:start": "supabase start",
     "supabase:start:no-functions": "supabase start -x edge-runtime",
     "supabase:stop": "supabase stop",
