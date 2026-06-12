@@ -1117,7 +1117,7 @@
   /* Level-up banner: bigger and longer than combo-banner, tier-colored */
   .level-banner {
     position: fixed;
-    top: 80px;
+    top: max(80px, env(safe-area-inset-top, 0px) + 80px);
     left: 50%;
     transform: translateX(-50%);
     z-index: 200;
@@ -1384,6 +1384,20 @@
     text-transform: uppercase;
     margin-bottom: 10px;
   }
+  .new-high-claim {
+    font-size: 11px;
+    color: var(--tlo);
+    margin-top: 4px;
+    text-align: center;
+  }
+  @keyframes profile-cta-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+    50%       { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+  }
+  .profile-cta-pulse {
+    animation: profile-cta-pulse 1.2s ease-in-out 4;
+    border-color: var(--yellow) !important;
+  }
 
   /* Story dialog — Pokemon-style with character portraits */
   .story-dialog {
@@ -1595,11 +1609,23 @@
     .hud {
       top: 0; bottom: auto;
       padding: 8px 10px;
+      padding-top: calc(8px + env(safe-area-inset-top, 0px));
       border-top: none;
       border-bottom: 1px solid var(--bd);
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+      flex-wrap: nowrap;
     }
+    .hud-right {
+      flex: 1 1 auto;
+      min-width: 0;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .hud-right #btnBgm { display: none; }
+    .hud-right .audio-toggle { padding: 6px; }
+    .menu-btn#btnMenu { padding: 6px 8px; font-size: 11px; white-space: nowrap; }
     .hud-left, .hud-right { gap: 10px; }
+    /* .hud-center is hidden in the HUD on mobile; re-shown as a fixed strip above keyboard (below) */
     .hud-center { display: none; }
     .stat-label { font-size: 8px; }
     .stat-value { font-size: 14px; }
@@ -1609,13 +1635,6 @@
     .menu-btn { padding: 6px 9px; font-size: 11px; }
     .xpbar { top: 50px; bottom: auto; }
     .stage { inset: 54px 0 calc(224px + env(safe-area-inset-bottom)) 0; }
-    .hud-center {
-      margin: 0 8px;
-      height: 30px;
-      padding: 0 10px;
-      min-width: 100px;
-      gap: 6px;
-    }
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
     .player { font-size: 70px; bottom: 4%; }
@@ -1645,6 +1664,23 @@
     .modal-card .actions button { padding: 10px 14px; font-size: 13px; }
     .battle-lb-row { grid-template-columns: 40px 22px 1fr 44px 70px; padding: 6px 10px; font-size: 12px; }
     .battle-lb-list { max-height: 260px; }
+
+    /* M1: game-over LB toolbar wraps on mobile so Edit profile is reachable */
+    #gameOverModal .battle-lb-toolbar { flex-wrap: wrap; row-gap: 8px; }
+    #gameOverModal .battle-lb-toolbar #btnEditProfile { order: 3; flex: 1 1 100%; text-align: center; }
+
+    /* M2: live IME buffer pinned just above the on-screen keyboard */
+    .hud-center {
+      display: flex; position: fixed; left: 0; right: 0;
+      bottom: calc(204px + env(safe-area-inset-bottom, 0px));
+      justify-content: center; height: 28px; background: transparent;
+      z-index: 109; pointer-events: none; margin: 0;
+      border: none;
+    }
+
+    /* m2: boss reward cards stack vertically on mobile */
+    .boss-reward-cards { flex-direction: column; }
+    .boss-reward-card { max-width: none; width: 100%; flex: 0 0 auto; }
 
     /* Battle on-screen keyboard */
     .battle-kb {
@@ -2069,12 +2105,26 @@
   }
   /* Square pixel-art pips — retro HP/MP charge cell look. */
   .special-pip {
-    width: 18px; height: 18px;
+    width: 16px; height: 16px;
     border-radius: 2px;
     background: var(--l3);
-    border: 2px solid var(--bd);
+    border: 2px solid var(--bdhi);
     transition: background 0.12s, border-color 0.12s;
+    margin: 0 2px; /* 4px+ gap between pips */
+    position: relative;
   }
+  /* Inner dot on empty pip so it reads as "slot", not "pause icon" */
+  .special-pip::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--bdhi);
+    opacity: 0.6;
+  }
+  .special-pip.charged::after { display: none; }
   .special-pip.charged {
     background: #f59e0b;
     border-color: var(--thi);
@@ -2962,7 +3012,7 @@
       <span class="pause-key">TAB</span><span class="pause-key-desc">peek at the next word / fast-fall the current monster</span>
       <span class="pause-key">ESC</span><span class="pause-key-desc">release current lock, or pause / resume</span>
       <span class="pause-key">BACKSPACE</span><span class="pause-key-desc">delete last character if mistyped, release lock</span>
-      <span class="pause-key">한글</span><span class="pause-key-desc">type 한글 to charge and unleash 필살기 (special move)</span>
+      <span class="pause-key">한글</span><span class="pause-key-desc">kills charge 필살기, type 한글 to unleash</span>
     </div>
   </div>
 </div>
@@ -4734,6 +4784,8 @@ const state = {
   levelWordHistory: [],
   // Checkpoint run: started from a chapter checkpoint, not leaderboard-eligible.
   checkpointRun: false,
+  // Acts (boss levels) killed this run; checkpoint only advances for acts present here.
+  actsCleared: [],
   // Rubber-band assist multiplier (1.0 = full speed, <1.0 = slowed down)
   assistMul: 1.0,
   // Leaks in the current level (monsters reaching damage line)
@@ -5028,15 +5080,11 @@ function spawnBoss() {
   const startX = window.innerWidth / 2;
   const beh = behaviorForTier('boss');
   const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * (state.assistMul || 1.0) * (state.slowMode ? 0.6 : 1.0);
-  // Per-phase deadline: base 9000/7500/6000ms, scale -60ms/level, floor 4000.
-  // Daily runs use the unscaled base so the clock isn't punished.
-  const baseWin = ADMIN.combat.bossPhaseWindowMs || 9000;
-  const levelScale = state.dailyRun ? 0 : Math.min(state.level * 60, baseWin - 4000);
-  const windows = [
-    Math.max(4000, baseWin - levelScale),
-    Math.max(4000, 7500 - levelScale),
-    Math.max(4000, 6000 - levelScale)
-  ];
+  // Per-phase deadline: derived from word length so longer words get more time.
+  // perKey scales down with level (daily runs use level-1 so the clock isn't punished).
+  const _pkLevel = state.dailyRun ? 1 : state.level;
+  const perKey = Math.max(420, 950 - _pkLevel * 20);
+  const windows = [ks1, ks2, ks3].map(ks => Math.min(20000, Math.max(4000, ks.length * perKey + 1500)));
   const monster = {
     id: ++monsterId, sprite: profile.emoji, spriteFile: profile.sprite, name: profile.name,
     word: phase1Word.ko, en: phase1Word.en, tier: 'boss',
@@ -5053,9 +5101,22 @@ function spawnBoss() {
     phaseWords,
     phaseKs: [ks1, ks2, ks3],
     phaseWindows: windows,
-    phaseDeadline: performance.now() + windows[0],
+    phaseDeadline: performance.now() + windows[0] + 1550, // +1550ms for cutscene duration
     phaseHit: false  // true while charging telegraph ring (last 1500ms)
   };
+  // Sweep non-boss monsters before the cutscene so the boss enters a clean arena.
+  // No XP or score; just a smoke puff and remove. Release any active lock first.
+  state.monsters.slice().forEach(mob => {
+    if (mob.isBoss) return;
+    if (state.lockId === mob.id) {
+      state.lockId = null; state.lockPosKs = 0; state.lockExpectedKs = [];
+      state.ime.reset(); LIVE_EL.textContent = '';
+    }
+    if (mob._walkInterval) { clearInterval(mob._walkInterval); mob._walkInterval = null; }
+    if (mob.el) { mob.el.classList.add('dying'); setTimeout(() => mob.el && mob.el.remove(), 550); }
+    spawnSmokePuff(mob.x, (mob.y || 0) + 40, { scale: 0.5 });
+  });
+  state.monsters = state.monsters.filter(m => m.isBoss);
   // Cutscene first, then build the on-stage element so the boss appears with the music
   playBossCutscene(profile);
   buildMonsterEl(monster);
@@ -5075,8 +5136,9 @@ function advanceBossPhase(m) {
   // Reset lock progress for the new phase word
   state.lockExpectedKs = nextKs;
   state.lockPosKs = 0;
-  // Reset phase deadline
-  m.phaseDeadline = performance.now() + m.phaseWindows[phaseIdx];
+  // Reset phase deadline using the pre-computed per-word window
+  const _nextWindow = m.phaseWindows[phaseIdx];
+  m.phaseDeadline = performance.now() + _nextWindow;
   m.phaseHit = false;
   // Remove telegraph ring if present
   if (m.el) m.el.classList.remove('boss-charging');
@@ -5119,7 +5181,7 @@ function showBossRewardModal() {
     <div class="modal-card" style="max-width:480px;">
       <div class="badge">BOSS DEFEATED</div>
       <h1>Choose Your Reward</h1>
-      <p class="subtitle">Press 1, 2, or 3</p>
+      <p class="subtitle">${window.matchMedia('(max-width:720px)').matches ? 'Tap a card (or press 1, 2, 3)' : 'Press 1, 2, or 3'}</p>
       <div class="boss-reward-cards">
         <button class="boss-reward-card" data-choice="1" aria-label="Option 1: ${lifeOption.label}">
           <div class="brc-icon">${lifeOption.icon}</div>
@@ -5296,14 +5358,14 @@ function killMonster(m, byPlayer) {
     const isCrit = m.isBoss || Math.random() < 0.05;
     if (isCrit) {
       sc *= 3; xp = Math.round(xp * 1.5);
-      flashCenterText('CRIT! ×3');
+      floatScorePop(m.x, m.y, 'CRIT! x3');
       particleBurst(m.x, m.y + 30, 18);
       pulseBattleCamera('pulse');
     }
     // Perfect recall bonus: killed without any syllable reveals
     if (m.recall && m.recallRevealsUsed === 0) {
       sc = Math.round(sc * 1.5);
-      flashCenterText('PERFECT RECALL');
+      floatScorePop(m.x, m.y - 20, 'PERFECT RECALL');
       tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.05, slide: 1760 });
     }
     // Heart pickup: only granted when killing a heart monster (m.isHeart),
@@ -5329,8 +5391,8 @@ function killMonster(m, byPlayer) {
     } catch (e) {}
     floatScorePop(m.x, m.y, '+' + sc + (isCrit ? ' ✨' : ''));
     // English-translation reveal — closes the learning loop. Suppressed during
-    // 필살기 so 6+ kills don't dogpile the screen with overlapping translations.
-    if (!state.specialMoveBurst) {
+    // 필살기 mass-kills and boss kills (reward modal covers the same space).
+    if (!state.specialMoveBurst && !m.isBoss) {
       const wordEl = m.el && m.el.querySelector('.word');
       const r = (wordEl || m.el).getBoundingClientRect();
       floatEnglishReveal(r.left + r.width / 2, r.top + r.height / 2, m.en);
@@ -5344,6 +5406,11 @@ function killMonster(m, byPlayer) {
       state.bossActive = false;
       document.body.classList.remove('boss-alive');
       unlockAchievement('first_boss');
+      // Record this act level as cleared so gameOver can advance the checkpoint
+      if (LEVEL_ACTS[state.level]) {
+        state.actsCleared = state.actsCleared || [];
+        if (!state.actsCleared.includes(state.level)) state.actsCleared.push(state.level);
+      }
     }
     // Power-up drops on kill (boss + crit drop more often)
     maybeDropPowerup(m.x, m.y + 24, isCrit);
@@ -5758,13 +5825,12 @@ function onLevelUp() {
   );
   const sp = playerForLevel(state.level);
   renderPlayerSprite(state.level);
-  // Wave-clear bonus: all monsters cleared before level-up
+  // Level banner always shows first; wave-clear queues after it.
+  flashLevelBanner('Lv. ' + state.level + ' · ' + sp.label, state.level);
   if (state.monsters.length === 0) {
     const bonus = 250 + state.level * 25;
     state.score += bonus;
-    flashLevelBanner('WAVE CLEAR +' + bonus, state.level);
-  } else {
-    flashLevelBanner('Lv. ' + state.level + ' · ' + sp.label, state.level);
+    setTimeout(() => flashCenterText('WAVE CLEAR +' + bonus), 1400);
   }
   // Set spawn pause so level transitions breathe
   state.spawnPauseMs = state.dailyRun ? 1000 : 2500;
@@ -5791,7 +5857,7 @@ function onLevelUp() {
   // Deterministic boss arrival: act levels {5,9,14,19,23} and every 5 past 23.
   const isActLevel = !!LEVEL_ACTS[state.level];
   const isPast23Boss = state.level > 23 && (state.level - 23) % 5 === 0;
-  if ((isActLevel || isPast23Boss) && !state.checkpointRun) {
+  if (isActLevel || isPast23Boss) {
     state.pendingBoss = true;
   }
   // Story act break at chapter milestones (chains before boss cutscene via pendingBoss delay)
@@ -5814,12 +5880,25 @@ function onLevelUp() {
   prewarmNextTheme(state.level);
 }
 
-function flashCenterText(txt) {
+// Banner queue: at most 3 items, no consecutive dupes, never overlaps.
+const _bannerQueue = [];
+let _bannerLive = false;
+function _showNextBanner() {
+  if (_bannerQueue.length === 0) { _bannerLive = false; return; }
+  _bannerLive = true;
+  const txt = _bannerQueue.shift();
   const el = document.createElement('div');
   el.className = 'combo-banner';
   el.textContent = txt;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1300);
+  setTimeout(() => { el.remove(); _showNextBanner(); }, 1300);
+}
+function flashCenterText(txt) {
+  if (_bannerQueue.length >= 3) return; // cap queue
+  const last = _bannerQueue.length > 0 ? _bannerQueue[_bannerQueue.length - 1] : null;
+  if (txt === last) return; // drop consecutive dupe
+  _bannerQueue.push(txt);
+  if (!_bannerLive) _showNextBanner();
 }
 
 function flashLevelBanner(txt, level) {
@@ -6588,15 +6667,11 @@ async function triggerSpecialMove() {
     tone({ freq: 1200 + (i * 50), type: 'sine', dur: 0.06, gain: 0.05, slide: 1900 });
 
     if (m.isBoss) {
-      const damage = Math.ceil(m.maxHp * 0.5);
-      m.hp = Math.max(0, m.hp - damage);
-      if (state.lockId === m.id) {
-        state.lockPosKs = Math.min(state.lockExpectedKs.length, state.lockPosKs + damage);
-      }
-      if (m.el) {
-        m.el.style.setProperty('--hp-frac', (m.hp / m.maxHp).toFixed(3));
-      }
-      if (m.hp <= 0) { killMonster(m, true); killed++; }
+      if (state.lockId === m.id) { state.ime.reset(); LIVE_EL.textContent = ''; }
+      if (m.phase < 3) {
+        advanceBossPhase(m);
+        if (state.lockId === m.id) { state.lockExpectedKs = m.ks; state.lockPosKs = 0; }
+      } else { killMonster(m, true); killed++; }
     } else {
       state.combo += 1;
       if (state.combo > state.bestCombo) state.bestCombo = state.combo;
@@ -6942,11 +7017,10 @@ function gameOver() {
   const newHigh = state.score > high;
   if (newHigh) setHighScore(state.score);
   if (state.level > getBestLevel()) setBestLevel(state.level);
-  // Update chapter checkpoint: highest act-break level the player has cleared
-  const actLevels = Object.keys(LEVEL_ACTS).map(Number).sort((a, b) => a - b);
-  const clearedActs = actLevels.filter(lv => state.level >= lv);
-  if (clearedActs.length > 0) {
-    const highestAct = clearedActs[clearedActs.length - 1];
+  // Update chapter checkpoint: only advance for acts whose boss was killed this run.
+  const actsKilled = (state.actsCleared || []).sort((a, b) => a - b);
+  if (actsKilled.length > 0) {
+    const highestAct = actsKilled[actsKilled.length - 1];
     if (highestAct > getCheckpoint()) setCheckpoint(highestAct);
   }
   const _overScoreEl = document.getElementById('overScore');
@@ -6982,8 +7056,23 @@ function gameOver() {
   // Only submit to leaderboard for full non-checkpoint, non-daily runs.
   // Slow mode submits but halves points (applied at submit site below).
   if (!state.checkpointRun && !state.dailyRun) {
-    // Arcade-style soft prompt on new high score or unset profile.
-    if (newHigh || isProfileUnset()) setTimeout(() => openProfileModal({ soft: true }), 600);
+    // Instead of auto-opening the modal, pulse the Edit profile button with a hint row.
+    if (newHigh || isProfileUnset()) {
+      setTimeout(() => {
+        const btn = document.getElementById('btnEditProfile');
+        if (btn) btn.classList.add('profile-cta-pulse');
+        const sign = document.getElementById('newHighSign');
+        if (sign && newHigh) {
+          // Append the claim-name hint if not already present
+          if (!sign.querySelector('.new-high-claim')) {
+            const hint = document.createElement('div');
+            hint.className = 'new-high-claim';
+            hint.textContent = 'Claim your name';
+            sign.appendChild(hint);
+          }
+        }
+      }, 300);
+    }
     // Submit, then render. submitBattleScore invalidates the cache so render fetches fresh.
     const submitPoints = state.slowMode ? Math.floor(state.score * 0.5) : state.score;
     submitBattleScore(state.level, submitPoints).finally(() => {
@@ -7089,7 +7178,9 @@ function findTargetForChar(rawKey, isShift) {
   if (!jamo) return null;
   let best = null;
   for (const m of state.monsters) {
-    if (m.ks[0] === jamo) {
+    // Match against the next expected jamo (resume from saved progress, or start of word)
+    const startPos = m.lockProgressKs || 0;
+    if (m.ks[startPos] === jamo) {
       if (!best || m.y > best.y) best = m;
     }
   }
@@ -7098,6 +7189,8 @@ function findTargetForChar(rawKey, isShift) {
 
 function handleKey(rawKey, isShift) {
   if (!state.running || state.paused) return;
+  // Block game keystrokes while the boss cutscene overlay is visible
+  if (document.querySelector('.boss-cutscene')) return;
   if (state.lockId == null) {
     const target = findTargetForChar(rawKey, isShift);
     if (!target) {
@@ -7106,7 +7199,8 @@ function handleKey(rawKey, isShift) {
       const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
       const jamo = rawKey === ' ' ? null : KEYMAP[lookupKey];
       if (jamo && feedSpecialBuffer(jamo)) return;
-      sfxMiss();
+      // A Hangul key that matches no monster costs the same soft combo break as a locked typo
+      if (jamo) { sfxMiss(); breakCombo(); }
       return;
     }
     state.lockId = target.id;
@@ -7620,6 +7714,7 @@ function doStartGame() {
   state.shownHeartHint = false;
   state.checkpointRun = false;
   state.dailyRun = false;
+  state.actsCleared = [];
   state.rng = null;
   state.dailyTimeLeft = 0;
   state.dailyTimerEl = null;
@@ -7703,6 +7798,7 @@ function startCheckpointGame(startLevel) {
   state.lockId = null; state.ime.reset();
   state.checkpointRun = true;
   state.dailyRun = false;
+  state.actsCleared = [];
   state.rng = null;
   state.dailyTimeLeft = 0;
   state.dailyTimerEl = null;
@@ -7756,6 +7852,7 @@ function startDailyGame() {
   state.lockId = null; state.ime.reset();
   state.checkpointRun = false;
   state.dailyRun = true;
+  state.actsCleared = [];
   state.assistMul = 1.0;
   state.levelLeaks = 0;
   state.slowMode = false;  // daily runs always at normal speed
@@ -7860,11 +7957,16 @@ function togglePause() {
     resetSpecialBuffer();
   }
   document.getElementById('pauseOverlay').style.display = state.paused ? 'flex' : 'none';
-  document.getElementById('btnMenu').textContent = state.paused ? '▶ Resume' : '⏸ Pause';
+  const _compact = window.matchMedia('(max-width: 720px)').matches;
+  document.getElementById('btnMenu').textContent =
+    state.paused ? (_compact ? '▶' : '▶ Resume') : (_compact ? '⏸' : '⏸ Pause');
 }
 
 document.getElementById('btnStart').addEventListener('click', startGame);
-document.getElementById('btnEditProfile').addEventListener('click', openProfileModal);
+document.getElementById('btnEditProfile').addEventListener('click', () => {
+  document.getElementById('btnEditProfile').classList.remove('profile-cta-pulse');
+  openProfileModal();
+});
 document.getElementById('btnEditProfileIntro').addEventListener('click', openProfileModal);
 document.getElementById('profileReplayIntro').addEventListener('click', () => {
   localStorage.removeItem(STORY_KEY);
