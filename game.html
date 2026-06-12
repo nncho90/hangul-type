@@ -3954,6 +3954,13 @@ function loadAdminOverrides() {
     const raw = localStorage.getItem('hangul-admin-overrides-v1');
     if (!raw) return JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
     const parsed = JSON.parse(raw);
+    // Stale-blob migration: overrides saved before the 2026-06 rework contain
+    // the retired specialComboPerCharge knob and pre-rework tier speedMuls.
+    // Carrying them forward would shadow the new defaults, so drop the blob.
+    if (parsed && parsed.combat && 'specialComboPerCharge' in parsed.combat) {
+      localStorage.removeItem('hangul-admin-overrides-v1');
+      return JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+    }
     const merged = JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
     for (const k of Object.keys(parsed)) {
       const v = parsed[k];
