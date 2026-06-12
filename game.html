@@ -236,6 +236,17 @@
     --floor-b: rgba(12, 74, 110, 0.26);
     --floor-line: rgba(14, 116, 144, 0.32);
   }
+
+  /* ── Theme accent tokens (consumed by HUD border, word pill, XP bar) ── */
+  body { --theme-accent: var(--blue); --theme-accent-soft: rgba(37,99,235,0.12); }
+  body.theme-village   { --theme-accent: #b45309; --theme-accent-soft: rgba(180,83,9,0.12); }
+  body.theme-forest    { --theme-accent: #047857; --theme-accent-soft: rgba(4,120,87,0.12); }
+  body.theme-study     { --theme-accent: #0369a1; --theme-accent-soft: rgba(3,105,161,0.12); }
+  body.theme-courtyard { --theme-accent: #7c3aed; --theme-accent-soft: rgba(124,58,237,0.12); }
+  body.theme-camp      { --theme-accent: #b45309; --theme-accent-soft: rgba(180,83,9,0.12); }
+  body.theme-battlefield { --theme-accent: #c2410c; --theme-accent-soft: rgba(194,65,12,0.12); }
+  body.theme-palace    { --theme-accent: #0e7490; --theme-accent-soft: rgba(14,116,144,0.12); }
+
   /* lv 23+ — 별나라 (Cosmos): deep night, constellations, nebula */
   body.theme-cosmos .backdrop {
     background-image: radial-gradient(ellipse at 50% 30%, #312e81 0%, #1e1b4b 40%, #0f0c29 80%, #000 100%);
@@ -359,8 +370,9 @@
     align-items: center;
     padding: 14px 22px;
     background: var(--l1);
-    border-top: 1px solid var(--bd);
+    border-top: 3px solid var(--theme-accent, var(--blue));
     box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.04);
+    transition: border-color 1.6s;
   }
   .hud-left { display: flex; align-items: center; gap: 22px; }
   .hud-right { display: flex; align-items: center; gap: 22px; justify-content: flex-end; }
@@ -422,11 +434,14 @@
     margin-top: 3px;
   }
   .stat-value.level   { color: var(--blue); }
-  .stat-value.score   { color: var(--green); }
-  .stat-value.combo   { color: var(--orange); min-width: 68px; text-align: right; }
+  .stat-value.score   { color: var(--green); font-size: 26px; }
+  .stat-value.combo   { color: var(--orange); min-width: 68px; text-align: right; transition: color 0.2s, transform 0.2s; }
   .stat-value.combo.zero { color: var(--tlo); }
+  .stat-value.combo.hot { color: var(--orange); transform: scale(1.1); }
+  .stat-value.combo.blazing { color: var(--red); transform: scale(1.15); text-shadow: 0 0 12px rgba(239,68,68,0.6); }
+  .stat-value.combo.legendary { color: var(--purple); transform: scale(1.2); text-shadow: 0 0 12px rgba(139,92,246,0.7); }
   .lives {
-    font-size: 22px;
+    font-size: 28px;
     letter-spacing: 5px;
     color: var(--red);
   }
@@ -452,7 +467,7 @@
   .xpbar {
     position: fixed;
     bottom: 80px; left: 0; right: 0;
-    height: 4px;
+    height: 6px;
     background: var(--l3);
     z-index: 99;
     overflow: hidden;
@@ -460,8 +475,8 @@
   .xpbar-fill {
     height: 100%;
     width: 0%;
-    background: var(--blue);
-    transition: width 0.3s;
+    background: linear-gradient(90deg, var(--theme-accent, var(--blue)), var(--purple));
+    transition: width 0.3s, background 1.6s;
   }
 
   /* Stage — fills the desktop viewport. The HUD is at the bottom on desktop,
@@ -475,6 +490,21 @@
     perspective-origin: 50% 42%;
     transform-style: preserve-3d;
     isolation: isolate;
+  }
+  .stage::before {
+    content: '';
+    position: absolute; inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 130% 95% at 50% 42%, transparent 58%, rgba(15,23,42,0.16) 100%),
+      linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 22%);
+    transition: background 1.6s;
+  }
+  body.boss-alive .stage::before {
+    background:
+      radial-gradient(ellipse 130% 95% at 50% 42%, transparent 45%, rgba(127,29,29,0.22) 100%),
+      linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 18%);
   }
   .stage::after {
     content: '';
@@ -553,8 +583,8 @@
   .battle-foreground {
     z-index: 58;
     background:
-      linear-gradient(180deg, rgba(15,23,42,0) 72%, rgba(15,23,42,0.20) 100%),
-      radial-gradient(ellipse 52% 12% at 50% 98%, rgba(15,23,42,0.28), rgba(15,23,42,0) 72%);
+      linear-gradient(180deg, rgba(15,23,42,0) 72%, rgba(15,23,42,0.30) 100%),
+      radial-gradient(ellipse 52% 12% at 50% 98%, rgba(15,23,42,0.38), rgba(15,23,42,0) 72%);
   }
   .battle-foreground::before,
   .battle-foreground::after {
@@ -563,7 +593,7 @@
     bottom: -10px;
     width: clamp(90px, 12vw, 190px);
     height: clamp(130px, 24vh, 310px);
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.30));
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.44));
     filter: blur(0.2px);
   }
   .battle-foreground::before {
@@ -760,15 +790,28 @@
   .monster .word {
     margin-top: 10px;
     background: var(--l1);
-    border: 2px solid var(--blue);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
-    padding: 8px 14px;
-    border-radius: 12px;
+    border: 2px solid var(--theme-accent, var(--bdhi));
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.22);
+    padding: 9px 16px;
+    border-radius: 10px;
     color: var(--thi);
     position: relative;
-    transition: border-color 0.18s, box-shadow 0.18s;
+    transition: border-color 1.6s, box-shadow 0.18s, transform 0.12s;
     max-width: min(720px, calc(100vw - 64px));
     white-space: nowrap;
+    transform: scale(var(--word-counter, 1));
+    transform-origin: 50% 100%;
+  }
+  .monster .word::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+    transform: scaleX(var(--hp-frac, 1));
+    transform-origin: left;
+    transition: transform 0.18s;
   }
   .monster .word .word-row {
     display: flex;
@@ -806,13 +849,25 @@
     width: 0; height: 0;
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
-    border-bottom: 8px solid var(--blue);
+    border-bottom: 8px solid var(--theme-accent, var(--bdhi));
+    transition: border-bottom-color 1.6s;
   }
   .monster.locked .word {
-    border-color: var(--orange);
-    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.25);
+    border: 3px solid var(--orange);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.22), 0 10px 26px rgba(249,115,22,0.30);
+    transform: scale(calc(var(--word-counter, 1) * 1.08));
+    transform-origin: 50% 100%;
   }
   .monster.locked .word::before { border-bottom-color: var(--orange); }
+  body.has-lock .monster:not(.locked) .word { opacity: 0.72; }
+  @keyframes word-tick {
+    0%   { transform: scale(calc(var(--word-counter,1) * 1.08)); }
+    40%  { transform: scale(calc(var(--word-counter,1) * 1.14)); }
+    100% { transform: scale(calc(var(--word-counter,1) * 1.08)); }
+  }
+  .monster.locked .word.jamo-tick {
+    animation: word-tick 120ms ease-out;
+  }
   .monster .word .typed {
     color: var(--green);
   }
@@ -827,20 +882,20 @@
   }
   .monster.boss .word::before { border-bottom-color: var(--red); }
 
-  .monster .hp-bar {
-    margin-top: 8px;
-    height: 5px;
-    width: 80px;
-    background: var(--l3);
-    border-radius: 3px;
-    overflow: hidden;
+  .monster .hp-bar { display: none; }
+  .monster .hp-fill { display: none; }
+
+  .monster .ground-shadow {
+    position: absolute;
+    bottom: -6px; left: 50%;
+    width: 72px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(15,23,42,var(--shadow-alpha,0.18)), transparent 72%);
+    transform: translateX(-50%) scaleX(var(--shadow-scale, 1));
+    transform-origin: center;
+    pointer-events: none;
+    z-index: -1;
   }
-  .monster .hp-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
-    transition: width 0.18s;
-  }
-  .monster.boss .hp-bar { width: 280px; height: 8px; }
 
   /* Ranged projectile (lv 9+ — mage/ninja/dragon era when player abandons melee) */
   .projectile {
@@ -1059,6 +1114,26 @@
     100% { opacity: 0; transform: translateX(-50%) scale(1); }
   }
 
+  /* Level-up banner: bigger and longer than combo-banner, tier-colored */
+  .level-banner {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    font-family: 'Black Han Sans', 'Inter', sans-serif;
+    font-size: 52px;
+    pointer-events: none;
+    animation: level-banner 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    letter-spacing: 3px;
+  }
+  @keyframes level-banner {
+    0%   { opacity: 0; transform: translateX(-50%) scale(0.3); }
+    20%  { opacity: 1; transform: translateX(-50%) scale(1.2); }
+    60%  { opacity: 1; transform: translateX(-50%) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1); }
+  }
+
   /* Cursor blink — used by the in-HUD typing display */
   @keyframes blink { 50% { opacity: 0; } }
 
@@ -1066,7 +1141,7 @@
   .modal-veil {
     position: fixed; inset: 0;
     z-index: 500;
-    background: rgba(15, 23, 42, 0.65);
+    background: rgba(15, 23, 42, 0.45);
     backdrop-filter: blur(2px);
     display: flex;
     align-items: center;
@@ -1113,12 +1188,55 @@
   #gameOverModal .modal-card #newHighSign:not([style*="none"]) { margin: 0; }
   #gameOverModal .modal-card .battle-lb-toolbar { margin: 0; flex-shrink: 0; }
   #gameOverModal .modal-card .battle-lb {
-    flex: 1 1 auto;
-    min-height: 120px;
+    flex: 0 0 auto;
+    max-height: 160px;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
   #gameOverModal .modal-card .actions { margin-top: 6px; flex-shrink: 0; }
+  #gameOverModal .modal-card .battle-lb.lb-collapsed {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+  /* Hero score in game-over */
+  #gameOverModal #overScore { font-size: 44px; color: var(--green); font-weight: 800; }
+  /* Share button prominence */
+  #btnShareResult { background: var(--green); border-color: var(--green); color: white; }
+  #btnShareResult:hover { background: #059669; border-color: #059669; }
+  /* Run-state chips */
+  #overCheckpointNote, #overSlowModeNote {
+    font-size: 11px;
+    color: var(--tmd);
+    background: var(--l2);
+    border: 1.5px solid var(--bd);
+    border-radius: 12px;
+    padding: 3px 10px;
+    display: inline-block;
+    margin: 2px;
+    font-weight: 700;
+  }
+  /* Leaderboard collapse */
+  .lb-collapsed {
+    max-height: 148px;
+    overflow: hidden;
+    mask-image: linear-gradient(180deg, black 55%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, black 55%, transparent 100%);
+  }
+  .lb-collapsed.lb-expanded {
+    max-height: 420px;
+    overflow-y: auto;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+  .lb-expand-btn {
+    background: none;
+    border: none;
+    color: var(--blue);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 6px;
+    font-weight: 600;
+  }
   @keyframes modal-rise {
     0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -1206,6 +1324,53 @@
     color: white;
   }
   .modal-card button.primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: white; }
+
+  /* ── Intro modal redesign ── */
+  #introModal .modal-card {
+    padding: 22px 32px 16px;
+    gap: 0;
+  }
+  #introModal .modal-card .subtitle {
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .intro-hero-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 6px;
+  }
+  .intro-player-sprite {
+    width: 88px; height: 88px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    flex-shrink: 0;
+  }
+  .intro-hero-text { text-align: left; }
+  .intro-hero-text .badge { margin-bottom: 6px; }
+  .intro-hero-text h1 { margin: 0; font-size: 28px; }
+  .intro-cta-band { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  .intro-start-btn { width: 100%; height: 52px; font-size: 16px !important; }
+  .intro-cta-row2 { display: flex; gap: 8px; }
+  .intro-daily-btn { flex: 1; }
+  .intro-slow-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 12px;
+    background: var(--l2);
+    border: 2px solid var(--bd);
+    border-radius: 3px;
+    font-size: 13px; color: var(--tmd);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .lb-section { margin: 8px 0; }
+  .lb-section-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .lb-section-header .lb-tabs { flex: 1; }
 
   .new-high {
     display: inline-block;
@@ -1438,8 +1603,9 @@
     .hud-center { display: none; }
     .stat-label { font-size: 8px; }
     .stat-value { font-size: 14px; }
+    .stat-value.score { font-size: 16px; }
     .stat-value.combo { min-width: 36px; font-size: 13px; }
-    .lives { font-size: 14px; letter-spacing: 2px; }
+    .lives { font-size: 18px; letter-spacing: 2px; }
     .menu-btn { padding: 6px 9px; font-size: 11px; }
     .xpbar { top: 50px; bottom: auto; }
     .stage { inset: 54px 0 calc(224px + env(safe-area-inset-bottom)) 0; }
@@ -1903,7 +2069,7 @@
   }
   /* Square pixel-art pips — retro HP/MP charge cell look. */
   .special-pip {
-    width: 14px; height: 14px;
+    width: 18px; height: 18px;
     border-radius: 2px;
     background: var(--l3);
     border: 2px solid var(--bd);
@@ -1923,6 +2089,32 @@
     background: radial-gradient(circle, #fee2e2, #dc2626);
     border-color: #dc2626;
     box-shadow: 0 0 14px rgba(220, 38, 38, 0.85);
+  }
+  /* Lives HUD pulse when at 1 life */
+  .lives-danger {
+    animation: lives-danger-pulse 0.6s ease-in-out 4;
+    color: #ef4444 !important;
+  }
+  @keyframes lives-danger-pulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.25); }
+  }
+
+  /* Kill-progress underbar beneath pips */
+  .special-kill-track {
+    width: 100%;
+    height: 3px;
+    background: var(--bd);
+    border-radius: 2px;
+    margin-top: 3px;
+    overflow: hidden;
+  }
+  .special-kill-bar {
+    height: 100%;
+    background: #f59e0b;
+    border-radius: 2px;
+    transition: width 0.15s ease;
+    width: 0%;
   }
 
   /* Chant mode overlay */
@@ -2294,6 +2486,56 @@
     animation: boss-name-rise 1.5s 0.2s ease-out forwards;
   }
 
+  /* Boss phase telegraph: pulsing red ring when attack is charging */
+  .monster.boss.boss-charging::after {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 3px solid rgba(220, 38, 38, 0.9);
+    box-shadow: 0 0 18px rgba(220, 38, 38, 0.7), inset 0 0 10px rgba(220, 38, 38, 0.4);
+    pointer-events: none;
+    animation: boss-charge-ring 0.4s ease-in-out infinite alternate;
+  }
+  @keyframes boss-charge-ring {
+    0%   { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 1;   transform: scale(1.08); }
+  }
+
+  /* Boss reward modal cards */
+  .boss-reward-cards {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    margin: 20px 0 8px;
+  }
+  .boss-reward-card {
+    flex: 1 1 120px; max-width: 140px;
+    background: var(--l2);
+    border: 2px solid var(--bd);
+    border-radius: 10px;
+    padding: 16px 10px 12px;
+    cursor: pointer;
+    text-align: center;
+    position: relative;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    font: inherit;
+  }
+  .boss-reward-card:hover {
+    border-color: var(--blue);
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.3);
+    transform: translateY(-2px);
+  }
+  .boss-reward-card:active { transform: translateY(0); }
+  .boss-reward-card.brc-disabled { opacity: 0.45; cursor: default; }
+  .boss-reward-card.brc-disabled:hover { border-color: var(--bd); box-shadow: none; transform: none; }
+  .brc-icon { font-size: 32px; margin-bottom: 6px; }
+  .brc-label { font-size: 13px; font-weight: 800; color: var(--thi); margin-bottom: 4px; }
+  .brc-desc  { font-size: 11px; color: var(--tmd); line-height: 1.3; }
+  .brc-key {
+    position: absolute; top: 6px; right: 8px;
+    font-size: 10px; font-weight: 800; color: var(--tlo);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
   /* English-translation reveal on kill — closes the learning loop.
      Attached to <body> (not .stage) so .stage's overflow:hidden can't clip it
      when the kill happens near the top of the play area. */
@@ -2593,36 +2835,45 @@
 
 <div id="introModal" class="modal-veil" role="dialog" aria-modal="true" aria-labelledby="introModalTitle">
   <div class="modal-card">
-    <div class="badge">⚔️ Battle Mode</div>
-    <h1 id="introModalTitle">한글 전투</h1>
+    <div class="intro-hero-row">
+      <img src="sprites/player/01-baegui-front.png" class="intro-player-sprite" alt="Player character" aria-hidden="true">
+      <div class="intro-hero-text">
+        <div class="badge">⚔️ Battle Mode</div>
+        <h1 id="introModalTitle">한글 전투</h1>
+      </div>
+    </div>
     <p class="subtitle">Type the Korean word above each demon to defeat it. Build combo and unleash 필살기 to clear the screen.</p>
-    <div class="stat-grid">
+    <div class="intro-cta-band">
+      <button class="primary intro-start-btn" id="btnStart">Start Battle</button>
+      <div class="intro-cta-row2">
+        <button id="btnDailyRun" class="intro-daily-btn">🗓️ Daily Run <span id="introStreak" style="display:none;"></span></button>
+        <label class="intro-slow-pill">
+          <input type="checkbox" id="slowModeToggle" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
+          🌱 Slow
+        </label>
+      </div>
+    </div>
+    <div class="stat-grid" style="margin:8px 0;">
       <div><div class="k">High Score</div><div class="v" id="introHigh">0</div></div>
       <div><div class="k">Best Level</div><div class="v" id="introBest">–</div></div>
     </div>
-    <div style="margin:10px 0 4px;text-align:center;">
-      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--tmd);">
-        <input type="checkbox" id="slowModeToggle" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
-        🌱 Slow mode for beginners (0.6× speed, points halved on leaderboard)
-      </label>
+    <div class="lb-section">
+      <div class="lb-section-header">
+        <div class="lb-tabs" data-lb="battleLbIntroContainer">
+          <button class="lb-tab active" data-tab="players">Players</button>
+          <button class="lb-tab" data-tab="fandoms">Fandoms</button>
+        </div>
+        <button class="menu-btn" id="btnEditProfileIntro">Edit profile</button>
+        <button class="lb-expand-btn" id="introLbExpander" aria-expanded="false">Show all ▾</button>
+      </div>
+      <div id="battleLbIntroContainer" class="battle-lb lb-collapsed" data-tab="players">
+        <div class="battle-lb-loading">Loading battle rankings…</div>
+      </div>
     </div>
-    <div style="margin:6px 0 10px;text-align:center;font-size:12px;">
+    <div style="margin:8px 0 4px;text-align:center;font-size:12px;">
       <a href="index.html" style="color:var(--blue);text-decoration:none;">New to Korean typing? Learn the keys first →</a>
     </div>
-    <div class="battle-lb-toolbar">
-      <div class="lb-tabs" data-lb="battleLbIntroContainer">
-        <button class="lb-tab active" data-tab="players">Players</button>
-        <button class="lb-tab" data-tab="fandoms">Fandoms</button>
-      </div>
-      <button class="menu-btn" id="btnEditProfileIntro">Edit profile</button>
-    </div>
-    <div id="battleLbIntroContainer" class="battle-lb" data-tab="players">
-      <div class="battle-lb-loading">Loading battle rankings…</div>
-    </div>
-    <div id="introStreak" style="display:none;text-align:center;font-size:13px;color:var(--orange);margin:6px 0;font-weight:600;"></div>
-    <div class="actions">
-      <button class="primary" id="btnStart">Start Battle</button>
-      <button id="btnDailyRun">🗓️ Daily Run</button>
+    <div class="actions" style="margin-top:8px;">
       <button id="btnBack">← Back to practice</button>
     </div>
   </div>
@@ -2631,7 +2882,7 @@
 <div id="gameOverModal" class="modal-veil" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
   <div class="modal-card">
     <div class="badge danger">Game Over</div>
-    <h1 id="gameOverTitle">전사 — Fallen</h1>
+    <h1 id="gameOverTitle">전사 · Fallen</h1>
     <p class="subtitle" id="gameOverFlavor">The demons broke through. Try again?</p>
     <div id="newHighSign" style="display:none;"><span class="new-high">⭐ New high score</span></div>
   <div class="stat-grid">
@@ -2647,11 +2898,12 @@
       </div>
       <button class="menu-btn" id="btnEditProfile">Edit profile</button>
     </div>
-    <div id="battleLbContainer" class="battle-lb" data-tab="players">
+    <div id="battleLbContainer" class="battle-lb lb-collapsed" data-tab="players">
       <div class="battle-lb-loading">Loading battle rankings…</div>
     </div>
-    <div id="overCheckpointNote" style="display:none;font-size:12px;color:var(--tlo);text-align:center;margin-top:8px;">checkpoint run: leaderboard off</div>
-    <div id="overSlowModeNote" style="display:none;font-size:12px;color:var(--tlo);text-align:center;margin-top:4px;">slow mode: points halved on leaderboard</div>
+    <button class="lb-expand-btn" id="gameOverLbExpander" aria-expanded="false">Show full rankings ▾</button>
+    <div id="overCheckpointNote" style="display:none;">📍 Checkpoint run · LB off</div>
+    <div id="overSlowModeNote" style="display:none;">🌱 Slow mode · points halved</div>
     <div class="actions">
       <button class="primary" id="btnRetry">Retry</button>
       <button id="btnCheckpointRetry" style="display:none;">Restart from Chapter</button>
@@ -3278,27 +3530,59 @@ const VOCAB = {
   ],
   // Sentences — TOPIK 2.4–2.5
   tier5: [
-    { ko:'오늘 날씨가 좋아요',           en:'The weather is nice today',    topikLevel:1 },
-    { ko:'저는 미국 사람이에요',         en:"I'm American",                 topikLevel:1 },
-    { ko:'시간이 없어요 빨리',           en:"I don't have time, hurry",     topikLevel:2 },
-    { ko:'안녕하세요 만나서 반가워요',   en:'Hello, nice to meet you',      topikLevel:1 },
-    { ko:'한국 음식이 정말 맛있어요',    en:'Korean food is really tasty',  topikLevel:1 },
-    { ko:'어디에서 왔어요',             en:'Where are you from',           topikLevel:1 },
-    { ko:'이름이 뭐예요',               en:"What's your name",             topikLevel:1 },
-    { ko:'학생이에요 회사원이에요',     en:'Are you a student or worker',  topikLevel:2 }
+    { ko:'오늘 날씨가 좋아요',           en:'The weather is nice today',       topikLevel:1 },
+    { ko:'저는 미국 사람이에요',         en:"I'm American",                    topikLevel:1 },
+    { ko:'시간이 없어요 빨리',           en:"I don't have time, hurry",        topikLevel:2 },
+    { ko:'안녕하세요 만나서 반가워요',   en:'Hello, nice to meet you',         topikLevel:1 },
+    { ko:'한국 음식이 정말 맛있어요',    en:'Korean food is really tasty',     topikLevel:1 },
+    { ko:'어디에서 왔어요',             en:'Where are you from',              topikLevel:1 },
+    { ko:'이름이 뭐예요',               en:"What's your name",                topikLevel:1 },
+    { ko:'학생이에요 회사원이에요',     en:'Are you a student or worker',     topikLevel:2 },
+    { ko:'내일 시간 있어요',            en:'Are you free tomorrow',           topikLevel:1 },
+    { ko:'버스 어디서 타요',            en:'Where do I take the bus',         topikLevel:1 },
+    { ko:'화장실이 어디예요',           en:'Where is the restroom',           topikLevel:1 },
+    { ko:'얼마예요 깎아줘요',           en:'How much, give a discount',       topikLevel:2 },
+    { ko:'배고파요 밥 먹어요',          en:'I am hungry, let us eat',         topikLevel:1 },
+    { ko:'저도 같이 가요',              en:'I will go together too',          topikLevel:1 },
+    { ko:'잠깐만 기다려요',             en:'Please wait a moment',            topikLevel:1 },
+    { ko:'오늘 많이 피곤해요',          en:'I am really tired today',         topikLevel:1 },
+    { ko:'이거 주문할게요',             en:'I will order this',               topikLevel:1 },
+    { ko:'조금 더 주세요',              en:'Please give me a little more',    topikLevel:1 },
+    { ko:'지금 어디 있어요',            en:'Where are you right now',         topikLevel:1 },
+    { ko:'같이 공부해요',               en:'Let us study together',           topikLevel:1 },
+    { ko:'맛있게 드세요',               en:'Enjoy your meal',                 topikLevel:1 },
+    { ko:'좀 도와주세요',               en:'Please help me',                  topikLevel:1 },
+    { ko:'그게 맞아요',                 en:'That is correct',                 topikLevel:1 },
+    { ko:'다음에 봐요',                 en:'See you next time',               topikLevel:1 },
+    { ko:'전화해 주세요',               en:'Please call me',                  topikLevel:1 }
   ],
-  // Boss-tier — TOPIK 2.5–2.6 long sentences
+  // Boss-tier: TOPIK 2 long sentences (diverse first jamos to avoid dedupe starvation)
   boss: [
-    { ko:'한국어 배우고 싶어',
-      en:'I want to learn Korean', topikLevel:2 },
-    { ko:'이름이 뭐예요',
-      en:'What is your name', topikLevel:2 },
-    { ko:'만나서 반가워요',
-      en:'Nice to meet you', topikLevel:2 },
-    { ko:'한국에서 살고 싶어',
-      en:'I want to live in Korea', topikLevel:2 },
-    { ko:'날씨가 너무 좋아요',
-      en:'The weather is so nice', topikLevel:2 }
+    { ko:'한국어 배우고 싶어',          en:'I want to learn Korean',          topikLevel:2 },
+    { ko:'날씨가 너무 좋아요',          en:'The weather is so nice',          topikLevel:2 },
+    { ko:'오늘 뭐 하고 싶어요',         en:'What do you want to do today',    topikLevel:2 },
+    { ko:'저는 한국에 살고 있어요',     en:'I am living in Korea',            topikLevel:2 },
+    { ko:'주말에 뭐 해요',              en:'What do you do on weekends',      topikLevel:1 },
+    { ko:'친구랑 같이 영화 봤어요',     en:'I watched a movie with a friend', topikLevel:2 },
+    { ko:'배가 많이 고파요',            en:'I am very hungry',                topikLevel:1 },
+    { ko:'이 근처에 카페 있어요',       en:'Is there a cafe nearby',          topikLevel:1 },
+    { ko:'다시 한 번 말해 주세요',      en:'Please say that one more time',   topikLevel:1 },
+    { ko:'한글은 정말 재미있어요',      en:'Hangul is really interesting',    topikLevel:2 },
+    { ko:'매일 운동해야 해요',          en:'I have to exercise every day',    topikLevel:2 },
+    { ko:'무슨 음식을 좋아해요',        en:'What food do you like',           topikLevel:1 },
+    { ko:'가장 좋아하는 계절이에요',    en:'It is my favorite season',        topikLevel:2 },
+    { ko:'시장에서 쇼핑했어요',         en:'I went shopping at the market',   topikLevel:2 },
+    { ko:'지금 어떤 기분이에요',        en:'How are you feeling right now',   topikLevel:2 },
+    { ko:'버스를 잘못 탔어요',          en:'I took the wrong bus',            topikLevel:2 },
+    { ko:'열심히 공부하고 있어요',      en:'I am studying hard',              topikLevel:2 },
+    { ko:'제 꿈은 한국 여행이에요',     en:'My dream is to travel in Korea',  topikLevel:2 },
+    { ko:'아직 잘 모르겠어요',          en:'I still do not know well',        topikLevel:1 },
+    { ko:'천천히 걸어가요',             en:'Let us walk slowly',              topikLevel:1 },
+    { ko:'내일 같이 밥 먹어요',         en:'Let us eat together tomorrow',    topikLevel:1 },
+    { ko:'공부가 재미있어요',           en:'Studying is fun',                 topikLevel:1 },
+    { ko:'빨리 집에 가고 싶어요',       en:'I want to go home quickly',       topikLevel:2 },
+    { ko:'새로운 친구를 만났어요',      en:'I met a new friend',              topikLevel:2 },
+    { ko:'더 열심히 해볼게요',          en:'I will try harder',               topikLevel:2 }
   ]
 };
 
@@ -3643,10 +3927,10 @@ function pickWordForLevel(lv, blockedFirstJamos) {
 const ADMIN_DEFAULTS = {
   tier: {
     "1":    { speedMul: 0.80, motion: "straight", fontPx: 79,  animS: 1.6 },
-    "2":    { speedMul: 0.95, motion: "straight", fontPx: 97,  animS: 1.8 },
-    "3":    { speedMul: 0.65, motion: "zigzag",   fontPx: 112, animS: 2.0 },
-    "4":    { speedMul: 0.90, motion: "dive",     fontPx: 130, animS: 2.2 },
-    "5":    { speedMul: 1.05, motion: "tracker",  fontPx: 151, animS: 1.5 },
+    "2":    { speedMul: 0.90, motion: "straight", fontPx: 97,  animS: 1.8 },
+    "3":    { speedMul: 0.80, motion: "zigzag",   fontPx: 112, animS: 2.0 },
+    "4":    { speedMul: 0.85, motion: "dive",     fontPx: 130, animS: 2.2 },
+    "5":    { speedMul: 0.95, motion: "tracker",  fontPx: 151, animS: 1.5 },
     "boss": { speedMul: 0.55, motion: "teleport", fontPx: 173, animS: 2.5 }
   },
   levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19 },
@@ -3656,9 +3940,11 @@ const ADMIN_DEFAULTS = {
     initialSpawnMs: 1400
   },
   combat: {
-    specialComboPerCharge: 60, specialMaxCharges: 2,
+    specialKillsPerCharge: 15, specialMaxCharges: 2,
     chantDurationMs: 2000, specialBufferIdleMs: 1500,
-    heartSpawnChance: 0.018
+    heartSpawnChance: 0.018,
+    comboSoftThreshold: 25, comboSoftFactor: 0.5,
+    bossPhaseWindowMs: 9000
   },
   spawnCap: { early: 3, mid: 4, late: 5, endgame: 6 },
   player: { lives: 3 }
@@ -4416,11 +4702,17 @@ const state = {
   monsters: [],
   lockId: null, lockExpectedKs: [], lockPosKs: 0,
   spawnTimer: 0, spawnInterval: ADMIN.pace.initialSpawnMs,
-  bossActive: false, bossNextLevel: 5,
+  spawnPauseMs: 0,
+  spawnsSinceHeart: 0,
+  shownHeartHint: false,
+  bossActive: false,
+  pendingBoss: false,   // set in onLevelUp at act levels; cleared when boss spawns
+  xpBoostLevel: 0,      // boss reward: level for which kills earn 2x XP
   // Ninja melee state
   playerTeleported: false,
-  // 필살기 (special move) state — combo charges into screen-clear attack
-  specialCharges: 0,        // 0..3
+  // 필살기 (special move) state: kill-based charges into screen-clear attack
+  specialCharges: 0,        // 0..SPECIAL_MAX_CHARGES
+  killsSinceCharge: 0,      // kills accumulated toward next charge
   // Power-up state
   activePowerups: { shield: 0, slowmo: 0, xp: 0 },  // ms remaining (xp = double-XP timer)
   powerups: [],             // dropped pickups in stage
@@ -4442,6 +4734,10 @@ const state = {
   // Slow mode: player opted in via intro toggle
   slowMode: false
 };
+// Expose state and key functions on window for Playwright smoke tests.
+// These are const/function in classic-script scope: const does NOT auto-bind
+// to window, but function declarations do. state is the only const we expose.
+window.state = state;
 
 function getHighScore() { try { return Number(localStorage.getItem(HIGH_KEY)) || 0; } catch (e) { return 0; } }
 function setHighScore(n) { try { localStorage.setItem(HIGH_KEY, String(n)); } catch (e) {} }
@@ -4542,7 +4838,8 @@ function xpForKill(tier) {
 }
 function scoreForKill(tier, comboBonus) {
   const base = tier === 'boss' ? 1000 : Number(tier) * 50 + 25;
-  return Math.round(base * (1 + comboBonus * 0.05));
+  const cappedCombo = Math.min(comboBonus, 50);
+  return Math.round(base * (1 + cappedCombo * 0.05));
 }
 
 let monsterId = 0;
@@ -4572,12 +4869,20 @@ const HEART_WORDS = [
   { ko: '사랑', en: 'love' },
   { ko: '생명', en: 'life' }
 ];
-const HEART_SPAWN_CHANCE = ADMIN.combat.heartSpawnChance;   // ~1.8% per spawn slot (very rare)
+const HEART_SPAWN_CHANCE = ADMIN.combat.heartSpawnChance;   // base ~1.8% per spawn slot
 
 function maybeSpawnHeart() {
   if (state.lives >= 3) return false;
   if (state.monsters.some(m => m.isHeart)) return false;     // one at a time
-  if (Math.random() > HEART_SPAWN_CHANCE) return false;
+  // Pity scaling: chance grows with spawns since last heart pickup
+  const n = state.spawnsSinceHeart || 0;
+  let chance;
+  if (state.lives === 1) {
+    chance = Math.max(HEART_SPAWN_CHANCE, (n - 4) * 0.12);
+  } else {
+    chance = HEART_SPAWN_CHANCE + n * 0.005;
+  }
+  if (Math.random() > chance) return false;
   const w = HEART_WORDS[Math.floor(Math.random() * HEART_WORDS.length)];
   // Avoid first-jamo collisions with active monsters so the player can lock it
   const blocked = activeFirstJamos();
@@ -4600,16 +4905,20 @@ function maybeSpawnHeart() {
   buildMonsterEl(monster);
   if (monster.el) monster.el.classList.add('heart');
   state.monsters.push(monster);
+  state.spawnsSinceHeart = 0;
   flashCenterText('❤ Heart approaching');
   tone({ freq: 1320, type:'triangle', dur:0.22, gain:0.05, slide: 1760 });
   return true;
 }
 
 function spawnMonster(forceBoss) {
-  if (forceBoss || (state.level >= state.bossNextLevel && !state.bossActive && state.kills > 0 && Math.random() < 0.3)) {
+  if (forceBoss) {
     return spawnBoss();
   }
+  // While a boss fight is active, suppress all regular and heart spawns.
+  if (state.bossActive) return;
   if (maybeSpawnHeart()) return;
+  state.spawnsSinceHeart = (state.spawnsSinceHeart || 0) + 1;
   // Within-level spaced repetition: past the halfway point of the level,
   // ~50% of new spawns are RECALL versions of words the player already saw
   // earlier in this same level (English shown, Korean syllables hidden).
@@ -4671,43 +4980,203 @@ function spawnMonster(forceBoss) {
     tpT: 0, tpHoldUntil: 600,
     isBoss: false, recall, el: null,
     // First reveal in 3.5s, subsequent reveals every 2.2s
-    recallNextRevealAt: recall ? performance.now() + 3500 : 0
+    recallNextRevealAt: recall ? performance.now() + 3500 : 0,
+    recallRevealsUsed: 0
   };
   buildMonsterEl(monster);
   state.monsters.push(monster);
+}
+
+// triggerBossFight: chains act-break (already shown) -> cutscene -> spawnBoss.
+// Called from the main loop once pendingBoss is true and spawnPauseMs <= 0.
+function triggerBossFight() {
+  // Brief dramatic pause before the cutscene fires
+  state.spawnPauseMs = 600;
+  setTimeout(() => spawnBoss(), 700);
 }
 
 function spawnBoss() {
   sfxBossWarn();
   pulseBattleCamera('heavy');
   state.bossActive = true;
-  const word = pickAvailableWord(VOCAB.boss, activeFirstJamos());
-  if (!word) { state.bossActive = false; return null; }
+  document.body.classList.add('boss-alive');
+  // Phase 1: tier pool for current level; Phase 2: next tier (capped at 5); Phase 3: VOCAB.boss
+  const tier = tierForLevel(state.level);
+  const tier2 = Math.min(tier + 1, 5);
+  const blocked = activeFirstJamos();
+  const w1 = pickAvailableWord(VOCAB['tier' + tier] || VOCAB.tier1, blocked);
+  const w2 = pickAvailableWord(VOCAB['tier' + tier2] || VOCAB.tier1, blocked);
+  const w3 = pickAvailableWord(VOCAB.boss, blocked);
+  // Fall back gracefully if any pool is exhausted
+  const phase1Word = w1 || w2 || w3;
+  const phase2Word = w2 || w1 || w3;
+  const phase3Word = w3 || w1 || w2;
+  if (!phase1Word) { state.bossActive = false; return null; }
+  const phaseWords = [phase1Word, phase2Word, phase3Word];
+  const ks1 = wordToKeystrokes(phase1Word.ko);
+  const ks2 = wordToKeystrokes(phase2Word.ko);
+  const ks3 = wordToKeystrokes(phase3Word.ko);
+  const totalKs = ks1.length + ks2.length + ks3.length;
   const profile = nextBossProfile();
-  const sprite = profile.emoji;
-  const spriteFile = profile.sprite;
-  const id = ++monsterId;
-  const ks = wordToKeystrokes(word.ko);
   const startX = window.innerWidth / 2;
   const beh = behaviorForTier('boss');
   const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * (state.assistMul || 1.0) * (state.slowMode ? 0.6 : 1.0);
+  // Per-phase deadline: base 9000/7500/6000ms, scale -60ms/level, floor 4000.
+  // Daily runs use the unscaled base so the clock isn't punished.
+  const baseWin = ADMIN.combat.bossPhaseWindowMs || 9000;
+  const levelScale = state.dailyRun ? 0 : Math.min(state.level * 60, baseWin - 4000);
+  const windows = [
+    Math.max(4000, baseWin - levelScale),
+    Math.max(4000, 7500 - levelScale),
+    Math.max(4000, 6000 - levelScale)
+  ];
   const monster = {
-    id, sprite, spriteFile, name: profile.name,
-    word: word.ko, en: word.en, tier: 'boss',
-    ks, hp: ks.length, maxHp: ks.length,
+    id: ++monsterId, sprite: profile.emoji, spriteFile: profile.sprite, name: profile.name,
+    word: phase1Word.ko, en: phase1Word.en, tier: 'boss',
+    ks: ks1, hp: totalKs, maxHp: totalKs,
     speed: bossSpeed,
     motion: 'bossAdvance',
     x: startX, originX: startX,
     y: monsterSpawnY('boss'),
     zigT: 0, zigAmp: 0, zigFreq: 0,
-    diveSpeed: 0,
-    tpT: 0, tpHoldUntil: 0,
-    isBoss: true, el: null
+    diveSpeed: 0, tpT: 0, tpHoldUntil: 0,
+    isBoss: true, el: null,
+    // 3-phase data
+    phase: 1,
+    phaseWords,
+    phaseKs: [ks1, ks2, ks3],
+    phaseWindows: windows,
+    phaseDeadline: performance.now() + windows[0],
+    phaseHit: false  // true while charging telegraph ring (last 1500ms)
   };
   // Cutscene first, then build the on-stage element so the boss appears with the music
   playBossCutscene(profile);
   buildMonsterEl(monster);
   state.monsters.push(monster);
+}
+
+// Called when the player completes a boss phase word while phase < 3.
+function advanceBossPhase(m) {
+  if (m.phase >= 3) return;
+  m.phase++;
+  const phaseIdx = m.phase - 1;
+  const nextWord = m.phaseWords[phaseIdx];
+  const nextKs   = m.phaseKs[phaseIdx];
+  m.word = nextWord.ko;
+  m.en   = nextWord.en;
+  m.ks   = nextKs;
+  // Reset lock progress for the new phase word
+  state.lockExpectedKs = nextKs;
+  state.lockPosKs = 0;
+  // Reset phase deadline
+  m.phaseDeadline = performance.now() + m.phaseWindows[phaseIdx];
+  m.phaseHit = false;
+  // Remove telegraph ring if present
+  if (m.el) m.el.classList.remove('boss-charging');
+  // Repaint the word row with the new word
+  if (m.el) {
+    const wordBubble = m.el.querySelector('.word');
+    if (wordBubble) {
+      const built = buildWordRow(m.word, 22);
+      wordBubble.innerHTML = '';
+      wordBubble.appendChild(built.wrapper);
+      m.syllables = built.syllables;
+    }
+  }
+  // Update HP bar (hp stays as total keystrokes already typed)
+  const ksDone = m.phaseKs.slice(0, phaseIdx).reduce((s, k) => s + k.length, 0);
+  m.hp = m.maxHp - ksDone;
+  if (m.el) m.el.style.setProperty('--hp-frac', (m.hp / m.maxHp).toFixed(3));
+  // Phase stagger VFX
+  triggerMonsterHit(m);
+  particleBurst(m.x, m.y + 30, 15);
+  flashCenterText('Phase ' + m.phase + ' !');
+  tone({ freq: 440, type: 'triangle', dur: 0.25, gain: 0.07, slide: 660 });
+}
+
+// Boss reward modal: pause game, show 3 card choices (click or keys 1/2/3).
+function showBossRewardModal() {
+  state.paused = true;
+  const charges = state.specialCharges || 0;
+  const lifeOption = state.lives >= 3
+    ? { icon: '🛡️', label: 'Shield', desc: 'Absorb next hit' }
+    : { icon: '❤', label: '+1 Life', desc: 'Restore one heart' };
+  const specialFull = charges >= SPECIAL_MAX_CHARGES;
+  const veil = document.createElement('div');
+  veil.id = 'bossRewardModal';
+  veil.className = 'modal-veil';
+  veil.setAttribute('role', 'dialog');
+  veil.setAttribute('aria-modal', 'true');
+  veil.setAttribute('aria-label', 'Boss Reward Choice');
+  veil.innerHTML = `
+    <div class="modal-card" style="max-width:480px;">
+      <div class="badge">BOSS DEFEATED</div>
+      <h1>Choose Your Reward</h1>
+      <p class="subtitle">Press 1, 2, or 3</p>
+      <div class="boss-reward-cards">
+        <button class="boss-reward-card" data-choice="1" aria-label="Option 1: ${lifeOption.label}">
+          <div class="brc-icon">${lifeOption.icon}</div>
+          <div class="brc-label">${lifeOption.label}</div>
+          <div class="brc-desc">${lifeOption.desc}</div>
+          <div class="brc-key">1</div>
+        </button>
+        <button class="boss-reward-card${specialFull ? ' brc-disabled' : ''}" data-choice="2" aria-label="Option 2: Special Charge">
+          <div class="brc-icon">⚡</div>
+          <div class="brc-label">+1 Special</div>
+          <div class="brc-desc">${specialFull ? 'Already full' : '+1 필살기 charge'}</div>
+          <div class="brc-key">2</div>
+        </button>
+        <button class="boss-reward-card" data-choice="3" aria-label="Option 3: 2x XP">
+          <div class="brc-icon">✨</div>
+          <div class="brc-label">2x XP</div>
+          <div class="brc-desc">Double XP this level</div>
+          <div class="brc-key">3</div>
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(veil);
+
+  function pick(choice) {
+    veil.remove();
+    document.removeEventListener('keydown', onKey, true);
+    if (choice === 1) {
+      if (state.lives >= 3) {
+        // Grant shield instead of life when full
+        state.activePowerups = state.activePowerups || {};
+        state.activePowerups.shield = 30000;
+        PLAYER_EL.classList.add('shielded');
+        flashCenterText('🛡️ Shield granted');
+        renderPowerupHud();
+      } else {
+        state.lives = Math.min(3, state.lives + 1);
+        flashCenterText('❤ +1 LIFE');
+        tone({ freq: 880, type: 'sine', dur: 0.20, gain: 0.07, slide: 1480 });
+      }
+    } else if (choice === 2) {
+      if (!specialFull) {
+        state.specialCharges = Math.min(SPECIAL_MAX_CHARGES, (state.specialCharges || 0) + 1);
+        renderSpecialMeter();
+        flashCenterText('⚡ Special charged');
+      }
+    } else if (choice === 3) {
+      state.xpBoostLevel = state.level;
+      flashCenterText('✨ 2x XP this level');
+    }
+    state.paused = false;
+    updateHud();
+  }
+
+  veil.querySelectorAll('.boss-reward-card').forEach(btn => {
+    btn.addEventListener('click', () => pick(Number(btn.dataset.choice)));
+  });
+
+  function onKey(e) {
+    if (e.key === '1' || e.key === '2' || e.key === '3') {
+      e.preventDefault(); e.stopPropagation();
+      pick(Number(e.key));
+    }
+  }
+  document.addEventListener('keydown', onKey, true);
 }
 
 function buildMonsterEl(m) {
@@ -4744,11 +5213,14 @@ function buildMonsterEl(m) {
   } else {
     sprite.textContent = m.sprite;
   }
+  const groundShadow = document.createElement('span');
+  groundShadow.className = 'ground-shadow';
+  el.insertBefore(groundShadow, el.firstChild);
   el.appendChild(sprite);
 
   const wordBubble = document.createElement('div');
   wordBubble.className = 'word';
-  const fontPx = m.tier === 'boss' ? 22 : 28;
+  const fontPx = m.tier === 'boss' ? 24 : 30;
   const built = buildWordRow(m.word, fontPx);
 
   // Recall mode: hide all syllables after the first; show English up top.
@@ -4796,6 +5268,7 @@ function buildMonsterEl(m) {
   el.style.top  = '0px';
   STAGE.appendChild(el);
   m.el = el;
+  el.style.setProperty('--hp-frac', '1');
   renderMonsterDepth(m);
 }
 
@@ -4808,6 +5281,7 @@ function killMonster(m, byPlayer) {
   }
   m.el.classList.add('dying');
   particleBurst(m.x, m.y + 30, m.tier === 'boss' ? 30 : 10);
+  spawnSmokePuff(m.x, m.y + 40, { scale: 0.6 });
   if (byPlayer) {
     let xp = xpForKill(m.tier);
     let sc = scoreForKill(m.tier, state.combo);
@@ -4817,6 +5291,13 @@ function killMonster(m, byPlayer) {
       sc *= 3; xp = Math.round(xp * 1.5);
       flashCenterText('CRIT! ×3');
       particleBurst(m.x, m.y + 30, 18);
+      pulseBattleCamera('pulse');
+    }
+    // Perfect recall bonus: killed without any syllable reveals
+    if (m.recall && m.recallRevealsUsed === 0) {
+      sc = Math.round(sc * 1.5);
+      flashCenterText('PERFECT RECALL');
+      tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.05, slide: 1760 });
     }
     // Heart pickup: only granted when killing a heart monster (m.isHeart),
     // not as a passive drop. Heart monsters spawn very rarely as their own
@@ -4827,11 +5308,13 @@ function killMonster(m, byPlayer) {
       tone({ freq: 880, type:'sine', dur:0.20, gain:0.07, slide:1480 });
       tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.05, slide:1760 });
     }
-    // Active 2× XP power-up
+    // Active 2× XP power-up OR boss-reward 2x XP for this level
     if (state.activePowerups && state.activePowerups.xp > 0) xp = xp * 2;
+    if (state.xpBoostLevel && state.xpBoostLevel === state.level) xp = xp * 2;
     state.score += sc;
     state.xp += xp;
     state.kills++;
+    maybeGainSpecialChargeFromKill();
     // Track word kill counts (for in-game mastery + future sync to practice)
     try {
       state.wordKills = state.wordKills || {};
@@ -4852,13 +5335,17 @@ function killMonster(m, byPlayer) {
     if (state.kills === 1) unlockAchievement('first_kill');
     if (m.isBoss) {
       state.bossActive = false;
-      state.bossNextLevel = state.level + 5;
+      document.body.classList.remove('boss-alive');
       unlockAchievement('first_boss');
     }
     // Power-up drops on kill (boss + crit drop more often)
     maybeDropPowerup(m.x, m.y + 24, isCrit);
     maybeLevelUp();
     updateHud();
+    // Boss reward choice: pause and show the 3-card modal after boss kill
+    if (m.isBoss) {
+      setTimeout(() => showBossRewardModal(), 400);
+    }
   }
   setTimeout(() => m.el.remove(), 550);
   state.monsters = state.monsters.filter(x => x.id !== m.id);
@@ -5181,19 +5668,19 @@ const LEVEL_ACTS = {
     chapter: 'Chapter 2',
     title: '바람',
     subtitle: 'The Bamboo Forest',
-    flavor: 'The village is safe — but at the treeline, the air bends. Spirits of the bamboo grove stir, and they remember every word the demons stole.'
+    flavor: 'The village is safe, but at the treeline, the air bends. Spirits of the bamboo grove stir, and they remember every word the demons stole.'
   },
   9: {
     chapter: 'Chapter 3',
     title: '산',
     subtitle: 'The Mountain Shrine',
-    flavor: 'You climb past the last lantern. A 산신령 watches in silence from the ridge, and the words come faster now — zigzagging like wind through pine.'
+    flavor: 'You climb past the last lantern. A 산신령 watches in silence from the ridge, and the words come faster now: zigzagging like wind through pine.'
   },
   14: {
     chapter: 'Chapter 4',
     title: '단청',
     subtitle: 'Temple of Painted Eaves',
-    flavor: 'Inside the sanctuary, 단청 patterns burn red and gold. The 저승사자 rises through them. Type fast — even the dead can read here.'
+    flavor: 'Inside the sanctuary, 단청 patterns burn red and gold. The 저승사자 rises through them. Type fast: even the dead can read here.'
   },
   19: {
     chapter: 'Chapter 5',
@@ -5255,9 +5742,25 @@ function onLevelUp() {
   PLAYER_EL.classList.remove('levelup');
   void PLAYER_EL.offsetWidth;
   PLAYER_EL.classList.add('levelup');
+  const _pr = PLAYER_EL.getBoundingClientRect();
+  const _sr = getStageRect();
+  if (_pr && _sr) particleBurst(
+    (_pr.left + _pr.width / 2) - _sr.left,
+    (_pr.top + _pr.height / 2) - _sr.top,
+    16
+  );
   const sp = playerForLevel(state.level);
   renderPlayerSprite(state.level);
-  flashCenterText('Lv. ' + state.level + ' · ' + sp.label);
+  // Wave-clear bonus: all monsters cleared before level-up
+  if (state.monsters.length === 0) {
+    const bonus = 250 + state.level * 25;
+    state.score += bonus;
+    flashLevelBanner('WAVE CLEAR +' + bonus, state.level);
+  } else {
+    flashLevelBanner('Lv. ' + state.level + ' · ' + sp.label, state.level);
+  }
+  // Set spawn pause so level transitions breathe
+  state.spawnPauseMs = state.dailyRun ? 1000 : 2500;
   // Rubber-band: adjust assistMul based on leaks in the level that just ended.
   // >=2 leaks: slow down slightly. 0 leaks: relax back toward 1.0.
   const leaks = state.levelLeaks || 0;
@@ -5274,7 +5777,17 @@ function onLevelUp() {
   // Theme transition — applies on each level so the band-boundary level
   // smoothly fades into the new gradient.
   applyTheme(themeForLevel(state.level));
-  // Story act break at chapter milestones
+  // Clear xpBoost from previous level (reward only applies to the level it was earned on)
+  if (state.xpBoostLevel && state.xpBoostLevel !== state.level) {
+    state.xpBoostLevel = 0;
+  }
+  // Deterministic boss arrival: act levels {5,9,14,19,23} and every 5 past 23.
+  const isActLevel = !!LEVEL_ACTS[state.level];
+  const isPast23Boss = state.level > 23 && (state.level - 23) % 5 === 0;
+  if ((isActLevel || isPast23Boss) && !state.checkpointRun) {
+    state.pendingBoss = true;
+  }
+  // Story act break at chapter milestones (chains before boss cutscene via pendingBoss delay)
   if (LEVEL_ACTS[state.level]) {
     setTimeout(() => showActBreak(LEVEL_ACTS[state.level]), 500);
   }
@@ -5300,6 +5813,19 @@ function flashCenterText(txt) {
   el.textContent = txt;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1300);
+}
+
+function flashLevelBanner(txt, level) {
+  const tier = tierForLevel(level);
+  const tierColors = { 1: '#60a5fa', 2: '#34d399', 3: '#f59e0b', 4: '#f87171', 5: '#a78bfa' };
+  const color = tierColors[tier] || '#f59e0b';
+  const el = document.createElement('div');
+  el.className = 'level-banner';
+  el.textContent = txt;
+  el.style.color = color;
+  el.style.textShadow = '0 4px 16px ' + color + '66';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
 }
 
 function particleBurst(x, y, count) {
@@ -5398,9 +5924,9 @@ function findKoreanVoice() {
 
 function speakKoreanWord(text) {
   if (!audioEnabled() || !text) return;
-  // Rate scales with level: 1.0 (lv1) → ~2.0 (lv40+). Keeps audio pace
-  // matched to gameplay tempo so it never feels laggy at high levels.
-  const rate = Math.min(2.0, 1.0 + (state.level || 1) * 0.025);
+  // Rate scales gently with level: 1.0 (lv1) to 1.3 (lv30+). Capped lower
+  // than before so mid-game speech stays intelligible at higher levels.
+  const rate = Math.min(1.3, 1.0 + (state.level || 1) * 0.01);
 
   const url = _audioMap && _audioMap[text];
   if (url) {
@@ -5533,7 +6059,7 @@ function clamp01(n) {
 const DEPTH = {
   horizonPct: 12,    // % from top — matches the regenerated background horizon lines
   floorPct:    8,    // % from bottom — player's feet plane (player sits at bottom:8%)
-  farScale:   0.50,  // scale at the horizon (smallest) — raised so far monsters are visible earlier
+  farScale:   0.56,  // scale at the horizon (smallest); raised so far monsters are visible earlier
   nearScale:  1.30   // scale at the floor (largest)
 };
 
@@ -5572,6 +6098,7 @@ function renderMonsterDepth(m) {
   m.el.style.setProperty('--depth-shadow', (u * 16).toFixed(1) + 'px');
   m.el.style.setProperty('--shadow-alpha', (0.16 + u * 0.16).toFixed(3));
   m.el.style.setProperty('--shadow-scale', (0.72 + u * 0.86).toFixed(3));
+  m.el.style.setProperty('--word-counter', Math.max(1, Math.min(1/scale, 1.55)).toFixed(3));
 }
 
 function pulseBattleCamera(kind) {
@@ -5801,8 +6328,8 @@ function swingSword(monster) {
 
 // ─── 필살기 (Special Move) ─────────────────────────────────────────────────
 const SPECIAL_TRIGGERS = ['한글', '필살'];   // either word triggers
-const SPECIAL_COMBO_PER_CHARGE = ADMIN.combat.specialComboPerCharge;          // was 25 — much harder to recharge
-const SPECIAL_MAX_CHARGES = ADMIN.combat.specialMaxCharges;                // was 3
+const SPECIAL_KILLS_PER_CHARGE = ADMIN.combat.specialKillsPerCharge;  // 1 charge per 15 kills
+const SPECIAL_MAX_CHARGES = ADMIN.combat.specialMaxCharges;
 const CHANT_DURATION_MS = ADMIN.combat.chantDurationMs;
 const SPECIAL_HINT_KEY  = 'hangul-battle-special-hint-seen-v1';
 
@@ -5819,12 +6346,30 @@ function renderSpecialMeter() {
     p.classList.toggle('charged', i < charges);
   });
   meter.classList.toggle('full', charges >= SPECIAL_MAX_CHARGES);
+  // Kill-progress underbar: thin fill showing killsSinceCharge / SPECIAL_KILLS_PER_CHARGE
+  let bar = meter.querySelector('.special-kill-bar');
+  if (!bar) {
+    const track = document.createElement('div');
+    track.className = 'special-kill-track';
+    bar = document.createElement('div');
+    bar.className = 'special-kill-bar';
+    track.appendChild(bar);
+    meter.appendChild(track);
+  }
+  const pct = Math.min(1, (state.killsSinceCharge || 0) / SPECIAL_KILLS_PER_CHARGE) * 100;
+  bar.style.width = pct + '%';
 }
 
-function gainSpecialChargeFromCombo() {
-  // Award one charge each time combo crosses a multiple of SPECIAL_COMBO_PER_CHARGE.
-  if (!state.combo || state.combo % SPECIAL_COMBO_PER_CHARGE !== 0) return;
-  if ((state.specialCharges || 0) >= SPECIAL_MAX_CHARGES) return;
+function maybeGainSpecialChargeFromKill() {
+  // Award one charge per SPECIAL_KILLS_PER_CHARGE kills (including 필살-burst kills).
+  state.killsSinceCharge = (state.killsSinceCharge || 0) + 1;
+  if (state.killsSinceCharge < SPECIAL_KILLS_PER_CHARGE) return;
+  if ((state.specialCharges || 0) >= SPECIAL_MAX_CHARGES) {
+    state.killsSinceCharge = 0;
+    renderSpecialMeter();
+    return;
+  }
+  state.killsSinceCharge = 0;
   state.specialCharges = (state.specialCharges || 0) + 1;
   renderSpecialMeter();
   tone({ freq: 760, type:'triangle', dur:0.18, gain:0.05, slide: 1320 });
@@ -6042,8 +6587,7 @@ async function triggerSpecialMove() {
         state.lockPosKs = Math.min(state.lockExpectedKs.length, state.lockPosKs + damage);
       }
       if (m.el) {
-        const fill = m.el.querySelector('.hp-fill');
-        if (fill) fill.style.width = (m.hp / m.maxHp * 100) + '%';
+        m.el.style.setProperty('--hp-frac', (m.hp / m.maxHp).toFixed(3));
       }
       if (m.hp <= 0) { killMonster(m, true); killed++; }
     } else {
@@ -6225,6 +6769,7 @@ function tickRecallReveals(now) {
       next.cached.canvas.classList.add('syl-fade-in');
       tone({ freq: 920, type:'sine', dur:0.06, gain:0.025 });
     }
+    m.recallRevealsUsed = (m.recallRevealsUsed || 0) + 1;
     m.recallNextRevealAt = now + 2200;          // next hint in 2.2s
   }
 }
@@ -6361,14 +6906,23 @@ function damagePlayer() {
   }
   state.lives--;
   state.perfectWave = false;
-  // Losing a life must also break combo (a life lost should never be cheaper
-  // than a wrong keystroke).
-  breakCombo();
+  // Losing a life always hard-breaks combo (a life lost is never cheaper than a typo).
+  breakCombo({ hard: true });
   PLAYER_EL.classList.remove('hit');
   void PLAYER_EL.offsetWidth;
   PLAYER_EL.classList.add('hit');
   noiseBurst({ dur:0.15, gain:0.07, freq:300 });
-  if (state.lives <= 0) gameOver();
+  if (state.lives <= 0) { gameOver(); return; }
+  // One-time hint when first dropping to 1 life: points toward the heart pickup
+  if (state.lives === 1 && !state.shownHeartHint) {
+    state.shownHeartHint = true;
+    flashCenterText('find the ❤ word');
+    const livesEl = document.getElementById('hudLives');
+    if (livesEl) {
+      livesEl.classList.add('lives-danger');
+      setTimeout(() => livesEl.classList.remove('lives-danger'), 3000);
+    }
+  }
   updateHud();
 }
 
@@ -6388,7 +6942,17 @@ function gameOver() {
     const highestAct = clearedActs[clearedActs.length - 1];
     if (highestAct > getCheckpoint()) setCheckpoint(highestAct);
   }
-  document.getElementById('overScore').textContent = state.score.toLocaleString();
+  const _overScoreEl = document.getElementById('overScore');
+  const _finalScore = state.score;
+  _overScoreEl.textContent = '0';
+  const _scoreStart = performance.now();
+  const _scoreDur = 600;
+  (function _countUp(now) {
+    const t = Math.min(1, (now - _scoreStart) / _scoreDur);
+    const eased = 1 - Math.pow(1 - t, 3);
+    _overScoreEl.textContent = Math.round(eased * _finalScore).toLocaleString();
+    if (t < 1) requestAnimationFrame(_countUp);
+  })(performance.now());
   document.getElementById('overLevel').textContent = state.level;
   document.getElementById('overKills').textContent = state.kills;
   document.getElementById('overCombo').textContent = state.bestCombo;
@@ -6433,12 +6997,17 @@ function gameOver() {
 }
 
 function updateHud() {
+  document.body.classList.toggle('has-lock', state.lockId != null);
   HUD_LEVEL.textContent = state.level;
   HUD_SCORE.textContent = state.score.toLocaleString();
   const lost = Math.max(0, 3 - state.lives);
   HUD_LIVES.innerHTML = '♥'.repeat(Math.max(0, state.lives)) + '<span class="lost">' + '♡'.repeat(lost) + '</span>';
   HUD_COMBO.textContent = state.combo > 0 ? `×${state.combo}` : '×1';
   HUD_COMBO.classList.toggle('zero', state.combo === 0);
+  HUD_COMBO.classList.remove('hot', 'blazing', 'legendary');
+  if (state.combo >= 50) HUD_COMBO.classList.add('legendary');
+  else if (state.combo >= 25) HUD_COMBO.classList.add('blazing');
+  else if (state.combo >= 5) HUD_COMBO.classList.add('hot');
   XP_FILL.style.width = Math.min(100, (state.xp / xpThresholdForLevel(state.level)) * 100) + '%';
 }
 
@@ -6544,7 +7113,7 @@ function handleKey(rawKey, isShift) {
     // Restore the HP bar to reflect already-typed keystrokes
     const restoredHp = Math.max(0, target.maxHp - state.lockPosKs);
     target.hp = restoredHp;
-    if (target.el) target.el.querySelector('.hp-fill').style.width = (restoredHp / target.maxHp * 100) + '%';
+    if (target.el) target.el.style.setProperty('--hp-frac', (restoredHp / target.maxHp).toFixed(3));
     if (target.syllables) repaintWordRow(target.syllables, state.lockPosKs);
     // Sword era (melee levels): teleport next to the locked monster so the
     // slashes land in place. Ranged levels stay home and fire projectiles.
@@ -6592,7 +7161,11 @@ function advanceLock(m) {
   state.combo++;
   if (state.combo > state.bestCombo) state.bestCombo = state.combo;
   m.hp = Math.max(0, m.maxHp - state.lockPosKs);
-  if (m.el) m.el.querySelector('.hp-fill').style.width = (m.hp / m.maxHp * 100) + '%';
+  if (m.el) m.el.style.setProperty('--hp-frac', (m.hp / m.maxHp).toFixed(3));
+  if (m.el) {
+    const ww = m.el.querySelector('.word');
+    if (ww) { ww.classList.remove('jamo-tick'); void ww.offsetWidth; ww.classList.add('jamo-tick'); }
+  }
   // Repaint each syllable canvas based on the new lock position. No more "disappearing" syllables.
   if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
   LIVE_EL.textContent = state.ime.display;
@@ -6609,19 +7182,33 @@ function advanceLock(m) {
   if (state.combo === 25)  unlockAchievement('combo_25');
   if (state.combo === 50)  unlockAchievement('combo_50');
   if (state.combo === 100) unlockAchievement('combo_100');
-  gainSpecialChargeFromCombo();
   if (state.lockPosKs >= state.lockExpectedKs.length) {
-    killMonster(m, true);
+    // Boss phase advance: phase 1 or 2 completed goes to next phase rather than kill
+    if (m.isBoss && m.phase < 3) {
+      state.ime.reset();
+      LIVE_EL.textContent = '';
+      advanceBossPhase(m);
+    } else {
+      killMonster(m, true);
+    }
   }
   updateHud();
 }
 
-function breakCombo() {
+function breakCombo(opts) {
+  const hard = opts && opts.hard;
   const wasCombo = state.combo;
-  if (state.combo > 0) { state.combo = 0; updateHud(); }
   // Wrong key in this wave — perfect-wave achievement is no longer possible.
   state.perfectWave = false;
-  // Visceral break feedback when losing a meaningful combo
+  if (!hard && wasCombo > 0 && wasCombo < ADMIN.combat.comboSoftThreshold) {
+    // Soft break: halve the combo instead of zeroing it
+    state.combo = Math.floor(wasCombo * ADMIN.combat.comboSoftFactor);
+    updateHud();
+    if (wasCombo >= 4) flashCenterText('combo / 2');
+    return;
+  }
+  // Hard break: full reset with visceral feedback
+  if (state.combo > 0) { state.combo = 0; updateHud(); }
   if (wasCombo >= 10) {
     flashCenterText('COMBO BROKEN');
     document.body.classList.add('shake');
@@ -6744,9 +7331,15 @@ function loop(t) {
     const slowMul = (state.activePowerups && state.activePowerups.slowmo > 0) ? 0.55 : 1.0;
     // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
     const fastMul = _fastFallActive ? 4.0 : 1.0;
+    if (state.spawnPauseMs > 0) state.spawnPauseMs -= dt;
+    // pendingBoss: once the spawn pause finishes and no boss is active, trigger boss fight.
+    if (state.pendingBoss && !state.bossActive && state.spawnPauseMs <= 0) {
+      state.pendingBoss = false;
+      triggerBossFight();
+    }
     state.spawnTimer += dt;
     const cap = state.level >= 15 ? ADMIN.spawnCap.endgame : state.level >= 7 ? ADMIN.spawnCap.late : state.level >= 4 ? ADMIN.spawnCap.mid : ADMIN.spawnCap.early;
-    if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap) {
+    if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap && state.spawnPauseMs <= 0 && !state.bossActive && !state.pendingBoss) {
       state.spawnTimer = 0;
       spawnMonster();
     }
@@ -6814,6 +7407,33 @@ function loop(t) {
           state.ime.reset(); LIVE_EL.textContent = '';
           teleportPlayerHome(true);
         }
+      }
+    }
+  }
+  // Boss phase deadline tick: telegraph ring + projectile attack on expiry
+  if (!state.paused && !state.specialMoveActive && state.bossActive) {
+    const boss = state.monsters.find(m => m.isBoss);
+    if (boss && boss.phaseDeadline) {
+      const now = performance.now();
+      const remaining = boss.phaseDeadline - now;
+      // Last 1500ms: show charging red ring
+      if (remaining <= 1500 && !boss.phaseHit) {
+        boss.phaseHit = true;
+        if (boss.el) boss.el.classList.add('boss-charging');
+        tone({ freq: 200, type: 'sawtooth', dur: 1.4, gain: 0.04, slide: 440 });
+      }
+      // Deadline expired: fire projectile, damage player, reset deadline for this phase
+      if (remaining <= 0) {
+        boss.phaseHit = false;
+        if (boss.el) boss.el.classList.remove('boss-charging');
+        // Projectile VFX toward player (inverted geometry: boss fires down)
+        fireProjectileAt({ x: boss.x, y: boss.y, el: boss.el, _bossShot: true });
+        setTimeout(() => {
+          if (state.running && !state.paused) damagePlayer();
+        }, 300);
+        // Reset deadline for the same phase (word progress is kept)
+        const phaseIdx = boss.phase - 1;
+        boss.phaseDeadline = performance.now() + boss.phaseWindows[phaseIdx];
       }
     }
   }
@@ -6988,6 +7608,9 @@ function doStartGame() {
   state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
   state.monsters = [];
   state.spawnTimer = 0;
+  state.spawnPauseMs = 0;
+  state.spawnsSinceHeart = 0;
+  state.shownHeartHint = false;
   state.checkpointRun = false;
   state.dailyRun = false;
   state.rng = null;
@@ -7000,12 +7623,13 @@ function doStartGame() {
   state.levelLeaks = 0;
   state.slowMode = getSlowMode();
   state.spawnInterval = ADMIN.pace.initialSpawnMs * (state.slowMode ? 1.4 : 1.0);
-  state.bossActive = false; state.bossNextLevel = 5;
+  state.bossActive = false; state.pendingBoss = false; state.xpBoostLevel = 0;
   state.lockId = null; state.ime.reset();
   // Reset ninja state
   teleportPlayerHome(true);
   // Reset 필살기 + power-ups
   state.specialCharges = 0;
+  state.killsSinceCharge = 0;
   state.specialMoveBurst = false;
   resetSpecialBuffer();
   cancelAllSpeech();
@@ -7065,7 +7689,10 @@ function startCheckpointGame(startLevel) {
   // Set spawn interval appropriate for the checkpoint level
   state.spawnInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - startLevel * ADMIN.pace.spawnIntervalLevelStep);
   state.spawnTimer = 0;
-  state.bossActive = false; state.bossNextLevel = 5;
+  state.spawnPauseMs = 0;
+  state.spawnsSinceHeart = 0;
+  state.shownHeartHint = false;
+  state.bossActive = false; state.pendingBoss = false; state.xpBoostLevel = 0;
   state.lockId = null; state.ime.reset();
   state.checkpointRun = true;
   state.dailyRun = false;
@@ -7080,6 +7707,7 @@ function startCheckpointGame(startLevel) {
   state.slowMode = getSlowMode();
   teleportPlayerHome(true);
   state.specialCharges = 0;
+  state.killsSinceCharge = 0;
   state.specialMoveBurst = false;
   resetSpecialBuffer();
   cancelAllSpeech();
@@ -7114,7 +7742,10 @@ function startDailyGame() {
   state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
   state.monsters = [];
   state.spawnTimer = 0; state.spawnInterval = ADMIN.pace.initialSpawnMs;
-  state.bossActive = false; state.bossNextLevel = 5;
+  state.spawnPauseMs = 0;
+  state.spawnsSinceHeart = 0;
+  state.shownHeartHint = false;
+  state.bossActive = false; state.pendingBoss = false; state.xpBoostLevel = 0;
   state.lockId = null; state.ime.reset();
   state.checkpointRun = false;
   state.dailyRun = true;
@@ -7130,6 +7761,7 @@ function startDailyGame() {
   if (state.dailyTimerEl) state.dailyTimerEl.style.display = '';
   teleportPlayerHome(true);
   state.specialCharges = 0;
+  state.killsSinceCharge = 0;
   state.specialMoveBurst = false;
   resetSpecialBuffer();
   cancelAllSpeech();
@@ -7166,7 +7798,16 @@ async function endDailyRun() {
   // Submit score
   const submitted = await submitDailyScore(points);
   // Show game-over modal with daily run context
-  document.getElementById('overScore').textContent = points.toLocaleString();
+  const _drScoreEl = document.getElementById('overScore');
+  const _drFinal = points;
+  _drScoreEl.textContent = '0';
+  const _drStart = performance.now();
+  (function _drCount(now) {
+    const t = Math.min(1, (now - _drStart) / 600);
+    const eased = 1 - Math.pow(1 - t, 3);
+    _drScoreEl.textContent = Math.round(eased * _drFinal).toLocaleString();
+    if (t < 1) requestAnimationFrame(_drCount);
+  })(performance.now());
   document.getElementById('overLevel').textContent = state.level;
   document.getElementById('overKills').textContent = state.kills;
   document.getElementById('overCombo').textContent = state.bestCombo;
@@ -7505,8 +8146,32 @@ document.getElementById('introHigh').textContent = getHighScore().toLocaleString
   const data = getDailyStreak();
   if (data.streak > 0) {
     streakEl.textContent = '🔥 ' + data.streak + '-day streak';
-    streakEl.style.display = '';
+    streakEl.style.display = 'inline';
   }
+})();
+
+// Intro leaderboard expander
+(function() {
+  const btn = document.getElementById('introLbExpander');
+  const container = document.getElementById('battleLbIntroContainer');
+  if (!btn || !container) return;
+  btn.addEventListener('click', () => {
+    const expanded = container.classList.toggle('lb-expanded');
+    btn.textContent = expanded ? 'Show less ▴' : 'Show all ▾';
+    btn.setAttribute('aria-expanded', String(expanded));
+  });
+})();
+
+// Game-over leaderboard expander
+(function() {
+  const btn = document.getElementById('gameOverLbExpander');
+  const container = document.getElementById('battleLbContainer');
+  if (!btn || !container) return;
+  btn.addEventListener('click', () => {
+    const expanded = container.classList.toggle('lb-expanded');
+    btn.textContent = expanded ? 'Show less ▴' : 'Show full rankings ▾';
+    btn.setAttribute('aria-expanded', String(expanded));
+  });
 })();
 
 // a11y focus management: move focus into modals on open, restore on close.

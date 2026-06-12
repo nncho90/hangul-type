@@ -427,10 +427,10 @@ select {
 const ADMIN_DEFAULTS = {
   tier: {
     "1":    { speedMul: 0.80, motion: "straight", fontPx: 44, animS: 1.6 },
-    "2":    { speedMul: 0.95, motion: "straight", fontPx: 54, animS: 1.8 },
-    "3":    { speedMul: 0.95, motion: "zigzag",   fontPx: 62, animS: 2.0 },
-    "4":    { speedMul: 0.90, motion: "dive",     fontPx: 72, animS: 2.2 },
-    "5":    { speedMul: 1.05, motion: "tracker",  fontPx: 84, animS: 1.5 },
+    "2":    { speedMul: 0.90, motion: "straight", fontPx: 54, animS: 1.8 },
+    "3":    { speedMul: 0.80, motion: "zigzag",   fontPx: 62, animS: 2.0 },
+    "4":    { speedMul: 0.85, motion: "dive",     fontPx: 72, animS: 2.2 },
+    "5":    { speedMul: 0.95, motion: "tracker",  fontPx: 84, animS: 1.5 },
     "boss": { speedMul: 0.55, motion: "teleport", fontPx: 96, animS: 2.5 }
   },
   levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19 },
@@ -440,9 +440,10 @@ const ADMIN_DEFAULTS = {
     initialSpawnMs: 1400
   },
   combat: {
-    specialComboPerCharge: 60, specialMaxCharges: 2,
+    specialKillsPerCharge: 15, specialMaxCharges: 2,
     chantDurationMs: 2000, specialBufferIdleMs: 1500,
-    heartSpawnChance: 0.018
+    heartSpawnChance: 0.018,
+    comboSoftThreshold: 25, comboSoftFactor: 0.5
   },
   spawnCap: { early: 3, mid: 4, late: 5, endgame: 6 },
   player: { lives: 3 }
@@ -617,11 +618,13 @@ function buildCombat() {
   const grid = document.getElementById('combat-grid');
   grid.innerHTML = '';
   const fields = [
-    { key: 'specialComboPerCharge', label: 'Combo Per Charge',     step: 1,     min: 1 },
+    { key: 'specialKillsPerCharge', label: 'Kills Per Charge',     step: 1,     min: 1 },
     { key: 'specialMaxCharges',     label: 'Max Charges',          step: 1,     min: 1, max: 10 },
     { key: 'chantDurationMs',       label: 'Chant Duration (ms)',  step: 100,   min: 100 },
     { key: 'specialBufferIdleMs',   label: 'Special Buffer (ms)',  step: 100,   min: 0 },
     { key: 'heartSpawnChance',      label: 'Heart Spawn Chance',   step: 0.001, min: 0, max: 1 },
+    { key: 'comboSoftThreshold',    label: 'Combo Soft Threshold', step: 1,     min: 0 },
+    { key: 'comboSoftFactor',       label: 'Combo Soft Factor',    step: 0.05,  min: 0, max: 1 },
   ];
   for (const f of fields) {
     const div = document.createElement('div');
