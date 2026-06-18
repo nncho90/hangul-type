@@ -674,29 +674,34 @@
   .topic-pill .topic-mastery { color: var(--tmd); font-weight: 600; }
   .topic-pill.on .topic-mastery { color: white; }
 
-  /* Battle Mode launcher — neutral pill, no gradient */
+  /* Battle Mode launcher — bold accent CTA so it clearly invites a press */
   .battle-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 11px 20px;
+    gap: 7px;
+    padding: 11px 22px;
     min-height: 46px;
     border-radius: 13px;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-    border: 1px solid var(--bdhi);
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
-    color: var(--thi);
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    border: 1px solid transparent;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.30);
+    color: #fff;
     text-decoration: none;
     font-size: 14px;
     font-weight: 700;
-    transition: all 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
   }
   .battle-link:hover {
-    border-color: var(--bdhi);
-    color: var(--thi);
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    color: #fff;
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.40);
   }
-  .battle-link .battle-icon { font-size: 14px; line-height: 1; }
+  .battle-link:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.32);
+  }
+  .battle-link .battle-icon { font-size: 15px; line-height: 1; }
   .battle-link .battle-text { line-height: 1; }
 
   /* Mode toggle (Practice / League) */
@@ -832,13 +837,14 @@
   .cr-card.cr-active .cr-name { color: var(--blue); font-weight: 700; }
   .cr-card.cr-active .cr-unit-num { color: var(--blue); }
   .cr-card.cr-active .cr-prog { color: rgba(37,99,235,0.55); }
-  /* Next: soft blue border, slightly elevated */
+  /* Next: dashed neutral outline — clearly "coming up", not a second selected card */
   .cr-card.cr-next {
-    border-color: rgba(96,165,250,0.55);
-    background: rgba(219,234,254,0.18);
-    box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+    border-style: dashed;
+    border-color: var(--bdhi);
+    background: rgba(255,255,255,0.92);
+    box-shadow: none;
   }
-  .cr-card.cr-next .cr-fill { background: rgba(37,99,235,0.05); }
+  .cr-card.cr-next .cr-fill { background: rgba(37,99,235,0.04); }
   .practice-content {
     max-width: 780px;
     margin: 0 auto;
@@ -1419,11 +1425,33 @@
   .diag .ko-emph.lg { font-size: 18px; }
 
   /* Heatmap */
+  /* Per-jamo accuracy card + settings gear share one row */
+  .jamo-settings-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    max-width: 745px;
+    margin: 14px auto 0;
+  }
+  .jamo-settings-row .settings-wrap { flex: 0 0 auto; }
+  /* Gear matches the collapsed per-jamo header height so the two sit level */
+  .jamo-settings-row .icon-btn {
+    width: 46px;
+    height: 50px;
+    padding: 0;
+    font-size: 18px;
+    border-radius: 12px;
+  }
+  /* Menu sits on the far right, so open it leftward to avoid overflow */
+  .jamo-settings-row .settings-menu { left: auto; right: 0; }
+
   /* Per-jamo accuracy card: collapsible. Hidden by default. */
   .jamo-card {
+    flex: 1 1 auto;
     width: 100%;
     max-width: 701px;
-    margin: 14px auto 0;
+    margin: 0;
     padding: 16px 20px;
   }
   .jamo-toggle {
@@ -2180,29 +2208,31 @@
           </div>
 
 
-          <!-- Per-jamo accuracy heatmap — collapsed by default -->
-          <section class="card jamo-card collapsed" id="jamoCard">
-            <button class="jamo-toggle" id="btnJamoToggle" aria-expanded="false">
-              <span class="jamo-toggle-label">Per-jamo accuracy</span>
-              <span class="jamo-toggle-caret">▾</span>
-            </button>
-            <div class="jamo-body">
-              <div class="csub">Where you struggle. New words are prioritized toward your weakest jamo. Tap a red or yellow key to drill it directly.</div>
-              <div id="jamoGrid"></div>
-              <div class="legend">
-                <span><span class="dot weak"></span>&lt; 70%</span>
-                <span><span class="dot med"></span>70-90%</span>
-                <span><span class="dot good"></span>90%+</span>
+          <!-- Per-jamo accuracy heatmap (collapsed by default) + settings gear, on one row -->
+          <div class="jamo-settings-row">
+            <section class="card jamo-card collapsed" id="jamoCard">
+              <button class="jamo-toggle" id="btnJamoToggle" aria-expanded="false">
+                <span class="jamo-toggle-label">Per-jamo accuracy</span>
+                <span class="jamo-toggle-caret">▾</span>
+              </button>
+              <div class="jamo-body">
+                <div class="csub">Where you struggle. New words are prioritized toward your weakest jamo. Tap a red or yellow key to drill it directly.</div>
+                <div id="jamoGrid"></div>
+                <div class="legend">
+                  <span><span class="dot weak"></span>&lt; 70%</span>
+                  <span><span class="dot med"></span>70-90%</span>
+                  <span><span class="dot good"></span>90%+</span>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          <div class="settings-wrap" id="settingsWrap">
-            <button class="icon-btn" id="btnSettings" title="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
-            <div class="settings-menu" id="settingsMenu" hidden>
-              <button class="setting-row" id="btnAudio">🔊 Audio: ON</button>
-              <button class="setting-row" id="btnRomanize" title="Show romanization">🅰️ Romanize: OFF</button>
-              <button class="setting-row danger" id="btnReset">Reset stats</button>
+            <div class="settings-wrap" id="settingsWrap">
+              <button class="icon-btn" id="btnSettings" title="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
+              <div class="settings-menu" id="settingsMenu" hidden>
+                <button class="setting-row" id="btnAudio">🔊 Audio: ON</button>
+                <button class="setting-row" id="btnRomanize" title="Show romanization">🅰️ Romanize: OFF</button>
+                <button class="setting-row danger" id="btnReset">Reset stats</button>
+              </div>
             </div>
           </div>
         </div>
@@ -3689,8 +3719,7 @@ function renderBattleChip() {
   const textEl = document.getElementById('battleText');
   if (!iconEl || !textEl) return;
   iconEl.textContent = '⚔️';
-  const high = getBattleHighScore();
-  textEl.textContent = high > 0 ? `Battle · best ${high}` : 'Battle';
+  textEl.textContent = 'Battle';
 }
 
 // Feature G: show a one-line nudge toward battle mode after a lesson completes.
