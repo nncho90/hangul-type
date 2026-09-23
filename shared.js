@@ -5,6 +5,48 @@
 const SUPABASE_URL      = 'https://yugrqnocdrfvpmkrddya.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_xKJO3LJAlU1qkEigRBvTRg_wTlwFVjP';
 
+// ------------------------------------------------------------
+// Analytics (Firebase / Google Analytics 4)
+// ------------------------------------------------------------
+// Firebase Analytics for web IS a GA4 data stream, so the lightweight gtag.js
+// loader below reports into both the Firebase console and GA4. Only the
+// measurement ID is needed; the rest of the Firebase config is not.
+//
+// To activate: Firebase console -> Project settings -> Your apps -> Web app
+// -> copy `measurementId` (looks like G-XXXXXXXXXX) and paste it here.
+// Leave empty to disable; every track() call becomes a no-op.
+const ANALYTICS_MEASUREMENT_ID = 'G-V0WDJJWEPP';
+
+// Set localStorage 'hangul-type-analytics-debug' = '1' to echo events to the
+// console (and to GA4 DebugView) without touching production data volume.
+const _analyticsDebug = (() => {
+  try { return localStorage.getItem('hangul-type-analytics-debug') === '1'; } catch (e) { return false; }
+})();
+
+(function initAnalytics() {
+  if (!ANALYTICS_MEASUREMENT_ID || typeof document === 'undefined') return;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+  gtag('js', new Date());
+  gtag('config', ANALYTICS_MEASUREMENT_ID, {
+    debug_mode: _analyticsDebug || undefined,
+    // Which surface the visitor is on; lets Firebase split practice vs battle.
+    page_surface: /game\.html/.test(location.pathname) ? 'battle' : 'practice'
+  });
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ANALYTICS_MEASUREMENT_ID);
+  document.head.appendChild(s);
+})();
+
+// track('event_name', { param: value }) — GA4 naming: snake_case, <= 40 chars,
+// params are flat strings/numbers. Safe to call anywhere; never throws.
+function track(name, params) {
+  if (_analyticsDebug) { try { console.log('[analytics]', name, params || {}); } catch (e) {} }
+  if (!ANALYTICS_MEASUREMENT_ID || typeof window.gtag !== 'function') return;
+  try { gtag('event', name, params || {}); } catch (e) {}
+}
+
 // Common IANA timezone -> ISO 3166-1 alpha-2 country code
 // index.html's copy is the superset; game.html had only ~12 entries
 const COUNTRY_BY_TZ = {

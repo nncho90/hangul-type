@@ -3790,6 +3790,7 @@ function closeModal(el) {
 function openProfileModal() {
   const el = document.getElementById('profileModal');
   if (!el) return;
+  track('profile_open', { surface: 'practice' });
   const cc = (progress.profile && progress.profile.countryCode) || detectCountry();
   const name = (progress.profile && progress.profile.name) || 'Player';
   const countryEntries = Object.entries(COUNTRY_NAMES).sort((a, b) => a[1].localeCompare(b[1]));
@@ -4069,6 +4070,7 @@ const TOPIC_ICONS = {
 // Pop a celebration when one sub-category fills and the next loads. Gives the
 // user a clear progress beat instead of silently swapping word pools.
 function celebrateTopicComplete(prev, next) {
+  track('topic_complete', { topic_id: String(prev.id), next_topic_id: next ? String(next.id) : '' });
   const banner = document.createElement('div');
   banner.className = 'topic-complete-toast';
   const ico = TOPIC_ICONS[prev.id] || '🎉';
@@ -5104,6 +5106,10 @@ function buildTopicsPicker() {
 
 function setTopic(id) {
   state.activeTopic = id;
+  track('topic_select', {
+    topic_id: String(id),
+    topic_kind: isCharTopic(id) ? 'char' : isLessonId(id) ? 'lesson' : (id === 'mistakes' || id === 'all') ? id : 'vocab'
+  });
   // Persist so the next session opens the same topic instead of falling back
   // to the first-time default. Save eagerly; subsequent state mutations call
   // saveProgress on their own milestones.
@@ -5362,6 +5368,7 @@ function renderJamoGrid() {
 // that contain the chosen jamo, weighted toward words with more occurrences.
 function startJamoDrill(jamo) {
   if (!jamo) return;
+  track('jamo_drill_start', { jamo: jamo });
   // Build a pool from ALL TOPICS words containing this jamo.
   const seen = new Set();
   const candidates = [];
@@ -5422,6 +5429,7 @@ function afterCorrectKeystroke() {
       const wAcc = Math.round((wordHits / Math.max(wordTotal, 1)) * 100);
       recordRecent(target, true, wAcc);
       recordDailyStreak();
+      track('word_complete', { topic_id: String(state.activeTopic), accuracy: wAcc });
       // Word-completion juice (kept lightweight; XP/level system removed)
       const wordEl = document.querySelector('#targetWord');
       confettiBurst(wordEl, 8);
@@ -5863,6 +5871,8 @@ function boot() {
   });
 
   document.getElementById('btnSkip').addEventListener('click', () => loadWord(pickNextWordIdx(state.wordIdx)));
+  const battleLinkEl = document.getElementById('battleLink');
+  if (battleLinkEl) battleLinkEl.addEventListener('click', () => track('battle_link_click', { words_done: state.wordsDone }));
   const btnAudio = document.getElementById('btnAudio');
   function syncAudioBtn() {
     btnAudio.textContent = `${state.audioOn ? '🔊' : '🔇'} Audio: ${state.audioOn ? 'ON' : 'OFF'}`;
@@ -5873,6 +5883,7 @@ function boot() {
     closeMobileMenu();
     state.audioOn = !state.audioOn;
     saveAudio();
+    track('setting_toggle', { setting: 'audio', enabled: state.audioOn ? 1 : 0 });
     if (!state.audioOn) cancelPronunciation();
     syncAudioBtn();
     if (state.audioOn) {
@@ -5890,6 +5901,7 @@ function boot() {
     closeMobileMenu();
     state.romanizeOn = !state.romanizeOn;
     saveRomanize();
+    track('setting_toggle', { setting: 'romanize', enabled: state.romanizeOn ? 1 : 0 });
     syncRomanizeBtn();
     const w = state.activeWords[state.wordIdx];
     if (w) renderRomanization(w.ko);

@@ -4351,6 +4351,7 @@ async function submitBattleScore(level, points) {
     // Network reached the server but server rejected — don't requeue (would loop forever).
     // Network errors (offline, DNS, timeout) hit the catch block and DO get queued for next load.
     if (!res.ok && res.status >= 500) _enqueueSubmit({ body });
+    track('score_submit', { level: level, points: points, ok: res.ok ? 1 : 0 });
     _battleLbCache = null;
     _fandomLbCache = null;  // clear now so the .finally() render fetches fresh fandom data
     // Mirror the player's local fandom selection to their server row, so the
@@ -4655,6 +4656,7 @@ function isProfileUnset() {
 }
 
 function openProfileModal(opts) {
+  track('profile_open', { surface: 'battle', required: (opts && opts.requireSetup) ? 1 : 0 });
   // Called both directly and as an event listener — strip the Event arg.
   if (!opts || opts instanceof Event) opts = {};
   const requireSetup = !!opts.requireSetup;
@@ -5055,6 +5057,7 @@ function triggerBossFight() {
 }
 
 function spawnBoss() {
+  track('boss_start', { level: state.level });
   sfxBossWarn();
   pulseBattleCamera('heavy');
   state.bossActive = true;
@@ -5165,6 +5168,7 @@ function advanceBossPhase(m) {
 
 // Boss reward modal: pause game, show 3 card choices (click or keys 1/2/3).
 function showBossRewardModal() {
+  track('boss_defeat', { level: state.level });
   state.paused = true;
   const charges = state.specialCharges || 0;
   const lifeOption = state.lives >= 3
@@ -5811,6 +5815,7 @@ function showActBreak(act) {
 }
 
 function onLevelUp() {
+  track('battle_level_up', { level: state.level, mode: state.runMode || 'story' });
   sfxLevelUp();
   pulseBattleCamera('pulse');
   PLAYER_EL.classList.remove('levelup');
@@ -7015,6 +7020,15 @@ function gameOver() {
   sfxGameOver();
   const high = getHighScore();
   const newHigh = state.score > high;
+  track('battle_end', {
+    mode: state.runMode || 'story',
+    level: state.level,
+    score: state.score,
+    kills: state.kills,
+    best_combo: state.bestCombo || 0,
+    duration_s: state.startedAt ? Math.round((Date.now() - state.startedAt) / 1000) : 0,
+    new_high: newHigh ? 1 : 0
+  });
   if (newHigh) setHighScore(state.score);
   if (state.level > getBestLevel()) setBestLevel(state.level);
   // Update chapter checkpoint: only advance for acts whose boss was killed this run.
@@ -7701,6 +7715,8 @@ function startGame() {
 }
 
 function doStartGame() {
+  state.runMode = 'story';
+  track('battle_start', { mode: 'story', start_level: 1 });
   state.running = true; state.paused = false;
   clearPlayerAnimationTimers();
   state.lives = ADMIN.player.lives; state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
@@ -7777,6 +7793,8 @@ function renderCheckpointButton() {
 }
 
 function startCheckpointGame(startLevel) {
+  state.runMode = 'checkpoint';
+  track('battle_start', { mode: 'checkpoint', start_level: startLevel });
   document.getElementById('gameOverModal').style.display = 'none';
   document.getElementById('introModal').style.display = 'none';
   clearPlayerAnimationTimers();
@@ -7835,6 +7853,8 @@ function startCheckpointGame(startLevel) {
 }
 
 function startDailyGame() {
+  state.runMode = 'daily';
+  track('battle_start', { mode: 'daily', start_level: 1 });
   document.getElementById('introModal').style.display = 'none';
   clearPlayerAnimationTimers();
   state.running = true; state.paused = false;
@@ -7894,6 +7914,14 @@ async function endDailyRun() {
   state.running = false;
   clearPlayerAnimationTimers();
   cancelAllSpeech();
+  track('battle_end', {
+    mode: 'daily',
+    level: state.level,
+    score: state.score,
+    kills: state.kills,
+    best_combo: state.bestCombo || 0,
+    duration_s: state.startedAt ? Math.round((Date.now() - state.startedAt) / 1000) : 0
+  });
   if (state.dailyTimerEl) state.dailyTimerEl.style.display = 'none';
   sfxGameOver();
   const points = state.score;
@@ -8161,6 +8189,7 @@ function buildShareCard() {
 function openShareModal() {
   const modal = document.getElementById('shareModal');
   if (!modal) return;
+  track('share_open', { level: state.level, score: state.score });
   buildShareCard();
   modal.classList.add('open');
   modal.style.display = 'flex';
