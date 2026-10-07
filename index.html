@@ -190,7 +190,7 @@
       box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
     }
     .mobile-menu-popover.open { display: grid; gap: 6px; }
-    .mobile-actions .battle-link,
+    .mobile-actions .home-btn,
     .mobile-actions .icon-btn {
       width: 100%;
       min-height: 40px;
@@ -291,35 +291,19 @@
     100% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.95); }
   }
 
-  /* Battle Mode launcher — bold accent CTA so it clearly invites a press */
-  .battle-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 11px 22px;
-    min-height: 46px;
-    border-radius: 13px;
-    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-    border: 1px solid transparent;
-    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.30);
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 700;
-    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  /* Header button back to the title screen */
+  .home-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--l2);
+    border: 1px solid var(--bd);
+    font: inherit; font-size: 12px; font-weight: 600;
+    color: var(--thi);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
   }
-  .battle-link:hover {
-    color: #fff;
-    transform: translateY(-1px);
-    filter: brightness(1.06);
-    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.40);
-  }
-  .battle-link:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.32);
-  }
-  .battle-link .battle-icon { font-size: 15px; line-height: 1; }
-  .battle-link .battle-text { line-height: 1; }
+  .home-btn:hover { background: var(--l3); border-color: var(--bdhi); }
 
   /* Topics shelf — single-row curriculum with section tabs */
   .topics-shelf {
@@ -1478,6 +1462,196 @@
     }
   }
 
+  /* ── Title screen ─────────────────────────────────────────────────── */
+  .title-screen {
+    --ts-ink: #10131f;          /* outlines and the deepest shade */
+    --ts-cream: #fff4d6;        /* title + menu text */
+    --ts-gold: #f6c453;         /* active menu item, cursor */
+    --ts-panel: rgba(14, 18, 34, 0.82);
+    --ts-frame: #efe4c8;        /* dialogue box border */
+    --ts-sakura: #f9c4d2;
+    --ts-sakura-deep: #f29bb4;
+    position: fixed; inset: 0;
+    z-index: 12000;
+    overflow: hidden;
+    background: var(--ts-ink);
+    color: var(--ts-cream);
+    transition: opacity 0.35s ease;
+  }
+  .title-screen[hidden] { display: none; }
+  .title-screen.closing { opacity: 0; pointer-events: none; }
+  body.title-open { overflow: hidden; }
+  .ts-bg {
+    position: absolute; inset: -6%;
+    background: url('sprites/backgrounds/01-village.webp') center bottom / cover no-repeat;
+    animation: ts-drift 40s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  @keyframes ts-drift {
+    from { transform: translate3d(-2%, 0, 0) scale(1.04); }
+    to   { transform: translate3d(2%, -1%, 0) scale(1.08); }
+  }
+  .ts-vignette {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(16, 19, 31, 0.55) 0%, rgba(16, 19, 31, 0) 38%),
+      radial-gradient(ellipse 75% 70% at 50% 58%, rgba(16, 19, 31, 0) 45%, rgba(16, 19, 31, 0.78) 100%);
+  }
+  .ts-petals { position: absolute; inset: 0; pointer-events: none; }
+  .ts-petal {
+    position: absolute; top: -24px;
+    width: 12px; height: 9px;
+    border-radius: 12px 2px 12px 2px;
+    background: linear-gradient(135deg, var(--ts-sakura), var(--ts-sakura-deep));
+    opacity: 0.85;
+    animation: ts-fall var(--dur, 14s) linear var(--delay, 0s) infinite;
+  }
+  @keyframes ts-fall {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+    50%  { transform: translate3d(var(--sway, 40px), 55vh, 0) rotate(200deg); }
+    100% { transform: translate3d(calc(var(--sway, 40px) * -0.5), 110vh, 0) rotate(420deg); }
+  }
+  .ts-content {
+    position: relative;
+    height: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: max(48px, 7vh) 24px max(28px, 4vh);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .ts-logo { text-align: center; }
+  .ts-title {
+    margin: 0;
+    font-family: 'Black Han Sans', 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: clamp(44px, 9vw, 108px);
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: var(--ts-cream);
+    /* Hard-edged outline plus a drop shadow for a chunky pixel look */
+    text-shadow:
+      4px 0 0 var(--ts-ink), -4px 0 0 var(--ts-ink), 0 4px 0 var(--ts-ink), 0 -4px 0 var(--ts-ink),
+      4px 4px 0 var(--ts-ink), -4px 4px 0 var(--ts-ink), 4px -4px 0 var(--ts-ink), -4px -4px 0 var(--ts-ink),
+      0 10px 0 var(--ts-ink), 4px 10px 0 var(--ts-ink), -4px 10px 0 var(--ts-ink);
+    text-wrap: balance;
+  }
+  .ts-sub {
+    margin: 22px 0 0;
+    font-family: var(--korean);
+    font-size: clamp(15px, 2.2vw, 22px);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--ts-cream);
+    word-break: keep-all;
+    text-shadow: 2px 0 0 var(--ts-ink), -2px 0 0 var(--ts-ink), 0 2px 0 var(--ts-ink), 0 -2px 0 var(--ts-ink), 0 4px 0 var(--ts-ink);
+  }
+  .ts-sub span { font-family: 'Inter', system-ui, sans-serif; }
+  .ts-scene {
+    flex: 1 1 auto;
+    width: min(720px, 100%);
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 4%;
+    min-height: 0;
+  }
+  .ts-actor { position: relative; display: flex; justify-content: center; isolation: isolate; }
+  .ts-actor::after {
+    /* contact shadow on the road */
+    content: '';
+    position: absolute; left: 50%; bottom: 2px;
+    width: 64%; height: 14px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: rgba(16, 19, 31, 0.38);
+    z-index: -1;
+  }
+  .ts-hero {
+    display: block;
+    width: 320px; height: 320px;
+    image-rendering: pixelated;
+    animation: ts-bob 1.8s ease-in-out infinite;
+  }
+  .ts-imp {
+    display: block;
+    width: 300px; height: 300px;
+    margin-bottom: -22px;
+    image-rendering: pixelated;   /* the frame has empty space under the feet */
+    animation: ts-bob 1.4s ease-in-out infinite reverse;
+  }
+  .ts-actor-imp::after { bottom: 4px; width: 46%; }
+  @keyframes ts-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .ts-panel {
+    margin-top: 18px;
+    width: min(380px, 100%);
+    padding: 14px 18px;
+    background: var(--ts-panel);
+    border: 3px solid var(--ts-frame);
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px var(--ts-ink), 0 14px 30px rgba(0, 0, 0, 0.45);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .ts-item {
+    position: relative;
+    display: flex; align-items: center; gap: 10px;
+    width: 100%;
+    padding: 10px 12px 10px 40px;
+    background: transparent;
+    border: 0; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 21px; font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ts-cream);
+    text-align: left;
+    cursor: pointer;
+  }
+  .ts-item .ts-ico { font-size: 18px; }
+  .ts-item.is-active { color: var(--ts-gold); background: rgba(255, 255, 255, 0.06); }
+  .ts-item.is-active::before {
+    content: '▶';
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: var(--ts-gold);
+    animation: ts-blink 1s steps(1) infinite;
+  }
+  /* The focused item is always the active one, and the gold highlight plus
+     cursor already mark it */
+  .ts-item:focus-visible { outline: none; }
+  .ts-item.is-active { box-shadow: inset 0 0 0 2px rgba(246, 196, 83, 0.55); }
+  @keyframes ts-blink { 50% { opacity: 0; } }
+  .ts-hint {
+    margin: 14px 0 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--ts-cream);
+    text-shadow: 0 2px 0 var(--ts-ink);
+    animation: ts-blink 1.6s steps(1) infinite;
+  }
+  @media (hover: none) and (pointer: coarse), (max-width: 700px) {
+    .ts-hint { display: none; }
+    .ts-item { padding: 16px 14px 16px 44px; font-size: 20px; min-height: 60px; }
+  }
+  @media (max-width: 700px) {
+    .ts-content { padding: max(56px, 9vh) 16px max(24px, calc(16px + env(safe-area-inset-bottom))); }
+    .ts-title { letter-spacing: 0.02em; }
+    .ts-scene { padding: 0; }
+    .ts-bg { background-position: 6% bottom; }
+    .ts-hero { width: 208px; height: 208px; }
+    .ts-imp { width: 196px; height: 196px; margin-bottom: -14px; }
+    .ts-panel { width: 100%; }
+  }
+  @media (max-height: 760px) and (min-width: 701px) {
+    .ts-hero { width: 224px; height: 224px; }
+    .ts-imp { width: 210px; height: 210px; margin-bottom: -16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ts-bg, .ts-hero, .ts-imp, .ts-hint, .ts-item.is-active::before { animation: none !important; }
+    .ts-petals { display: none; }
+  }
+
   /* Hidden input (mobile keyboard fallback) */
   .input-shield {
     position: fixed;
@@ -1498,6 +1672,34 @@
 <!-- Keyboard capture surface. First in the DOM so Tab from it moves to the
      header controls instead of leaving the page. -->
 <input type="text" class="input-shield" id="shield" aria-label="Typing input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+
+<!-- Title screen: covers the page on every visit (except #practice links)
+     and leads into Battle or Practice. The practice markup below stays in
+     place for SEO; the overlay only sits on top of it. -->
+<div id="titleScreen" class="title-screen" role="dialog" aria-modal="true" aria-labelledby="titleHeading">
+  <div class="ts-bg" aria-hidden="true"></div>
+  <div class="ts-vignette" aria-hidden="true"></div>
+  <div class="ts-petals" id="tsPetals" aria-hidden="true"></div>
+  <div class="ts-content">
+    <div class="ts-logo">
+      <h2 class="ts-title" id="titleHeading">TYPE HANGEUL</h2>
+      <p class="ts-sub" lang="ko">한글 · <span lang="en">Korean typing practice</span></p>
+    </div>
+    <div class="ts-scene" aria-hidden="true">
+      <div class="ts-actor ts-actor-hero"><img class="ts-hero" src="sprites/player/01-baegui-front.png" alt="" width="256" height="256"></div>
+      <div class="ts-actor ts-actor-imp"><img class="ts-imp" id="tsImp" src="sprites/enemies/01-imp-walk-1.png" alt="" width="512" height="512"></div>
+    </div>
+    <div class="ts-panel">
+      <button class="ts-item is-active" type="button" data-choice="game">START GAME <span class="ts-ico" aria-hidden="true">⚔️</span></button>
+      <button class="ts-item" type="button" data-choice="practice">PRACTICE <span class="ts-ico" aria-hidden="true">⌨️</span></button>
+    </div>
+    <p class="ts-hint" aria-hidden="true">↑↓ choose · Enter select</p>
+  </div>
+</div>
+<script>
+  // Decide before first paint so a #practice link never flashes the title.
+  if (location.hash === '#practice') document.getElementById('titleScreen').hidden = true;
+</script>
 <div class="wrap">
 
   <header>
@@ -1512,10 +1714,7 @@
         <span class="profile-name">Player</span>
         <span class="profile-edit">✏️</span>
       </button>
-      <a id="battleLink" href="game.html" class="battle-link" title="Battle Mode: type Korean to defeat 한글 demons">
-        <span class="battle-icon" id="battleIcon">⚔️</span>
-        <span class="battle-text" id="battleText">Battle</span>
-      </a>
+      <button id="btnTitle" class="home-btn" type="button" title="Back to the title menu">🏠 Menu</button>
     </div>
 
     <div class="stats">
@@ -4707,9 +4906,14 @@ function focusedControlByKeyboard() {
   try { return a.matches(':focus-visible'); } catch (e) { return false; }
 }
 
+function titleOpen() {
+  const el = document.getElementById('titleScreen');
+  return !!(el && !el.hidden);
+}
+
 function overlayOpen() {
   const profile = document.getElementById('profileModal');
-  return !!document.querySelector('.coachmark-overlay') || !!(profile && profile.style.display !== 'none');
+  return titleOpen() || !!document.querySelector('.coachmark-overlay') || !!(profile && profile.style.display !== 'none');
 }
 
 function attachInput() {
@@ -4719,7 +4923,7 @@ function attachInput() {
   // keyboard drives input, and focusing the offscreen input would pop the OS
   // keyboard (and scroll the page to it).
   const focusShield = () => {
-    if (!shield || mobileMq.matches) return;
+    if (!shield || mobileMq.matches || titleOpen()) return;
     shield.focus({ preventScroll: true });
   };
   focusShield();
@@ -4728,8 +4932,8 @@ function attachInput() {
   // keyboard user can continue into what they opened; the same goes for
   // anything inside those surfaces when activated from the keyboard
   // (detail === 0).
-  const KEEP_FOCUS = 'input, select, textarea, label, .profile-modal, #mobileActions, .coachmark-overlay, .seo-section';
-  const KEEP_FOCUS_KEYBOARD = '#btnSettings, .settings-menu, #mobileMenuBtn, #profileChip, #btnJamoToggle, .cr-tab';
+  const KEEP_FOCUS = 'input, select, textarea, label, .profile-modal, #mobileActions, .coachmark-overlay, .seo-section, .title-screen';
+  const KEEP_FOCUS_KEYBOARD = '#btnSettings, .settings-menu, #mobileMenuBtn, #profileChip, #btnJamoToggle, .cr-tab, #btnTitle';
   document.addEventListener('click', (e) => {
     const t = e.target;
     if (!t || !t.closest) return;
@@ -4849,6 +5053,7 @@ function attachInput() {
     setTimeout(() => { if (!composing) resetInputFeed(); }, 0);
   });
   shield.addEventListener('input', (e) => {
+    if (titleOpen()) { resetInputFeed(); return; }
     const v = shield.value;
     // Whole composition deleted: undo every jamo it had fed
     if (!v) { feedInputText(''); return; }
@@ -4864,6 +5069,8 @@ function attachInput() {
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // The title screen owns the keyboard while it's open
+    if (titleOpen()) return;
     // Don't intercept when the user is typing in a real input. The hidden
     // shield input is our keyboard capture surface, so it must pass through.
     const tag = document.activeElement && document.activeElement.tagName;
@@ -4960,6 +5167,111 @@ function showCoachmark() {
 }
 
 // ============================================================
+// Title screen
+// ============================================================
+// Shown on every visit (a #practice link skips it). START GAME goes to
+// Battle; PRACTICE fades the title away and hands the keyboard back to the
+// typing drill.
+
+const TITLE_PETALS = 10;
+const IMP_FRAMES = [1, 2, 3, 4].map(n => `sprites/enemies/01-imp-walk-${n}.png`);
+let titleIdx = 0;
+let impTimer = null;
+
+function titleItems() {
+  return [...document.querySelectorAll('#titleScreen .ts-item')];
+}
+
+function setTitleCursor(i, focus) {
+  const items = titleItems();
+  titleIdx = (i + items.length) % items.length;
+  items.forEach((el, k) => el.classList.toggle('is-active', k === titleIdx));
+  if (focus) items[titleIdx].focus({ preventScroll: true });
+}
+
+function startImpWalk() {
+  const img = document.getElementById('tsImp');
+  if (!img || impTimer || prefersReducedMotion()) return;
+  let f = 0;
+  impTimer = setInterval(() => {
+    f = (f + 1) % IMP_FRAMES.length;
+    img.src = IMP_FRAMES[f];
+  }, 180);
+}
+
+function stopImpWalk() {
+  if (impTimer) { clearInterval(impTimer); impTimer = null; }
+}
+
+function openTitleScreen() {
+  const el = document.getElementById('titleScreen');
+  el.classList.remove('closing');
+  el.hidden = false;
+  document.body.classList.add('title-open');
+  cancelPronunciation();
+  setTitleCursor(0, true);
+  startImpWalk();
+}
+
+function chooseTitleItem(choice) {
+  track('title_select', { choice });
+  if (choice === 'game') {
+    flushSaves();
+    location.href = 'game.html';
+    return;
+  }
+  const el = document.getElementById('titleScreen');
+  el.classList.add('closing');
+  setTimeout(() => {
+    el.hidden = true;
+    el.classList.remove('closing');
+    document.body.classList.remove('title-open');
+    stopImpWalk();
+    if (!mobileMq.matches) document.getElementById('shield').focus({ preventScroll: true });
+    if (isFirstRun()) showCoachmark();
+  }, prefersReducedMotion() ? 0 : 350);
+}
+
+function initTitleScreen() {
+  const el = document.getElementById('titleScreen');
+  if (!el) return;
+  // Preload the imp's walk frames so the cycle doesn't flicker
+  for (const src of IMP_FRAMES) { const im = new Image(); im.src = src; }
+  const petals = document.getElementById('tsPetals');
+  if (petals && !prefersReducedMotion()) {
+    for (let i = 0; i < TITLE_PETALS; i++) {
+      const p = document.createElement('span');
+      p.className = 'ts-petal';
+      p.style.left = `${Math.round(Math.random() * 100)}%`;
+      p.style.setProperty('--dur', `${(10 + Math.random() * 8).toFixed(1)}s`);
+      p.style.setProperty('--delay', `${(-Math.random() * 16).toFixed(1)}s`);
+      p.style.setProperty('--sway', `${Math.round(30 + Math.random() * 60)}px`);
+      p.style.scale = (0.7 + Math.random() * 0.6).toFixed(2);
+      petals.appendChild(p);
+    }
+  }
+  titleItems().forEach((item, k) => {
+    item.addEventListener('mouseenter', () => setTitleCursor(k, false));
+    item.addEventListener('focus', () => setTitleCursor(k, false));
+    item.addEventListener('click', () => chooseTitleItem(item.dataset.choice));
+  });
+  // Capture phase so nothing else on the page sees keys while it's open
+  document.addEventListener('keydown', (e) => {
+    if (!titleOpen() || el.classList.contains('closing')) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key;
+    if (k === 'ArrowUp' || k === 'w' || k === 'W') { setTitleCursor(titleIdx - 1, true); }
+    else if (k === 'ArrowDown' || k === 's' || k === 'S') { setTitleCursor(titleIdx + 1, true); }
+    else if (k === 'Tab') { setTitleCursor(titleIdx + (e.shiftKey ? -1 : 1), true); }
+    else if (k === 'Enter' || k === ' ') { if (!e.repeat) chooseTitleItem(titleItems()[titleIdx].dataset.choice); }
+    else if (/^F\d+$/.test(k) || k === 'Escape') return; // function keys (reload, devtools) still work
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
+  if (!el.hidden) openTitleScreen();
+}
+
+// ============================================================
 // Boot
 // ============================================================
 
@@ -5003,7 +5315,7 @@ function boot() {
   // area stays first.
   const mobileActions = document.getElementById('mobileActions');
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-  const mobileMenuItems = ['profileChip', 'battleLink', 'settingsWrap']
+  const mobileMenuItems = ['profileChip', 'btnTitle', 'settingsWrap']
     .map(id => document.getElementById(id))
     .filter(Boolean)
     .map(el => ({ el, parent: el.parentElement, next: el.nextSibling }));
@@ -5045,8 +5357,10 @@ function boot() {
   });
 
   document.getElementById('btnSkip').addEventListener('click', () => loadWord(pickNextWordIdx(state.wordIdx)));
-  const battleLinkEl = document.getElementById('battleLink');
-  if (battleLinkEl) battleLinkEl.addEventListener('click', () => track('battle_link_click', { words_done: state.wordsDone }));
+  document.getElementById('btnTitle').addEventListener('click', () => {
+    closeMobileMenu();
+    openTitleScreen();
+  });
   const btnAudio = document.getElementById('btnAudio');
   function syncAudioBtn() {
     btnAudio.textContent = `${state.audioOn ? '🔊' : '🔇'} Audio: ${state.audioOn ? 'ON' : 'OFF'}`;
@@ -5124,8 +5438,10 @@ function boot() {
     });
   }
 
-  // Feature D: show coachmark on first run.
-  if (isFirstRun()) showCoachmark();
+  // Feature D: the first-run coachmark waits until Practice is chosen on
+  // the title screen; it never shows on top of the title.
+  initTitleScreen();
+  if (!titleOpen() && isFirstRun()) showCoachmark();
 
   // Feature E: profile chip. openProfileModal now uses openModal internally.
   document.getElementById('profileChip').addEventListener('click', openProfileModal);

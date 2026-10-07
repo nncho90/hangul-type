@@ -7,7 +7,8 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     try { localStorage.setItem('hangul-type-seen-intro-v1', '1'); } catch (e) {}
   });
-  await page.goto('/index.html');
+  // #practice skips the title screen (covered in title.spec.js)
+  await page.goto('/index.html#practice');
   await page.waitForFunction(() => typeof state !== 'undefined' && state.expectedKs.length > 0);
 });
 
