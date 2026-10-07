@@ -8,6 +8,7 @@ const TEN_MIN_MS = 10 * 60 * 1000;
 function nowIso() { return new Date().toISOString(); }
 
 function rateWord(s, rating) {
+  const wasDue = !(Date.parse(s.dueAt) > Date.now());
   s.lastRated = nowIso();
   if (rating < 3) {
     s.lapses++;
@@ -17,6 +18,8 @@ function rateWord(s, rating) {
     s.dueAt = new Date(Date.now() + TEN_MIN_MS).toISOString();
     return s;
   }
+  // Early success (before dueAt) is not a spaced recall: no interval growth
+  if (!wasDue) return s;
   s.ease = Math.max(1.3, s.ease + (0.1 - (5 - rating) * (0.08 + (5 - rating) * 0.02)));
   s.reps++;
   if (s.reps === 1) s.interval = 1;
@@ -75,11 +78,32 @@ expect('0% accuracy → 2 (lapse)', ratingFromAccuracy(0) === 2);
   const s = { ease: 2.5, interval: 0, dueAt: nowIso(), reps: 0, lapses: 0, lastRated: null };
   rateWord(s, 5);
   expect('first review (rating 5): reps=1, interval=1', s.reps === 1 && s.interval === 1);
+  const elapse = () => { s.dueAt = new Date(Date.now() - 1000).toISOString(); }; // the wait until due
+  elapse();
   rateWord(s, 5);
   expect('second review (rating 5): reps=2, interval=6', s.reps === 2 && s.interval === 6);
   const beforeEase = s.ease;
+  elapse();
   rateWord(s, 5);
   expect('third review uses NEW ease (canonical SM-2 order)', s.interval >= 14 && s.interval <= 18 && s.ease > beforeEase);
+}
+
+// Interval only grows once the word is due
+{
+  const s = { ease: 2.5, interval: 6, dueAt: new Date(Date.now() + 3 * DAY_MS).toISOString(), reps: 2, lapses: 0, lastRated: null };
+  const dueBefore = s.dueAt;
+  rateWord(s, 5);
+  expect('early review (not due): interval unchanged', s.interval === 6 && s.reps === 2);
+  expect('early review (not due): dueAt unchanged', s.dueAt === dueBefore);
+  expect('early review (not due): ease unchanged', s.ease === 2.5);
+  s.dueAt = new Date(Date.now() - 1000).toISOString();
+  rateWord(s, 5);
+  expect('due review: interval grows', s.interval > 6 && s.reps === 3);
+}
+{
+  const s = { ease: 2.5, interval: 6, dueAt: new Date(Date.now() + 3 * DAY_MS).toISOString(), reps: 2, lapses: 0, lastRated: null };
+  rateWord(s, 2);
+  expect('early failure still lapses', s.lapses === 1 && s.reps === 0);
 }
 
 // Lapse behavior

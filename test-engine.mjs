@@ -5,7 +5,7 @@
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { KEYMAP, HangulIME } = require('./hangul-ime.js');
+const { KEYMAP, HangulIME, wordToKeystrokes } = require('./hangul-ime.js');
 
 function typeString(input) {
   const ime = new HangulIME();
@@ -94,4 +94,57 @@ for (const c of sentenceCases) {
 }
 console.log(`${p3}/${p3 + f3} sentence cases passed`);
 
-process.exit((failed + f2 + f3) > 0 ? 1 : 0);
+// Backspace across a syllable boundary. Mirrors index.html: each backspace
+// drops one accepted keystroke and the IME is rebuilt by replaying the
+// remaining prefix, so a syllable committed by the next jamo (학 in 학교)
+// reopens correctly instead of being deleted whole.
+function typeWithBackspace(word, backspaces) {
+  const ks = wordToKeystrokes(word);
+  let pos = ks.length;
+  let ime = HangulIME.fromKeystrokes(ks);
+  const afterFull = ime.display;
+  for (let i = 0; i < backspaces && pos > 0; i++) {
+    pos--;
+    ime = HangulIME.fromKeystrokes(ks.slice(0, pos));
+  }
+  const afterBack = ime.display;
+  for (const j of ks.slice(pos)) {
+    if (j === ' ') { ime.commitBuffer(); ime.committed += ' '; } else ime.type(j);
+  }
+  ime.commitBuffer();
+  return { afterFull, afterBack, final: ime.display };
+}
+
+const backspaceCases = [
+  { word: '학교', n: 3, mid: '하', desc: '학교: 3 backspaces reopens 학 as 하' },
+  { word: '학교', n: 2, mid: '학', desc: '학교: 2 backspaces leaves 학 intact' },
+  { word: '안녕', n: 3, mid: '안', desc: '안녕: 3 backspaces back to 안' },
+  { word: '안녕', n: 4, mid: '아', desc: '안녕: 4 backspaces reopens 안 as 아' },
+  { word: '좋아', n: 2, mid: '좋', desc: '좋아: undo kick-out restores batchim ㅎ' },
+  { word: '읽다', n: 3, mid: '일', desc: '읽다: compound final ㄺ splits back to ㄹ' },
+  { word: '만나서 반가워요', n: 11, mid: '만나서', desc: 'sentence: backspace through the space' }
+];
+
+let p4 = 0, f4 = 0;
+console.log('\n--- Backspace across syllables ---');
+for (const c of backspaceCases) {
+  const r = typeWithBackspace(c.word, c.n);
+  const ok = r.afterFull === c.word && r.afterBack === c.mid && r.final === c.word;
+  if (ok) p4++; else f4++;
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${c.desc.padEnd(45)}  mid="${r.afterBack}" final="${r.final}"`);
+}
+console.log(`${p4}/${p4 + f4} backspace cases passed`);
+
+// The old in-place backspace() could not reopen a committed syllable: this
+// documents why the UI replays instead (학교 x3 would finish as "ㄱ교").
+{
+  const ime = new HangulIME();
+  for (const j of wordToKeystrokes('학교')) ime.type(j);
+  ime.backspace(); ime.backspace(); ime.backspace();
+  const stale = ime.display;
+  const ok = stale !== '하';
+  if (ok) p4++; else f4++;
+  console.log(`${ok ? 'PASS' : 'FAIL'}  in-place backspace() is lossy (got "${stale}"), replay needed`);
+}
+
+process.exit((failed + f2 + f3 + f4) > 0 ? 1 : 0);

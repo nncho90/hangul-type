@@ -111,6 +111,20 @@ function wordToSyllableKeystrokes(word) {
 
 class HangulIME {
   constructor() { this.reset(); }
+
+  // Build an IME by replaying a keystroke list (jamo or ' '). Backspace in the
+  // practice UI uses this instead of backspace(): after a syllable has been
+  // committed, backspace() can't reopen it, but replaying the accepted prefix
+  // reproduces the exact buffer the user would have had at that point.
+  static fromKeystrokes(ks) {
+    const ime = new HangulIME();
+    for (const jamo of ks) {
+      if (jamo === ' ') { ime.commitBuffer(); ime.committed += ' '; }
+      else ime.type(jamo);
+    }
+    return ime;
+  }
+
   reset() {
     this.committed = '';
     this.buf = { initial: '', medial: '', final: '' };
