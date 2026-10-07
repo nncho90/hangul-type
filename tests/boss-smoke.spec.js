@@ -1,7 +1,7 @@
 // @ts-check
 // Boss set-piece smoke tests: verifies items 1-6 from the boss rework plan,
 // plus regression tests for the new mechanics from round-2 critique.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 const URL = '/game.html';
 
@@ -163,9 +163,9 @@ test('boss: phase windows scale with word length', async ({ page }) => {
   expect(maxWindow).toBeGreaterThanOrEqual(minWindow);
 });
 
-// ── Item 3: phase deadline expiry decrements lives ───────────────────────
+// ── Item 3: phase timer expiry decrements lives ───────────────────────
 
-test('boss: phase deadline expiry damages player', async ({ page }) => {
+test('boss: phase timer expiry damages player', async ({ page }) => {
   await seedGame(page);
   await startGame(page);
 
@@ -175,8 +175,8 @@ test('boss: phase deadline expiry damages player', async ({ page }) => {
     window.spawnBoss();
     const boss = window.state.monsters.find(m => m.isBoss);
     if (!boss) return null;
-    // Force the deadline to the past so the next loop tick fires it
-    boss.phaseDeadline = performance.now() - 100;
+    // Expire the phase timer so the next loop tick fires the attack
+    boss.phaseRemainingMs = -100;
     boss.phaseHit = false;
     return window.state.lives;
   });

@@ -71,10 +71,23 @@
     background-size: cover;
     background-position: center bottom;
     transition: opacity 1.2s ease;
+  }
+  /* Painted theme scenes. Two stacked layers so a theme change crossfades:
+     applyTheme loads the next image into the hidden layer, waits for decode,
+     then swaps which layer is .on. --bg-zoom (set on .backdrop) drives the
+     depth parallax on both. */
+  .backdrop .bg-layer {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 1.2s ease;
     transform: scale(var(--bg-zoom, 1));
     transform-origin: 50% 14%;  /* near the horizon so ground pushes toward viewer */
-    will-change: transform;
+    will-change: transform, opacity;
   }
+  .backdrop .bg-layer.on { opacity: 1; }
   .backdrop::after {
     content: '';
     position: absolute; inset: 0;
@@ -182,9 +195,10 @@
   }
 
   /* ── New 7-tier image backgrounds (sprite-art match) ─────────────────── */
-  /* These override .backdrop::before with painted pixel-art scenes that
-     match the player + enemy sprite aesthetic. The gradient on .backdrop
-     itself stays as a tinted base in case the image fails to load. */
+  /* The painted scenes (sprites/backgrounds/0N-name.webp) live on the two
+     .bg-layer elements, set by setBackdropImage(). Blank the legacy
+     ::before decorations so they never paint over the image. The gradient
+     on .backdrop itself stays as a tinted base while the image decodes. */
   body.theme-village .backdrop::before,
   body.theme-forest .backdrop::before,
   body.theme-study .backdrop::before,
@@ -192,19 +206,10 @@
   body.theme-camp .backdrop::before,
   body.theme-battlefield .backdrop::before,
   body.theme-palace .backdrop::before {
-    background-size: cover;
-    background-position: center bottom;
-    background-repeat: no-repeat;
+    background: none;
     clip-path: none;
     box-shadow: none;
   }
-  body.theme-village .backdrop::before    { background-image: url('sprites/backgrounds/01-village.png');     }
-  body.theme-forest .backdrop::before     { background-image: url('sprites/backgrounds/02-forest.png');      }
-  body.theme-study .backdrop::before      { background-image: url('sprites/backgrounds/03-study.png');       }
-  body.theme-courtyard .backdrop::before  { background-image: url('sprites/backgrounds/04-courtyard.png');   }
-  body.theme-camp .backdrop::before       { background-image: url('sprites/backgrounds/05-camp.png');        }
-  body.theme-battlefield .backdrop::before{ background-image: url('sprites/backgrounds/06-battlefield.png'); }
-  body.theme-palace .backdrop::before     { background-image: url('sprites/backgrounds/07-palace.png');      }
   /* Tinted gradient base (fallback if image missing). Each tier picks a
      dominant tone matching the painted scene. */
   body.theme-study .backdrop      { background-image: linear-gradient(180deg, #fde68a 0%, #fef9f0 14%, #e9eef5 42%, #cdd9e8 100%); }
@@ -488,8 +493,17 @@
     overflow: hidden;
     perspective: 760px;
     perspective-origin: 50% 42%;
-    transform-style: preserve-3d;
+    /* No preserve-3d: the rotated floor is disabled, and a 3D rendering
+       context would depth-sort children instead of honoring z-index. */
     isolation: isolate;
+  }
+  /* Effects layer: particles, score pops, slashes, spell VFX, projectiles.
+     Sits above every monster (z 38-58) and the teleported player (95). */
+  .fx-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
   }
   .stage::before {
     content: '';
@@ -515,19 +529,8 @@
     background: radial-gradient(circle at 50% 54%, rgba(255,255,255,0.22), rgba(255,255,255,0) 34%),
                 radial-gradient(ellipse at 50% 100%, rgba(15, 23, 42, 0.16), rgba(15,23,42,0) 58%);
   }
-  .stage.camera-pulse::after { animation: camera-pulse 460ms ease-out; }
-  .stage.camera-heavy::after { animation: camera-heavy 760ms ease-out; }
-  @keyframes camera-pulse {
-    0% { opacity: 0; transform: scale(1); }
-    34% { opacity: 1; transform: scale(1.018); }
-    100% { opacity: 0; transform: scale(1); }
-  }
-  @keyframes camera-heavy {
-    0% { opacity: 0; transform: scale(1); }
-    18% { opacity: 1; transform: scale(1.035) translateY(4px); }
-    42% { opacity: 0.75; transform: scale(1.012) translateY(-2px); }
-    100% { opacity: 0; transform: scale(1); }
-  }
+  /* The ::after flash and the camera kick are both played by
+     pulseBattleCamera() via the Web Animations API. */
   .battle-depth {
     position: absolute;
     inset: 0;
@@ -604,15 +607,6 @@
     right: -28px;
     clip-path: polygon(0 48%, 20% 100%, 38% 24%, 56% 100%, 74% 36%, 100% 100%, 0 100%);
   }
-  .stage.camera-pulse .battle-floor,
-  .stage.camera-heavy .battle-floor {
-    animation: floor-breathe 8s ease-in-out infinite, floor-push 520ms ease-out;
-  }
-  @keyframes floor-push {
-    0% { transform: rotateX(63deg) translateZ(-120px) translateY(0); }
-    32% { transform: rotateX(63deg) translateZ(-92px) translateY(10px); }
-    100% { transform: rotateX(63deg) translateZ(-120px) translateY(0); }
-  }
 
   /* Player */
   .player {
@@ -623,18 +617,22 @@
     font-size: 72px;
     line-height: 1;
     z-index: 60;
-    filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.15));
     animation: breathe 0.7s ease-in-out infinite;
-    /* No `transform` here on purpose: the teleport-strike sets an inline
+    /* No transition at all on purpose: the teleport-strike sets an inline
        scale() per jump; if `transform` were transitioned, snapping that
        inline scale away on teleport-home animated a "zoom" the user hated.
        Visible teleport motion is sold by the smoke puffs + jump-pose frames. */
-    transition: filter 0.4s;
     display: inline-flex;
     align-items: flex-end;
     gap: 0;
   }
-  .player .player-main { font-size: 72px; line-height: 1; }
+  /* Teleported next to a monster: in front of every monster (z 38-58),
+     still under the .fx-layer slashes. */
+  .player.teleported { z-index: 95; }
+  /* Swing / hit / level-up reactions animate .player-main (Web Animations
+     API), so they survive the inline `animation: none` set on .player while
+     teleported and never fight its translate/scale. */
+  .player .player-main { display: block; font-size: 72px; line-height: 1; transform-origin: 50% 85%; }
   .player .player-equip {
     font-size: 32px;
     margin-left: -8px;
@@ -660,20 +658,6 @@
     50%  { transform: translateX(-50%) translateY(0); }
     75%  { transform: translateX(-51%) translateY(-3px); }
     100% { transform: translateX(-50%) translateY(0); }
-  }
-  .player.hit { animation: shake 0.4s; filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.6)); }
-  @keyframes shake {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    20% { transform: translateX(calc(-50% - 8px)) translateY(2px); }
-    40% { transform: translateX(calc(-50% + 8px)) translateY(-2px); }
-    60% { transform: translateX(calc(-50% - 5px)) translateY(2px); }
-    80% { transform: translateX(calc(-50% + 5px)) translateY(0); }
-  }
-  .player.levelup { animation: levelup 1.1s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  @keyframes levelup {
-    0%   { transform: translateX(-50%) scale(1); filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
-    50%  { transform: translateX(-50%) scale(1.6); filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.6)); }
-    100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
   }
 
   /* Monsters */
@@ -743,14 +727,9 @@
   .monster.tier-3 .sprite { font-size: var(--tier3-font, 1008px); }
   .monster.tier-4 .sprite { font-size: var(--tier4-font, 1170px); }
   .monster.tier-5 .sprite { font-size: var(--tier5-font, 1359px); }
-  .monster.boss .sprite {
-    font-size: 480px;
-    animation: bossbob 1.4s ease-in-out infinite;
-  }
-  @keyframes bossbob {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50%      { transform: translateY(-8px) scale(1.04); }
-  }
+  /* Boss motion comes only from sprite-walk-boss on the img; a second bob on
+     the .sprite wrapper doubled the sway. */
+  .monster.boss .sprite { font-size: 480px; }
   .monster.locked .sprite {
     filter: drop-shadow(0 0 18px rgba(37, 99, 235, 0.5)) brightness(1.05);
     animation: locked-pulse 1.0s ease-in-out infinite;
@@ -759,34 +738,22 @@
     0%, 100% { transform: scale(1); }
     50%      { transform: scale(1.06); }
   }
-  /* Brief shake + red glow when a monster takes a hit. JS adds .monster-hitflash
-     to .sprite for ~200ms; CSS handles the flash so timing stays in lockstep
-     with the DOM swap to hit-1/hit-2 frames. */
-  .monster .sprite.monster-hitflash {
-    filter: drop-shadow(0 0 14px rgba(239, 68, 68, 0.85)) brightness(1.18);
-    animation: monster-hit-shake 0.18s ease-out;
-  }
-  @keyframes monster-hit-shake {
-    0%, 100% { transform: translateX(0); }
-    25%      { transform: translateX(-4px); }
-    75%      { transform: translateX(4px); }
-  }
+  /* Hit reaction (white flash frame + small knock) is one Web Animation on
+     .sprite, restarted per keystroke by hitReact(); see there. */
   .monster.dying .sprite { animation: monster-defeat 0.55s ease-out forwards; }
-  /* Defeat sequence: NO rotation. The killMonster JS swaps the sprite img to
-     the hit-2 (pain) frame at the moment of death, then this keyframe fades
-     it out with a brief brightness pulse so the monster visibly takes the
-     last hit and dissolves instead of spinning offscreen. */
+  /* Defeat sequence: NO rotation. The sprite img holds the hit-2 (pain)
+     frame; the first keyframe is a solid white silhouette, which is what the
+     hit-stop freezes on, then a brief glow and a fade so the monster visibly
+     takes the last hit and dissolves instead of spinning offscreen. */
   @keyframes monster-defeat {
-    0%   { transform: scale(1);    opacity: 1;   filter: brightness(1.0) drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
-    35%  { transform: scale(1.08); opacity: 1;   filter: brightness(1.4) drop-shadow(0 0 18px rgba(245, 158, 11, 0.85)); }
+    0%   { transform: scale(1.04); opacity: 1;   filter: brightness(0) invert(1); }
+    14%  { transform: scale(1.08); opacity: 1;   filter: brightness(1.6) drop-shadow(0 0 18px rgba(245, 158, 11, 0.85)); }
     100% { transform: scale(0.6);  opacity: 0;   filter: brightness(1.0) drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
   }
-  .monster.teleport-flash { animation: tp-flash 0.32s ease-out; }
-  @keyframes tp-flash {
-    0%   { opacity: 0.0; transform: translateX(-50%) scale(0.6); filter: blur(8px); }
-    50%  { opacity: 1.0; transform: translateX(-50%) scale(1.15); filter: blur(0); }
-    100% { opacity: 1.0; transform: translateX(-50%) scale(1); }
-  }
+  /* Teleporting monsters flash in place via teleportFlash(): scale/filter
+     on the .sprite only, so the inline translate3d on .monster is never
+     overwritten (the old .monster keyframe snapped it to the stage's
+     top-left for a frame). */
   .monster .word {
     margin-top: 10px;
     background: var(--l1);
@@ -799,8 +766,12 @@
     transition: border-color 1.6s, box-shadow 0.18s, transform 0.12s;
     max-width: min(720px, calc(100vw - 64px));
     white-space: nowrap;
-    transform: scale(var(--word-counter, 1));
-    transform-origin: 50% 100%;
+    /* --word-shift slides the bubble (not the monster) back inside the
+       stage near an edge; set per frame by renderMonsterDepth. */
+    transform: translateX(var(--word-shift, 0px)) scale(var(--word-counter, 1));
+    /* Top origin: the counter-scale grows / shrinks the bubble away from
+       the sprite's feet, so it stays tucked under the monster at any depth. */
+    transform-origin: 50% 0%;
   }
   .monster .word::after {
     content: '';
@@ -845,7 +816,9 @@
     content: '';
     position: absolute;
     top: -8px; left: 50%;
-    transform: translateX(-50%);
+    /* Counter-shift so the pointer stays under the monster when the bubble
+       is clamped sideways. */
+    transform: translateX(calc(-50% + var(--arrow-shift, 0px)));
     width: 0; height: 0;
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
@@ -855,19 +828,13 @@
   .monster.locked .word {
     border: 3px solid var(--orange);
     box-shadow: 0 0 0 3px rgba(249,115,22,0.22), 0 10px 26px rgba(249,115,22,0.30);
-    transform: scale(calc(var(--word-counter, 1) * 1.08));
-    transform-origin: 50% 100%;
+    transform: translateX(var(--word-shift, 0px)) scale(calc(var(--word-counter, 1) * 1.08));
+    transform-origin: 50% 0%;
   }
   .monster.locked .word::before { border-bottom-color: var(--orange); }
   body.has-lock .monster:not(.locked) .word { opacity: 0.72; }
-  @keyframes word-tick {
-    0%   { transform: scale(calc(var(--word-counter,1) * 1.08)); }
-    40%  { transform: scale(calc(var(--word-counter,1) * 1.14)); }
-    100% { transform: scale(calc(var(--word-counter,1) * 1.08)); }
-  }
-  .monster.locked .word.jamo-tick {
-    animation: word-tick 120ms ease-out;
-  }
+  /* Per-keystroke word tick: a Web Animation on .word-row in advanceLock
+     (no class restart, so no forced reflow per keystroke). */
   .monster .word .typed {
     color: var(--green);
   }
@@ -897,73 +864,81 @@
     z-index: -1;
   }
 
-  /* Ranged projectile (lv 9+ — mage/ninja/dragon era when player abandons melee) */
+  /* Ranged projectile (장군 arrow, plus glyph fallbacks).
+     Parked at the fx-layer origin; flyProjectile() moves it with a transform
+     Web Animation along a shallow arc. The inner .proj-body carries the
+     centering + per-keyframe rotation. */
   .projectile {
     position: absolute;
+    left: 0; top: 0;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .projectile .proj-body {
     width: 12px; height: 12px;
     background: var(--blue);
     border-radius: 50%;
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.7);
-    z-index: 55;
-    pointer-events: none;
     transform: translate(-50%, -50%);
   }
-  .projectile.glyph {
+  .projectile.glyph .proj-body,
+  .projectile.pixel .proj-body {
     width: auto; height: auto;
     background: transparent;
     border-radius: 0;
     box-shadow: none;
     line-height: 1;
-    font-weight: 900;
-    filter: drop-shadow(0 0 10px currentColor);
   }
-  /* Pixel-art sprite projectile (장군 arrow). Rotated to point at the target;
-     the angle is set inline via --proj-angle. The arrow PNG is drawn pointing
-     right, so the angle from start→target maps directly to rotation. */
-  .projectile.pixel {
-    background: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    transform: translate(-50%, -50%) rotate(var(--proj-angle, 0deg));
-    filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.4));
-  }
+  .projectile.glyph .proj-body { font-weight: 900; filter: drop-shadow(0 0 10px currentColor); }
+  .projectile.pixel .proj-body { filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.4)); }
   .projectile.pixel .sprite-img {
     image-rendering: pixelated;
-    width: 100%; height: 100%;
     display: block;
+    filter: none;
   }
+  /* Boss fireball: a hot core with a red-orange corona, flickering. */
+  .projectile.boss-shot .proj-body {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 42% 38%, #fff7ed 0%, #fde68a 22%, #f97316 52%, #dc2626 78%, rgba(127, 29, 29, 0) 100%);
+    box-shadow: 0 0 14px 4px rgba(239, 68, 68, 0.75), 0 0 34px 10px rgba(249, 115, 22, 0.35);
+    animation: boss-shot-flicker 90ms steps(2) infinite;
+  }
+  @keyframes boss-shot-flicker {
+    0%   { filter: brightness(1); }
+    100% { filter: brightness(1.25); }
+  }
+  /* Trail dots: parked at the fx-layer origin, placed and faded by a
+     transform Web Animation in flyProjectile(). */
   .trail-particle {
     position: absolute;
+    left: -3.5px; top: -3.5px;
     width: 7px; height: 7px;
     border-radius: 50%;
-    z-index: 54;
     pointer-events: none;
-    transform: translate(-50%, -50%);
-    animation: trail-fade 320ms ease-out forwards;
-  }
-  @keyframes trail-fade {
-    0%   { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0;    transform: translate(-50%, -50%) scale(0.3); }
   }
 
   /* ── Spell-cast VFX (선비 scroll, 양반 brush, 대왕 scepter) ── */
   /* AoE ring expands from the monster, then a Korean glyph flashes on impact.
      Replaces the projectile-travel for tiers whose attackType === 'spell'. */
+  /* Fixed-size ring grown with transform: scale (compositor only); the old
+     width/height keyframes relaid out the stage every frame of every cast. */
   .spell-ring {
     position: absolute;
-    width: 0; height: 0;
+    width: 160px; height: 160px;
     border-radius: 50%;
     border: 3px solid var(--spell-c1, #3b82f6);
     box-shadow: 0 0 20px var(--spell-c2, #60a5fa);
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(0);
     pointer-events: none;
     z-index: 80;
     animation: spell-ring-expand 0.48s ease-out forwards;
+    will-change: transform, opacity;
   }
   @keyframes spell-ring-expand {
-    0%   { width: 0;   height: 0;   opacity: 1; border-width: 4px; }
-    60%  { width: 110px; height: 110px; opacity: 0.85; border-width: 3px; }
-    100% { width: 160px; height: 160px; opacity: 0; border-width: 1px; }
+    0%   { transform: translate(-50%, -50%) scale(0);    opacity: 1; }
+    60%  { transform: translate(-50%, -50%) scale(0.69); opacity: 0.85; }
+    100% { transform: translate(-50%, -50%) scale(1);    opacity: 0; }
   }
   .spell-glyph {
     position: absolute;
@@ -992,8 +967,8 @@
   }
   .spell-vfx .sprite-img {
     image-rendering: pixelated;
-    width: 128px; height: 128px;
     display: block;
+    filter: none;
   }
   @keyframes spell-vfx-pop {
     0%   { transform: translate(-50%, -50%) scale(0.5) rotate(-6deg); opacity: 0; }
@@ -1011,12 +986,6 @@
     0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.75) translateY(8px); filter: blur(6px); }
     55%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08) translateY(-2px); filter: blur(0); }
     100% { opacity: 1; transform: translate(-50%, -50%) scale(1) translateY(0); filter: blur(0); }
-  }
-  .player.swinging { animation: swing 0.18s ease-out; }
-  @keyframes swing {
-    0%   { transform: translate(-50%, -50%) rotate(0); }
-    40%  { transform: translate(-50%, -50%) rotate(-22deg) translateX(8px); }
-    100% { transform: translate(-50%, -50%) rotate(0); }
   }
 
   .smoke-puff {
@@ -1052,26 +1021,15 @@
   }
   .slash-fx.crit { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)); }
 
-  /* Hit-flash on monster when slashed */
-  .monster.struck .sprite { animation: monster-flinch 0.18s ease-out; }
-  @keyframes monster-flinch {
-    0%   { transform: translateY(0) rotate(-2deg); filter: brightness(1); }
-    40%  { transform: translateY(-4px) rotate(-12deg) scale(1.08); filter: brightness(2.2) drop-shadow(0 0 14px rgba(255,255,255,0.9)); }
-    100% { transform: translateY(0) rotate(-2deg); filter: brightness(1); }
-  }
-
-  /* Particles */
+  /* Particles: placed at their origin, flown by particleBurst() with a
+     transform Web Animation that bakes in gravity (rise, arc, fall). */
   .particle {
     position: absolute;
     width: 8px; height: 8px;
+    margin: -4px 0 0 -4px;
     border-radius: 2px;
     pointer-events: none;
-    z-index: 70;
-    animation: particle-fly 700ms ease-out forwards;
-  }
-  @keyframes particle-fly {
-    0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: var(--end) scale(0.4); }
+    will-change: transform, opacity;
   }
 
   /* Score pop */
@@ -1084,8 +1042,11 @@
     font-weight: 800;
     color: var(--green);
     text-shadow: 0 1px 0 white;
-    animation: pop-rise 900ms ease-out forwards;
+    animation: pop-rise 900ms ease-out both;
+    white-space: nowrap;
   }
+  .score-pop.crit   { color: #d97706; font-size: 20px; }
+  .score-pop.recall { color: var(--purple); font-size: 14px; }
   @keyframes pop-rise {
     0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
     20%  { opacity: 1; transform: translate(-50%, -10px) scale(1.15); }
@@ -1106,6 +1067,7 @@
     pointer-events: none;
     animation: combo-banner 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     letter-spacing: 2px;
+    white-space: nowrap;
   }
   @keyframes combo-banner {
     0%   { opacity: 0; transform: translateX(-50%) scale(0.4); }
@@ -1122,10 +1084,11 @@
     transform: translateX(-50%);
     z-index: 200;
     font-family: 'Black Han Sans', 'Inter', sans-serif;
-    font-size: 52px;
+    font-size: clamp(26px, 7vw, 52px);
     pointer-events: none;
     animation: level-banner 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     letter-spacing: 3px;
+    white-space: nowrap;
   }
   @keyframes level-banner {
     0%   { opacity: 0; transform: translateX(-50%) scale(0.3); }
@@ -1436,14 +1399,14 @@
   .story-portrait-teacher {
     left: max(28px, calc(50% - 220px));
     bottom: 182px;
-    background-image: url('sprites/portraits/teacher.png');
+    background-image: url('sprites/portraits/teacher.webp');
   }
   /* Demon: right side, mirrored so they face the player */
   .story-portrait-demon {
     right: max(28px, calc(50% - 338px));
     bottom: 152px;
     transform: scaleX(-1);
-    background-image: url('sprites/portraits/hangeulwang.png');
+    background-image: url('sprites/portraits/hangeulwang.webp');
   }
   /* Active speaker: full brightness, blue ring */
   .story-portrait-player.sp-active,
@@ -1520,15 +1483,43 @@
     50% { transform: translateY(4px); }
   }
 
-  /* Body shake for visceral combo-break / damage */
-  body.shake { animation: body-shake 0.32s ease-in-out; }
-  @keyframes body-shake {
-    0%, 100% { transform: translate(0, 0); }
-    20% { transform: translate(-8px, 4px); }
-    40% { transform: translate(8px, -3px); }
-    60% { transform: translate(-6px, 3px); }
-    80% { transform: translate(6px, -2px); }
+  /* Life lost: red edge vignette. Faded in and out by hurtFlash(). */
+  .hurt-vignette {
+    position: fixed; inset: 0;
+    z-index: 98;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(ellipse 120% 100% at 50% 50%, rgba(220, 38, 38, 0) 55%, rgba(220, 38, 38, 0.55) 100%);
   }
+  /* Kill / boss-death white frame. */
+  .white-flash {
+    position: fixed; inset: 0;
+    z-index: 97;
+    pointer-events: none;
+    opacity: 0;
+    background: #fff;
+  }
+  /* Freeze every stage animation while paused or in hit-stop. Walk frames,
+     boss timers and monster motion are already loop-driven, so this stops
+     the CSS breathe / walk-sway / VFX too. */
+  body.paused .stage *,
+  body.paused .stage *::before,
+  body.paused .stage *::after,
+  .stage.hitstop .monster,
+  .stage.hitstop .monster *,
+  .stage.hitstop .player,
+  .stage.hitstop .player * { animation-play-state: paused !important; }
+  body.paused .backdrop::after { animation-play-state: paused !important; }
+  /* Game over: 600ms desaturate beat before the modal rises. The modal is
+     already display:flex (focus + key guard work immediately); its veil and
+     card are held invisible by the delayed animations below. */
+  body.game-over-beat .stage,
+  body.game-over-beat .backdrop {
+    filter: grayscale(1) brightness(0.82);
+    transition: filter 0.6s ease-out;
+  }
+  body.game-over-beat #gameOverModal { animation: fade-in 0.3s ease 0.6s both; }
+  body.game-over-beat #gameOverModal .modal-card { animation: modal-rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both; }
 
   /* Pause overlay */
   .pause-overlay {
@@ -1604,7 +1595,10 @@
      stays untouched.  Below 720px the stage shrinks to leave room for the
      keyboard, and the keyboard pins to the bottom of the viewport. */
   .battle-kb { display: none; }
-  @media (max-width: 720px) {
+  /* Landscape phones are wider than 720px but have no physical keyboard;
+     the coarse-pointer + short-viewport clause gives them the touch layout.
+     Keep in sync with TOUCH_LAYOUT_MQ in the script. */
+  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px) {
     /* Mobile keeps HUD at the top — the on-screen keyboard already pins to the bottom. */
     .hud {
       top: 0; bottom: auto;
@@ -1640,11 +1634,8 @@
     .player { font-size: 70px; bottom: 4%; }
     .player .player-main { font-size: 70px; }
     .player .player-equip { font-size: 30px; }
-    /* Shrink the actual player sprite img on mobile — the inline width/height
-       baked by spriteHtml() needs !important to override. The sprite img is
-       siblings the same size as the emoji fallback, so font-size and img
-       dimensions need to move together. */
-    .player .sprite-img { width: 100px !important; height: 100px !important; }
+    /* Sprite imgs (player + monsters) are sized in JS by spriteScale(),
+       which follows the stage height, so no fixed px override here. */
     .monster .sprite { font-size: 79px; }
     .monster.tier-1 .sprite { font-size: 585px; }
     .monster.tier-2 .sprite { font-size: 711px; }
@@ -1796,6 +1787,17 @@
       color: white;
       transition: background 0.1s, border-color 0.1s;
     }
+  }
+  /* Landscape phones: the full-height keyboard left the stage ~110px tall,
+     shorter than the player sprite. Compact the keys so the stage keeps
+     roughly half the viewport. */
+  @media (pointer: coarse) and (max-height: 500px) {
+    .stage { inset: 54px 0 calc(150px + env(safe-area-inset-bottom)) 0; }
+    .battle-kb { padding: 4px 6px calc(4px + env(safe-area-inset-bottom)); }
+    .battle-kb .kb-row { margin-bottom: 3px; }
+    .battle-kb .key { height: 32px; }
+    .battle-kb .key .qwerty { display: none; }
+    .hud-center { bottom: calc(146px + env(safe-area-inset-bottom, 0px)); }
   }
   @media (max-width: 400px) {
     .stage { inset: 54px 0 calc(46px + 200px + env(safe-area-inset-bottom)) 0; }
@@ -2167,47 +2169,6 @@
     width: 0%;
   }
 
-  /* Chant mode overlay */
-  .chant-banner {
-    position: fixed;
-    bottom: 102px; left: 50%;
-    transform: translateX(-50%);
-    z-index: 350;
-    background: linear-gradient(135deg, #dc2626, #f59e0b);
-    color: white;
-    padding: 10px 22px 6px;
-    border-radius: 14px;
-    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
-    font-weight: 800;
-    font-size: 18px;
-    letter-spacing: 1px;
-    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
-    pointer-events: none;
-    animation: chant-pop 0.18s ease-out;
-    min-width: 260px;
-    text-align: center;
-  }
-  @keyframes chant-pop {
-    0%   { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.85); }
-    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-  }
-  .chant-banner .ko { font-family: 'Noto Sans KR', sans-serif; font-size: 22px; margin: 0 2px; }
-  .chant-banner .typed-progress { color: #fef9c3; }
-  .chant-timer-bar {
-    height: 3px;
-    background: rgba(255,255,255,0.4);
-    border-radius: 2px;
-    margin-top: 6px;
-    overflow: hidden;
-  }
-  .chant-timer-fill {
-    height: 100%;
-    background: white;
-    width: 100%;
-    transform-origin: left;
-    transition: transform 0.06s linear;
-  }
-
   /* Sakura screen-clear + nuke flash */
   .nuke-flash {
     position: fixed; inset: 0;
@@ -2406,7 +2367,7 @@
     from { transform: translateX(-50%) scale(1); }
     to   { transform: translateX(-50%) scale(1.06); }
   }
-  @media (max-width: 720px) { .fast-fall-badge { display: none !important; } }
+  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px) { .fast-fall-badge { display: none !important; } }
 
   /* Power-up drops */
   .powerup {
@@ -2472,41 +2433,81 @@
     50%      { opacity: 1; transform: scale(1.06); }
   }
 
-  /* Boss intro cutscene */
+  /* Boss intro cutscene: letterbox bars slide in, the boss portrait (the
+     384px art from sprites/portraits when the boss has one) rises in a
+     framed medallion, then the name card. 1.5s total; playBossCutscene
+     removes it at 1.55s. */
   .boss-cutscene {
     position: fixed; inset: 0;
     z-index: 400;
     pointer-events: none;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.0), rgba(15, 23, 42, 0.85) 70%);
+    padding: 0 16px;
+    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.88) 70%);
     animation: boss-veil 1.5s ease-out forwards;
   }
   @keyframes boss-veil {
     0%   { opacity: 0; }
-    20%  { opacity: 1; }
-    80%  { opacity: 1; }
+    15%  { opacity: 1; }
+    82%  { opacity: 1; }
     100% { opacity: 0; }
   }
+  .boss-cutscene .boss-letterbox {
+    position: absolute; left: 0; right: 0;
+    height: 12vh;
+    background: #000;
+    animation: boss-bar-top 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  .boss-cutscene .boss-letterbox.top { top: 0; }
+  .boss-cutscene .boss-letterbox.bottom { bottom: 0; animation-name: boss-bar-bottom; }
+  @keyframes boss-bar-top {
+    0%   { transform: translateY(-100%); }
+    18%  { transform: translateY(0); }
+    85%  { transform: translateY(0); }
+    100% { transform: translateY(-100%); }
+  }
+  @keyframes boss-bar-bottom {
+    0%   { transform: translateY(100%); }
+    18%  { transform: translateY(0); }
+    85%  { transform: translateY(0); }
+    100% { transform: translateY(100%); }
+  }
   .boss-cutscene .boss-portrait {
-    font-size: 180px;
+    width: clamp(120px, 26vh, 220px);
+    height: clamp(120px, 26vh, 220px);
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(80px, 18vh, 160px);
     line-height: 1;
-    filter: drop-shadow(0 0 40px rgba(220, 38, 38, 0.8));
+    background: radial-gradient(circle at 50% 40%, #450a0a, #0f172a 75%);
+    border: 3px solid rgba(254, 202, 202, 0.75);
+    box-shadow: 0 0 0 6px rgba(127, 29, 29, 0.55), 0 0 48px rgba(220, 38, 38, 0.65);
     animation: boss-zoom 1.5s ease-out forwards;
   }
+  .boss-cutscene .boss-portrait .sprite-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: none;
+  }
+  .boss-cutscene .boss-portrait.sprite-only .sprite-img { object-fit: contain; padding: 8%; }
   @keyframes boss-zoom {
-    0%   { transform: scale(0.3) rotate(-30deg); opacity: 0; }
-    30%  { transform: scale(1.2) rotate(0); opacity: 1; }
-    80%  { transform: scale(1.0) rotate(0); opacity: 1; }
-    100% { transform: scale(0.9) rotate(0); opacity: 0; }
+    0%   { transform: translateY(24px) scale(0.7); opacity: 0; }
+    28%  { transform: translateY(0) scale(1.06);   opacity: 1; }
+    40%  { transform: translateY(0) scale(1);      opacity: 1; }
+    82%  { transform: translateY(0) scale(1);      opacity: 1; }
+    100% { transform: translateY(0) scale(0.96);   opacity: 0; }
   }
   .boss-cutscene .boss-name {
     font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
-    font-size: 88px;
+    font-size: clamp(36px, min(9vh, 11vw), 88px);
     color: #fee2e2;
     letter-spacing: 4px;
-    margin-top: 8px;
+    margin-top: 10px;
     text-shadow: 0 4px 20px rgba(220, 38, 38, 0.8);
+    word-break: keep-all;
+    text-align: center;
     animation: boss-name-rise 1.5s ease-out forwards;
   }
   @keyframes boss-name-rise {
@@ -2519,37 +2520,70 @@
     color: #fde68a;
     font-size: 16px;
     font-weight: 600;
-    margin-top: 8px;
+    margin-top: 6px;
     letter-spacing: 2px;
     text-transform: uppercase;
+    text-align: center;
+    opacity: 0;
     animation: boss-name-rise 1.5s 0.1s ease-out forwards;
   }
   .boss-cutscene .boss-flavor {
     color: #fde68a;
     font-size: 14px;
     font-style: italic;
-    margin-top: 14px;
+    margin-top: 10px;
     max-width: 520px;
     text-align: center;
     line-height: 1.5;
+    text-wrap: pretty;
     opacity: 0;
     animation: boss-name-rise 1.5s 0.2s ease-out forwards;
   }
+  @media (max-height: 500px) {
+    .boss-cutscene .boss-flavor { display: none; }
+    .boss-cutscene .boss-name { margin-top: 4px; }
+  }
+
+  /* "Phase N !" callout, anchored to the boss by bossPhaseCallout(). */
+  .phase-callout {
+    position: absolute;
+    transform: translate(-50%, 0);
+    font-family: 'Black Han Sans', 'Inter', sans-serif;
+    font-size: clamp(24px, 5vw, 36px);
+    letter-spacing: 2px;
+    color: #fff7ed;
+    white-space: nowrap;
+    text-shadow: 0 0 2px #7f1d1d, 0 3px 0 #b91c1c, 0 6px 16px rgba(127, 29, 29, 0.6);
+    pointer-events: none;
+    animation: phase-pop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .phase-callout.above { transform: translate(-50%, -100%); }
+  @keyframes phase-pop {
+    0%   { opacity: 0; scale: 0.5; }
+    18%  { opacity: 1; scale: 1.12; }
+    35%  { opacity: 1; scale: 1; }
+    80%  { opacity: 1; scale: 1; }
+    100% { opacity: 0; scale: 1; }
+  }
 
   /* Boss phase telegraph: pulsing red ring when attack is charging */
-  .monster.boss.boss-charging::after {
+  /* Centered on the boss sprite (.sprite is position:relative and sized to
+     the img), not on the whole .monster box that includes the word bubble. */
+  .monster.boss.boss-charging .sprite::after {
     content: '';
     position: absolute;
-    inset: -14px;
+    left: 50%; top: 55%;
+    width: 86%; aspect-ratio: 1;
     border-radius: 50%;
     border: 3px solid rgba(220, 38, 38, 0.9);
     box-shadow: 0 0 18px rgba(220, 38, 38, 0.7), inset 0 0 10px rgba(220, 38, 38, 0.4);
     pointer-events: none;
+    transform: translate(-50%, -50%);
     animation: boss-charge-ring 0.4s ease-in-out infinite alternate;
   }
   @keyframes boss-charge-ring {
-    0%   { opacity: 0.6; transform: scale(1); }
-    100% { opacity: 1;   transform: scale(1.08); }
+    0%   { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
   }
 
   /* Boss reward modal cards */
@@ -2737,6 +2771,28 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+    /* The blanket rule above jumps every keyframe to its last frame, and
+       these all end at opacity 0, so they used to vanish instantly. Give
+       the content-bearing ones an opacity-only fade at their real length. */
+    .english-reveal { animation: rm-fade 1.6s linear forwards !important; transform: translate(-50%, -50%) translateY(-28px) !important; }
+    .level-banner   { animation: rm-fade 2s linear forwards !important;   transform: translateX(-50%) !important; }
+    .combo-banner   { animation: rm-fade 1.2s linear forwards !important; transform: translateX(-50%) !important; }
+    .score-pop      { animation: rm-fade 0.9s linear both !important;     transform: translate(-50%, -24px) !important; }
+    .phase-callout  { animation: rm-fade 1.2s linear forwards !important; }
+    .boss-cutscene  { animation: rm-fade 1.5s linear forwards !important; }
+    .boss-cutscene .boss-portrait,
+    .boss-cutscene .boss-name,
+    .boss-cutscene .boss-subtitle,
+    .boss-cutscene .boss-flavor { animation: none !important; opacity: 1; transform: none; }
+    .boss-cutscene .boss-letterbox { animation: none !important; transform: none; }
+    /* Same specificity as the drift rule's !important, later in source. */
+    .backdrop::after { animation: none !important; }
+  }
+  @keyframes rm-fade {
+    0%   { opacity: 0; }
+    10%  { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
   }
 
   /* Sprite asset rendering — replaces emoji when img exists */
@@ -2744,7 +2800,6 @@
     display: block;
     object-fit: contain;
     image-rendering: -webkit-optimize-contrast;
-    filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.18));
     user-select: none;
     -webkit-user-drag: none;
   }
@@ -2753,9 +2808,12 @@
      restarts from 0%; any rotate component snaps back to its starting angle on
      that first frame, which read as a "spin" on return. Vertical-only avoids
      that snap entirely while keeping the idle alive. */
+  /* Only the player keeps a grounding drop-shadow; on monsters it painted
+     a dark halo that read as a ghosted second layer. */
   .player .sprite-img {
     animation: sprite-breathe-player 2.4s ease-in-out infinite;
     transform-origin: 50% 80%;
+    filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.22));
   }
   @keyframes sprite-breathe-player {
     0%, 100% { transform: translateY(0)    scale(1); }
@@ -2812,17 +2870,13 @@
   /* When the parent .sprite span has its bob animation, kill it so we don't
      double-animate (the new breathe-img on the img is richer + per-tier). */
   .monster .sprite { animation: none; }
-  @media (max-width: 720px) {
+  /* Keep in sync with TOUCH_LAYOUT_MQ in the script. */
+  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px) {
     .stage { perspective: 620px; perspective-origin: 50% 46%; }
     .battle-floor {
       top: 42%;
       height: 76%;
       transform: rotateX(61deg) translateZ(-110px);
-    }
-    @keyframes floor-push {
-      0% { transform: rotateX(61deg) translateZ(-110px) translateY(0); }
-      32% { transform: rotateX(61deg) translateZ(-86px) translateY(8px); }
-      100% { transform: rotateX(61deg) translateZ(-110px) translateY(0); }
     }
     .battle-foreground::before,
     .battle-foreground::after { opacity: 0.22; }
@@ -2831,7 +2885,7 @@
 </head>
 <body>
 
-<div class="backdrop"></div>
+<div class="backdrop"><div class="bg-layer"></div><div class="bg-layer"></div></div>
 
 <header class="hud">
   <div class="hud-left">
@@ -2879,7 +2933,10 @@
   <div class="battle-depth battle-floor" aria-hidden="true"></div>
   <div class="battle-depth battle-foreground" aria-hidden="true"></div>
   <div class="player" id="player"></div>
+  <div class="fx-layer" id="fxLayer"></div>
 </div>
+<div class="hurt-vignette" id="hurtVignette" aria-hidden="true"></div>
+<div class="white-flash" id="whiteFlash" aria-hidden="true"></div>
 
 <input class="shield" id="shield" tabindex="-1" aria-hidden="true" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
@@ -2955,7 +3012,7 @@
     <div id="overCheckpointNote" style="display:none;">📍 Checkpoint run · LB off</div>
     <div id="overSlowModeNote" style="display:none;">🌱 Slow mode · points halved</div>
     <div class="actions">
-      <button class="primary" id="btnRetry">Retry</button>
+      <button class="primary" id="btnRetry" data-autofocus>Retry</button>
       <button id="btnCheckpointRetry" style="display:none;">Restart from Chapter</button>
       <button id="btnShareResult">📸 Share my result</button>
       <button id="btnHome">Back to practice</button>
@@ -3009,9 +3066,9 @@
     <div class="pause-controls-title">조작법 / Controls</div>
     <div class="pause-controls-list">
       <span class="pause-key">TYPE</span><span class="pause-key-desc">type the Korean word above a monster to attack</span>
-      <span class="pause-key">TAB</span><span class="pause-key-desc">peek at the next word / fast-fall the current monster</span>
+      <span class="pause-key">TAB</span><span class="pause-key-desc">hold to fast-fall the monsters</span>
       <span class="pause-key">ESC</span><span class="pause-key-desc">release current lock, or pause / resume</span>
-      <span class="pause-key">BACKSPACE</span><span class="pause-key-desc">delete last character if mistyped, release lock</span>
+      <span class="pause-key">BACKSPACE</span><span class="pause-key-desc">release the current lock</span>
       <span class="pause-key">한글</span><span class="pause-key-desc">kills charge 필살기, type 한글 to unleash</span>
     </div>
   </div>
@@ -3688,13 +3745,47 @@ function playerForLevel(lv) {
 // onerror attribute (today's callers all pass trusted constants).
 // Allow alphanumerics, underscores, dashes, and forward slashes for subdir
 // paths (e.g. "player/04-yangban-back"). Reject ".." for traversal safety.
-function spriteHtml(file, emoji, sizePx) {
+// basePx (optional) marks an img that tracks spriteScale(): its unscaled
+// size is kept in data-base-px so applySpriteScale() can resize it on a
+// viewport change. Those imgs get their src swapped every few frames
+// (walk / strike / hit), so they decode synchronously from the preloaded
+// cache instead of flashing an empty frame.
+function spriteHtml(file, emoji, sizePx, basePx) {
   if (!file) return escapeHtml(emoji);
   let safeFile = String(file).replace(/[^a-z0-9_/\-]/gi, '');
   if (safeFile.includes('..')) safeFile = '';
   const safeEmoji = String(emoji || '').replace(/['"\\<>&]/g, '');
   const px = Math.max(16, Math.min(512, Number(sizePx) || 72));
-  return `<img class="sprite-img" src="sprites/${safeFile}.png" alt="" decoding="async" fetchpriority="high" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${safeEmoji}'">`;
+  const swap = basePx ? ` data-base-px="${Number(basePx) || 0}" decoding="sync"` : ' decoding="async"';
+  return `<img class="sprite-img" src="sprites/${safeFile}.png" alt=""${swap} fetchpriority="high" style="width:${px}px;height:${px}px;" onerror="this.outerHTML='${safeEmoji}'">`;
+}
+
+// One scale for every battle sprite (player, monsters, land offsets), driven
+// by the stage height: 1 on a 900px-tall desktop stage, down to 0.42 on a
+// phone where the on-screen keyboard eats most of the viewport. Monster and
+// player sizes stay in proportion, so the teleport landing math holds.
+let _spriteScale = null;
+function spriteScale() {
+  if (_spriteScale != null) return _spriteScale;
+  const r = getStageRect();
+  const h = (r && r.height) ? r.height : 900;
+  // The 0.42 floor keeps phone sprites legible; on a very short stage
+  // (landscape phone) it gives way so the player stays under half the
+  // stage height.
+  const floor = Math.min(0.42, (h * 0.45) / PLAYER_BASE_PX);
+  _spriteScale = Math.max(floor, Math.min(1, h / 900));
+  return _spriteScale;
+}
+// Re-size every scaled sprite img after a viewport change.
+function applySpriteScale() {
+  _spriteScale = null;
+  const ss = spriteScale();
+  document.querySelectorAll('.stage img.sprite-img[data-base-px]').forEach(img => {
+    const px = Math.round(Number(img.dataset.basePx) * ss);
+    if (!px) return;
+    img.style.width = px + 'px';
+    img.style.height = px + 'px';
+  });
 }
 
 function renderPlayerSprite(lv) {
@@ -3702,53 +3793,40 @@ function renderPlayerSprite(lv) {
   // Battle stage uses the back-view sprite (Pokemon-style — player faces up
   // toward the descending enemies). The new tier sprites have the weapon baked
   // in, so no separate equip emoji is needed.
-  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, 237)}</span>`;
+  const px = Math.round(PLAYER_BASE_PX * spriteScale());
+  PLAYER_EL.innerHTML = `<span class="player-main">${spriteHtml(sp.spriteBack, sp.emoji, px, PLAYER_BASE_PX)}</span>`;
 }
 
-// Preload all 4-frame attack sprites so the first hit doesn't flash. Also
-// preload the 2-frame jump and 2-frame land poses used during melee teleports.
-// Called once at module load time.
-(function preloadStrikeFrames() {
+// Preload every frame that gets src-swapped onto a battle img (player
+// strike / jump / land, enemy walk 1-4 + hit 1-2, boss idle + step) and
+// decode it up front, so a swap never waits on the network or a decode.
+// Kept in a module-scope array so GC cannot drop an Image before it loads.
+// Backgrounds are NOT preloaded here: setBackdropImage loads the current
+// theme and prewarmNextTheme warms only the next one.
+const _preloadedSprites = (function preloadBattleFrames() {
+  const imgs = [];
+  const add = (src) => {
+    const im = new Image();
+    im.src = src;
+    if (im.decode) im.decode().catch(() => {});
+    imgs.push(im);
+  };
   for (const sp of PLAYER_SPRITES) {
     if (sp.spriteStrike) {
-      for (const n of [1, 2, 3, 4]) {
-        const im = new Image();
-        im.src = `sprites/${sp.spriteStrike}-${n}.png`;
-      }
+      for (const n of [1, 2, 3, 4]) add(`sprites/${sp.spriteStrike}-${n}.png`);
     }
     if (sp.spriteBack) {
-      for (const suf of ['jump-1', 'jump-2', 'land-1', 'land-2']) {
-        const im = new Image();
-        im.src = `sprites/${sp.spriteBack}-${suf}.png`;
-      }
+      for (const suf of ['jump-1', 'jump-2', 'land-1', 'land-2']) add(`sprites/${sp.spriteBack}-${suf}.png`);
     }
   }
-})();
-
-// Preload all 7 background PNGs so level changes never hit an uncached image
-// and the village-pink fallback gradient never flashes through the veil.
-(function preloadBackgrounds() {
-  for (const n of ['01-village','02-forest','03-study','04-courtyard','05-camp','06-battlefield','07-palace']) {
-    const im = new Image(); im.src = 'sprites/backgrounds/' + n + '.png';
-  }
-})();
-
-// Preload all enemy walk + hit frames at module load so sprite swaps never blink.
-// Stored at module scope so GC cannot drop the Image objects before load completes.
-const _preloadedSprites = (function preloadEnemyFrames() {
-  const imgs = [];
   const cfg = window.BATTLE_CONFIG || {};
   for (const file of Object.values(cfg.enemyTiers || {})) {
-    for (const suf of ['-walk-1', '-walk-3', '-hit-1', '-hit-2']) {
-      const im = new Image(); im.src = `sprites/${file}${suf}.png`;
-      imgs.push(im);
-    }
+    for (const suf of ['-walk-1', '-walk-2', '-walk-3', '-walk-4', '-hit-1', '-hit-2']) add(`sprites/${file}${suf}.png`);
   }
   for (const boss of (cfg.bosses || [])) {
     if (!boss.sprite) continue;
-    const im1 = new Image(); im1.src = `sprites/${boss.sprite}.png`;
-    const im2 = new Image(); im2.src = `sprites/${boss.sprite}-step.png`;
-    imgs.push(im1, im2);
+    add(`sprites/${boss.sprite}.png`);
+    add(`sprites/${boss.sprite}-step.png`);
   }
   return imgs;
 })();
@@ -3795,6 +3873,7 @@ function triggerStrikePose() {
     const nowImg = PLAYER_EL.querySelector('img.sprite-img');
     if (!nowImg) { state._strikeRunning = false; return; }
     if (i < sequence.length) {
+      if (i === 0) { nowImg.style.transform = ''; nowImg.style.animation = ''; }
       nowImg.setAttribute('src', `${baseSrc}-${sequence[i]}.png`);
       i++;
       state._strikeTimer = setTimeout(playFrame, FRAME_MS);
@@ -3807,6 +3886,10 @@ function triggerStrikePose() {
       return;
     }
     nowImg.setAttribute('src', idleSrc);
+    // A land pose may have bailed out (strike was running) with its feet
+    // offset still applied; clear it so idle sits on the ground line.
+    nowImg.style.transform = '';
+    nowImg.style.animation = '';
     state._strikeRunning = false;
     state._strikeTimer = null;
   };
@@ -3820,55 +3903,80 @@ function clearPlayerAnimationTimers() {
   state._strikeRunning = false;
   state._strikePending = false;
   state._jumpUntil = 0;
+  const img = PLAYER_EL.querySelector('img.sprite-img');
+  if (img) { img.style.transform = ''; img.style.animation = ''; }
 }
 
-// Play a brief 2-frame "got hit" reaction on a monster. Called from advanceLock
-// every time the player lands a keystroke. Pauses the walk-cycle src-swap,
-// sequences hit-1 → hit-2 on the single sprite img, then restores walk-1 and
-// resumes. Skipped if the monster is already in its dying explode animation.
+// Play a brief "got hit" reaction on a monster. Called from advanceLock on
+// every landed keystroke (ranged: when the arrow lands). The hit-1 -> hit-2
+// pose is driven by tickMonsterFrames from the main loop (m.hitMs), so it
+// freezes with pause / hit-stop like everything else; the visual punch is
+// one restartable Web Animation (hitReact). Bosses have no hit frames and
+// only get the flash. Skipped once the monster is dying.
+const HIT_POSE_MS = 280;      // hit-1 for the first 110ms, then hit-2
 function triggerMonsterHit(m) {
-  if (!m || !m.el || !m.spriteFile) return;
+  if (!m || !m.el) return;
   if (m.el.classList.contains('dying')) return;
-  const spriteEl = m.el.querySelector('.sprite');
-  if (!spriteEl) return;
-  // CSS-driven red glow + shake — applies to every tier including boss.
-  spriteEl.classList.add('monster-hitflash');
-  if (m._hitToken) {
-    clearTimeout(m._hitToken[0]);
-    clearTimeout(m._hitToken[1]);
+  if (m.spriteFile && m.tier !== 'boss') m.hitMs = HIT_POSE_MS;
+  hitReact(m);
+}
+
+// One hit reaction per keystroke: a solid white silhouette frame, then a
+// short knock-back that decays. Restarting cancels the previous run so rapid
+// typing never stacks competing animations on the sprite.
+function hitReact(m) {
+  const spriteEl = m && m.el && m.el.querySelector('.sprite');
+  if (!spriteEl || !spriteEl.animate) return;
+  if (m._hitAnim) m._hitAnim.cancel();
+  const kf = REDUCED.matches
+    ? [{ filter: 'brightness(0) invert(1)' }, { filter: 'brightness(1.5)', offset: 0.3 }, { filter: 'none' }]
+    : [
+        { filter: 'brightness(0) invert(1)', transform: 'translate(0, 0) scale(1.06)' },
+        { filter: 'brightness(1.5)', transform: 'translate(-4px, -3px) scale(1.03)', offset: 0.3 },
+        { filter: 'none', transform: 'translate(2px, 0) scale(1.01)', offset: 0.65 },
+        { filter: 'none', transform: 'none' }
+      ];
+  m._hitAnim = spriteEl.animate(kf, { duration: 180, easing: 'ease-out' });
+}
+
+// Teleporting monster: blink in at its new spot. Scale/filter/opacity on the
+// .sprite only, never the .monster transform that carries its position.
+function teleportFlash(m) {
+  const spriteEl = m && m.el && m.el.querySelector('.sprite');
+  if (!spriteEl || !spriteEl.animate) return;
+  if (m._tpAnim) m._tpAnim.cancel();
+  const kf = REDUCED.matches
+    ? [{ opacity: 0 }, { opacity: 1 }]
+    : [
+        { opacity: 0, transform: 'scale(0.6)', filter: 'blur(8px)' },
+        { opacity: 1, transform: 'scale(1.15)', filter: 'blur(0)', offset: 0.5 },
+        { opacity: 1, transform: 'scale(1)', filter: 'none' }
+      ];
+  m._tpAnim = spriteEl.animate(kf, { duration: 320, easing: 'ease-out' });
+}
+
+// Single-img src-swap walk + hit cycle, advanced from the main loop with the
+// game's scaled dt (so pause, hit-stop and slow-mo freeze or slow it). One
+// <img> per monster, always opacity 1, only its src changes: nothing can
+// blink or stack. Regular tiers cycle walk-1..4; bosses idle/step.
+const WALK_FRAME_MS = 175;
+const BOSS_FRAME_MS = 350;
+function tickMonsterFrames(m, dt) {
+  if (!m._img || !m._frames) return;
+  let src;
+  if (m.hitMs > 0) {
+    m.hitMs -= dt;
+    if (m.hitMs > 0) src = m.hitMs > HIT_POSE_MS - 110 ? m._hitFrames[0] : m._hitFrames[1];
   }
-  // Bosses ship as <base>.png + <base>-step.png only (no hit frames).
-  // Just flash the hitflash class and restore; no src swap needed.
-  if (m.tier === 'boss') {
-    const tBoss = setTimeout(() => {
-      if (!m.el) return;
-      spriteEl.classList.remove('monster-hitflash');
-      m._hitToken = null;
-    }, 280);
-    m._hitToken = [tBoss, tBoss];
-    return;
+  if (!src) {
+    m.walkT = (m.walkT || 0) + dt;
+    const frameMs = m.isBoss ? BOSS_FRAME_MS : WALK_FRAME_MS;
+    src = m._frames[Math.floor(m.walkT / frameMs) % m._frames.length];
   }
-  // Single img: pause the walk-cycle interval, swap through hit-1 → hit-2,
-  // then restore to walk-1 and resume. One element; nothing can stack.
-  const img = spriteEl.querySelector('img.sprite-img');
-  if (!img) return;
-  const base = `sprites/${m.spriteFile}`;
-  m._walkPaused = true;
-  img.setAttribute('src', `${base}-hit-1.png`);
-  const t1 = setTimeout(() => {
-    if (!m.el || m.el.classList.contains('dying')) return;
-    img.setAttribute('src', `${base}-hit-2.png`);
-  }, 110);
-  const t2 = setTimeout(() => {
-    if (!m.el) return;
-    spriteEl.classList.remove('monster-hitflash');
-    if (!m.el.classList.contains('dying')) {
-      img.setAttribute('src', `${base}-walk-1.png`);
-      m._walkPaused = false;
-    }
-    m._hitToken = null;
-  }, 280);
-  m._hitToken = [t1, t2];
+  if (src !== m._src) {
+    m._src = src;
+    m._img.setAttribute('src', src);
+  }
 }
 
 // Play a jump or land pose on the player sprite during a melee teleport.
@@ -3884,6 +3992,9 @@ function triggerJumpPose(phase) {
   if (!img) return;
   const base = `sprites/${sp.spriteBack}`;
   if (state._jumpTimers) { state._jumpTimers.forEach(t => clearTimeout(t)); state._jumpTimers = null; }
+  // Cancelling a land mid-way would otherwise strand its translateY offset.
+  img.style.transform = '';
+  img.style.animation = '';
   if (phase === 'out') {
     // Hold the jump frames for ~260ms total. During this window strike poses
     // queue instead of overwriting (see triggerStrikePose).
@@ -3907,22 +4018,25 @@ function triggerJumpPose(phase) {
       daewang:  [27, 28],
     };
     const charKey = Object.keys(LAND_OFFSETS).find(k => base.includes(k)) || 'baegui';
-    const [off1, off2] = LAND_OFFSETS[charKey];
+    // Offsets were measured at the 237px base; scale with the sprite.
+    const ss = spriteScale();
+    const [off1, off2] = LAND_OFFSETS[charKey].map(v => Math.round(v * ss));
     img.setAttribute('src', `${base}-land-1.png`);
     img.style.animation = 'none';
     img.style.transform = `translateY(${off1}px)`;
     const t1 = setTimeout(() => {
-      if (img.parentNode) {
+      if (img.parentNode && !state._strikeRunning) {
         img.setAttribute('src', `${base}-land-2.png`);
         img.style.transform = `translateY(${off2}px)`;
       }
     }, 130);
     const t2 = setTimeout(() => {
       if (!img.parentNode) return;
-      if (state._strikeRunning) return;
-      img.setAttribute('src', `${base}.png`);
+      // Always drop the feet offset; only swap to idle if no strike owns the frame.
       img.style.animation = '';
       img.style.transform = '';
+      if (state._strikeRunning) return;
+      img.setAttribute('src', `${base}.png`);
     }, 260);
     state._jumpTimers = [t1, t2];
   }
@@ -4117,6 +4231,10 @@ function sfxBossWarn() { for (let i = 0; i < 3; i++) setTimeout(() => tone({ fre
 const STAGE = document.getElementById('stage');
 const PLAYER_EL = document.getElementById('player');
 const BACKDROP_EL = document.querySelector('.backdrop');
+const FX_LAYER = document.getElementById('fxLayer');
+// Live media query: every JS-driven motion effect (camera kick, particles,
+// sakura, parallax zoom, WAAPI transforms) checks REDUCED.matches.
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
 const LIVE_EL = document.getElementById('liveOut');
 const HUD_LEVEL = document.getElementById('hudLevel');
 const HUD_SCORE = document.getElementById('hudScore');
@@ -4284,7 +4402,9 @@ async function flushBattleSubmitQueue() {
         },
         body: JSON.stringify(item.body)
       });
-      if (!res.ok) remaining.push(item);
+      // 4xx means the server rejected this payload for good (validation, rate
+      // limit); requeueing would retry it forever. Only 5xx is worth another try.
+      if (!res.ok && res.status >= 500) remaining.push(item);
     } catch (e) {
       remaining.push(item);
     }
@@ -4453,6 +4573,8 @@ async function renderBattleLeaderboard(containerId) {
   if (!container) return;
   progress = getProgress();
   const data = await fetchBattleLeaderboard();
+  // The user may have switched to the Fandoms tab while we awaited.
+  if ((container.getAttribute('data-tab') || 'players') !== 'players') return;
   if (!data) {
     container.innerHTML = '<div class="battle-lb-loading">Could not load rankings. Try again later.</div>';
     return;
@@ -4499,6 +4621,8 @@ async function renderBattleLeaderboard(containerId) {
   }
 
   // If user has a rank but it's outside top 100, pin them at the bottom.
+  // The rank is for their best saved row, so show the saved best (local
+  // high score / best level), not whatever the current run happened to score.
   let pinHtml = '';
   if (myRank > 100) {
     const userName = (progress.profile && progress.profile.name) || 'Player';
@@ -4510,8 +4634,8 @@ async function renderBattleLeaderboard(containerId) {
       <span class="r">#${myRank.toLocaleString()}</span>
       <span>${flagEmoji(userCountry)}</span>
       ${pinNameCell}
-      <span class="lv">Lv.${state.level}</span>
-      <span class="pts">${(state.score || 0).toLocaleString()}</span>
+      <span class="lv">Lv.${getBestLevel() || state.level}</span>
+      <span class="pts">${Math.max(getHighScore(), state.score || 0).toLocaleString()}</span>
     </div>`;
   }
 
@@ -4583,6 +4707,8 @@ async function renderFandomLeaderboard(containerId) {
   progress = getProgress();
   container.innerHTML = '<div class="battle-lb-loading">Loading fandom rankings…</div>';
   const data = await fetchFandomLeaderboard();
+  // The user may have switched back to the Players tab while we awaited.
+  if (container.getAttribute('data-tab') !== 'fandoms') return;
   if (!data) {
     container.innerHTML = '<div class="battle-lb-empty">Could not load fandom rankings. Check your connection and try again.</div>';
     return;
@@ -4744,6 +4870,11 @@ function openProfileModal(opts) {
     if (typeof opts.afterSave === 'function') opts.afterSave();
   };
   modal.onclick = onBackdrop;
+  // Enter saves from any field; Esc cancels unless a name is required.
+  modal.onkeydown = (e) => {
+    if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') { e.preventDefault(); onSave(); }
+    else if (e.key === 'Escape' && !requireSetup) { e.preventDefault(); close(); }
+  };
   document.getElementById('profileCancel').onclick = onCancel;
   document.getElementById('profileSave').onclick = onSave;
   requestAnimationFrame(() => {
@@ -4776,8 +4907,6 @@ const state = {
   activePowerups: { shield: 0, slowmo: 0, xp: 0 },  // ms remaining (xp = double-XP timer)
   powerups: [],             // dropped pickups in stage
   // Achievement / wave bookkeeping
-  unlockedAchievements: null,  // lazily loaded from localStorage
-  perfectWave: true,        // reset to true at the start of each level
   lastWaveLevel: 1,
   wordKills: {},
   // Within-level spaced repetition: words spawned this level are tracked
@@ -4793,7 +4922,11 @@ const state = {
   // Leaks in the current level (monsters reaching damage line)
   levelLeaks: 0,
   // Slow mode: player opted in via intro toggle
-  slowMode: false
+  slowMode: false,
+  // Juice timers (ms, counted down by real frame time in the loop):
+  // hit-stop freezes the sim on a kill; slow-mo scales it (boss death).
+  hitStopMs: 0,
+  slowMoMs: 0, slowMoScale: 1
 };
 // Expose state and key functions on window for Playwright smoke tests.
 // These are const/function in classic-script scope: const does NOT auto-bind
@@ -5041,7 +5174,9 @@ function spawnMonster(forceBoss) {
     tpT: 0, tpHoldUntil: 600,
     isBoss: false, recall, el: null,
     // First reveal in 3.5s, subsequent reveals every 2.2s
-    recallNextRevealAt: recall ? performance.now() + 3500 : 0,
+    // ms until the next hint, counted down by the loop's scaled dt so pause
+    // and hit-stop delay it too.
+    recallRevealInMs: recall ? 3500 : 0,
     recallRevealsUsed: 0
   };
   buildMonsterEl(monster);
@@ -5050,13 +5185,16 @@ function spawnMonster(forceBoss) {
 
 // triggerBossFight: chains act-break (already shown) -> cutscene -> spawnBoss.
 // Called from the main loop once pendingBoss is true and spawnPauseMs <= 0.
+// The 700ms beat is counted down by the unpaused loop (bossSpawnInMs), so
+// pausing or game over during the beat can't spawn a boss behind a menu.
 function triggerBossFight() {
   // Brief dramatic pause before the cutscene fires
   state.spawnPauseMs = 600;
-  setTimeout(() => spawnBoss(), 700);
+  state.bossSpawnInMs = 700;
 }
 
 function spawnBoss() {
+  if (!state.running) return null;
   track('boss_start', { level: state.level });
   sfxBossWarn();
   pulseBattleCamera('heavy');
@@ -5079,7 +5217,7 @@ function spawnBoss() {
   const ks2 = wordToKeystrokes(phase2Word.ko);
   const ks3 = wordToKeystrokes(phase3Word.ko);
   const totalKs = ks1.length + ks2.length + ks3.length;
-  const profile = nextBossProfile();
+  const profile = nextBossProfile(state.level);
   const startX = window.innerWidth / 2;
   const beh = behaviorForTier('boss');
   const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * (state.assistMul || 1.0) * (state.slowMode ? 0.6 : 1.0);
@@ -5104,8 +5242,10 @@ function spawnBoss() {
     phaseWords,
     phaseKs: [ks1, ks2, ks3],
     phaseWindows: windows,
-    phaseDeadline: performance.now() + windows[0] + 1550, // +1550ms for cutscene duration
-    phaseHit: false  // true while charging telegraph ring (last 1500ms)
+    // Counted down by dt in the unpaused loop so pause / tab switch freeze it.
+    phaseRemainingMs: windows[0] + 1550, // +1550ms for cutscene duration
+    phaseHit: false,  // true while charging telegraph ring (last 1500ms)
+    shotLandInMs: 0   // >0 while a boss shot is in flight toward the player
   };
   // Sweep non-boss monsters before the cutscene so the boss enters a clean arena.
   // No XP or score; just a smoke puff and remove. Release any active lock first.
@@ -5115,7 +5255,7 @@ function spawnBoss() {
       state.lockId = null; state.lockPosKs = 0; state.lockExpectedKs = [];
       state.ime.reset(); LIVE_EL.textContent = '';
     }
-    if (mob._walkInterval) { clearInterval(mob._walkInterval); mob._walkInterval = null; }
+    mob._img = null;
     if (mob.el) { mob.el.classList.add('dying'); setTimeout(() => mob.el && mob.el.remove(), 550); }
     spawnSmokePuff(mob.x, (mob.y || 0) + 40, { scale: 0.5 });
   });
@@ -5124,6 +5264,14 @@ function spawnBoss() {
   playBossCutscene(profile);
   buildMonsterEl(monster);
   state.monsters.push(monster);
+}
+
+// Keystrokes already spent on earlier boss phases. maxHp spans all three
+// phase words, so every HP write adds this to the current lock position;
+// otherwise the bar refills at each phase start.
+function ksDoneBeforePhase(m) {
+  if (!m || !m.isBoss || !m.phaseKs) return 0;
+  return m.phaseKs.slice(0, m.phase - 1).reduce((s, k) => s + k.length, 0);
 }
 
 // Called when the player completes a boss phase word while phase < 3.
@@ -5136,12 +5284,15 @@ function advanceBossPhase(m) {
   m.word = nextWord.ko;
   m.en   = nextWord.en;
   m.ks   = nextKs;
-  // Reset lock progress for the new phase word
-  state.lockExpectedKs = nextKs;
-  state.lockPosKs = 0;
-  // Reset phase deadline using the pre-computed per-word window
-  const _nextWindow = m.phaseWindows[phaseIdx];
-  m.phaseDeadline = performance.now() + _nextWindow;
+  // Reset lock progress for the new phase word. Saved escape progress belongs
+  // to the old word; the live lock only changes if the boss is the target.
+  m.lockProgressKs = 0;
+  if (state.lockId === m.id) {
+    state.lockExpectedKs = nextKs.slice();
+    state.lockPosKs = 0;
+  }
+  // Reset phase timer using the pre-computed per-word window
+  m.phaseRemainingMs = m.phaseWindows[phaseIdx];
   m.phaseHit = false;
   // Remove telegraph ring if present
   if (m.el) m.el.classList.remove('boss-charging');
@@ -5153,23 +5304,50 @@ function advanceBossPhase(m) {
       wordBubble.innerHTML = '';
       wordBubble.appendChild(built.wrapper);
       m.syllables = built.syllables;
+      m._wordW = wordBubble.offsetWidth;
     }
   }
   // Update HP bar (hp stays as total keystrokes already typed)
-  const ksDone = m.phaseKs.slice(0, phaseIdx).reduce((s, k) => s + k.length, 0);
-  m.hp = m.maxHp - ksDone;
+  m.hp = m.maxHp - ksDoneBeforePhase(m);
   if (m.el) m.el.style.setProperty('--hp-frac', (m.hp / m.maxHp).toFixed(3));
   // Phase stagger VFX
   triggerMonsterHit(m);
   particleBurst(m.x, m.y + 30, 15);
-  flashCenterText('Phase ' + m.phase + ' !');
+  bossPhaseCallout(m, 'Phase ' + m.phase + ' !');
   tone({ freq: 440, type: 'triangle', dur: 0.25, gain: 0.07, slide: 660 });
+}
+
+// "Phase N !" pinned to the boss instead of the top banner lane, which sits
+// right on the boss sprite. Above the sprite when there is headroom (boss
+// lower on the stage), otherwise just under its word bubble.
+function bossPhaseCallout(m, text) {
+  if (!m || !m.el) return;
+  const el = document.createElement('div');
+  el.className = 'phase-callout';
+  el.textContent = text;
+  let y, above;
+  if (m.y > 70) {
+    y = m.y - 10;
+    above = true;
+  } else {
+    const word = m.el.querySelector('.word');
+    const sr = getStageRect();
+    y = word ? word.getBoundingClientRect().bottom - sr.top + 12 : m.y + 60;
+    above = false;
+  }
+  el.style.left = m.x + 'px';
+  el.style.top = y + 'px';
+  if (above) el.classList.add('above');
+  FX_LAYER.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
 }
 
 // Boss reward modal: pause game, show 3 card choices (click or keys 1/2/3).
 function showBossRewardModal() {
   track('boss_defeat', { level: state.level });
   state.paused = true;
+  // The boss-death slow-mo ends here; it must not carry into the next wave.
+  state.slowMoMs = 0; state.slowMoScale = 1;
   const charges = state.specialCharges || 0;
   const lifeOption = state.lives >= 3
     ? { icon: '🛡️', label: 'Shield', desc: 'Absorb next hit' }
@@ -5185,7 +5363,7 @@ function showBossRewardModal() {
     <div class="modal-card" style="max-width:480px;">
       <div class="badge">BOSS DEFEATED</div>
       <h1>Choose Your Reward</h1>
-      <p class="subtitle">${window.matchMedia('(max-width:720px)').matches ? 'Tap a card (or press 1, 2, 3)' : 'Press 1, 2, or 3'}</p>
+      <p class="subtitle">${window.matchMedia(TOUCH_LAYOUT_MQ).matches ? 'Tap a card (or press 1, 2, 3)' : 'Press 1, 2, or 3'}</p>
       <div class="boss-reward-cards">
         <button class="boss-reward-card" data-choice="1" aria-label="Option 1: ${lifeOption.label}">
           <div class="brc-icon">${lifeOption.icon}</div>
@@ -5210,8 +5388,10 @@ function showBossRewardModal() {
   document.body.appendChild(veil);
 
   function pick(choice) {
-    veil.remove();
     document.removeEventListener('keydown', onKey, true);
+    // Removed by clearRunOverlays (game over / new run): grant nothing.
+    if (!veil.isConnected) return;
+    veil.remove();
     if (choice === 1) {
       if (state.lives >= 3) {
         // Grant shield instead of life when full
@@ -5237,6 +5417,7 @@ function showBossRewardModal() {
     }
     state.paused = false;
     updateHud();
+    flushPendingAutoPause();
   }
 
   veil.querySelectorAll('.boss-reward-card').forEach(btn => {
@@ -5244,6 +5425,9 @@ function showBossRewardModal() {
   });
 
   function onKey(e) {
+    if (!veil.isConnected) { document.removeEventListener('keydown', onKey, true); return; }
+    // A key still held from the boss kill must not auto-pick a reward.
+    if (e.repeat) return;
     if (e.key === '1' || e.key === '2' || e.key === '3') {
       e.preventDefault(); e.stopPropagation();
       pick(Number(e.key));
@@ -5259,29 +5443,29 @@ function buildMonsterEl(m) {
   sprite.className = 'sprite';
   // Per-tier image size (matches existing CSS font-size scale).
   // Live in battle-config.js so the workshop previews at game-accurate sizes.
+  // Scaled by spriteScale() so phones get proportionally smaller demons.
   const sizePx = (window.BATTLE_CONFIG.tierSizePx && window.BATTLE_CONFIG.tierSizePx[m.tier]) || 101;
+  m.basePx = sizePx;
   if (m.spriteFile) {
     // Single-img src-swap walk cycle: one <img> per monster, always opacity 1.
-    // JS setInterval toggles img.src between idle and step frames — no second
-    // element means no crossfade drift (blink) and no overlay stacking.
-    // Both frame PNGs are preloaded at startup so the swap is visually gapless.
-    const idleSuffix = m.tier === 'boss' ? ''      : '-walk-1';
-    const stepSuffix = m.tier === 'boss' ? '-step' : '-walk-3';
-    sprite.innerHTML = spriteHtml(m.spriteFile + idleSuffix, m.sprite, sizePx);
+    // tickMonsterFrames (main loop) swaps its src through the preloaded
+    // frames; no second element means no crossfade blink and no stacking.
+    const base = `sprites/${m.spriteFile}`;
+    m._frames = m.tier === 'boss'
+      ? [`${base}.png`, `${base}-step.png`]
+      : [1, 2, 3, 4].map(n => `${base}-walk-${n}.png`);
+    m._hitFrames = [`${base}-hit-1.png`, `${base}-hit-2.png`];
+    // Random phase so a wave doesn't step in lockstep.
+    m.walkT = Math.random() * 4 * WALK_FRAME_MS;
+    m.hitMs = 0;
+    const firstFrame = m._frames[Math.floor(m.walkT / (m.tier === 'boss' ? BOSS_FRAME_MS : WALK_FRAME_MS)) % m._frames.length];
+    const firstFile = firstFrame.slice('sprites/'.length, -'.png'.length);
+    sprite.innerHTML = spriteHtml(firstFile, m.sprite, Math.round(sizePx * spriteScale()), sizePx);
     const imgEl = sprite.querySelector('.sprite-img');
-    const walkPhase = (-Math.random() * 1.8).toFixed(3) + 's';
-    if (imgEl) imgEl.style.animationDelay = walkPhase;
     if (imgEl) {
-      const idleSrc = `sprites/${m.spriteFile}${idleSuffix}.png`;
-      const stepSrc = `sprites/${m.spriteFile}${stepSuffix}.png`;
-      let _showStep = false;
-      const _interval = setInterval(() => {
-        if (!el.isConnected || !imgEl.isConnected) { clearInterval(_interval); return; }
-        if (m._walkPaused) return;
-        _showStep = !_showStep;
-        imgEl.setAttribute('src', _showStep ? stepSrc : idleSrc);
-      }, 350);
-      m._walkInterval = _interval;
+      imgEl.style.animationDelay = (-Math.random() * 1.8).toFixed(3) + 's';
+      m._img = imgEl;
+      m._src = firstFrame;
     }
   } else {
     sprite.textContent = m.sprite;
@@ -5326,6 +5510,7 @@ function buildMonsterEl(m) {
   }
   wordBubble.appendChild(built.wrapper);
   el.appendChild(wordBubble);
+  m._wordEl = wordBubble;
   m.syllables = built.syllables;
 
   const hpBar = document.createElement('div');
@@ -5342,34 +5527,59 @@ function buildMonsterEl(m) {
   STAGE.appendChild(el);
   m.el = el;
   el.style.setProperty('--hp-frac', '1');
+  // Unscaled bubble width, read once per spawn (and per boss phase word),
+  // so the per-frame edge clamp needs no layout read.
+  m._wordW = wordBubble.offsetWidth;
   renderMonsterDepth(m);
 }
 
+// Freeze the sim (and the stage's CSS animations) for a few frames so a
+// kill lands with weight. Longest request wins; never stacks.
+function hitStop(ms) {
+  state.hitStopMs = Math.max(state.hitStopMs || 0, ms);
+  STAGE.classList.add('hitstop');
+}
+
+// Center of a monster's sprite in stage coordinates, from game state
+// (monster.y is the sprite's top edge) so no layout read is needed.
+function monsterCenter(m) {
+  const scale = depthScaleAtPx(Number(m.y) || 0);
+  const h = (m.basePx || MONSTER_BASE_PX[m.isBoss ? 'boss' : m.tier] || 120) * spriteScale() * scale;
+  return { x: m.x, y: m.y + h * 0.5, h };
+}
+
 function killMonster(m, byPlayer) {
-  if (m._walkInterval) { clearInterval(m._walkInterval); m._walkInterval = null; }
-  if (m.el && m.spriteFile && m.tier !== 'boss') {
-    const base = `sprites/${m.spriteFile}`;
-    const img = m.el.querySelector('img.sprite-img');
-    if (img) img.setAttribute('src', `${base}-hit-2.png`);
-  }
+  // Drop out of the frame ticker and hold the pain frame for the defeat fade.
+  if (m._img && m._hitFrames && m.tier !== 'boss') m._img.setAttribute('src', m._hitFrames[1]);
+  m._img = null;
+  if (m._hitAnim) { m._hitAnim.cancel(); m._hitAnim = null; }
   m.el.classList.add('dying');
-  particleBurst(m.x, m.y + 30, m.tier === 'boss' ? 30 : 10);
-  spawnSmokePuff(m.x, m.y + 40, { scale: 0.6 });
+  const center = monsterCenter(m);
+  const isBossKill = !!m.isBoss;
+  // Removal waits out the defeat fade, stretched by any hit-stop / boss slow-mo.
+  let removeAfterMs = 550;
+  particleBurst(center.x, center.y, isBossKill ? 30 : 12, tierParticleColors(m.tier));
+  spawnSmokePuff(m.x, center.y + center.h * 0.3, { size: 64 * spriteScale() });
+  // Drop the dead monster before maybeLevelUp so onLevelUp's empty-field
+  // check (WAVE CLEAR bonus) sees the real field.
+  state.monsters = state.monsters.filter(x => x.id !== m.id);
   if (byPlayer) {
     let xp = xpForKill(m.tier);
     let sc = scoreForKill(m.tier, state.combo);
     // Variable rewards: 5% crit (3× score), 1% heart drop (only if not full HP), bosses guarantee crit.
     const isCrit = m.isBoss || Math.random() < 0.05;
+    // Score pops stack upward with a stagger instead of overprinting.
+    const pops = [];
     if (isCrit) {
       sc *= 3; xp = Math.round(xp * 1.5);
-      floatScorePop(m.x, m.y, 'CRIT! x3');
-      particleBurst(m.x, m.y + 30, 18);
+      pops.push({ text: 'CRIT! x3', cls: 'crit' });
+      if (!isBossKill) particleBurst(center.x, center.y, 10, ['#fde68a', '#f59e0b', '#ffffff']);
       pulseBattleCamera('pulse');
     }
     // Perfect recall bonus: killed without any syllable reveals
     if (m.recall && m.recallRevealsUsed === 0) {
       sc = Math.round(sc * 1.5);
-      floatScorePop(m.x, m.y - 20, 'PERFECT RECALL');
+      pops.push({ text: 'PERFECT RECALL', cls: 'recall' });
       tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.05, slide: 1760 });
     }
     // Heart pickup: only granted when killing a heart monster (m.isHeart),
@@ -5393,7 +5603,26 @@ function killMonster(m, byPlayer) {
       state.wordKills = state.wordKills || {};
       state.wordKills[m.word] = (state.wordKills[m.word] || 0) + 1;
     } catch (e) {}
-    floatScorePop(m.x, m.y, '+' + sc + (isCrit ? ' ✨' : ''));
+    pops.unshift({ text: '+' + sc + (isCrit ? ' ✨' : '') });
+    pops.forEach((pop, i) => floatScorePop(m.x, m.y - i * 24, pop.text, { delay: i * 80, cls: pop.cls }));
+    // Hit-stop: a beat on every kill, longer on crits, longest on a boss.
+    // Not during 필살 (time is already frozen and kills chain fast).
+    if (!state.specialMoveBurst) {
+      const stopMs = isBossKill ? 250 : isCrit ? 120 : 60;
+      hitStop(stopMs);
+      removeAfterMs += stopMs;
+    }
+    if (isBossKill) {
+      // Boss death: white flash + the world drops into slow-mo for a beat.
+      whiteFlash(0.85, 420);
+      state.slowMoMs = 1100;
+      state.slowMoScale = 0.3;
+      const spriteEl = m.el.querySelector('.sprite');
+      if (spriteEl && spriteEl.getAnimations) {
+        spriteEl.getAnimations().forEach(a => { a.playbackRate = 0.4; });
+        removeAfterMs = Math.round(550 / 0.4) + 250;
+      }
+    }
     // English-translation reveal — closes the learning loop. Suppressed during
     // 필살기 mass-kills and boss kills (reward modal covers the same space).
     if (!state.specialMoveBurst && !m.isBoss) {
@@ -5405,11 +5634,9 @@ function killMonster(m, byPlayer) {
     // the audio confirms what they just produced. Suppressed during 필살.
     if (!state.specialMoveBurst) speakKoreanWord(m.word);
     sfxKill();
-    if (state.kills === 1) unlockAchievement('first_kill');
     if (m.isBoss) {
       state.bossActive = false;
       document.body.classList.remove('boss-alive');
-      unlockAchievement('first_boss');
       // Record this act level as cleared so gameOver can advance the checkpoint
       if (LEVEL_ACTS[state.level]) {
         state.actsCleared = state.actsCleared || [];
@@ -5422,11 +5649,10 @@ function killMonster(m, byPlayer) {
     updateHud();
     // Boss reward choice: pause and show the 3-card modal after boss kill
     if (m.isBoss) {
-      setTimeout(() => showBossRewardModal(), 400);
+      runTimeout(() => { if (state.running) showBossRewardModal(); }, 400);
     }
   }
-  setTimeout(() => m.el.remove(), 550);
-  state.monsters = state.monsters.filter(x => x.id !== m.id);
+  setTimeout(() => m.el.remove(), removeAfterMs);
   if (state.lockId === m.id) {
     state.lockId = null;
     state.lockExpectedKs = [];
@@ -5450,8 +5676,9 @@ function maybeLevelUp() {
 
 // ─── Tier-band themes (aligned with the 7 player tiers) ──────────────────
 // Each player tier has a matching backdrop scene. Image backgrounds live in
-// sprites/backgrounds/0N-name.png; CSS overrides .backdrop::before with the
-// PNG so the existing gradient base stays as a tinted color floor.
+// sprites/backgrounds/0N-name.webp and crossfade between the two .bg-layer
+// elements; the body theme class still sets the tinted gradient floor and
+// the accent tokens.
 function themeForLevel(lv) {
   if (lv <= 4)  return 'village';     // tier 1 백의
   if (lv <= 9)  return 'forest';      // tier 2 나무꾼
@@ -5463,28 +5690,62 @@ function themeForLevel(lv) {
 }
 const ALL_THEMES = ['village','forest','study','courtyard','camp','battlefield','palace',
                     /* legacy, removed but cleaned for safety: */ 'shrine','temple','cosmos'];
+const THEME_BG_FILES = { village: '01-village', forest: '02-forest', study: '03-study',
+                         courtyard: '04-courtyard', camp: '05-camp',
+                         battlefield: '06-battlefield', palace: '07-palace' };
+function themeBgUrl(theme) {
+  return THEME_BG_FILES[theme] ? 'sprites/backgrounds/' + THEME_BG_FILES[theme] + '.webp' : null;
+}
 function applyTheme(theme) {
   const body = document.body;
   body.className = body.className.replace(/\btheme-\S+/g, '').trim() + ' theme-' + theme;
+  setBackdropImage(theme);
   if (typeof Bgm !== 'undefined') (window.requestIdleCallback || requestAnimationFrame)(() => Bgm.setTheme(theme));
 }
+// Crossfade to a theme's painted scene: decode into the hidden layer, then
+// swap which layer is .on (the CSS opacity transition does the fade). A
+// newer request supersedes one still decoding.
+let _bgTheme = null;
+let _bgFront = 0;
+function setBackdropImage(theme) {
+  if (theme === _bgTheme) return;
+  _bgTheme = theme;
+  const layers = BACKDROP_EL ? BACKDROP_EL.querySelectorAll('.bg-layer') : [];
+  if (layers.length < 2) return;
+  const url = themeBgUrl(theme);
+  const prev = layers[_bgFront];
+  if (!url) { prev.classList.remove('on'); return; }
+  const next = layers[1 - _bgFront];
+  const img = new Image();
+  img.src = url;
+  const show = () => {
+    if (_bgTheme !== theme) return;
+    next.style.backgroundImage = `url('${url}')`;
+    next.classList.add('on');
+    prev.classList.remove('on');
+    _bgFront = 1 - _bgFront;
+  };
+  if (img.decode) img.decode().then(show, show); else img.onload = img.onerror = show;
+}
+// Warm the next band's scene one level ahead so its crossfade is instant.
+const _prewarmedBgs = [];
 function prewarmNextTheme(lv) {
   const next = themeForLevel(lv + 1);
   if (next === themeForLevel(lv)) return;
-  const names = { village: '01-village', forest: '02-forest', study: '03-study',
-                  courtyard: '04-courtyard', camp: '05-camp',
-                  battlefield: '06-battlefield', palace: '07-palace' };
-  if (!names[next]) return;
+  const url = themeBgUrl(next);
+  if (!url) return;
   const img = new Image();
-  img.src = 'sprites/backgrounds/' + names[next] + '.png';
+  img.src = url;
   if (img.decode) img.decode().catch(() => {});
+  _prewarmedBgs.push(img);
 }
 
 // ─── BGM (per-theme Korean lofi-hiphop loops) ─────────────────────────────
 // Procedural so the game ships zero music files. Each theme gets a distinct
 // chord progression voiced from a Korean-pentatonic-ish scale plus a soft
-// kick/snare/hat lofi groove, all scheduled via WebAudio. If a real mp3
-// drops at bgm/{theme}.mp3, that overrides the synth.
+// kick/snare/hat lofi groove, all scheduled via WebAudio. (The old
+// bgm/{theme}.mp3 override was removed: no bgm/ folder ships, so its HEAD
+// probe only produced a 404 per theme change.)
 //
 // Each preset = { root, chords (semitone-offset arrays), melody (motif),
 // bpm, lowpass cutoff (mojo) }. Tempo stays in the lofi pocket (60–82 bpm).
@@ -5533,7 +5794,8 @@ const Bgm = (function () {
   let stepTimer = null;
   let step = 0;
   let muted = false;
-  let mp3El = null;
+  let paused = false;      // run paused / ended: fade out without tearing down
+  let themeGen = 0;        // bumps on every setTheme so stale timeouts bail
   let activePreset = null;
   let vinylNoise = null;
 
@@ -5557,7 +5819,6 @@ const Bgm = (function () {
   function tearDown() {
     if (stepTimer) { clearInterval(stepTimer); stepTimer = null; }
     if (vinylNoise) { try { vinylNoise.stop(); vinylNoise.disconnect(); } catch (_) {} vinylNoise = null; }
-    if (mp3El) { try { mp3El.pause(); mp3El.src = ''; } catch (_) {} mp3El = null; }
     activePreset = null;
   }
 
@@ -5667,7 +5928,7 @@ const Bgm = (function () {
     const stepMs = 60000 / preset.bpm / 2;
     step = 0;
     stepTimer = setInterval(() => {
-      if (muted) { step++; return; }
+      if (muted || paused) { step++; return; }
       const t0 = c.currentTime + 0.03;
       const beat = step % 8;             // 8 sixteenth-positions per "bar"
       const bar = Math.floor(step / 8);  // chord index
@@ -5696,38 +5957,34 @@ const Bgm = (function () {
     m.gain.linearRampToValueAtTime(targetGain, t0 + ms / 1000);
   }
 
-  function tryMp3(theme) {
-    return fetch(`bgm/${theme}.mp3`, { method: 'HEAD' })
-      .then(r => r.ok)
-      .catch(() => false);
-  }
+  function audibleGain() { return (muted || paused || !currentTheme) ? 0 : 1; }
 
   function setTheme(theme) {
     if (theme === currentTheme) return;
     const preset = BGM_PRESETS[theme];
     if (!preset) return;
     currentTheme = theme;
+    // Two quick theme changes (e.g. a double level-up) used to race: both
+    // timeouts built a synth and the first one leaked. Only the latest wins.
+    const gen = ++themeGen;
     fadeMaster(0, 600);
     setTimeout(() => {
+      if (gen !== themeGen) return;
       tearDown();
-      tryMp3(theme).then(hasMp3 => {
-        if (hasMp3) {
-          mp3El = new Audio(`bgm/${theme}.mp3`);
-          mp3El.loop = true;
-          mp3El.volume = muted ? 0 : 0.35;
-          mp3El.play().catch(() => {});
-        } else {
-          buildSynth(preset);
-          fadeMaster(muted ? 0 : 1, 1200);
-        }
-      });
+      buildSynth(preset);
+      fadeMaster(audibleGain(), 1200);
     }, 650);
   }
 
   function setMuted(v) {
     muted = !!v;
-    if (mp3El) mp3El.volume = muted ? 0 : 0.35;
-    fadeMaster(muted ? 0 : (currentTheme ? 1 : 0), 240);
+    fadeMaster(audibleGain(), 240);
+  }
+
+  // Pause menu and game over silence the loop; resume / new run restores it.
+  function setPaused(v) {
+    paused = !!v;
+    fadeMaster(audibleGain(), 240);
   }
 
   function isMuted() { return muted; }
@@ -5737,7 +5994,7 @@ const Bgm = (function () {
     if (stored === '1') muted = true;
   } catch (_) {}
 
-  return { setTheme, setMuted, isMuted };
+  return { setTheme, setMuted, setPaused, isMuted };
 })();
 
 // ─── Story acts (level-milestone narrative beats) ─────────────────────────
@@ -5796,13 +6053,18 @@ function showActBreak(act) {
   const close = () => {
     if (closed) return;
     closed = true;
+    document.removeEventListener('keydown', onKey, true);
+    // Removed by clearRunOverlays (game over / new run): don't touch pause state.
+    if (!overlay.isConnected) return;
     overlay.style.transition = 'opacity 0.3s';
     overlay.style.opacity = '0';
-    setTimeout(() => overlay.remove(), 320);
+    setTimeout(() => { overlay.remove(); flushPendingAutoPause(); }, 320);
     state.paused = wasPaused;
-    document.removeEventListener('keydown', onKey, true);
   };
   const onKey = (e) => {
+    if (!overlay.isConnected) { close(); return; }
+    // Held Space / Enter from typing must not dismiss the chapter card.
+    if (e.repeat) return;
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
       e.preventDefault(); e.stopPropagation();
       close();
@@ -5811,31 +6073,37 @@ function showActBreak(act) {
   document.addEventListener('keydown', onKey, true);
   overlay.addEventListener('click', close);
   // Auto-dismiss after 6s so the player isn't stuck
-  setTimeout(close, 6000);
+  runTimeout(close, 6000);
 }
 
 function onLevelUp() {
   track('battle_level_up', { level: state.level, mode: state.runMode || 'story' });
   sfxLevelUp();
   pulseBattleCamera('pulse');
-  PLAYER_EL.classList.remove('levelup');
-  void PLAYER_EL.offsetWidth;
-  PLAYER_EL.classList.add('levelup');
   const _pr = PLAYER_EL.getBoundingClientRect();
   const _sr = getStageRect();
   if (_pr && _sr) particleBurst(
     (_pr.left + _pr.width / 2) - _sr.left,
     (_pr.top + _pr.height / 2) - _sr.top,
-    16
+    16, ['#fde68a', '#f59e0b', '#ffffff', '#60a5fa']
   );
   const sp = playerForLevel(state.level);
   renderPlayerSprite(state.level);
+  // Pulse the fresh sprite. Targets .player-main, so it plays whether the
+  // player is home or teleported (teleport sets animation:none on .player).
+  playerFx(REDUCED.matches
+    ? [{ filter: 'drop-shadow(0 0 0 rgba(245,158,11,0))' }, { filter: 'drop-shadow(0 0 26px rgba(245,158,11,0.75))', offset: 0.4 }, { filter: 'drop-shadow(0 0 0 rgba(245,158,11,0))' }]
+    : [
+        { transform: 'scale(1)',    filter: 'drop-shadow(0 0 0 rgba(245,158,11,0))' },
+        { transform: 'scale(1.35)', filter: 'drop-shadow(0 0 26px rgba(245,158,11,0.75))', offset: 0.4 },
+        { transform: 'scale(1)',    filter: 'drop-shadow(0 0 0 rgba(245,158,11,0))' }
+      ], { duration: 900, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
   // Level banner always shows first; wave-clear queues after it.
   flashLevelBanner('Lv. ' + state.level + ' · ' + sp.label, state.level);
   if (state.monsters.length === 0) {
     const bonus = 250 + state.level * 25;
     state.score += bonus;
-    setTimeout(() => flashCenterText('WAVE CLEAR +' + bonus), 1400);
+    runTimeout(() => flashCenterText('WAVE CLEAR +' + bonus), 1400);
   }
   // Set spawn pause so level transitions breathe
   state.spawnPauseMs = state.dailyRun ? 1000 : 2500;
@@ -5867,21 +6135,13 @@ function onLevelUp() {
   }
   // Story act break at chapter milestones (chains before boss cutscene via pendingBoss delay)
   if (LEVEL_ACTS[state.level]) {
-    setTimeout(() => showActBreak(LEVEL_ACTS[state.level]), 500);
+    const act = LEVEL_ACTS[state.level];
+    runTimeout(() => { if (state.running) showActBreak(act); }, 500);
   }
-  // Perfect-wave check (no missed key in the wave that just ended)
-  if (state.perfectWave && state.level - state.lastWaveLevel >= 1) {
-    unlockAchievement('perfect_wave');
-  }
-  state.perfectWave = true;
   state.lastWaveLevel = state.level;
   // Fresh recall pool for the new level — words from the previous level no
   // longer count, the player gets a clean recognition→recall arc per level.
   state.levelWordHistory = [];
-  // Level-milestone achievements
-  if (state.level >= 5  && state.lives === 3) unlockAchievement('no_damage_lv5');
-  if (state.level >= 10) unlockAchievement('reach_lv10');
-  if (state.level >= 20) unlockAchievement('reach_lv20');
   prewarmNextTheme(state.level);
 }
 
@@ -5896,7 +6156,36 @@ function _showNextBanner() {
   el.className = 'combo-banner';
   el.textContent = txt;
   document.body.appendChild(el);
+  const lane = bannerLaneAvoidingBoss(el.offsetWidth, el.offsetHeight);
+  if (lane) { el.style.top = lane.top + 'px'; if (lane.left != null) el.style.left = lane.left + 'px'; }
   setTimeout(() => { el.remove(); _showNextBanner(); }, 1300);
+}
+// The default banner lane (top: 96px) sits on a boss, which spawns at the
+// top of the stage and holds the center column. During a boss fight, use
+// the first lane that fits inside the stage: the band above its sprite,
+// below its word bubble (leaving the slot right under it to the "Phase N !"
+// callout), or the wider side gutter next to it (short landscape stages).
+// Returns viewport { top, left? } (left is the banner's center), or null.
+function bannerLaneAvoidingBoss(bannerW, bannerH) {
+  const boss = state.monsters.find(m => m.isBoss && m.el && m.el.isConnected);
+  if (!boss) return null;
+  const spriteEl = boss.el.querySelector('.sprite');
+  if (!spriteEl) return null;
+  const sr = getStageRect();
+  const sprite = spriteEl.getBoundingClientRect();
+  const room = sprite.top - sr.top;
+  if (room >= bannerH + 24) return { top: Math.round(sr.top + (room - bannerH) / 2) };
+  const word = boss.el.querySelector('.word');
+  const below = Math.max(sprite.bottom, word ? word.getBoundingClientRect().bottom : 0) + 64;
+  if (below + bannerH <= sr.bottom - 8) return { top: Math.round(below) };
+  const leftGap = sprite.left - sr.left, rightGap = sr.right - sprite.right;
+  const useLeft = leftGap >= rightGap;
+  const gap = useLeft ? leftGap : rightGap;
+  if (gap >= bannerW + 16) {
+    const cx = useLeft ? sr.left + gap / 2 : sprite.right + gap / 2;
+    return { top: Math.round(sprite.top + (sprite.height - bannerH) / 2), left: Math.round(cx) };
+  }
+  return { top: Math.round(Math.min(below, sr.bottom - bannerH - 8)) };
 }
 function flashCenterText(txt) {
   if (_bannerQueue.length >= 3) return; // cap queue
@@ -5919,31 +6208,64 @@ function flashLevelBanner(txt, level) {
   setTimeout(() => el.remove(), 2000);
 }
 
-function particleBurst(x, y, count) {
-  const colors = ['var(--blue)','var(--green)','var(--yellow)','var(--orange)','var(--purple)'];
+// Death / level-up burst. Each chip is thrown up and out, then gravity
+// pulls it down: the parabola is baked into transform keyframes, so one
+// compositor animation per chip and no per-frame JS. Skipped under reduced
+// motion. Colors default to the UI palette; kills pass the tier's colors.
+const DEFAULT_PARTICLE_COLORS = ['#2563eb', '#10b981', '#f59e0b', '#f97316', '#8b5cf6'];
+function tierParticleColors(tier) {
+  const map = (window.BATTLE_CONFIG && window.BATTLE_CONFIG.tierParticles) || {};
+  return map[tier] || DEFAULT_PARTICLE_COLORS;
+}
+function particleBurst(x, y, count, colors) {
+  if (REDUCED.matches || !count) return;
+  const palette = colors && colors.length ? colors : DEFAULT_PARTICLE_COLORS;
+  const ss = spriteScale();
+  const rate = fxRate();
+  const frag = document.createDocumentFragment();
   for (let i = 0; i < count; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
-    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
-    const dist = 50 + Math.random() * 60;
-    const dx = Math.cos(angle) * dist, dy = Math.sin(angle) * dist;
     p.style.left = x + 'px';
     p.style.top  = y + 'px';
-    p.style.background = colors[i % colors.length];
-    p.style.setProperty('--end', `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`);
-    STAGE.appendChild(p);
-    p.addEventListener('animationend', () => p.remove());
+    p.style.background = palette[i % palette.length];
+    const size = (5 + Math.random() * 5) * Math.max(0.7, ss);
+    p.style.width = p.style.height = size.toFixed(1) + 'px';
+    frag.appendChild(p);
+    // Launch velocity biased upward; g pulls it back down past the origin.
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+    const speed = (90 + Math.random() * 110) * ss;     // px/s
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed - 160 * ss;
+    const g = 900 * ss;                                 // px/s^2
+    const dur = 650 + Math.random() * 250;
+    const kf = [];
+    for (let k = 0; k <= 6; k++) {
+      const t = (k / 6) * dur / 1000;
+      kf.push({
+        transform: `translate(${(vx * t).toFixed(1)}px, ${(vy * t + 0.5 * g * t * t).toFixed(1)}px) rotate(${(k * 50 * (i % 2 ? 1 : -1))}deg) scale(${(1 - k / 9).toFixed(2)})`,
+        opacity: k < 4 ? 1 : 1 - (k - 3) / 3
+      });
+    }
+    const a = p.animate(kf, { duration: dur, easing: 'linear', fill: 'forwards' });
+    a.playbackRate = rate;
+    a.onfinish = () => p.remove();
   }
+  FX_LAYER.appendChild(frag);
 }
 
-function floatScorePop(x, y, text) {
+// Floating score text. opts.delay staggers stacked pops (CSS fill: both
+// keeps a delayed pop invisible until it starts); opts.cls tints it.
+function floatScorePop(x, y, text, opts = {}) {
   const el = document.createElement('div');
-  el.className = 'score-pop';
+  el.className = 'score-pop' + (opts.cls ? ' ' + opts.cls : '');
   el.textContent = text;
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
-  STAGE.appendChild(el);
-  setTimeout(() => el.remove(), 900);
+  const delay = Number(opts.delay) || 0;
+  if (delay) el.style.animationDelay = delay + 'ms';
+  FX_LAYER.appendChild(el);
+  setTimeout(() => el.remove(), 900 + delay);
 }
 
 // English translation flies up from the kill point so the player learns the
@@ -5970,6 +6292,7 @@ let _audioMap = null;             // ko -> URL relative to game.html
 const _audioCache = new Map();    // ko -> HTMLAudioElement
 let _koreanVoice = undefined;     // undefined = unprobed, false = probed/none, Voice = found
 let _ttsSupported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+let _lastSpokenAudio = null;      // most recent word clip, paused before the next one
 
 fetch('audio/manifest.json')
   .then(r => r.ok ? r.json() : null)
@@ -6018,11 +6341,16 @@ function speakKoreanWord(text) {
   // Rate scales gently with level: 1.0 (lv1) to 1.3 (lv30+). Capped lower
   // than before so mid-game speech stays intelligible at higher levels.
   const rate = Math.min(1.3, 1.0 + (state.level || 1) * 0.01);
+  // One word at a time: stop the previous word before starting the next so
+  // fast kill streaks don't pile overlapping voices on top of each other.
+  if (_ttsSupported) speechSynthesis.cancel();
+  if (_lastSpokenAudio) { try { _lastSpokenAudio.pause(); } catch (e) {} _lastSpokenAudio = null; }
 
   const url = _audioMap && _audioMap[text];
   if (url) {
     let a = _audioCache.get(text);
     if (!a) { a = new Audio(url); a.preload = 'auto'; _audioCache.set(text, a); }
+    _lastSpokenAudio = a;
     try {
       a.currentTime = 0;
       a.volume = 0.7;     // sit just under chiptune SFX volume
@@ -6087,17 +6415,18 @@ function spawnSmokePuff(x, y, opts = {}) {
   el.style.opacity = String(alpha);
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
-  STAGE.appendChild(el);
+  FX_LAYER.appendChild(el);
   setTimeout(() => el.remove(), 440);
 }
 function spawnTeleportDust(x, y) {
+  const ss = spriteScale();
   const bursts = [
     { dx: -18, dy:  6, size: 34, alpha: 0.55, delay: 0 },
     { dx:  12, dy:  2, size: 42, alpha: 0.48, delay: 18 },
     { dx:  -2, dy: -6, size: 26, alpha: 0.35, delay: 34 }
   ];
   for (const b of bursts) {
-    setTimeout(() => spawnSmokePuff(x + b.dx, y + b.dy, { size: b.size, alpha: b.alpha }), b.delay);
+    setTimeout(() => spawnSmokePuff(x + b.dx * ss, y + b.dy * ss, { size: b.size * Math.max(0.7, ss), alpha: b.alpha }), b.delay);
   }
 }
 function spawnSlashFx(x, y, isCrit) {
@@ -6105,6 +6434,8 @@ function spawnSlashFx(x, y, isCrit) {
   el.className = 'slash-fx' + (isCrit ? ' crit' : '');
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
+  const px = Math.round(88 * Math.max(0.6, spriteScale()));
+  el.style.width = el.style.height = px + 'px';
   // Stylized white-cyan slash arc (two crossing crescents)
   const angle = -20 + Math.random() * 40;
   el.innerHTML = `
@@ -6120,20 +6451,29 @@ function spawnSlashFx(x, y, isCrit) {
       <path d="M 12 78 Q 50 20 90 14" stroke="url(#slgrad)" stroke-width="9" fill="none" stroke-linecap="round"/>
       <path d="M 18 86 Q 56 30 92 22" stroke="rgba(255,255,255,0.55)" stroke-width="3" fill="none" stroke-linecap="round"/>
     </svg>`;
-  STAGE.appendChild(el);
+  FX_LAYER.appendChild(el);
   setTimeout(() => el.remove(), 260);
 }
 
 // Stage geometry is read on every teleport (1-3× per kill) and on every loop
 // frame for the collision threshold. Cache it and invalidate on resize so
 // we don't force a layout flush from each call.
+// Built from offset* (layout box, ignores transforms) so a read taken while
+// the camera kick has the stage translated is not cached off by a few px.
 let _stageRectCache = null;
 function getStageRect() {
   if (_stageRectCache) return _stageRectCache;
-  _stageRectCache = STAGE.getBoundingClientRect();
+  const left = STAGE.offsetLeft, top = STAGE.offsetTop;
+  const width = STAGE.offsetWidth, height = STAGE.offsetHeight;
+  _stageRectCache = { left, top, width, height, right: left + width, bottom: top + height };
   return _stageRectCache;
 }
-function invalidateStageRect() { _stageRectCache = null; }
+let _spriteScaleRaf = 0;
+function invalidateStageRect() {
+  _stageRectCache = null;
+  // Sprite sizes follow the stage height; re-apply once per frame at most.
+  if (!_spriteScaleRaf) _spriteScaleRaf = requestAnimationFrame(() => { _spriteScaleRaf = 0; applySpriteScale(); });
+}
 window.addEventListener('resize', invalidateStageRect, { passive: true });
 window.addEventListener('orientationchange', invalidateStageRect, { passive: true });
 
@@ -6178,33 +6518,121 @@ function monsterDepth(m) {
   return clamp01((yPx - horizonY) / Math.max(1, floorY - horizonY));
 }
 
+// Writes only what changed since the last frame: a monster that is holding
+// still (boss at its floor, hit-stop, slow drift) costs no style writes.
 function renderMonsterDepth(m) {
   if (!m || !m.el) return;
   const u = monsterDepth(m);
   const scale = depthScaleAtPx(Number(m.y) || 0);
   const x = Math.round(m.x || 0);
   const y = Math.round(m.y || 0);
-  m.el.style.transform = `translate3d(${x}px, ${y}px, 0) translateX(-50%) scale(${scale.toFixed(3)})`;
-  m.el.style.zIndex = String(38 + Math.round(u * 48) + (m.isBoss ? 4 : 0));
-  m.el.style.setProperty('--depth-shadow', (u * 16).toFixed(1) + 'px');
-  m.el.style.setProperty('--shadow-alpha', (0.16 + u * 0.16).toFixed(3));
-  m.el.style.setProperty('--shadow-scale', (0.72 + u * 0.86).toFixed(3));
-  m.el.style.setProperty('--word-counter', Math.max(1, Math.min(1/scale, 1.55)).toFixed(3));
+  const sc = scale.toFixed(3);
+  const tf = `translate3d(${x}px, ${y}px, 0) translateX(-50%) scale(${sc})`;
+  if (tf === m._tf) return;
+  m._tf = tf;
+  m.el.style.transform = tf;
+  // Depth band 38-58: always under the player (60 home, 95 teleported) and
+  // the .fx-layer (100). The boss sits a hair in front at equal depth.
+  const z = String(Math.min(58, 38 + Math.round(u * 18) + (m.isBoss ? 2 : 0)));
+  if (z !== m._z) { m._z = z; m.el.style.zIndex = z; }
+  const ub = u.toFixed(2);
+  if (ub !== m._ub) {
+    m._ub = ub;
+    m.el.style.setProperty('--depth-shadow', (u * 16).toFixed(1) + 'px');
+    m.el.style.setProperty('--shadow-alpha', (0.16 + u * 0.16).toFixed(3));
+    m.el.style.setProperty('--shadow-scale', (0.72 + u * 0.86).toFixed(3));
+  }
+  // Counter-scale the word bubble so it renders at about its native size at
+  // any depth: near ones shrink back so the canvas glyphs are never upscaled
+  // into blur, far ones grow to stay readable (up to 1.55x on desktop). On
+  // short phone stages the far boost fades out with spriteScale, so far
+  // bubbles shrink along with their monster, and every bubble shrinks with
+  // the sprites (to no less than 0.7).
+  const ss = spriteScale();
+  const farBoost = 1 + 0.55 * clamp01((ss - 0.42) / 0.58) * clamp01((ss - 0.42) / 0.58);
+  const wordFit = Math.max(0.7, Math.min(1, ss * 1.4));
+  const wcNum = Math.min(1 / scale, farBoost) * wordFit;
+  const wc = wcNum.toFixed(3);
+  if (wc !== m._wc) { m._wc = wc; m.el.style.setProperty('--word-counter', wc); }
+  // Keep the bubble inside the stage: slide it (never the monster) back from
+  // whichever edge it would cross, and counter-shift its pointer.
+  let shift = 0;
+  if (m._wordW) {
+    const half = (m._wordW * scale * wcNum * (m.el.classList.contains('locked') ? 1.08 : 1)) / 2;
+    const sw = getStageRect().width;
+    const pad = 8;
+    if (half * 2 + pad * 2 >= sw) shift = sw / 2 - x;
+    else if (x - half < pad) shift = pad - (x - half);
+    else if (x + half > sw - pad) shift = (sw - pad) - (x + half);
+  }
+  const ws = (shift / scale).toFixed(1);
+  if (ws !== m._ws) {
+    m._ws = ws;
+    m.el.style.setProperty('--word-shift', ws + 'px');
+    m.el.style.setProperty('--arrow-shift', (-shift / (scale * wcNum)).toFixed(1) + 'px');
+  }
 }
 
+// Camera kick: the stage and backdrop translate along a decaying shake
+// (4px pulse, 10px heavy) plus the ::after flash. Uses the individual
+// `translate` property so it composes with the backdrop's zoom transform.
 function pulseBattleCamera(kind) {
-  if (!STAGE) return;
-  const cls = kind === 'heavy' ? 'camera-heavy' : 'camera-pulse';
-  STAGE.classList.remove('camera-pulse', 'camera-heavy');
-  void STAGE.offsetWidth;
-  STAGE.classList.add(cls);
-  setTimeout(() => STAGE.classList.remove(cls), kind === 'heavy' ? 820 : 520);
+  if (!STAGE || !STAGE.animate) return;
+  const heavy = kind === 'heavy';
+  try {
+    if (STAGE._flashAnim) STAGE._flashAnim.cancel();
+    STAGE._flashAnim = STAGE.animate(
+      [{ opacity: 0 }, { opacity: heavy ? 1 : 0.8, offset: heavy ? 0.18 : 0.34 }, { opacity: 0 }],
+      { duration: heavy ? 760 : 460, easing: 'ease-out', pseudoElement: '::after' });
+  } catch (e) {}
+  if (REDUCED.matches) return;
+  cameraShake(heavy ? 10 : 4, heavy ? 520 : 300);
+}
+function cameraShake(amp, dur) {
+  if (REDUCED.matches || !STAGE.animate) return;
+  const kf = [];
+  const steps = 7;
+  for (let i = 0; i <= steps; i++) {
+    const decay = 1 - i / steps;
+    const sx = i === 0 || i === steps ? 0 : (i % 2 ? 1 : -1) * amp * decay;
+    const sy = i === 0 || i === steps ? 0 : (i % 3 === 1 ? 1 : -0.6) * amp * 0.6 * decay;
+    kf.push({ translate: `${sx.toFixed(1)}px ${sy.toFixed(1)}px` });
+  }
+  for (const el of [STAGE, BACKDROP_EL]) {
+    if (!el) continue;
+    if (el._shakeAnim) el._shakeAnim.cancel();
+    el._shakeAnim = el.animate(kf, { duration: dur, easing: 'ease-out' });
+  }
+}
+
+// Short-lived effect on the player's sprite wrapper (.player-main): swing,
+// hit, level-up. Restarting cancels the previous one.
+function playerFx(kf, opts) {
+  const main = PLAYER_EL.querySelector('.player-main');
+  if (!main || !main.animate) return null;
+  if (PLAYER_EL._fxAnim) PLAYER_EL._fxAnim.cancel();
+  PLAYER_EL._fxAnim = main.animate(kf, opts);
+  return PLAYER_EL._fxAnim;
+}
+
+// Full-screen white frame (boss death, 필살 finisher).
+function whiteFlash(peak, dur) {
+  const el = document.getElementById('whiteFlash');
+  if (!el || !el.animate) return;
+  el.animate([{ opacity: peak }, { opacity: 0 }], { duration: dur, easing: 'ease-out' });
+}
+
+// Slow-mo (boss death) slows the WAAPI effects spawned during it too.
+function fxRate() {
+  return state.slowMoMs > 0 ? (state.slowMoScale || 1) : 1;
 }
 
 let _playerHomePending = null;
 let _bgZoom = 1;   // lerp target for backdrop parallax; updated every frame
-// Player back-view sprite render size (the px passed to spriteHtml in
-// renderPlayerSprite). Everything monster-sized is expressed relative to this.
+let _bgZoomStr = '';
+// Player back-view sprite render size at spriteScale 1 (the px passed to
+// spriteHtml in renderPlayerSprite). Everything monster-sized is expressed
+// relative to this.
 const PLAYER_BASE_PX = 237;
 // Tier → monster sprite render px at scale 1 (mirrors battle-config.js
 // tierSizePx). Sized relative to the player: tier 1 (imp) ≈ half the player
@@ -6234,13 +6662,16 @@ function teleportPlayerTo(x, y, monster) {
   // y + baseFont*monsterScale. Land the player so HIS feet meet the monster's
   // feet (same ground line) — since .player uses translate(-50%,-50%), the
   // target Y is the player's CENTER = monsterFeet - playerRendered/2.
+  // Both base sizes carry spriteScale(), the same factor their imgs use.
+  const ss = spriteScale();
   const tierKey = monster && monster.isBoss ? 'boss' : (monster && monster.tier) || 1;
-  const baseFont = MONSTER_BASE_PX[tierKey] || MONSTER_BASE_PX[1];
+  const baseFont = (MONSTER_BASE_PX[tierKey] || MONSTER_BASE_PX[1]) * ss;
+  const playerPx = PLAYER_BASE_PX * ss;
   const monsterScale = jumpScaleNum;
-  const verticalOffset = (baseFont * monsterScale) - (PLAYER_BASE_PX * jumpScaleNum) / 2;
+  const verticalOffset = (baseFont * monsterScale) - (playerPx * jumpScaleNum) / 2;
   // Slide the player into the monster's right silhouette so the weapon crosses
   // the body: half the monster's width + a sliver of the player's, ×0.75 overlap.
-  const sideOffset = (baseFont * monsterScale * 0.5 + PLAYER_BASE_PX * jumpScaleNum * 0.42) * 0.78;
+  const sideOffset = (baseFont * monsterScale * 0.5 + playerPx * jumpScaleNum * 0.42) * 0.78;
   const targetX = x + sideOffset;
   const targetY = y + verticalOffset;
   PLAYER_EL.style.bottom = 'auto';
@@ -6248,6 +6679,7 @@ function teleportPlayerTo(x, y, monster) {
   PLAYER_EL.style.top  = targetY + 'px';
   PLAYER_EL.style.transform = `translate(-50%, -50%) scale(${jumpScale})`;
   PLAYER_EL.style.animation = 'none';   // disable the bottom-anchored breathe while teleported
+  PLAYER_EL.classList.add('teleported');
   setTimeout(() => spawnTeleportDust(targetX, targetY), 24);
   state.playerTeleported = true;
   if (combatStyle(state.level) === 'melee') triggerJumpPose('out');
@@ -6263,15 +6695,14 @@ function teleportPlayerHome(immediate) {
       const sr = getStageRect();
       spawnTeleportDust((r.left + r.width / 2) - sr.left, (r.top + r.height / 2) - sr.top);
     }
-    PLAYER_EL.style.transition = 'none';   // kill the transform tween so the
-    PLAYER_EL.classList.remove('arriving','swinging','teleporting','levelup'); // scale snap-home doesn't zoom
+    // .player has no transition, so clearing the inline scale snaps home
+    // with no zoom tween and no reflow needed to commit it.
+    PLAYER_EL.classList.remove('arriving','teleporting','teleported');
     PLAYER_EL.style.bottom = '';
     PLAYER_EL.style.top  = '';
     PLAYER_EL.style.left = '';
     PLAYER_EL.style.transform = '';
     PLAYER_EL.style.animation = '';
-    void PLAYER_EL.offsetWidth;            // commit the reset before restoring
-    PLAYER_EL.style.transition = '';      // restore stylesheet transition
     state.playerTeleported = false;
     _playerHomePending = null;
     if (wasTeleported && combatStyle(state.level) === 'melee') triggerJumpPose('in');
@@ -6306,13 +6737,11 @@ function projectileForLevel(lv) {
 
 // Spell casts: a colored ring expansion + tier-specific pixel-art VFX sprite
 // pops at the monster. No projectile travels. Damage timing matches melee/ranged
-// so combat feel stays consistent across the three attack types.
+// so combat feel stays consistent across the three attack types. The target
+// point comes from game state (monsterCenter), not a layout read.
 function castSpellAt(monster) {
   if (!monster || !monster.el) return;
-  const r = monster.el.getBoundingClientRect();
-  const sr = getStageRect();
-  const cx = (r.left + r.width / 2) - sr.left;
-  const cy = (r.top + r.height / 2) - sr.top;
+  const { x: cx, y: cy } = monsterCenter(monster);
   const tier = (playerForLevel(state.level) && playerForLevel(state.level).tier) || 3;
   // Tier-specific palette + dedicated pixel-art VFX sprite. Falls back to a
   // Korean glyph if the sprite fails to load (e.g. asset missing in dev).
@@ -6328,92 +6757,127 @@ function castSpellAt(monster) {
   ring.style.top  = cy + 'px';
   ring.style.setProperty('--spell-c1', config.c1);
   ring.style.setProperty('--spell-c2', config.c2);
-  STAGE.appendChild(ring);
+  FX_LAYER.appendChild(ring);
   // Pixel-art VFX sprite overlay
   const vfx = document.createElement('div');
   vfx.className = 'spell-vfx';
   vfx.style.left = cx + 'px';
   vfx.style.top  = cy + 'px';
-  vfx.innerHTML = spriteHtml(config.vfx, config.glyph, 128);
-  STAGE.appendChild(vfx);
+  vfx.innerHTML = spriteHtml(config.vfx, config.glyph, Math.round(128 * Math.max(0.6, spriteScale())));
+  FX_LAYER.appendChild(vfx);
   setTimeout(() => { ring.remove(); vfx.remove(); }, 520);
 }
 
-function fireProjectileAt(monster) {
-  const playerRect = PLAYER_EL.getBoundingClientRect();
+// Where the player's hands are at home, from layout constants (the player
+// sits at bottom:8%, centered), so ranged shots need no per-key layout read.
+function playerHomeMuzzle() {
   const sr = getStageRect();
-  const startX = (playerRect.left + playerRect.width / 2) - sr.left;
-  const startY = (playerRect.top  + playerRect.height / 4) - sr.top;
-  const proj = projectileForLevel(state.level);
-  const toX = monster.x;
-  const toY = monster.y + 24;
-  // Rotate sprite-style projectiles to point at the target. The arrow PNG is
-  // drawn pointing right (+X axis); rotate by the angle from start → target.
-  const dx = toX - startX, dy = toY - startY;
-  const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
-  const p = document.createElement('div');
-  if (proj.sprite) {
-    p.className = 'projectile pixel';
-    p.style.width = proj.size + 'px';
-    p.style.height = proj.size + 'px';
-    p.innerHTML = spriteHtml(proj.sprite, proj.glyph, proj.size);
-    p.style.setProperty('--proj-angle', angleDeg + 'deg');
-  } else {
-    p.className = 'projectile glyph';
-    p.style.fontSize = proj.size + 'px';
-    p.style.color = proj.color;
-    p.textContent = proj.glyph;
+  const h = PLAYER_BASE_PX * spriteScale();
+  return { x: sr.width / 2, y: sr.height * 0.92 - h * 0.7 };
+}
+
+// Fly a projectile element along a shallow arc with one transform Web
+// Animation (no per-frame JS, no left/top layout), dropping fading trail
+// dots along the same path. Calls onLand when it arrives.
+function flyProjectile(p, from, to, opts) {
+  const dur = opts.dur;
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  // Bow the path sideways, perpendicular to the flight line.
+  const bow = Math.min(60, dist * 0.12) * (opts.bowSign || (dx >= 0 ? -1 : 1));
+  const nx = -dy / dist, ny = dx / dist;
+  const ctrl = { x: (from.x + to.x) / 2 + nx * bow, y: (from.y + to.y) / 2 + ny * bow };
+  const at = (t) => ({
+    x: (1 - t) * (1 - t) * from.x + 2 * (1 - t) * t * ctrl.x + t * t * to.x,
+    y: (1 - t) * (1 - t) * from.y + 2 * (1 - t) * t * ctrl.y + t * t * to.y
+  });
+  const steps = 8;
+  const pts = [];
+  for (let i = 0; i <= steps; i++) pts.push(at(i / steps));
+  const body = p.querySelector('.proj-body');
+  const kf = pts.map((pt, i) => ({ transform: `translate(${pt.x.toFixed(1)}px, ${pt.y.toFixed(1)}px)` }));
+  FX_LAYER.appendChild(p);
+  const anim = p.animate(kf, { duration: dur, easing: 'linear', fill: 'forwards' });
+  if (opts.rotate && body) {
+    // Point the arrow along the path tangent at each step.
+    const rk = pts.map((pt, i) => {
+      const a = pts[Math.min(steps, i + 1)], b = pts[Math.max(0, i - 1)];
+      const ang = Math.atan2(a.y - b.y, a.x - b.x) * 180 / Math.PI;
+      return { transform: `translate(-50%, -50%) rotate(${ang.toFixed(1)}deg)` };
+    });
+    body.animate(rk, { duration: dur, easing: 'linear', fill: 'forwards' });
   }
-  p.style.left = startX + 'px';
-  p.style.top  = startY + 'px';
-  STAGE.appendChild(p);
-  const start = performance.now();
-  const dur = 200;
-  let lastTrail = 0;
-  function step(t) {
-    const k = Math.min(1, (t - start) / dur);
-    const x = startX + (toX - startX) * k;
-    const y = startY + (toY - startY) * k;
-    p.style.left = x + 'px';
-    p.style.top  = y + 'px';
-    if (proj.trail && t - lastTrail > 26 && k < 0.95) {
-      lastTrail = t;
+  if (opts.trail) {
+    const frag = document.createDocumentFragment();
+    const dots = 7;
+    for (let i = 1; i < dots; i++) {
+      const pt = at(i / dots);
       const tp = document.createElement('div');
       tp.className = 'trail-particle';
-      tp.style.left = x + 'px';
-      tp.style.top  = y + 'px';
-      tp.style.background = proj.trail;
-      STAGE.appendChild(tp);
-      setTimeout(() => tp.remove(), 320);
+      tp.style.background = opts.trail;
+      frag.appendChild(tp);
+      const t0 = `translate(${pt.x.toFixed(1)}px, ${pt.y.toFixed(1)}px)`;
+      tp.animate([
+        { transform: t0 + ' scale(1)', opacity: 0.95 },
+        { transform: t0 + ' scale(0.3)', opacity: 0 }
+      ], { duration: 320, delay: dur * i / dots, easing: 'ease-out', fill: 'both' })
+        .onfinish = () => tp.remove();
     }
-    if (k < 1) {
-      requestAnimationFrame(step);
-    } else {
-      p.remove();
-      if (monster.el) {
-        monster.el.classList.remove('struck');
-        void monster.el.offsetWidth;
-        monster.el.classList.add('struck');
-        setTimeout(() => monster.el && monster.el.classList.remove('struck'), 220);
-      }
-    }
+    FX_LAYER.appendChild(frag);
   }
-  requestAnimationFrame(step);
+  anim.onfinish = () => { p.remove(); if (opts.onLand) opts.onLand(); };
+  return anim;
+}
+
+function fireProjectileAt(monster, onLand) {
+  const from = playerHomeMuzzle();
+  const proj = projectileForLevel(state.level);
+  const to = monsterCenter(monster);
+  const p = document.createElement('div');
+  const body = document.createElement('div');
+  body.className = 'proj-body';
+  if (proj.sprite) {
+    p.className = 'projectile pixel';
+    body.innerHTML = spriteHtml(proj.sprite, proj.glyph, Math.round(proj.size * Math.max(0.7, spriteScale())));
+  } else {
+    p.className = 'projectile glyph';
+    body.style.fontSize = proj.size + 'px';
+    body.style.color = proj.color;
+    body.textContent = proj.glyph;
+  }
+  p.appendChild(body);
+  flyProjectile(p, from, to, { dur: 200, rotate: !!proj.sprite, trail: proj.trail, onLand });
+}
+
+// Boss -> player variant of fireProjectileAt: a fireball arcing from the boss
+// down to the player's home position. The damage itself is applied by the
+// loop (boss.shotLandInMs), so landing only spawns an impact burst.
+function fireBossShot(boss) {
+  const c = monsterCenter(boss);
+  const from = { x: boss.x, y: c.y };
+  const muzzle = playerHomeMuzzle();
+  const to = { x: muzzle.x, y: muzzle.y + PLAYER_BASE_PX * spriteScale() * 0.25 };
+  const p = document.createElement('div');
+  p.className = 'projectile boss-shot';
+  const body = document.createElement('div');
+  body.className = 'proj-body';
+  p.appendChild(body);
+  flyProjectile(p, from, to, {
+    dur: 300, trail: 'rgba(239,68,68,0.6)', bowSign: Math.random() < 0.5 ? -1 : 1,
+    onLand: () => particleBurst(to.x, to.y, 10, ['#fde68a', '#f97316', '#dc2626'])
+  });
 }
 
 function swingSword(monster) {
   // Slash visual on the monster sprite center
-  const sx = monster.x;
-  const sy = monster.y + 28;
-  spawnSlashFx(sx, sy, false);
-  PLAYER_EL.classList.remove('swinging');
-  void PLAYER_EL.offsetWidth;
-  PLAYER_EL.classList.add('swinging');
-  if (monster.el) {
-    monster.el.classList.remove('struck');
-    void monster.el.offsetWidth;
-    monster.el.classList.add('struck');
-    setTimeout(() => monster.el && monster.el.classList.remove('struck'), 220);
+  const c = monsterCenter(monster);
+  spawnSlashFx(c.x, c.y, false);
+  if (!REDUCED.matches) {
+    playerFx([
+      { transform: 'rotate(0deg)' },
+      { transform: 'rotate(-14deg) translateX(6px)', offset: 0.4 },
+      { transform: 'rotate(0deg)' }
+    ], { duration: 180, easing: 'ease-out' });
   }
 }
 
@@ -6421,13 +6885,10 @@ function swingSword(monster) {
 const SPECIAL_TRIGGERS = ['한글', '필살'];   // either word triggers
 const SPECIAL_KILLS_PER_CHARGE = ADMIN.combat.specialKillsPerCharge;  // 1 charge per 15 kills
 const SPECIAL_MAX_CHARGES = ADMIN.combat.specialMaxCharges;
-const CHANT_DURATION_MS = ADMIN.combat.chantDurationMs;
 const SPECIAL_HINT_KEY  = 'hangul-battle-special-hint-seen-v1';
 
 const SPECIAL_METER_EL = () => document.getElementById('specialMeter');
 const POWERUP_HUD_EL   = () => document.getElementById('powerupHud');
-
-let _chantState = null; // { ime, deadline, raf, bannerEl, fillEl, progressEl }
 
 function renderSpecialMeter() {
   const meter = SPECIAL_METER_EL(); if (!meter) return;
@@ -6485,7 +6946,7 @@ function feedSpecialBuffer(jamo) {
     if (state.specialIme) state.specialIme.reset();
     _specialBufferIdleTimer = null;
   }, SPECIAL_BUFFER_IDLE_MS);
-  if ((state.specialCharges || 0) > 0) {
+  if ((state.specialCharges || 0) > 0 && specialMoveAllowed()) {
     const display = state.specialIme.display;
     for (const trig of SPECIAL_TRIGGERS) {
       if (display.endsWith(trig)) {
@@ -6498,6 +6959,16 @@ function feedSpecialBuffer(jamo) {
   }
   return false;
 }
+// 필살기 needs targets, and must not hijack a boss phrase the player is
+// partway through typing (boss words can contain 한글 / 필살 themselves).
+function specialMoveAllowed() {
+  if (state.monsters.length === 0) return false;
+  if (state.lockId != null && state.lockPosKs > 0) {
+    const locked = state.monsters.find(x => x.id === state.lockId);
+    if (locked && locked.isBoss) return false;
+  }
+  return true;
+}
 function resetSpecialBuffer() {
   if (state.specialIme) state.specialIme.reset();
   if (_specialBufferIdleTimer) { clearTimeout(_specialBufferIdleTimer); _specialBufferIdleTimer = null; }
@@ -6508,88 +6979,6 @@ function hasSeenSpecialHint() {
 }
 function setSpecialHintSeen() {
   try { localStorage.setItem(SPECIAL_HINT_KEY, '1'); } catch (e) {}
-}
-
-function chantActive() { return _chantState != null; }
-
-function startChantMode() {
-  if (chantActive()) {
-    // Already chanting — refresh the timer.
-    _chantState.deadline = performance.now() + CHANT_DURATION_MS;
-    return;
-  }
-  if ((state.specialCharges || 0) <= 0) {
-    flashCenterText('필살기 not ready');
-    sfxMiss();
-    return;
-  }
-  if (state.lockId != null) {
-    // Don't allow chant while attacking — would steal keystrokes from typing.
-    sfxMiss();
-    return;
-  }
-  const banner = document.createElement('div');
-  banner.className = 'chant-banner';
-  banner.innerHTML = `
-    <div>Chant <span class="ko" id="chantHint">한글</span> · <span class="typed-progress" id="chantTyped"></span></div>
-    <div class="chant-timer-bar"><div class="chant-timer-fill" id="chantTimerFill"></div></div>`;
-  document.body.appendChild(banner);
-  tone({ freq: 280, type:'sawtooth', dur:0.22, gain:0.05 });
-  _chantState = {
-    ime: new HangulIME(),
-    deadline: performance.now() + CHANT_DURATION_MS,
-    bannerEl: banner,
-    fillEl: banner.querySelector('#chantTimerFill'),
-    progressEl: banner.querySelector('#chantTyped'),
-    raf: 0
-  };
-  const tick = () => {
-    if (!_chantState) return;
-    const ms = _chantState.deadline - performance.now();
-    if (ms <= 0) { exitChantMode(false); return; }
-    if (_chantState.fillEl) {
-      _chantState.fillEl.style.transform = `scaleX(${ms / CHANT_DURATION_MS})`;
-    }
-    _chantState.raf = requestAnimationFrame(tick);
-  };
-  tick();
-}
-
-function exitChantMode(success) {
-  if (!_chantState) return;
-  if (_chantState.raf) cancelAnimationFrame(_chantState.raf);
-  if (_chantState.bannerEl) _chantState.bannerEl.remove();
-  _chantState = null;
-  if (!success) sfxMiss();
-}
-
-function feedChantKey(rawKey, isShift) {
-  if (!_chantState) return false;
-  const lookupKey = (isShift && KEYMAP[rawKey.toUpperCase()]) ? rawKey.toUpperCase() : rawKey.toLowerCase();
-  const jamo = KEYMAP[lookupKey];
-  if (!jamo) {
-    // Non-jamo (likely number/punct) breaks the chant.
-    exitChantMode(false);
-    return true;
-  }
-  _chantState.ime.type(jamo);
-  const display = _chantState.ime.display;
-  if (_chantState.progressEl) _chantState.progressEl.textContent = display;
-  // Soft tick
-  tone({ freq: 1100, type:'sine', dur:0.02, gain:0.025 });
-  for (const trig of SPECIAL_TRIGGERS) {
-    if (display.endsWith(trig)) {
-      // Trigger!
-      exitChantMode(true);
-      triggerSpecialMove();
-      return true;
-    }
-  }
-  // Cap chant buffer length so it can't infinitely accumulate.
-  if (display.length > 8) {
-    exitChantMode(false);
-  }
-  return true;
 }
 
 // Capcom-vs-Marvel style cinematic 필살기:
@@ -6621,6 +7010,7 @@ function _drawSpecialTrail(toX, toY) {
 async function triggerSpecialMove() {
   if ((state.specialCharges || 0) <= 0) return;
   if (state.specialMoveActive) return;  // ignore re-entry while cinematic plays
+  if (!state.running || state.monsters.length === 0) return;  // keep the charge
   state.specialCharges -= 1;
   renderSpecialMeter();
 
@@ -6709,13 +7099,13 @@ async function triggerSpecialMove() {
 
   if (killed > 0) {
     flashCenterText(`필살 · ${killed} 처치!`);
-    unlockAchievement('first_special');
-    if (killed >= 6) unlockAchievement('special_combo');
   }
 
   state.specialMoveActive = false;
   state.specialMoveBurst  = false;
   updateHud();
+  // Tab was hidden mid-cinematic (auto-pause skips during the freeze).
+  if (document.hidden) autoPauseIfRunning();
 }
 
 // ── Hold-Tab fast-fall (desktop only) ──
@@ -6741,6 +7131,7 @@ document.addEventListener('keyup', (e) => {
 window.addEventListener('blur', () => setFastFall(false));
 
 function spawnSakura(count) {
+  if (REDUCED.matches) return;
   const frag = document.createDocumentFragment();
   const total = Math.min(18, count);
   for (let i = 0; i < total; i++) {
@@ -6775,7 +7166,7 @@ function maybeDropPowerup(x, y, isCrit) {
   el.textContent = def.ico;
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
-  STAGE.appendChild(el);
+  FX_LAYER.appendChild(el);
   const drop = { kind, el, expiresAt: performance.now() + 6000 };
   state.powerups = state.powerups || [];
   state.powerups.push(drop);
@@ -6834,13 +7225,14 @@ function tickPowerups(dt) {
 
 // Recall mode: progressively fade in hidden syllables as a hint. Stops once
 // the monster is locked (player has committed) so reveals don't make it free.
-function tickRecallReveals(now) {
+function tickRecallReveals(dt) {
   for (const m of state.monsters) {
-    if (!m.recall || !m.recallNextRevealAt) continue;
+    if (!m.recall || !m.recallRevealInMs) continue;
     if (state.lockId === m.id) continue;       // freeze hints once engaged
-    if (now < m.recallNextRevealAt) continue;
+    m.recallRevealInMs -= dt;
+    if (m.recallRevealInMs > 0) continue;
     const next = m.syllables && m.syllables.find(s => s.hidden);
-    if (!next) { m.recallNextRevealAt = 0; continue; }
+    if (!next) { m.recallRevealInMs = 0; continue; }
     next.hidden = false;
     if (next.placeholderEl && next.cached && next.cached.canvas) {
       // Restore the canvas in the placeholder's slot, repaint, fade in.
@@ -6851,13 +7243,18 @@ function tickRecallReveals(now) {
         medial:  positionsStateAt(next.mPos, state.lockId === m.id ? state.lockPosKs : 0),
         final:   next.fPos.length ? positionsStateAt(next.fPos, state.lockId === m.id ? state.lockPosKs : 0) : 'pending'
       });
-      next.cached.canvas.classList.remove('syl-fade-in');
-      void next.cached.canvas.offsetWidth;
-      next.cached.canvas.classList.add('syl-fade-in');
+      if (next.cached.canvas.animate) {
+        next.cached.canvas.animate(REDUCED.matches
+          ? [{ opacity: 0 }, { opacity: 1 }]
+          : [
+              { opacity: 0, transform: 'scale(0.5) translateY(-6px)', filter: 'blur(2px)' },
+              { opacity: 1, transform: 'none', filter: 'none' }
+            ], { duration: 550, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+      }
       tone({ freq: 920, type:'sine', dur:0.06, gain:0.025 });
     }
     m.recallRevealsUsed = (m.recallRevealsUsed || 0) + 1;
-    m.recallNextRevealAt = now + 2200;          // next hint in 2.2s
+    m.recallRevealInMs = 2200;                  // next hint in 2.2s
   }
 }
 
@@ -6879,12 +7276,18 @@ function renderPowerupHud() {
 // Roster lives in battle-config.js so battle-workshop.html can preview them.
 const BOSS_PROFILES = window.BATTLE_CONFIG.bosses;
 let _bossCycleIdx = 0;
-function nextBossProfile() {
+// Act levels get the boss their story card names; later bosses cycle.
+function nextBossProfile(level) {
+  const forAct = BOSS_PROFILES.find(b => b.act === level);
+  if (forAct) return forAct;
   const p = BOSS_PROFILES[_bossCycleIdx % BOSS_PROFILES.length];
   _bossCycleIdx++;
   return p;
 }
 
+// Boss entrance: letterbox bars, the boss's 384px portrait (falls back to
+// the battle sprite for bosses without one) in a framed medallion, then
+// name / subtitle / flavor.
 function playBossCutscene(profile) {
   const cs = document.createElement('div');
   cs.className = 'boss-cutscene';
@@ -6892,17 +7295,22 @@ function playBossCutscene(profile) {
   // future migration of profile data to a feed/CMS doesn't open an XSS sink.
   // Match spriteHtml's allowlist (path-style names like "enemies/08-hangeulwang"
   // need '/' and '-' to survive sanitizing). Block traversal attempts.
-  let spriteFile = String(profile.sprite || '').replace(/[^a-z0-9_/\-]/gi, '');
-  if (spriteFile.includes('..')) spriteFile = '';
+  const safePath = (v) => {
+    const f = String(v || '').replace(/[^a-z0-9_/\-]/gi, '');
+    return f.includes('..') ? '' : f;
+  };
+  const portraitFile = safePath(profile.portrait);
+  const spriteFile = safePath(profile.sprite);
   const emoji = escapeHtml(profile.emoji);
   const name = escapeHtml(profile.name);
   const subtitle = escapeHtml(profile.subtitle);
   const flavor = escapeHtml(profile.flavor);
-  const portrait = spriteFile
-    ? `<img class="sprite-img" src="sprites/${spriteFile}.png" alt="" style="width:200px;height:200px;">`
-    : emoji;
+  const src = portraitFile ? `sprites/${portraitFile}.webp` : (spriteFile ? `sprites/${spriteFile}.png` : '');
+  const portrait = src ? `<img class="sprite-img" src="${src}" alt="" decoding="async">` : emoji;
   cs.innerHTML = `
-    <div class="boss-portrait" data-emoji="${emoji}">${portrait}</div>
+    <div class="boss-letterbox top"></div>
+    <div class="boss-letterbox bottom"></div>
+    <div class="boss-portrait${portraitFile ? '' : ' sprite-only'}" data-emoji="${emoji}">${portrait}</div>
     <div class="boss-name">${name}</div>
     <div class="boss-subtitle">${subtitle}</div>
     <div class="boss-flavor">${flavor}</div>`;
@@ -6912,94 +7320,64 @@ function playBossCutscene(profile) {
     img.replaceWith(document.createTextNode(profile.emoji || ''));
   }, { once: true });
   document.body.appendChild(cs);
-  setTimeout(() => cs.remove(), 1550);
+  setTimeout(() => { cs.remove(); flushPendingAutoPause(); }, 1550);
 }
 
-// ─── Achievement system ───────────────────────────────────────────────────
-const ACH_KEY = 'hangul-battle-achievements-v1';
-const ACHIEVEMENTS = [
-  { id: 'first_kill',      ico: '🗡️', title: 'First Blood',          desc: 'Defeat your first demon.' },
-  { id: 'combo_25',        ico: '🔥', title: '25 Combo',              desc: 'Reach a 25× combo.' },
-  { id: 'combo_50',        ico: '⚡', title: '50 Combo',              desc: 'Reach a 50× combo.' },
-  { id: 'combo_100',       ico: '💥', title: '한글 Master · 100 Combo', desc: 'Reach a 100× combo.' },
-  { id: 'first_boss',      ico: '🐉', title: 'Boss Slayer',           desc: 'Defeat your first boss.' },
-  { id: 'first_special',   ico: '✨', title: '필살기 First Use',       desc: 'Unleash your special move.' },
-  { id: 'special_combo',   ico: '🌸', title: 'Sakura Storm',          desc: 'Clear 6+ demons with one 필살기.' },
-  { id: 'reach_lv10',      ico: '🥷', title: 'Hwarang Apprentice',    desc: 'Reach level 10.' },
-  { id: 'reach_lv20',      ico: '🐲', title: 'Hwarang Master',        desc: 'Reach level 20.' },
-  { id: 'perfect_wave',    ico: '🏯', title: 'Perfect Wave',          desc: 'Clear a level with no missed keystroke.' },
-  { id: 'no_damage_lv5',   ico: '🛡️', title: 'Untouchable',           desc: 'Reach level 5 without losing a life.' },
-  { id: 'shield_save',     ico: '✨', title: 'Saved by the Talisman',  desc: 'Block a hit with the shield power-up.' }
-];
-
-function loadAchievements() {
-  if (state.unlockedAchievements) return state.unlockedAchievements;
-  try {
-    const raw = localStorage.getItem(ACH_KEY);
-    state.unlockedAchievements = raw ? JSON.parse(raw) : {};
-  } catch (e) { state.unlockedAchievements = {}; }
-  return state.unlockedAchievements;
-}
-function saveAchievements() {
-  try { localStorage.setItem(ACH_KEY, JSON.stringify(state.unlockedAchievements || {})); } catch (e) {}
-}
-
-function unlockAchievement(id) {
-  // Achievements removed — call sites kept as no-ops so we don't have to
-  // surgically rip out every unlockAchievement('foo') call across the file.
-}
-
-function showAchievementToast(def) {
-  const el = document.createElement('div');
-  el.className = 'achievement-toast';
-  el.innerHTML = `
-    <div class="ach-icon">${def.ico}</div>
-    <div class="ach-meta">
-      <div class="ach-eyebrow">Achievement</div>
-      <div class="ach-title">${def.title}</div>
-      <div class="ach-desc">${def.desc}</div>
-    </div>`;
-  document.body.appendChild(el);
-  // Fanfare
-  [880, 1320, 1760].forEach((f, i) => setTimeout(() => tone({ freq:f, type:'triangle', dur:0.16, gain:0.05 }), i * 80));
-  setTimeout(() => el.remove(), 4600);
-}
-
-function renderAchievementGrid() {
-  const grid = document.getElementById('achGrid'); if (!grid) return;
-  const owned = loadAchievements();
-  grid.innerHTML = ACHIEVEMENTS.map(a => {
-    const has = !!owned[a.id];
-    return `<div class="ach-card ${has ? 'unlocked' : 'locked'}">
-      <div class="ach-card-ico">${has ? a.ico : '🔒'}</div>
-      <div class="ach-card-meta">
-        <div class="ach-card-title">${a.title}</div>
-        <div class="ach-card-desc">${a.desc}</div>
-      </div>
-    </div>`;
-  }).join('');
+// Life lost: red edge vignette, the heart that just emptied shakes, and a
+// short stage shake. (Replaces the old whole-body shake, which also moved
+// the HUD and modals.)
+function hurtFlash() {
+  const v = document.getElementById('hurtVignette');
+  if (v && v.animate) {
+    v.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 0 }], { duration: 650, easing: 'ease-out' });
+  }
+  cameraShake(8, 280);
+  const lost = HUD_LIVES.querySelector('.lost');
+  if (lost && lost.animate && !REDUCED.matches) {
+    lost.animate([
+      { transform: 'translateX(0) scale(1.3)', color: 'var(--red)' },
+      { transform: 'translateX(-4px) scale(1.2)', offset: 0.2 },
+      { transform: 'translateX(4px) scale(1.1)', offset: 0.45 },
+      { transform: 'translateX(-2px) scale(1)', offset: 0.7 },
+      { transform: 'none' }
+    ], { duration: 520, easing: 'ease-out' });
+  }
+  if (!REDUCED.matches) {
+    playerFx([
+      { transform: 'translateX(0)', filter: 'brightness(0) invert(1)' },
+      { transform: 'translateX(-6px)', filter: 'none', offset: 0.25 },
+      { transform: 'translateX(5px)', offset: 0.5 },
+      { transform: 'translateX(-3px)', offset: 0.75 },
+      { transform: 'none' }
+    ], { duration: 380, easing: 'ease-out' });
+  }
 }
 
 function damagePlayer() {
+  // Late callers (delayed boss shot, second leak in the same frame) after the
+  // run already ended must not re-trigger game over.
+  if (!state.running) return;
   // Shield power-up consumes the hit instead.
   if (state.activePowerups && state.activePowerups.shield) {
     state.activePowerups.shield = 0;
     PLAYER_EL.classList.remove('shielded');
     flashCenterText('SHIELDED');
     tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.06, slide: 660 });
-    unlockAchievement('shield_save');
     renderPowerupHud();
     return;
   }
   state.lives--;
-  state.perfectWave = false;
   // Losing a life always hard-breaks combo (a life lost is never cheaper than a typo).
   breakCombo({ hard: true });
-  PLAYER_EL.classList.remove('hit');
-  void PLAYER_EL.offsetWidth;
-  PLAYER_EL.classList.add('hit');
   noiseBurst({ dur:0.15, gain:0.07, freq:300 });
-  if (state.lives <= 0) { gameOver(); return; }
+  // HUD first so hurtFlash can shake the heart that just emptied.
+  updateHud();
+  hurtFlash();
+  if (state.lives <= 0) {
+    // Daily runs keep their own end screen (streak + daily board submit).
+    if (state.dailyRun) endDailyRun(); else gameOver();
+    return;
+  }
   // One-time hint when first dropping to 1 life: points toward the heart pickup
   if (state.lives === 1 && !state.shownHeartHint) {
     state.shownHeartHint = true;
@@ -7010,14 +7388,22 @@ function damagePlayer() {
       setTimeout(() => livesEl.classList.remove('lives-danger'), 3000);
     }
   }
-  updateHud();
+  // No second updateHud here: it would rebuild #hudLives and drop the
+  // lost-heart shake hurtFlash just started.
 }
 
 function gameOver() {
+  if (!state.running) return;
   state.running = false;
+  state.endedAt = performance.now();
+  clearRunOverlays();
   clearPlayerAnimationTimers();
   cancelAllSpeech();
+  flushJamoStats();
+  if (typeof Bgm !== 'undefined') Bgm.setPaused(true);
   sfxGameOver();
+  // 600ms desaturate beat; the modal's veil + card animate in after it.
+  document.body.classList.add('game-over-beat');
   const high = getHighScore();
   const newHigh = state.score > high;
   track('battle_end', {
@@ -7040,10 +7426,11 @@ function gameOver() {
   const _overScoreEl = document.getElementById('overScore');
   const _finalScore = state.score;
   _overScoreEl.textContent = '0';
-  const _scoreStart = performance.now();
+  // Count up once the modal has risen out of the desaturate beat.
+  const _scoreStart = performance.now() + 600;
   const _scoreDur = 600;
   (function _countUp(now) {
-    const t = Math.min(1, (now - _scoreStart) / _scoreDur);
+    const t = Math.max(0, Math.min(1, (now - _scoreStart) / _scoreDur));
     const eased = 1 - Math.pow(1 - t, 3);
     _overScoreEl.textContent = Math.round(eased * _finalScore).toLocaleString();
     if (t < 1) requestAnimationFrame(_countUp);
@@ -7060,9 +7447,11 @@ function gameOver() {
   // Show slow-mode note if applicable
   const smNote = document.getElementById('overSlowModeNote');
   if (smNote) smNote.style.display = state.slowMode ? 'block' : 'none';
-  // Hide any daily-run result panel left over from an earlier daily run.
+  // Hide any daily-run result panel / HUD timer left over from an earlier daily run.
   const dailyPanel = document.getElementById('overDailyResult');
-  if (dailyPanel && !state.dailyRun) dailyPanel.style.display = 'none';
+  if (dailyPanel) dailyPanel.style.display = 'none';
+  const dailyHud = document.getElementById('hudDailyTimer');
+  if (dailyHud) dailyHud.style.display = 'none';
   progress = getProgress();
   // Analytics: every game-over counts as an attempt (separate from the leaderboard).
   logBattleAttempt(state.level, state.score);
@@ -7129,18 +7518,35 @@ const SHIELD = document.getElementById('shield');
 
 // ── Per-jamo miss tracking (shared with practice mode stats store) ────────
 const JAMO_STATS_KEY = 'hangul-type-stats-v1';
+// Phones in either orientation (portrait by width, landscape by coarse
+// pointer + short viewport). Mirrors the touch-layout @media query in CSS.
+const TOUCH_LAYOUT_MQ = '(max-width: 720px), (pointer: coarse) and (max-height: 500px)';
+// Per-keystroke localStorage read/parse/write was a hot-path cost; tally in
+// memory and merge into the shared store at game over (and on page hide).
+let _jamoStatsPending = {};
 function recordJamoAttempt(jamo, correct) {
   if (!jamo || jamo === ' ') return;
+  const rec = _jamoStatsPending[jamo] || (_jamoStatsPending[jamo] = { tries: 0, hits: 0 });
+  rec.tries++;
+  if (correct) rec.hits++;
+}
+function flushJamoStats() {
+  const pending = _jamoStatsPending;
+  _jamoStatsPending = {};
+  if (Object.keys(pending).length === 0) return;
   try {
     let store = {};
     try { store = JSON.parse(localStorage.getItem(JAMO_STATS_KEY)) || {}; } catch (e) {}
     if (!store.perJamo) store.perJamo = {};
-    if (!store.perJamo[jamo]) store.perJamo[jamo] = { tries: 0, hits: 0 };
-    store.perJamo[jamo].tries++;
-    if (correct) store.perJamo[jamo].hits++;
+    for (const [jamo, rec] of Object.entries(pending)) {
+      if (!store.perJamo[jamo]) store.perJamo[jamo] = { tries: 0, hits: 0 };
+      store.perJamo[jamo].tries += rec.tries;
+      store.perJamo[jamo].hits += rec.hits;
+    }
     localStorage.setItem(JAMO_STATS_KEY, JSON.stringify(store));
   } catch (e) {}
 }
+window.addEventListener('pagehide', flushJamoStats);
 
 // Flash the current expected jamo red on the locked monster's word row for ~300ms,
 // then restore. Also highlights the correct key on the mobile on-screen keyboard.
@@ -7164,7 +7570,7 @@ function flashErrJamo(m, expectedJamo) {
     paintSyllable(syl.cached, errMap);
   }
   // Flash the correct key on the mobile on-screen keyboard if visible
-  const kbMq = window.matchMedia('(max-width: 720px)');
+  const kbMq = window.matchMedia(TOUCH_LAYOUT_MQ);
   if (kbMq.matches && expectedJamo) {
     const battleKb = document.getElementById('battleKb');
     if (battleKb) {
@@ -7180,9 +7586,12 @@ function flashErrJamo(m, expectedJamo) {
       }
     }
   }
-  // Restore after 300ms
+  // Restore after 300ms. Repaint the captured monster at ITS progress: the
+  // lock may have moved to another monster (or been released) meanwhile.
   setTimeout(() => {
-    if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
+    if (!m.syllables || !m.el || !m.el.isConnected) return;
+    const restorePos = state.lockId === m.id ? state.lockPosKs : (m.lockProgressKs || 0);
+    repaintWordRow(m.syllables, restorePos);
   }, 300);
 }
 
@@ -7226,7 +7635,7 @@ function handleKey(rawKey, isShift) {
     for (let i = 0; i < state.lockPosKs; i++) state.ime.type(target.ks[i]);
     target.el.classList.add('locked');
     // Restore the HP bar to reflect already-typed keystrokes
-    const restoredHp = Math.max(0, target.maxHp - state.lockPosKs);
+    const restoredHp = Math.max(0, target.maxHp - ksDoneBeforePhase(target) - state.lockPosKs);
     target.hp = restoredHp;
     if (target.el) target.el.style.setProperty('--hp-frac', (restoredHp / target.maxHp).toFixed(3));
     if (target.syllables) repaintWordRow(target.syllables, state.lockPosKs);
@@ -7275,28 +7684,35 @@ function advanceLock(m) {
   state.lockPosKs++;
   state.combo++;
   if (state.combo > state.bestCombo) state.bestCombo = state.combo;
-  m.hp = Math.max(0, m.maxHp - state.lockPosKs);
+  m.hp = Math.max(0, m.maxHp - ksDoneBeforePhase(m) - state.lockPosKs);
   if (m.el) m.el.style.setProperty('--hp-frac', (m.hp / m.maxHp).toFixed(3));
-  if (m.el) {
-    const ww = m.el.querySelector('.word');
-    if (ww) { ww.classList.remove('jamo-tick'); void ww.offsetWidth; ww.classList.add('jamo-tick'); }
+  // Word tick: a restartable Web Animation on the row (the .word itself
+  // carries the depth counter-scale transform), no forced reflow.
+  if (m.el && !REDUCED.matches) {
+    const row = m.el.querySelector('.word .word-row');
+    if (row && row.animate) {
+      if (m._tickAnim) m._tickAnim.cancel();
+      m._tickAnim = row.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.4 }, { transform: 'scale(1)' }],
+        { duration: 120, easing: 'ease-out' });
+    }
   }
   // Repaint each syllable canvas based on the new lock position. No more "disappearing" syllables.
   if (m.syllables) repaintWordRow(m.syllables, state.lockPosKs);
   LIVE_EL.textContent = state.ime.display;
   const style = combatStyle(state.level);
   triggerStrikePose();
-  triggerMonsterHit(m);
-  if (style === 'melee')      swingSword(m);
-  else if (style === 'spell') castSpellAt(m);
-  else                        fireProjectileAt(m);
+  // Ranged: the monster reacts when the arrow lands, not on the keypress.
+  if (style === 'ranged') {
+    fireProjectileAt(m, () => { if (state.monsters.includes(m)) triggerMonsterHit(m); });
+  } else {
+    triggerMonsterHit(m);
+    if (style === 'melee') swingSword(m);
+    else                   castSpellAt(m);
+  }
   sfxShoot();
   if (state.combo === 5 || state.combo === 10 || state.combo === 25 || state.combo === 50 || state.combo === 100) {
     flashCenterText(state.combo + '× combo');
   }
-  if (state.combo === 25)  unlockAchievement('combo_25');
-  if (state.combo === 50)  unlockAchievement('combo_50');
-  if (state.combo === 100) unlockAchievement('combo_100');
   if (state.lockPosKs >= state.lockExpectedKs.length) {
     // Boss phase advance: phase 1 or 2 completed goes to next phase rather than kill
     if (m.isBoss && m.phase < 3) {
@@ -7313,8 +7729,6 @@ function advanceLock(m) {
 function breakCombo(opts) {
   const hard = opts && opts.hard;
   const wasCombo = state.combo;
-  // Wrong key in this wave — perfect-wave achievement is no longer possible.
-  state.perfectWave = false;
   if (!hard && wasCombo > 0 && wasCombo < ADMIN.combat.comboSoftThreshold) {
     // Soft break: halve the combo instead of zeroing it
     state.combo = Math.floor(wasCombo * ADMIN.combat.comboSoftFactor);
@@ -7326,8 +7740,7 @@ function breakCombo(opts) {
   if (state.combo > 0) { state.combo = 0; updateHud(); }
   if (wasCombo >= 10) {
     flashCenterText('COMBO BROKEN');
-    document.body.classList.add('shake');
-    setTimeout(() => document.body.classList.remove('shake'), 320);
+    cameraShake(6, 320);
     noiseBurst({ dur: 0.18, gain: 0.06, freq: 240 });
   }
 }
@@ -7346,6 +7759,7 @@ function escapeLock() {
   state.ime.reset();
   LIVE_EL.textContent = '';
   teleportPlayerHome(true);
+  updateHud();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -7368,9 +7782,26 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  // Retry is focused on game over; swallow Enter / Space for a beat so keys
+  // still being hammered at the moment of death don't instantly restart.
+  if (!state.running && state.endedAt && performance.now() - state.endedAt < 700 &&
+      (e.key === 'Enter' || e.code === 'Space')) {
+    e.preventDefault();
+    return;
+  }
+
+  // Held keys auto-repeat: ignore the repeats (Tab fast-fall is already a
+  // held state; repeated letters would type into the word).
+  if (e.repeat) {
+    if (state.running && (e.key === 'Tab' || e.code === 'Space' || e.key === 'Backspace')) e.preventDefault();
+    return;
+  }
+
   if (e.key === 'Escape') {
     if (state.running) {
-      if (state.lockId != null) escapeLock();
+      // While paused, Esc always resumes (never just releases a lock).
+      if (state.paused) togglePause();
+      else if (state.lockId != null) escapeLock();
       else togglePause();
     }
     return;
@@ -7398,7 +7829,11 @@ document.addEventListener('keydown', (e) => {
   // Use e.code (physical key on QWERTY) instead of e.key so the game
   // accepts input even when the OS is in Korean IME mode (where e.key
   // would be a composed Hangul character like 한 instead of the QWERTY 'g').
-  if (e.code === 'Space') { e.preventDefault(); handleKey(' ', false); return; }
+  if (e.code === 'Space') {
+    // Outside live play, let Space activate the focused button (Retry, etc.).
+    if ((!state.running || state.paused) && activeEl && activeEl.tagName === 'BUTTON') return;
+    e.preventDefault(); handleKey(' ', false); return;
+  }
   const ch = codeToChar(e.code, e.shiftKey);
   if (ch) { e.preventDefault(); handleKey(ch, e.shiftKey); }
 });
@@ -7418,20 +7853,48 @@ function codeToChar(code, isShift) {
 // ============================================================
 
 let lastT = 0;
+let _bodyPaused = false;
 function loop(t) {
   if (!state.running) return;
   if (!lastT) lastT = t;
-  const dt = Math.min(50, t - lastT);
+  const frameDt = Math.min(50, t - lastT);
   lastT = t;
+
+  // Mirror state.paused onto <body> (it is set by the pause menu, act break,
+  // boss reward...) so CSS can freeze every stage animation with it.
+  if (state.paused !== _bodyPaused) {
+    _bodyPaused = state.paused;
+    document.body.classList.toggle('paused', _bodyPaused);
+  }
+
+  // Juice time-scale. Hit-stop and slow-mo count down in real time and only
+  // while the game is live, then scale `dt`, which every sim system below
+  // uses (monster motion, walk frames, spawner, boss phase / shot timers,
+  // power-ups), so they all freeze or slow together and pause still stops
+  // them outright. The daily countdown uses real frame time (frameDt): it
+  // is a wall-clock challenge, and a kill's hit-stop shouldn't bank time.
+  let timeScale = 1;
+  if (!state.paused && !state.specialMoveActive) {
+    if (state.hitStopMs > 0) {
+      state.hitStopMs -= frameDt;
+      timeScale = 0;
+      if (state.hitStopMs <= 0) { state.hitStopMs = 0; STAGE.classList.remove('hitstop'); }
+    } else if (state.slowMoMs > 0) {
+      state.slowMoMs -= frameDt;
+      timeScale = state.slowMoScale || 1;
+      if (state.slowMoMs <= 0) { state.slowMoMs = 0; state.slowMoScale = 1; }
+    }
+  }
+  const dt = frameDt * timeScale;
 
   if (!state.paused && !state.specialMoveActive) {
     // Decay power-up timers + drop expirations
     tickPowerups(dt);
     // Progressive recall hints (fade hidden syllables in over time)
-    tickRecallReveals(t);
+    tickRecallReveals(dt);
     // Daily run: tick countdown timer and end run when it hits zero
     if (state.dailyRun) {
-      state.dailyTimeLeft = (state.dailyTimeLeft || 0) - dt;
+      state.dailyTimeLeft = (state.dailyTimeLeft || 0) - frameDt;
       if (state.dailyTimeLeft <= 0) {
         state.dailyTimeLeft = 0;
         endDailyRun();
@@ -7452,9 +7915,13 @@ function loop(t) {
       state.pendingBoss = false;
       triggerBossFight();
     }
+    if (state.bossSpawnInMs > 0) {
+      state.bossSpawnInMs -= dt;
+      if (state.bossSpawnInMs <= 0) { state.bossSpawnInMs = 0; spawnBoss(); }
+    }
     state.spawnTimer += dt;
     const cap = state.level >= 15 ? ADMIN.spawnCap.endgame : state.level >= 7 ? ADMIN.spawnCap.late : state.level >= 4 ? ADMIN.spawnCap.mid : ADMIN.spawnCap.early;
-    if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap && state.spawnPauseMs <= 0 && !state.bossActive && !state.pendingBoss) {
+    if (state.spawnTimer > state.spawnInterval && state.monsters.length < cap && state.spawnPauseMs <= 0 && !state.bossActive && !state.pendingBoss && !(state.bossSpawnInMs > 0)) {
       state.spawnTimer = 0;
       spawnMonster();
     }
@@ -7496,11 +7963,7 @@ function loop(t) {
         } else {
           m.tpT = 0;
           m.x = 100 + Math.random() * (window.innerWidth - 200);
-          if (m.el) {
-            m.el.classList.remove('teleport-flash');
-            void m.el.offsetWidth; // restart animation
-            m.el.classList.add('teleport-flash');
-          }
+          teleportFlash(m);
         }
       } else {
         m.y += m.speed * dts;
@@ -7510,10 +7973,14 @@ function loop(t) {
       if (m.x < minX) m.x = minX;
       if (m.x > maxX) m.x = maxX;
       renderMonsterDepth(m);
+      tickMonsterFrames(m, dt * slowMul);
       if (m.y > baseY - 50) {
-        state.levelLeaks = (state.levelLeaks || 0) + 1;
-        damagePlayer();
-        if (m._walkInterval) { clearInterval(m._walkInterval); m._walkInterval = null; }
+        // A heart that slips past is a missed pickup, not a hit.
+        if (!m.isHeart) {
+          state.levelLeaks = (state.levelLeaks || 0) + 1;
+          damagePlayer();
+        }
+        m._img = null;
         m.el.classList.add('dying');
         setTimeout(() => m.el.remove(), 550);
         state.monsters = state.monsters.filter(x => x.id !== m.id);
@@ -7522,33 +7989,44 @@ function loop(t) {
           state.ime.reset(); LIVE_EL.textContent = '';
           teleportPlayerHome(true);
         }
+        // Fatal hit ended the run: stop processing the rest of this frame so a
+        // second monster crossing the line can't fire game over again.
+        if (!state.running) return;
       }
     }
   }
-  // Boss phase deadline tick: telegraph ring + projectile attack on expiry
+  // Boss phase timer tick: telegraph ring + projectile attack on expiry.
+  // Decremented by dt only while unpaused, so pause / tab switch / cutscene
+  // menus freeze the clock instead of letting it run out behind them.
   if (!state.paused && !state.specialMoveActive && state.bossActive) {
     const boss = state.monsters.find(m => m.isBoss);
-    if (boss && boss.phaseDeadline) {
-      const now = performance.now();
-      const remaining = boss.phaseDeadline - now;
+    if (boss && boss.phaseRemainingMs != null) {
+      // In-flight shot lands: damage only if the boss is still alive.
+      if (boss.shotLandInMs > 0) {
+        boss.shotLandInMs -= dt;
+        if (boss.shotLandInMs <= 0) {
+          boss.shotLandInMs = 0;
+          damagePlayer();
+          if (!state.running) return;
+        }
+      }
+      boss.phaseRemainingMs -= dt;
+      const remaining = boss.phaseRemainingMs;
       // Last 1500ms: show charging red ring
       if (remaining <= 1500 && !boss.phaseHit) {
         boss.phaseHit = true;
         if (boss.el) boss.el.classList.add('boss-charging');
         tone({ freq: 200, type: 'sawtooth', dur: 1.4, gain: 0.04, slide: 440 });
       }
-      // Deadline expired: fire projectile, damage player, reset deadline for this phase
+      // Timer expired: fire at the player, damage lands ~300ms later, reset the timer for this phase
       if (remaining <= 0) {
         boss.phaseHit = false;
         if (boss.el) boss.el.classList.remove('boss-charging');
-        // Projectile VFX toward player (inverted geometry: boss fires down)
-        fireProjectileAt({ x: boss.x, y: boss.y, el: boss.el, _bossShot: true });
-        setTimeout(() => {
-          if (state.running && !state.paused) damagePlayer();
-        }, 300);
-        // Reset deadline for the same phase (word progress is kept)
+        fireBossShot(boss);
+        boss.shotLandInMs = 300;
+        // Reset timer for the same phase (word progress is kept)
         const phaseIdx = boss.phase - 1;
-        boss.phaseDeadline = performance.now() + boss.phaseWindows[phaseIdx];
+        boss.phaseRemainingMs = boss.phaseWindows[phaseIdx];
       }
     }
   }
@@ -7564,9 +8042,15 @@ function loop(t) {
       for (const m of state.monsters) if (m.y > best.y) best = m;
       depthU = monsterDepth(best);
     }
-    const bgTarget = 1 + Math.min(depthU, 1) * 0.06;
+    // Reduced motion: hold the backdrop still.
+    const bgTarget = REDUCED.matches ? 1 : 1 + Math.min(depthU, 1) * 0.06;
     _bgZoom += (bgTarget - _bgZoom) * 0.08;
-    if (BACKDROP_EL) BACKDROP_EL.style.setProperty('--bg-zoom', _bgZoom.toFixed(4));
+    // Write only when the rounded value moves (no per-frame style churn).
+    const zs = _bgZoom.toFixed(3);
+    if (zs !== _bgZoomStr && BACKDROP_EL) {
+      _bgZoomStr = zs;
+      BACKDROP_EL.style.setProperty('--bg-zoom', zs);
+    }
   }
   requestAnimationFrame(loop);
 }
@@ -7617,7 +8101,7 @@ function showStoryBeat() {
   pTeacher.style.display = beat.activeSpeaker === 'teacher' ? 'block' : 'none';
 
   if (beat.demon) {
-    pDemon.style.backgroundImage = `url('sprites/portraits/${beat.demon}.png')`;
+    pDemon.style.backgroundImage = `url('sprites/portraits/${beat.demon}.webp')`;
     pDemon.style.display = 'block';
   } else {
     pDemon.style.display = 'none';
@@ -7680,7 +8164,7 @@ function advanceStory() {
 function closeStory() {
   document.getElementById('storyDialog').style.display = 'none';
   if (storyTyping) { clearInterval(storyTyping); storyTyping = null; }
-  localStorage.setItem(STORY_KEY, '1');
+  try { localStorage.setItem(STORY_KEY, '1'); } catch (e) {}
   beginGameAfterStory();
 }
 
@@ -7690,7 +8174,9 @@ function beginGameAfterStory() {
 }
 
 function playIntroIfNeeded() {
-  if (localStorage.getItem(STORY_KEY) === '1') {
+  let sawIntro = false;
+  try { sawIntro = localStorage.getItem(STORY_KEY) === '1'; } catch (e) {}
+  if (sawIntro) {
     beginGameAfterStory();
   } else {
     showStory();
@@ -7714,20 +8200,48 @@ function startGame() {
   playIntroIfNeeded();
 }
 
-function doStartGame() {
-  state.runMode = 'story';
-  track('battle_start', { mode: 'story', start_level: 1 });
-  state.running = true; state.paused = false;
+// Timeouts scoped to one run (act-break, boss reward, cutscene, wave-clear
+// banner). clearRunOverlays cancels them so nothing from a finished run fires
+// into the next one or over the game-over screen.
+const _runTimers = new Set();
+function runTimeout(fn, ms) {
+  const id = setTimeout(() => { _runTimers.delete(id); fn(); }, ms);
+  _runTimers.add(id);
+  return id;
+}
+
+// Tear down boss / story overlays and pending run timers. Called on game over
+// (both endings) and at the start of every run via resetRunState.
+function clearRunOverlays() {
+  _runTimers.forEach(id => clearTimeout(id));
+  _runTimers.clear();
+  state.bossSpawnInMs = 0;
+  document.body.classList.remove('boss-alive');
+  document.querySelectorAll('.act-break, #bossRewardModal, .boss-cutscene').forEach(el => el.remove());
+  _bannerQueue.length = 0;
+  setFastFall(false);
+}
+
+// Shared reset for every run mode (story, checkpoint, daily). Callers set the
+// mode flags, spawn interval and timers afterwards, then call startRunLoop.
+function resetRunState(startLevel) {
+  clearRunOverlays();
   clearPlayerAnimationTimers();
-  state.lives = ADMIN.player.lives; state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
+  state.running = true; state.paused = false;
+  state.lives = ADMIN.player.lives;
+  state.level = startLevel;
+  state.xp = 0; state.score = 0; state.kills = 0;
   state.combo = 0; state.bestCombo = 0;
   state.startedAt = Date.now();
-  state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
+  state.monsters.forEach(m => { m._img = null; m.el && m.el.remove(); });
   state.monsters = [];
   state.spawnTimer = 0;
   state.spawnPauseMs = 0;
   state.spawnsSinceHeart = 0;
   state.shownHeartHint = false;
+  state.bossActive = false; state.pendingBoss = false; state.xpBoostLevel = 0;
+  _bossCycleIdx = 0;
+  state.lockId = null; state.lockPosKs = 0; state.lockExpectedKs = []; state.ime.reset();
   state.checkpointRun = false;
   state.dailyRun = false;
   state.actsCleared = [];
@@ -7735,14 +8249,12 @@ function doStartGame() {
   state.dailyTimeLeft = 0;
   state.dailyTimerEl = null;
   state.dailyTimeEl = null;
-  const _timerHud = document.getElementById('hudDailyTimer');
-  if (_timerHud) _timerHud.style.display = 'none';
+  const timerHud = document.getElementById('hudDailyTimer');
+  if (timerHud) timerHud.style.display = 'none';
+  const dailyPanel = document.getElementById('overDailyResult');
+  if (dailyPanel) dailyPanel.style.display = 'none';
   state.assistMul = 1.0;
   state.levelLeaks = 0;
-  state.slowMode = getSlowMode();
-  state.spawnInterval = ADMIN.pace.initialSpawnMs * (state.slowMode ? 1.4 : 1.0);
-  state.bossActive = false; state.pendingBoss = false; state.xpBoostLevel = 0;
-  state.lockId = null; state.ime.reset();
   // Reset ninja state
   teleportPlayerHome(true);
   // Reset 필살기 + power-ups
@@ -7755,27 +8267,46 @@ function doStartGame() {
   PLAYER_EL.classList.remove('shielded');
   (state.powerups || []).forEach(p => p.el && p.el.remove());
   state.powerups = [];
-  state.kills = 0;
-  state.bestCombo = 0;
-  state.lastWaveLevel = 1;
+  state.lastWaveLevel = startLevel;
   state.levelWordHistory = [];
-  renderPlayerSprite(1);
+  // Per-run visual resets: juice timers, freeze / game-over classes, any
+  // in-flight effects from the previous run.
+  state.hitStopMs = 0; state.slowMoMs = 0; state.slowMoScale = 1;
+  _pendingAutoPause = false;
+  STAGE.classList.remove('hitstop');
+  document.body.classList.remove('game-over-beat', 'paused');
+  _bodyPaused = false;
+  FX_LAYER.replaceChildren();
+  _spriteScale = null;
+  renderPlayerSprite(startLevel);
   // Restart breathe animation from frame 0 so the player is centered from the
   // first frame. Without this, the animation is mid-cycle (started on page load)
-  // and the sprite appears 1% off-center until swingSword() does the same reset.
-  PLAYER_EL.style.animation = 'none';
-  void PLAYER_EL.offsetWidth;
-  PLAYER_EL.style.animation = '';
-  applyTheme(themeForLevel(1));    // open with the village backdrop
+  // and the sprite appears 1% off-center.
+  PLAYER_EL.getAnimations().forEach(a => { a.currentTime = 0; });
+  applyTheme(themeForLevel(startLevel));
+  if (typeof Bgm !== 'undefined') Bgm.setPaused(false);
   LIVE_EL.textContent = '';
   document.getElementById('introModal').style.display = 'none';
   document.getElementById('gameOverModal').style.display = 'none';
+  setPauseUi(false);
+}
+
+function startRunLoop() {
   updateHud();
   if (typeof renderSpecialMeter === 'function') renderSpecialMeter();
   if (typeof renderPowerupHud === 'function') renderPowerupHud();
   lastT = 0;
   requestAnimationFrame(loop);
   ac().resume && ac().resume();
+}
+
+function doStartGame() {
+  state.runMode = 'story';
+  track('battle_start', { mode: 'story', start_level: 1 });
+  resetRunState(1);
+  state.slowMode = getSlowMode();
+  state.spawnInterval = ADMIN.pace.initialSpawnMs * (state.slowMode ? 1.4 : 1.0);
+  startRunLoop();
 }
 
 // Renders the "Restart from Chapter N" button on the game-over modal if a
@@ -7795,87 +8326,21 @@ function renderCheckpointButton() {
 function startCheckpointGame(startLevel) {
   state.runMode = 'checkpoint';
   track('battle_start', { mode: 'checkpoint', start_level: startLevel });
-  document.getElementById('gameOverModal').style.display = 'none';
-  document.getElementById('introModal').style.display = 'none';
-  clearPlayerAnimationTimers();
-  state.running = true; state.paused = false;
-  state.lives = ADMIN.player.lives;
-  state.level = startLevel;
-  state.xp = 0; state.score = 0; state.kills = 0;
-  state.combo = 0; state.bestCombo = 0;
-  state.startedAt = Date.now();
-  state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
-  state.monsters = [];
+  resetRunState(startLevel);
+  state.checkpointRun = true;
+  state.slowMode = getSlowMode();
   // Set spawn interval appropriate for the checkpoint level
   state.spawnInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - startLevel * ADMIN.pace.spawnIntervalLevelStep);
-  state.spawnTimer = 0;
-  state.spawnPauseMs = 0;
-  state.spawnsSinceHeart = 0;
-  state.shownHeartHint = false;
-  state.bossActive = false; state.pendingBoss = false; state.xpBoostLevel = 0;
-  state.lockId = null; state.ime.reset();
-  state.checkpointRun = true;
-  state.dailyRun = false;
-  state.actsCleared = [];
-  state.rng = null;
-  state.dailyTimeLeft = 0;
-  state.dailyTimerEl = null;
-  state.dailyTimeEl = null;
-  const _cpTimerHud = document.getElementById('hudDailyTimer');
-  if (_cpTimerHud) _cpTimerHud.style.display = 'none';
-  state.assistMul = 1.0;
-  state.levelLeaks = 0;
-  state.slowMode = getSlowMode();
-  teleportPlayerHome(true);
-  state.specialCharges = 0;
-  state.killsSinceCharge = 0;
-  state.specialMoveBurst = false;
-  resetSpecialBuffer();
-  cancelAllSpeech();
-  state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
-  PLAYER_EL.classList.remove('shielded');
-  (state.powerups || []).forEach(p => p.el && p.el.remove());
-  state.powerups = [];
-  state.lastWaveLevel = startLevel;
-  state.levelWordHistory = [];
-  renderPlayerSprite(startLevel);
-  PLAYER_EL.style.animation = 'none';
-  void PLAYER_EL.offsetWidth;
-  PLAYER_EL.style.animation = '';
-  applyTheme(themeForLevel(startLevel));
-  LIVE_EL.textContent = '';
-  updateHud();
-  if (typeof renderSpecialMeter === 'function') renderSpecialMeter();
-  if (typeof renderPowerupHud === 'function') renderPowerupHud();
-  lastT = 0;
-  requestAnimationFrame(loop);
-  ac().resume && ac().resume();
+  startRunLoop();
 }
 
 function startDailyGame() {
   state.runMode = 'daily';
   track('battle_start', { mode: 'daily', start_level: 1 });
-  document.getElementById('introModal').style.display = 'none';
-  clearPlayerAnimationTimers();
-  state.running = true; state.paused = false;
-  state.lives = ADMIN.player.lives;
-  state.level = 1; state.xp = 0; state.score = 0; state.kills = 0;
-  state.combo = 0; state.bestCombo = 0;
-  state.startedAt = Date.now();
-  state.monsters.forEach(m => { if (m._walkInterval) clearInterval(m._walkInterval); m.el && m.el.remove(); });
-  state.monsters = [];
-  state.spawnTimer = 0; state.spawnInterval = ADMIN.pace.initialSpawnMs;
-  state.spawnPauseMs = 0;
-  state.spawnsSinceHeart = 0;
-  state.shownHeartHint = false;
-  state.bossActive = false; state.pendingBoss = false; state.xpBoostLevel = 0;
-  state.lockId = null; state.ime.reset();
-  state.checkpointRun = false;
+  resetRunState(1);
   state.dailyRun = true;
-  state.actsCleared = [];
-  state.assistMul = 1.0;
-  state.levelLeaks = 0;
   state.slowMode = false;  // daily runs always at normal speed
+  state.spawnInterval = ADMIN.pace.initialSpawnMs;
   // Seeded PRNG for deterministic word selection
   state.rng = mulberry32(dailySeed(dailyDateStr()));
   // Daily timer
@@ -7883,37 +8348,18 @@ function startDailyGame() {
   state.dailyTimerEl = document.getElementById('hudDailyTimer');
   state.dailyTimeEl = document.getElementById('hudDailyTime');
   if (state.dailyTimerEl) state.dailyTimerEl.style.display = '';
-  teleportPlayerHome(true);
-  state.specialCharges = 0;
-  state.killsSinceCharge = 0;
-  state.specialMoveBurst = false;
-  resetSpecialBuffer();
-  cancelAllSpeech();
-  state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
-  PLAYER_EL.classList.remove('shielded');
-  (state.powerups || []).forEach(p => p.el && p.el.remove());
-  state.powerups = [];
-  state.lastWaveLevel = 1;
-  state.levelWordHistory = [];
-  renderPlayerSprite(1);
-  PLAYER_EL.style.animation = 'none';
-  void PLAYER_EL.offsetWidth;
-  PLAYER_EL.style.animation = '';
-  applyTheme(themeForLevel(1));
-  LIVE_EL.textContent = '';
-  document.getElementById('gameOverModal').style.display = 'none';
-  updateHud();
-  if (typeof renderSpecialMeter === 'function') renderSpecialMeter();
-  if (typeof renderPowerupHud === 'function') renderPowerupHud();
-  lastT = 0;
-  requestAnimationFrame(loop);
-  ac().resume && ac().resume();
+  startRunLoop();
 }
 
 async function endDailyRun() {
+  if (!state.running) return;
   state.running = false;
+  state.endedAt = performance.now();
+  clearRunOverlays();
   clearPlayerAnimationTimers();
   cancelAllSpeech();
+  flushJamoStats();
+  if (typeof Bgm !== 'undefined') Bgm.setPaused(true);
   track('battle_end', {
     mode: 'daily',
     level: state.level,
@@ -7924,18 +8370,21 @@ async function endDailyRun() {
   });
   if (state.dailyTimerEl) state.dailyTimerEl.style.display = 'none';
   sfxGameOver();
+  document.body.classList.add('game-over-beat');
   const points = state.score;
   // Update streak
   const streakData = updateDailyStreak();
-  // Submit score
-  const submitted = await submitDailyScore(points);
-  // Show game-over modal with daily run context
+  // Show the game-over modal right away; the score submit and today's top
+  // 10 fill in below it as their requests resolve.
+  const runStamp = state.startedAt;
+  const stillThisRun = () => !state.running && state.startedAt === runStamp;
   const _drScoreEl = document.getElementById('overScore');
   const _drFinal = points;
   _drScoreEl.textContent = '0';
-  const _drStart = performance.now();
+  // Count up once the modal has risen out of the desaturate beat.
+  const _drStart = performance.now() + 600;
   (function _drCount(now) {
-    const t = Math.min(1, (now - _drStart) / 600);
+    const t = Math.max(0, Math.min(1, (now - _drStart) / 600));
     const eased = 1 - Math.pow(1 - t, 3);
     _drScoreEl.textContent = Math.round(eased * _drFinal).toLocaleString();
     if (t < 1) requestAnimationFrame(_drCount);
@@ -7959,10 +8408,17 @@ async function endDailyRun() {
     if (actionsEl) actionsEl.parentNode.insertBefore(dailyResultEl, actionsEl);
   }
   const streakTxt = streakData.streak > 1 ? ` | 🔥 ${streakData.streak}-day streak` : '';
-  const submitTxt = submitted ? '' : ' (offline, not submitted)';
-  dailyResultEl.innerHTML = `🗓️ Daily Run${submitTxt}${streakTxt}<br><div id="overDailyLb" style="margin-top:8px;font-size:12px;"></div>`;
-  // Fetch today's top 10
+  dailyResultEl.innerHTML = `🗓️ Daily Run<span id="overDailySubmit"> · submitting…</span>${streakTxt}<br><div id="overDailyLb" style="margin-top:8px;font-size:12px;">Loading today's top 10…</div>`;
+  renderCheckpointButton();
+  document.getElementById('gameOverModal').style.display = 'flex';
+
+  const submitted = await submitDailyScore(points);
+  if (!stillThisRun()) return;
+  const submitEl = document.getElementById('overDailySubmit');
+  if (submitEl) submitEl.textContent = submitted ? '' : ' (offline, not submitted)';
+  // Fetch today's top 10 (after the submit, so it can include this score)
   const top10 = await fetchDailyTop10();
+  if (!stillThisRun()) return;
   const lbEl = document.getElementById('overDailyLb');
   if (lbEl) {
     if (top10.length === 0) {
@@ -7972,23 +8428,65 @@ async function endDailyRun() {
         top10.map((r, i) => `${i + 1}. ${escapeHtml(r.name)}: ${Number(r.points).toLocaleString()}`).join('<br>');
     }
   }
-  renderCheckpointButton();
-  document.getElementById('gameOverModal').style.display = 'flex';
+}
+
+// True while something other than the pause menu owns state.paused (act
+// break, boss reward choice, boss cutscene) or a run-ending / profile modal is
+// up. The pause toggle stays out of the way so it can't unpause behind them.
+function pauseBlockedByOverlay() {
+  if (document.querySelector('.act-break, #bossRewardModal, .boss-cutscene')) return true;
+  const over = document.getElementById('gameOverModal');
+  if (over && over.style.display === 'flex') return true;
+  const prof = document.getElementById('profileModal');
+  if (prof && prof.style.display === 'flex') return true;
+  return false;
+}
+
+function setPauseUi(paused) {
+  document.getElementById('pauseOverlay').style.display = paused ? 'flex' : 'none';
+  const _compact = window.matchMedia(TOUCH_LAYOUT_MQ).matches;
+  document.getElementById('btnMenu').textContent =
+    paused ? (_compact ? '▶' : '▶ Resume') : (_compact ? '⏸' : '⏸ Pause');
 }
 
 function togglePause() {
-  state.paused = !state.paused;
+  if (!state.running || state.specialMoveActive) return;
+  // Only the pause menu itself may resume; other overlays manage their own pause.
+  const menuOpen = document.getElementById('pauseOverlay').style.display === 'flex';
+  if (!menuOpen && (state.paused || pauseBlockedByOverlay())) return;
+  state.paused = !menuOpen;
   if (state.paused) {
     // Stop any in-flight Korean pronunciation + reset 필살 buffer so a
     // pause-then-resume doesn't leave half-typed jamos lingering.
     cancelAllSpeech();
     resetSpecialBuffer();
+    setFastFall(false);
   }
-  document.getElementById('pauseOverlay').style.display = state.paused ? 'flex' : 'none';
-  const _compact = window.matchMedia('(max-width: 720px)').matches;
-  document.getElementById('btnMenu').textContent =
-    state.paused ? (_compact ? '▶' : '▶ Resume') : (_compact ? '⏸' : '⏸ Pause');
+  if (typeof Bgm !== 'undefined') Bgm.setPaused(state.paused);
+  setPauseUi(state.paused);
 }
+
+// Auto-pause when the tab is hidden or the window loses focus, so the boss
+// timer and falling monsters don't keep running while the player is away.
+// An act break / boss cutscene / reward choice owns the pause while it is
+// up, so a blur or tab-hide then can't open the pause menu. Remember it and
+// pause as soon as that overlay closes (unless the player is already back).
+let _pendingAutoPause = false;
+function autoPauseIfRunning() {
+  if (!state.running || state.specialMoveActive) return;
+  if (pauseBlockedByOverlay()) { _pendingAutoPause = true; return; }
+  if (state.paused) return;
+  togglePause();
+}
+// Called by each blocking overlay right after it is gone.
+function flushPendingAutoPause() {
+  if (!_pendingAutoPause) return;
+  _pendingAutoPause = false;
+  if (document.hidden || !document.hasFocus()) autoPauseIfRunning();
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) autoPauseIfRunning(); });
+window.addEventListener('blur', autoPauseIfRunning);
+window.addEventListener('focus', () => { if (!document.hidden) _pendingAutoPause = false; });
 
 document.getElementById('btnStart').addEventListener('click', startGame);
 document.getElementById('btnEditProfile').addEventListener('click', () => {
@@ -7997,7 +8495,7 @@ document.getElementById('btnEditProfile').addEventListener('click', () => {
 });
 document.getElementById('btnEditProfileIntro').addEventListener('click', openProfileModal);
 document.getElementById('profileReplayIntro').addEventListener('click', () => {
-  localStorage.removeItem(STORY_KEY);
+  try { localStorage.removeItem(STORY_KEY); } catch (e) {}
   document.getElementById('profileModal').style.display = 'none';
 });
 // Skip button (Esc-equivalent) on the story dialog. The Esc key already
@@ -8089,8 +8587,14 @@ function buildShareCard() {
   ctx.fillStyle = '#fde047';
   ctx.shadowColor = 'rgba(253, 224, 71, 0.55)';
   ctx.shadowBlur = 50;
-  ctx.font = '900 220px "Inter", system-ui, sans-serif';
-  ctx.fillText(score, W/2, 400);
+  // Shrink the hero font until long scores fit inside the card margins.
+  let scorePx = 220;
+  ctx.font = `900 ${scorePx}px "Inter", system-ui, sans-serif`;
+  while (scorePx > 80 && ctx.measureText(score).width > W - 160) {
+    scorePx -= 10;
+    ctx.font = `900 ${scorePx}px "Inter", system-ui, sans-serif`;
+  }
+  ctx.fillText(score, W/2, 400 + (220 - scorePx) / 2);
   ctx.shadowBlur = 0;
 
   // Subtitle row: Lv · Kills · Best combo
@@ -8319,7 +8823,9 @@ document.getElementById('introHigh').textContent = getHighScore().toLocaleString
   let _prevFocus = null;
   function trapFocusInModal(modal) {
     _prevFocus = document.activeElement;
-    const focusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    // Prefer the modal's primary action (Retry on game over) so Enter / Space restarts.
+    const focusable = modal.querySelector('[data-autofocus]') ||
+      modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (focusable) focusable.focus({ preventScroll: true });
   }
   function restoreFocus() {
@@ -8391,7 +8897,7 @@ document.getElementById('introHigh').textContent = getHighScore().toLocaleString
     el.classList.add('kb-pressed');
     setTimeout(() => el.classList.remove('kb-pressed'), 110);
   }
-  const kbMq = window.matchMedia('(max-width: 720px)');
+  const kbMq = window.matchMedia(TOUCH_LAYOUT_MQ);
   root.addEventListener('pointerdown', (e) => {
     if (!kbMq.matches) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -8426,7 +8932,7 @@ document.getElementById('introHigh').textContent = getHighScore().toLocaleString
 // Focus the hidden shield only on devices that have a physical keyboard.
 // On phones, focusing #shield pops the OS soft keyboard, which would compete
 // with the on-screen battle keyboard.
-const isMobileViewport = () => window.matchMedia('(max-width: 720px)').matches;
+const isMobileViewport = () => window.matchMedia(TOUCH_LAYOUT_MQ).matches;
 if (!isMobileViewport()) {
   SHIELD.focus({ preventScroll: true });
 }

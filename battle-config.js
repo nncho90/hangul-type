@@ -24,8 +24,8 @@
     ],
 
     // ─── Enemy tier sprite paths (1–5) ──────────────────────────────────────
-    // Each tier is one demon archetype. buildMonsterEl appends '-walk-1' /
-    // '-walk-3' to compose a 2-frame walk via CSS opacity flicker.
+    // Each tier is one demon archetype. game.html cycles '-walk-1'..'-walk-4'
+    // (and '-hit-1' / '-hit-2' on a hit) by swapping one img's src.
     enemyTiers: {
       1: 'enemies/01-imp',
       2: 'enemies/02-gumiho',
@@ -48,20 +48,26 @@
     // ─── Boss roster ────────────────────────────────────────────────────────
     // Bosses ship as <base>.png + <base>-step.png (NOT a 4-frame walk row).
     // buildMonsterEl branches on tier === 'boss' to pick the right suffix.
+    // portrait (optional) = sprites/<portrait>.webp, the 384px close-up the
+    // boss intro cutscene shows; bosses without one fall back to their sprite.
+    // act = the LEVEL_ACTS level whose story card introduces this boss, so the
+    // chapter text and the boss that appears always match (14 names 저승사자,
+    // 23 names 한글왕). Bosses past Lv.23 cycle through the list in order.
     bosses: [
-      { sprite: 'enemies/08-hangeulwang',     emoji: '🐉', name: '한글왕',         subtitle: 'Demon King of Hangeul',     flavor: '"All who would speak my tongue, kneel."' },
-      { sprite: 'enemies/02-gumiho-mini',     emoji: '🦊', name: '구미호 여왕',     subtitle: 'Queen of Nine Tails',      flavor: '"Your syllables taste like fear, little one."' },
-      { sprite: 'enemies/05-dokkaebi-elder',  emoji: '👹', name: '도깨비 대장',     subtitle: 'Goblin Chieftain',         flavor: '"Hahaha! Type if you dare, mortal!"' },
-      { sprite: 'enemies/06-jeoseung-saja',   emoji: '🪦', name: '저승사자',        subtitle: 'Reaper of the Underworld', flavor: '"Your ledger… is incomplete."' },
-      { sprite: 'enemies/03-cheonyeo-gwisin', emoji: '👻', name: '처녀귀신',        subtitle: 'Maiden of Vengeance',      flavor: '"You forgot me. I have not forgotten you."' }
+      { act: 23, sprite: 'enemies/08-hangeulwang',     portrait: 'portraits/hangeulwang', emoji: '🐉', name: '한글왕',         subtitle: 'Demon King of Hangeul',     flavor: '"All who would speak my tongue, kneel."' },
+      { act: 5,  sprite: 'enemies/02-gumiho-mini',     emoji: '🦊', name: '구미호 여왕',     subtitle: 'Queen of Nine Tails',      flavor: '"Your syllables taste like fear, little one."' },
+      { act: 9,  sprite: 'enemies/05-dokkaebi-elder',  portrait: 'portraits/dokkaebi',    emoji: '👹', name: '도깨비 대장',     subtitle: 'Goblin Chieftain',         flavor: '"Hahaha! Type if you dare, mortal!"' },
+      { act: 14, sprite: 'enemies/06-jeoseung-saja',   emoji: '🪦', name: '저승사자',        subtitle: 'Reaper of the Underworld', flavor: '"Your ledger… is incomplete."' },
+      { act: 19, sprite: 'enemies/03-cheonyeo-gwisin', portrait: 'portraits/cheonyeo',    emoji: '👻', name: '처녀귀신',        subtitle: 'Maiden of Vengeance',      flavor: '"You forgot me. I have not forgotten you."' }
     ],
 
     // ─── Per-tier sprite sizes (px) on the battle stage ─────────────────────
     // Used by buildMonsterEl. Sized RELATIVE TO THE PLAYER back-view sprite
     // (renderPlayerSprite renders it at 237px): tier 1 (imp) ≈ half the player
-    // — reaches his stomach when they stand together; tier 2 (gumiho) a touch
+    // (reaches his stomach when they stand together); tier 2 (gumiho) a touch
     // bigger; tier 4 (jeoseung "floating guy") ≈ the player's full height;
-    // tier 5 a touch bigger. Keep this in sync with MONSTER_BASE_PX in game.html.
+    // tier 5 a touch bigger. game.html multiplies both by spriteScale() on
+    // short stages (phones). Keep this in sync with MONSTER_BASE_PX in game.html.
     tierSizePx: {
       1: 119,
       2: 150,
@@ -69,6 +75,18 @@
       4: 237,
       5: 270,
       boss: 351
+    },
+
+    // ─── Death-burst particle colors per tier ───────────────────────────────
+    // Picked from each demon's sprite so the chips read as pieces of it.
+    // Consumed by particleBurst via tierParticleColors() in game.html.
+    tierParticles: {
+      1:    ['#1f2937', '#d4a017', '#f59e0b', '#fb923c'],   // imp: soot + brass horn
+      2:    ['#ffffff', '#fee2e2', '#dc2626', '#fca5a5'],   // gumiho: white fur + red marks
+      3:    ['#3730a3', '#4c1d95', '#dc2626', '#d4a017'],   // oni: indigo robe + red sash
+      4:    ['#111827', '#374151', '#d4a017', '#fbbf24'],   // jeoseung: black gat + lantern
+      5:    ['#f8fafc', '#cbd5e1', '#93c5fd', '#1f2937'],   // cheonyeo: pale robe + hair
+      boss: ['#fbbf24', '#dc2626', '#fff7ed', '#7c3aed']
     },
 
     // ─── XP curve ───────────────────────────────────────────────────────────
