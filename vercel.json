@@ -3,39 +3,115 @@
   "redirects": [
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "learnhangeul.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "learnhangeul.com"
+        }
+      ],
       "destination": "https://typehangeul.com/",
       "permanent": true
     },
     {
       "source": "/:path+",
-      "has": [{ "type": "host", "value": "learnhangeul.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "learnhangeul.com"
+        }
+      ],
       "destination": "https://typehangeul.com/:path+",
       "permanent": true
     },
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "www.learnhangeul.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "www.learnhangeul.com"
+        }
+      ],
       "destination": "https://typehangeul.com/",
       "permanent": true
     },
     {
       "source": "/:path+",
-      "has": [{ "type": "host", "value": "www.learnhangeul.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "www.learnhangeul.com"
+        }
+      ],
       "destination": "https://typehangeul.com/:path+",
       "permanent": true
     },
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "hangul-type.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "hangul-type.vercel.app"
+        }
+      ],
       "destination": "https://typehangeul.com/",
       "permanent": true
     },
     {
       "source": "/:path+",
-      "has": [{ "type": "host", "value": "hangul-type.vercel.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "hangul-type.vercel.app"
+        }
+      ],
       "destination": "https://typehangeul.com/:path+",
       "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
+      ]
+    },
+    {
+      "source": "/audio/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/audio/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/sprites/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
+        }
+      ]
     }
   ]
 }

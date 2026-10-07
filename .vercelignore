@@ -39,3 +39,17 @@ package-lock.json
 .superpowers/
 .omc/
 .claude/
+
+# Sprite and audio working files (originals, backups, scratch outputs, scripts)
+sprites/**/_old-*
+sprites/**/_pre-*
+sprites/**/_bak
+sprites/**/_wait_*
+sprites/**/*.py
+**/.omc/
+**/.DS_Store
+audio/_raw/
+audio/preview/
+audio/approved.json
+audio/overrides.json
+audio/redo_count.json
