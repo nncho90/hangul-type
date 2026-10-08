@@ -17,7 +17,7 @@
 <meta property="og:image" content="https://typehangeul.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Type Hangeul logo: a blue Hangeul character above a Korean typing keyboard">
+<meta property="og:image:alt" content="Type Hangeul: a young hero in white hanbok faces a horned dokkaebi imp in a pixel-art Joseon village">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
@@ -72,7 +72,7 @@
     border-bottom: 1px solid var(--bd);
   }
   .brand { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-  .brand-logo { font-size: 22px; line-height: 1; }
+  .brand-logo { display: block; width: 32px; height: 32px; border-radius: 8px; }
   .brand h1 {
     margin: 0;
     font-family: 'Black Han Sans', 'Noto Sans KR', 'Inter', system-ui, sans-serif;
@@ -169,7 +169,7 @@
     }
     .brand { min-width: 0; }
     .brand h1 { font-size: 20px; }
-    .brand-logo { font-size: 20px; }
+    .brand-logo { width: 28px; height: 28px; }
     .header-mid { display: none; }
     .stats { justify-content: flex-end; gap: 10px; width: auto; }
     .stat { text-align: right; }
@@ -1566,21 +1566,27 @@
   }
   .ts-hero {
     display: block;
-    width: 320px; height: 320px;
-    image-rendering: pixelated;
+    width: auto; height: 290px;
     animation: ts-bob 1.8s ease-in-out infinite;
   }
   .ts-imp {
     display: block;
-    width: 300px; height: 300px;
-    margin-bottom: -22px;
-    image-rendering: pixelated;   /* the frame has empty space under the feet */
-    animation: ts-bob 1.4s ease-in-out infinite reverse;
+    width: auto; height: 190px;
+    margin-bottom: 4px;
+    transform-origin: 50% 100%;
+    animation: ts-hop 1.1s ease-in-out infinite;
   }
-  .ts-actor-imp::after { bottom: 4px; width: 46%; }
+  .ts-actor-imp::after { bottom: 0; width: 70%; }
   @keyframes ts-bob {
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-6px); }
+  }
+  /* Imp idle: one image, a small squash-and-hop (no frame swapping, so no
+     blank frame while a new src decodes) */
+  @keyframes ts-hop {
+    0%, 100% { transform: translateY(0) scale(1.04, 0.96); }
+    40%      { transform: translateY(-10px) scale(0.98, 1.03); }
+    60%      { transform: translateY(-10px) scale(0.98, 1.03); }
   }
   .ts-panel {
     margin-top: 18px;
@@ -1639,13 +1645,13 @@
     .ts-title { letter-spacing: 0.02em; }
     .ts-scene { padding: 0; }
     .ts-bg { background-position: 6% bottom; }
-    .ts-hero { width: 208px; height: 208px; }
-    .ts-imp { width: 196px; height: 196px; margin-bottom: -14px; }
+    .ts-hero { height: 196px; }
+    .ts-imp { height: 132px; }
     .ts-panel { width: 100%; }
   }
   @media (max-height: 760px) and (min-width: 701px) {
-    .ts-hero { width: 224px; height: 224px; }
-    .ts-imp { width: 210px; height: 210px; margin-bottom: -16px; }
+    .ts-hero { height: 210px; }
+    .ts-imp { height: 140px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .ts-bg, .ts-hero, .ts-imp, .ts-hint, .ts-item.is-active::before { animation: none !important; }
@@ -1686,8 +1692,8 @@
       <p class="ts-sub" lang="ko">한글 · <span lang="en">Korean typing practice</span></p>
     </div>
     <div class="ts-scene" aria-hidden="true">
-      <div class="ts-actor ts-actor-hero"><img class="ts-hero" src="sprites/player/01-baegui-front.png" alt="" width="256" height="256"></div>
-      <div class="ts-actor ts-actor-imp"><img class="ts-imp" id="tsImp" src="sprites/enemies/01-imp-walk-1.png" alt="" width="512" height="512"></div>
+      <div class="ts-actor ts-actor-hero"><img class="ts-hero" src="sprites/title/hero.webp" alt="" width="273" height="640" decoding="async"></div>
+      <div class="ts-actor ts-actor-imp"><img class="ts-imp" id="tsImp" src="sprites/title/imp.webp" alt="" width="380" height="440" decoding="async"></div>
     </div>
     <div class="ts-panel">
       <button class="ts-item is-active" type="button" data-choice="game">START GAME <span class="ts-ico" aria-hidden="true">⚔️</span></button>
@@ -1704,7 +1710,7 @@
 
   <header>
     <div class="brand">
-      <span class="brand-logo">⌨️</span>
+      <img class="brand-logo" src="favicon-96.png" alt="" width="32" height="32">
       <h1>Type Hangeul</h1>
     </div>
 
@@ -5174,9 +5180,7 @@ function showCoachmark() {
 // typing drill.
 
 const TITLE_PETALS = 10;
-const IMP_FRAMES = [1, 2, 3, 4].map(n => `sprites/enemies/01-imp-walk-${n}.png`);
 let titleIdx = 0;
-let impTimer = null;
 
 function titleItems() {
   return [...document.querySelectorAll('#titleScreen .ts-item')];
@@ -5189,20 +5193,6 @@ function setTitleCursor(i, focus) {
   if (focus) items[titleIdx].focus({ preventScroll: true });
 }
 
-function startImpWalk() {
-  const img = document.getElementById('tsImp');
-  if (!img || impTimer || prefersReducedMotion()) return;
-  let f = 0;
-  impTimer = setInterval(() => {
-    f = (f + 1) % IMP_FRAMES.length;
-    img.src = IMP_FRAMES[f];
-  }, 180);
-}
-
-function stopImpWalk() {
-  if (impTimer) { clearInterval(impTimer); impTimer = null; }
-}
-
 function openTitleScreen() {
   const el = document.getElementById('titleScreen');
   el.classList.remove('closing');
@@ -5210,7 +5200,6 @@ function openTitleScreen() {
   document.body.classList.add('title-open');
   cancelPronunciation();
   setTitleCursor(0, true);
-  startImpWalk();
 }
 
 function chooseTitleItem(choice) {
@@ -5226,7 +5215,6 @@ function chooseTitleItem(choice) {
     el.hidden = true;
     el.classList.remove('closing');
     document.body.classList.remove('title-open');
-    stopImpWalk();
     if (!mobileMq.matches) document.getElementById('shield').focus({ preventScroll: true });
     if (isFirstRun()) showCoachmark();
   }, prefersReducedMotion() ? 0 : 350);
@@ -5235,8 +5223,6 @@ function chooseTitleItem(choice) {
 function initTitleScreen() {
   const el = document.getElementById('titleScreen');
   if (!el) return;
-  // Preload the imp's walk frames so the cycle doesn't flicker
-  for (const src of IMP_FRAMES) { const im = new Image(); im.src = src; }
   const petals = document.getElementById('tsPetals');
   if (petals && !prefersReducedMotion()) {
     for (let i = 0; i < TITLE_PETALS; i++) {
