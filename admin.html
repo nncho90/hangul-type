@@ -355,7 +355,7 @@ select {
 
     <!-- 2. PER-TIER BEHAVIOR -->
     <div class="card">
-      <div class="shead"><span class="slbl">PER-TIER BEHAVIOR</span><span class="sbadge">6 tiers</span></div>
+      <div class="shead"><span class="slbl">PER-TIER BEHAVIOR</span><span class="sbadge">9 tiers</span></div>
       <div class="tier-header">
         <div>Tier</div>
         <div>Speed Mul</div>
@@ -431,9 +431,12 @@ const ADMIN_DEFAULTS = {
     "3":    { speedMul: 0.80, motion: "zigzag",   fontPx: 62, animS: 2.0 },
     "4":    { speedMul: 0.85, motion: "dive",     fontPx: 72, animS: 2.2 },
     "5":    { speedMul: 0.95, motion: "tracker",  fontPx: 84, animS: 1.5 },
+    "6":    { speedMul: 0.90, motion: "hopper",   fontPx: 92, animS: 1.4 },
+    "7":    { speedMul: 0.90, motion: "blink",    fontPx: 96, animS: 1.6 },
+    "8":    { speedMul: 0.60, motion: "heavy",    fontPx: 110, animS: 2.4 },
     "boss": { speedMul: 0.55, motion: "teleport", fontPx: 96, animS: 2.5 }
   },
-  levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19 },
+  levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19, tier6Start: 24, tier7Start: 30, tier8Start: 40 },
   pace: {
     baseSpeedBase: 12, baseSpeedLevelMul: 0.9, baseSpeedTierMul: 1.0,
     spawnIntervalFloor: 900, spawnIntervalStart: 2300, spawnIntervalLevelStep: 70,
@@ -459,6 +462,9 @@ const SPRITES = [
   { file: "enemies/06-jeoseung-saja",    label: "Jeoseung Saja",     tier: "4",      badgeClass: "re" },
   { file: "enemies/07-mudang",           label: "Mudang",            tier: "boss",   badgeClass: "or" },
   { file: "enemies/08-hangeulwang",      label: "Hangeul-wang Boss", tier: "boss",   badgeClass: "or" },
+  { file: "enemies/05-dokkaebi-jangsu-walk-1",  label: "도깨비 장수",        tier: "6",      badgeClass: "or" },
+  { file: "enemies/07-yeowang-walk-1",   label: "무당 여왕",          tier: "7",      badgeClass: "pu" },
+  { file: "enemies/08-yeomra-walk-1",    label: "염라대왕",           tier: "8",      badgeClass: "re" },
   { file: "player/01-baegui-front",      label: "백의 Commoner",      tier: "player", badgeClass: "bl" },
   { file: "player/02-namukkun-front",    label: "나무꾼 Woodcutter",  tier: "player", badgeClass: "bl" },
   { file: "player/03-seonbi-front",      label: "선비 Scholar",       tier: "player", badgeClass: "bl" },
@@ -523,8 +529,8 @@ function buildSprites() {
 }
 
 /* --- Build tier rows --- */
-const TIER_KEYS = ["1", "2", "3", "4", "5", "boss"];
-const MOTIONS = ["straight", "zigzag", "dive", "tracker", "teleport"];
+const TIER_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "boss"];
+const MOTIONS = ["straight", "zigzag", "dive", "tracker", "teleport", "hopper", "blink", "heavy"];
 
 function buildTierRows() {
   const container = document.getElementById('tier-rows');
@@ -557,6 +563,9 @@ function buildLevelTierMapping() {
     { key: 'tier3Start', label: 'Tier 3 Start' },
     { key: 'tier4Start', label: 'Tier 4 Start' },
     { key: 'tier5Start', label: 'Tier 5 Start' },
+    { key: 'tier6Start', label: 'Tier 6 Mix-in (도깨비 장수)' },
+    { key: 'tier7Start', label: 'Tier 7 Mix-in (무당 여왕)' },
+    { key: 'tier8Start', label: 'Tier 8 Mix-in (염라대왕)' },
   ];
   for (const f of fields) {
     const div = document.createElement('div');
@@ -577,11 +586,18 @@ function updateTierHints() {
   const t4 = parseInt(document.getElementById('lt-tier4Start')?.value) || state.levelTiers.tier4Start;
   const t5 = parseInt(document.getElementById('lt-tier5Start')?.value) || state.levelTiers.tier5Start;
 
+  const t6 = parseInt(document.getElementById('lt-tier6Start')?.value) || state.levelTiers.tier6Start;
+  const t7 = parseInt(document.getElementById('lt-tier7Start')?.value) || state.levelTiers.tier7Start;
+  const t8 = parseInt(document.getElementById('lt-tier8Start')?.value) || state.levelTiers.tier8Start;
+
   const hints = {
     'lt-tier2Start-hint': `Tier 1: lvl 1–${t2 - 1} | Tier 2: lvl ${t2}+`,
     'lt-tier3Start-hint': `Tier 2: lvl ${t2}–${t3 - 1} | Tier 3: lvl ${t3}+`,
     'lt-tier4Start-hint': `Tier 3: lvl ${t3}–${t4 - 1} | Tier 4: lvl ${t4}+`,
     'lt-tier5Start-hint': `Tier 4: lvl ${t4}–${t5 - 1} | Tier 5: lvl ${t5}+`,
+    'lt-tier6Start-hint': `Mixes in with tier 5 from lvl ${t6}`,
+    'lt-tier7Start-hint': `Mixes in from lvl ${t7}`,
+    'lt-tier8Start-hint': `Mixes in from lvl ${t8}`,
   };
   for (const [id, text] of Object.entries(hints)) {
     const el = document.getElementById(id);
@@ -678,6 +694,9 @@ function readFormState() {
   out.levelTiers.tier3Start = parseInt(document.getElementById('lt-tier3Start').value);
   out.levelTiers.tier4Start = parseInt(document.getElementById('lt-tier4Start').value);
   out.levelTiers.tier5Start = parseInt(document.getElementById('lt-tier5Start').value);
+  out.levelTiers.tier6Start = parseInt(document.getElementById('lt-tier6Start').value);
+  out.levelTiers.tier7Start = parseInt(document.getElementById('lt-tier7Start').value);
+  out.levelTiers.tier8Start = parseInt(document.getElementById('lt-tier8Start').value);
 
   for (const key of Object.keys(ADMIN_DEFAULTS.pace)) {
     const el = document.getElementById(`pace-${key}`);

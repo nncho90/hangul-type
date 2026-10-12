@@ -17,3 +17,7 @@ logs/
 test-results/
 playwright-report/
 progress.txt
+.superpowers/
+sprites/portraits/_wait_*.png
+sprites/backgrounds/portrait/_old-*/
+sprites/player/_bak/

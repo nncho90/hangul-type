@@ -30,6 +30,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Hangeul Battle","url":"https://typehangeul.com/game.html","applicationCategory":"GameApplication","genre":"Educational","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Browser typing game where players defeat Korean 한글 demons by typing the Korean word floating above each one.","image":"https://typehangeul.com/og-image.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"],"isPartOf":{"@type":"WebApplication","name":"Type Hangeul","url":"https://typehangeul.com/","image":"https://typehangeul.com/og-image.png","logo":"https://typehangeul.com/logo.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"]},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ui.css">
 <style>
   *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
   :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
@@ -55,13 +56,11 @@
   }
 
   /* Soft gradient backdrop — base layer. Theme classes on body recolor it. */
+  /* Before a theme loads (intro, story): the title screen's night ink */
   .backdrop {
     position: fixed; inset: 0;
-    background-color: var(--bg);
-    background-image:
-      linear-gradient(rgba(96,165,250,0.32) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(96,165,250,0.32) 1px, transparent 1px);
-    background-size: 18px 18px;
+    background-color: var(--ink);
+    background-image: radial-gradient(ellipse 80% 70% at 50% 35%, var(--panel-hi) 0%, var(--ink) 100%);
     z-index: 0;
     transition: background-color 1.6s ease;
   }
@@ -88,6 +87,11 @@
     will-change: transform, opacity;
   }
   .backdrop .bg-layer.on { opacity: 1; }
+  /* Portrait 2:3 art puts its landmark and horizon in the top third. Pin
+     the image top to the HUD's bottom edge (--hud-h) so the HUD never
+     hides the landmark; the bottom that gets cut sits under the keyboard
+     anyway. Zoom around the horizon. */
+  .backdrop .bg-layer.bg-portrait { background-position: center var(--hud-h, 0px); transform-origin: 50% 25%; }
   .backdrop::after {
     content: '';
     position: absolute; inset: 0;
@@ -307,7 +311,7 @@
     margin-bottom: 16px;
   }
   .act-break .act-title {
-    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-display);
     font-size: 88px;
     color: #fef9c3;
     letter-spacing: 0.06em;
@@ -316,7 +320,7 @@
     text-shadow: 0 4px 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(220, 38, 38, 0.4);
   }
   .act-break .act-subtitle {
-    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-display);
     font-size: 24px;
     color: #fef3c7;
     letter-spacing: 0.04em;
@@ -374,10 +378,10 @@
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     padding: 14px 22px;
-    background: var(--l1);
-    border-top: 3px solid var(--theme-accent, var(--blue));
-    box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.04);
-    transition: border-color 1.6s;
+    /* Dark dialogue strip: cream frame line with an ink rule outside it */
+    background: linear-gradient(180deg, var(--panel-top) 0%, var(--panel-solid) 100%);
+    border-top: 3px solid var(--frame);
+    box-shadow: 0 -3px 0 var(--ink);
   }
   .hud-left { display: flex; align-items: center; gap: 22px; }
   .hud-right { display: flex; align-items: center; gap: 22px; justify-content: flex-end; }
@@ -390,22 +394,24 @@
     height: 44px;
     display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
-    background: var(--l2);
+    background: var(--ink);
     border: 2px solid var(--bdhi);
-    border-radius: 3px;
-    font-family: 'Noto Sans KR', 'Inter', sans-serif;
+    border-radius: var(--r-2);
+    font-family: var(--korean);
     min-width: 0;
     overflow: hidden;
   }
   .hud-center .type-prompt {
     font-size: 14px;
-    color: var(--tlo);
+    color: var(--gold);
     font-weight: 700;
   }
   .hud-center .live {
     font-size: 24px;
     font-weight: 700;
-    color: var(--blue);
+    color: var(--cream);
+    /* ink outline keeps it readable when pinned over the stage on mobile */
+    text-shadow: 1px 0 0 var(--ink), -1px 0 0 var(--ink), 0 1px 0 var(--ink), 0 -1px 0 var(--ink), 0 2px 0 var(--ink);
     letter-spacing: 1px;
     line-height: 1;
     flex: 1;
@@ -416,7 +422,7 @@
   .hud-center .ime-cursor {
     display: inline-block;
     width: 2px; height: 24px;
-    background: var(--blue);
+    background: var(--gold);
     vertical-align: middle;
     animation: blink 0.9s steps(2) infinite;
   }
@@ -438,8 +444,8 @@
     color: var(--thi);
     margin-top: 3px;
   }
-  .stat-value.level   { color: var(--blue); }
-  .stat-value.score   { color: var(--green); font-size: 26px; }
+  .stat-value.level   { color: var(--gold); }
+  .stat-value.score   { color: var(--gold); font-size: 26px; }
   .stat-value.combo   { color: var(--orange); min-width: 68px; text-align: right; transition: color 0.2s, transform 0.2s; }
   .stat-value.combo.zero { color: var(--tlo); }
   .stat-value.combo.hot { color: var(--orange); transform: scale(1.1); }
@@ -452,28 +458,15 @@
   }
   .lives .lost { color: var(--bd); }
 
-  .menu-btn {
-    background: var(--l1);
-    border: 2px solid var(--thi);
-    border-radius: 3px;
-    padding: 8px 14px;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--thi);
-    cursor: pointer;
-    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.25);
-    transition: transform 0.06s, box-shadow 0.06s;
-  }
-  .menu-btn:hover { background: var(--l3); }
-  .menu-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 rgba(15,23,42,0); }
+  /* .menu-btn is paired with .rpg-btn (ui.css), which draws it */
+  .menu-btn { padding: 8px 16px; font-size: 13px; }
 
   /* XP bar — sits just above the Command Bar on desktop. */
   .xpbar {
     position: fixed;
     bottom: 80px; left: 0; right: 0;
     height: 6px;
-    background: var(--l3);
+    background: var(--ink);
     z-index: 99;
     overflow: hidden;
   }
@@ -727,6 +720,9 @@
   .monster.tier-3 .sprite { font-size: var(--tier3-font, 1008px); }
   .monster.tier-4 .sprite { font-size: var(--tier4-font, 1170px); }
   .monster.tier-5 .sprite { font-size: var(--tier5-font, 1359px); }
+  .monster.tier-6 .sprite { font-size: var(--tier6-font, 1230px); }
+  .monster.tier-7 .sprite { font-size: var(--tier7-font, 1380px); }
+  .monster.tier-8 .sprite { font-size: var(--tier8-font, 1530px); }
   /* Boss motion comes only from sprite-walk-boss on the img; a second bob on
      the .sprite wrapper doubled the sway. */
   .monster.boss .sprite { font-size: 480px; }
@@ -945,7 +941,7 @@
     transform: translate(-50%, -50%);
     pointer-events: none;
     z-index: 81;
-    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-display);
     font-size: 64px;
     font-weight: 900;
     animation: spell-glyph-pop 0.46s ease-out forwards;
@@ -1060,7 +1056,7 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 200;
-    font-family: 'Black Han Sans', 'Inter', sans-serif;
+    font-family: var(--font-display);
     color: var(--orange);
     font-size: 36px;
     text-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
@@ -1083,7 +1079,7 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 200;
-    font-family: 'Black Han Sans', 'Inter', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(26px, 7vw, 52px);
     pointer-events: none;
     animation: level-banner 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -1104,8 +1100,7 @@
   .modal-veil {
     position: fixed; inset: 0;
     z-index: 500;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(2px);
+    background: rgba(10, 12, 22, 0.62);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1115,10 +1110,8 @@
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   /* Pixel-art era modal: hard border, square corners, chunky offset shadow.
      Drops the soft "Bauhaus glass card" look for a retro game-dialog feel. */
+  /* Surface, frame and dark tokens come from .rpg-panel (ui.css) */
   .modal-card {
-    background: var(--l1);
-    border: 2px solid var(--thi);
-    border-radius: 4px;
     padding: 36px 44px;
     text-align: center;
     max-width: 520px;
@@ -1129,7 +1122,6 @@
     max-height: calc(100dvh - 40px);
     overflow-y: auto;
     overscroll-behavior: contain;
-    box-shadow: 4px 4px 0 rgba(15, 23, 42, 0.35);
     animation: modal-rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   /* Game-over modal: pin Retry above the fold by making the leaderboard the
@@ -1162,17 +1154,14 @@
     min-height: 0;
   }
   /* Hero score in game-over */
-  #gameOverModal #overScore { font-size: 44px; color: var(--green); font-weight: 800; }
-  /* Share button prominence */
-  #btnShareResult { background: var(--green); border-color: var(--green); color: white; }
-  #btnShareResult:hover { background: #059669; border-color: #059669; }
+  #gameOverModal #overScore { font-size: 44px; color: var(--gold); font-weight: 800; }
   /* Run-state chips */
   #overCheckpointNote, #overSlowModeNote {
     font-size: 11px;
     color: var(--tmd);
     background: var(--l2);
-    border: 1.5px solid var(--bd);
-    border-radius: 12px;
+    border: 2px solid var(--bd);
+    border-radius: var(--r-2);
     padding: 3px 10px;
     display: inline-block;
     margin: 2px;
@@ -1194,7 +1183,7 @@
   .lb-expand-btn {
     background: none;
     border: none;
-    color: var(--blue);
+    color: var(--gold);
     font-size: 12px;
     cursor: pointer;
     padding: 4px 6px;
@@ -1206,26 +1195,30 @@
   }
   .modal-card .badge {
     display: inline-block;
-    background: var(--blue);
-    color: white;
+    background: var(--ink);
+    color: var(--gold);
     font-size: 11px;
     font-weight: 800;
     padding: 4px 12px;
-    border: 2px solid var(--thi);
-    border-radius: 3px;
+    border: 2px solid var(--gold);
+    border-radius: var(--r-2);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-bottom: 14px;
   }
   .modal-card .badge.danger {
-    background: var(--red);
+    background: var(--danger);
+    border-color: var(--ink);
+    color: var(--cream);
   }
   .modal-card h1 {
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: var(--font-display);
+    font-weight: 400;
     font-size: 36px;
-    color: var(--thi);
+    color: var(--cream);
     margin-bottom: 8px;
     letter-spacing: 0.02em;
+    text-shadow: 0 3px 0 var(--ink);
   }
   .modal-card .subtitle {
     font-size: 14px;
@@ -1240,9 +1233,9 @@
     margin: 20px 0;
   }
   .modal-card .stat-grid > div {
-    background: var(--l2);
+    background: rgba(0, 0, 0, 0.22);
     border: 2px solid var(--bd);
-    border-radius: 3px;
+    border-radius: var(--r-2);
     padding: 12px;
   }
   .modal-card .stat-grid .k {
@@ -1253,9 +1246,9 @@
     font-weight: 700;
   }
   .modal-card .stat-grid .v {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 22px;
-    color: var(--thi);
+    color: var(--gold);
     font-weight: 800;
     margin-top: 4px;
   }
@@ -1263,30 +1256,38 @@
     display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
     margin-top: 18px;
   }
-  .modal-card button {
-    background: var(--l1);
-    border: 2px solid var(--thi);
-    border-radius: 3px;
-    color: var(--tmd);
+  /* Legacy buttons without .rpg-btn (e.g. JS-built modals) */
+  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.boss-reward-card) {
+    background: var(--l2);
+    border: 2px solid var(--frame);
+    border-radius: var(--r-2);
+    color: var(--cream);
     padding: 12px 22px;
     font: inherit;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.25);
+    box-shadow: 0 3px 0 var(--ink);
     transition: transform 0.06s, box-shadow 0.06s;
   }
-  .modal-card button:active {
-    transform: translate(2px, 2px);
-    box-shadow: 0 0 0 rgba(15, 23, 42, 0);
+  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.boss-reward-card):active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--ink);
   }
-  .modal-card button:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
-  .modal-card button.primary {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: white;
+  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.boss-reward-card):hover { background: var(--l3); }
+  .modal-card button.primary:not(.rpg-btn) {
+    background: var(--gold);
+    border-color: var(--ink);
+    color: var(--ink);
   }
-  .modal-card button.primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: white; }
+  .modal-card button.primary:not(.rpg-btn):hover { background: var(--gold-hi); }
+  .modal-card .actions .rpg-btn { padding: 12px 22px; }
+  /* Practice / Title exits under the main actions */
+  .modal-nav {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    margin-top: 2px; flex-shrink: 0;
+  }
+  .modal-nav .rpg-btn, .modal-title-link { min-height: 40px; padding: 8px 16px 8px 20px; font-size: 13px; }
 
   /* ── Intro modal redesign ── */
   #introModal .modal-card {
@@ -1321,8 +1322,8 @@
     display: flex; align-items: center; gap: 6px;
     padding: 8px 12px;
     background: var(--l2);
-    border: 2px solid var(--bd);
-    border-radius: 3px;
+    border: 2px solid var(--bdhi);
+    border-radius: var(--r-2);
     font-size: 13px; color: var(--tmd);
     cursor: pointer;
     white-space: nowrap;
@@ -1337,10 +1338,12 @@
 
   .new-high {
     display: inline-block;
-    background: linear-gradient(135deg, var(--yellow), var(--orange));
-    color: white;
+    background: var(--gold);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    box-shadow: 0 0 0 2px var(--gold);
     padding: 6px 14px;
-    border-radius: 16px;
+    border-radius: var(--r-2);
     font-weight: 800;
     font-size: 12px;
     letter-spacing: 0.1em;
@@ -1381,7 +1384,7 @@
     background-size: 180%;
     background-position: 50% 8%;
     background-repeat: no-repeat;
-    background-color: #0f172a;
+    background-color: var(--ink);
     border: 3px solid rgba(255, 255, 255, 0.22);
     box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.06);
     transition: filter 0.38s ease, opacity 0.38s ease, border-color 0.38s ease, box-shadow 0.38s ease;
@@ -1434,20 +1437,17 @@
     opacity: 0.85;
     border-color: rgba(255, 255, 255, 0.15);
   }
+  /* Dialogue box: surface + cream frame from .rpg-panel (ui.css) */
   .story-card {
     max-width: 720px;
     margin: 0 auto;
-    background: var(--l1);
-    border: 2px solid var(--blue);
-    border-radius: 14px;
     padding: 20px 28px 28px;
-    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.45);
     position: relative;
     z-index: 1;
   }
   .story-speaker {
     font-size: 11px; font-weight: 800;
-    color: var(--blue);
+    color: var(--gold);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     margin-bottom: 8px;
@@ -1462,7 +1462,7 @@
   .story-text .ko {
     font-family: var(--korean);
     font-weight: 800;
-    color: var(--blue);
+    color: var(--gold);
   }
   .story-meta {
     position: absolute;
@@ -1471,13 +1471,15 @@
     font-size: 11px; color: var(--tlo);
   }
   .story-meta .story-prompt {
-    color: var(--blue);
+    color: var(--gold);
     font-size: 14px;
     opacity: 0;
     transition: opacity 0.2s;
     animation: prompt-bounce 0.9s ease-in-out infinite;
   }
   .story-meta .story-prompt.ready { opacity: 1; }
+  .story-meta .story-skip { min-height: 32px; padding: 4px 10px 4px 16px; font-size: 11px; }
+  .story-meta .story-skip::after { content: ''; position: absolute; inset: -6px; } /* 44px hit area */
   @keyframes prompt-bounce {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(4px); }
@@ -1524,33 +1526,39 @@
   /* Pause overlay */
   .pause-overlay {
     position: fixed; inset: 0; z-index: 400;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(10, 12, 22, 0.72);
+    backdrop-filter: blur(3px);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 12px;
   }
   .pause-overlay .pause-title {
-    font-family: 'Black Han Sans', sans-serif;
+    font-family: var(--font-display);
     font-size: 56px;
-    color: var(--blue);
+    line-height: 1.1;
+    color: var(--cream);
     letter-spacing: 4px;
+    text-shadow:
+      3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 3px 0 var(--ink), 0 -3px 0 var(--ink),
+      3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink),
+      0 7px 0 var(--ink);
   }
   .pause-overlay .pause-hint {
     font-size: 13px;
     color: var(--tlo, #94a3b8);
     letter-spacing: 0.04em;
   }
-  .pause-overlay .pause-back-btn {
-    margin-top: 4px;
-    text-decoration: none;
+  .pause-nav { display: flex; gap: 8px; margin-top: 4px; }
+  .pause-overlay .pause-back-btn { text-decoration: none; }
+  .pause-overlay .pause-resume-btn {
+    min-height: 52px;
+    min-width: 200px;
+    padding: 12px 28px;
+    font-size: 18px;
   }
+  .pause-controls-list.pause-keys-touch { display: none; }
   .pause-controls {
-    margin-top: 8px;
-    border: 2px solid var(--thi);
-    border-radius: 3px;
-    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.35);
-    background: var(--l1);
+    margin-top: 12px;
     padding: 14px 20px;
     min-width: 280px;
   }
@@ -1575,11 +1583,11 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     font-weight: 700;
-    color: var(--thi);
-    background: var(--l3);
-    border: 2px solid var(--thi);
-    border-radius: 3px;
-    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.25);
+    color: var(--cream);
+    background: var(--ink);
+    border: 2px solid var(--frame);
+    border-radius: var(--r-2);
+    box-shadow: 0 2px 0 var(--ink);
     padding: 2px 7px;
     white-space: nowrap;
     justify-self: start;
@@ -1595,18 +1603,20 @@
      stays untouched.  Below 720px the stage shrinks to leave room for the
      keyboard, and the keyboard pins to the bottom of the viewport. */
   .battle-kb { display: none; }
-  /* Landscape phones are wider than 720px but have no physical keyboard;
-     the coarse-pointer + short-viewport clause gives them the touch layout.
+  /* Landscape phones and tablets are wider than 720px but have no physical
+     keyboard; the coarse-pointer clauses give them the touch layout.
      Keep in sync with TOUCH_LAYOUT_MQ in the script. */
-  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px) {
+  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px), (hover: none) and (pointer: coarse) {
     /* Mobile keeps HUD at the top — the on-screen keyboard already pins to the bottom. */
     .hud {
       top: 0; bottom: auto;
       padding: 8px 10px;
       padding-top: calc(8px + env(safe-area-inset-top, 0px));
+      padding-left: max(10px, env(safe-area-inset-left, 0px));
+      padding-right: max(10px, env(safe-area-inset-right, 0px));
       border-top: none;
-      border-bottom: 1px solid var(--bd);
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+      border-bottom: 3px solid var(--frame);
+      box-shadow: 0 3px 0 var(--ink);
       flex-wrap: nowrap;
     }
     .hud-right {
@@ -1618,6 +1628,18 @@
     .hud-right #btnBgm { display: none; }
     .hud-right .audio-toggle { padding: 6px; }
     .menu-btn#btnMenu { padding: 6px 8px; font-size: 11px; white-space: nowrap; }
+    /* Tap targets: at least 44x44 on touch. */
+    #btnMenu, #btnAudio, #btnBgm {
+      min-width: 44px; min-height: 44px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .pause-controls { max-width: calc(100vw - 32px); box-sizing: border-box; }
+    .pause-overlay .menu-btn { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
+    /* Close button sits in its own strip above the card image. */
+    #shareModal .share-card-wrap { padding-top: 56px; }
+    #shareModal .share-close { top: 6px; right: 6px; width: 44px; height: 44px; }
+    .pause-controls-list.pause-keys-desktop { display: none; }
+    .pause-controls-list.pause-keys-touch { display: grid; }
     .hud-left, .hud-right { gap: 10px; }
     /* .hud-center is hidden in the HUD on mobile; re-shown as a fixed strip above keyboard (below) */
     .hud-center { display: none; }
@@ -1627,8 +1649,10 @@
     .stat-value.combo { min-width: 36px; font-size: 13px; }
     .lives { font-size: 18px; letter-spacing: 2px; }
     .menu-btn { padding: 6px 9px; font-size: 11px; }
-    .xpbar { top: 50px; bottom: auto; }
-    .stage { inset: 54px 0 calc(224px + env(safe-area-inset-bottom)) 0; }
+    /* --hud-h is the HUD's measured height (JS, incl. the notch inset), so
+       the stage and XP bar always start below it. */
+    .xpbar { top: var(--hud-h, calc(50px + env(safe-area-inset-top, 0px))); bottom: auto; }
+    .stage { inset: var(--hud-h, calc(54px + env(safe-area-inset-top, 0px))) 0 calc(224px + env(safe-area-inset-bottom)) 0; }
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
     .player { font-size: 70px; bottom: 4%; }
@@ -1642,17 +1666,20 @@
     .monster.tier-3 .sprite { font-size: 810px; }
     .monster.tier-4 .sprite { font-size: 909px; }
     .monster.tier-5 .sprite { font-size: 1035px; }
+    .monster.tier-6 .sprite { font-size: 940px; }
+    .monster.tier-7 .sprite { font-size: 1050px; }
+    .monster.tier-8 .sprite { font-size: 1160px; }
     .monster.boss .sprite { font-size: 360px; }
     .monster .word {
       padding: 6px 10px;
       max-width: calc(100vw - 32px);
     }
-    .monster.boss .word { font-size: 18px; }
+    .monster.boss .word { font-size: 22px; }
     .modal-card { padding: 24px 18px; }
     .modal-card h1 { font-size: 28px; }
     .modal-card .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .modal-card .stat-grid .v { font-size: 18px; }
-    .modal-card .actions button { padding: 10px 14px; font-size: 13px; }
+    .modal-card .actions button { padding: 10px 14px; font-size: 13px; min-height: 44px; }
     .battle-lb-row { grid-template-columns: 40px 22px 1fr 44px 70px; padding: 6px 10px; font-size: 12px; }
     .battle-lb-list { max-height: 260px; }
 
@@ -1679,10 +1706,15 @@
       position: fixed;
       left: 0; right: 0; bottom: 0;
       z-index: 110;
-      padding: 8px 6px calc(6px + env(safe-area-inset-bottom));
-      background: var(--l1);
-      border-top: 1px solid var(--bd);
-      box-shadow: 0 -2px 14px rgba(15, 23, 42, 0.08);
+      /* Side padding clears the notch in landscape; key widths below
+         subtract the same --kb-px so the rows still fit. */
+      --kb-px: max(6px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+      padding: 8px var(--kb-px) calc(6px + env(safe-area-inset-bottom));
+      /* Dark tray with paper keycaps; frame drawn by shadows so the
+         keyboard height (and the stage inset above it) stays the same */
+      background: var(--panel-solid);
+      border-top: 1px solid var(--frame);
+      box-shadow: 0 -2px 0 var(--frame), 0 -5px 0 var(--ink);
     }
     .battle-kb .kb-row {
       display: flex;
@@ -1690,20 +1722,21 @@
       justify-content: center;
       margin-bottom: 4px;
     }
-    /* Uniform letter-key width across every row: 1/10 of (viewport − 12px
-       horizontal padding − 9 inter-key gaps of 4px each). Row 1 fills with 10
+    /* Uniform letter-key width across every row: 1/10 of (viewport minus
+       the side padding minus 9 inter-key gaps of 4px each). Row 1 fills with 10
        keys; rows 2 and 3 center with their 9 / 7 keys at the same key size,
        producing the iOS-style stair-step without flex-stretching. */
     .battle-kb .kb-row.r2,
     .battle-kb .kb-row.r3 { padding-left: 0; }
     .battle-kb .key {
-      flex: 0 0 calc((100vw - 12px - 36px) / 10);
-      width: calc((100vw - 12px - 36px) / 10);
+      flex: 0 0 calc((100vw - 2 * var(--kb-px) - 36px) / 10);
+      width: calc((100vw - 2 * var(--kb-px) - 36px) / 10);
       min-width: 0;
       height: 44px;
-      background: var(--l2);
-      border: 1px solid var(--bdhi);
-      border-radius: 7px;
+      background: var(--paper);
+      border: 1px solid var(--ink);
+      border-radius: var(--r-2);
+      box-shadow: 0 2px 0 var(--ink);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1754,8 +1787,8 @@
        as the letter keys, except space which spans 4 key-widths so it stays
        comfortably tappable. */
     .battle-kb .key.kb-special {
-      flex: 0 0 calc((100vw - 12px - 36px) / 10);
-      width: calc((100vw - 12px - 36px) / 10);
+      flex: 0 0 calc((100vw - 2 * var(--kb-px) - 36px) / 10);
+      width: calc((100vw - 2 * var(--kb-px) - 36px) / 10);
       padding: 0;
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 12px;
@@ -1763,8 +1796,8 @@
       color: var(--tmd);
     }
     .battle-kb .key.kb-space {
-      flex: 0 0 calc(((100vw - 12px - 36px) / 10) * 4 + 12px);
-      width: calc(((100vw - 12px - 36px) / 10) * 4 + 12px);
+      flex: 0 0 calc(((100vw - 2 * var(--kb-px) - 36px) / 10) * 4 + 12px);
+      width: calc(((100vw - 2 * var(--kb-px) - 36px) / 10) * 4 + 12px);
     }
     .battle-kb .key.kb-shift,
     .battle-kb .key.kb-back { flex: 0 0 56px; min-width: 56px; }
@@ -1792,15 +1825,43 @@
      shorter than the player sprite. Compact the keys so the stage keeps
      roughly half the viewport. */
   @media (pointer: coarse) and (max-height: 500px) {
-    .stage { inset: 54px 0 calc(150px + env(safe-area-inset-bottom)) 0; }
-    .battle-kb { padding: 4px 6px calc(4px + env(safe-area-inset-bottom)); }
+    .stage { inset: var(--hud-h, calc(54px + env(safe-area-inset-top, 0px))) 0 calc(150px + env(safe-area-inset-bottom)) 0; }
+    .battle-kb { padding: 4px var(--kb-px) calc(4px + env(safe-area-inset-bottom)); }
     .battle-kb .kb-row { margin-bottom: 3px; }
     .battle-kb .key { height: 32px; }
     .battle-kb .key .qwerty { display: none; }
     .hud-center { bottom: calc(146px + env(safe-area-inset-bottom, 0px)); }
   }
+  /* Landscape phones: every px of height goes to the stage. One-row HUD
+     (~38px) with the stat labels dropped; the buttons draw at 34px but
+     keep a 44px hit area through ::after. */
+  @media (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
+    .hud {
+      padding-top: calc(2px + env(safe-area-inset-top, 0px));
+      padding-bottom: 2px;
+    }
+    .hud .stat-label { display: none; }
+    .hud .stat-value { margin-top: 0; font-size: 15px; }
+    .hud .stat-value.score { font-size: 16px; }
+    .hud .lives { font-size: 15px; letter-spacing: 1px; }
+    .hud-left { gap: 14px; }
+    .hud .special-meter { padding: 2px 8px; }
+    .hud .special-meter .sm-label { white-space: nowrap; }
+    #btnMenu, #btnAudio, #btnBgm {
+      position: relative;
+      min-width: 34px; min-height: 34px;
+      padding: 4px 8px;
+    }
+    #btnMenu::after, #btnAudio::after, #btnBgm::after {
+      content: '';
+      position: absolute;
+      inset: -5px;
+    }
+    .pause-overlay { justify-content: flex-start; overflow-y: auto; padding: 12px 0; gap: 8px; }
+    .pause-overlay .pause-title { font-size: 34px; }
+  }
   @media (max-width: 400px) {
-    .stage { inset: 54px 0 calc(46px + 200px + env(safe-area-inset-bottom)) 0; }
+    .stage { inset: var(--hud-h, calc(54px + env(safe-area-inset-top, 0px))) 0 calc(46px + 200px + env(safe-area-inset-bottom)) 0; }
     .battle-kb .key { height: 40px; }
     .battle-kb .kb-row { gap: 3px; margin-bottom: 3px; }
     .battle-kb .key.kb-shift,
@@ -1814,7 +1875,7 @@
     opacity: 0;
   }
   /* ── Battle leaderboard ── */
-  .battle-lb { margin: 16px 0 4px; border: 1px solid var(--bd); border-radius: 10px; overflow: hidden; }
+  .battle-lb { margin: 16px 0 4px; border: 2px solid var(--bd); border-radius: var(--r-2); overflow: hidden; background: rgba(0, 0, 0, 0.22); }
   .battle-lb-toolbar {
     display: flex;
     justify-content: space-between;
@@ -1842,8 +1903,9 @@
   .battle-lb-list { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; }
   .battle-lb-row { display: grid; grid-template-columns: 44px 24px 1fr 52px 92px; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; }
   .battle-lb-row:last-child { border-bottom: none; }
-  .battle-lb-row.you { background: rgba(37,99,235,0.06); font-weight: 600; cursor: pointer; }
-  .battle-lb-row.you.below { border-top: 2px solid var(--bdhi); background: rgba(37,99,235,0.10); }
+  .battle-lb-row:nth-child(-n+3) .r { color: var(--gold); font-weight: 700; }
+  .battle-lb-row.you { background: rgba(246, 196, 83, 0.12); box-shadow: inset 3px 0 0 var(--gold); font-weight: 600; cursor: pointer; }
+  .battle-lb-row.you.below { border-top: 2px solid var(--bdhi); background: rgba(246, 196, 83, 0.16); }
   /* Fandom badge — appears next to the current player's display name on the
      leaderboard. Tiny, colored, doesn't overflow narrow rows. */
   /* Players / Fandoms tab toggle. Sits in the toolbar where the title +
@@ -1851,9 +1913,10 @@
      inactive tab stays as a quiet outline button. */
   .lb-tabs { display: flex; gap: 6px; }
   .lb-tab {
+    min-height: 36px;
     padding: 6px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--bd);
+    border-radius: var(--r-2);
+    border: 2px solid var(--bdhi);
     background: transparent;
     color: var(--tmd);
     font-size: 12px;
@@ -1864,9 +1927,9 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
   .lb-tab.active {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: white;
+    background: var(--ink);
+    border-color: var(--gold);
+    color: var(--gold);
   }
   .lb-tab:not(.active):hover { background: var(--l3); color: var(--thi); }
   /* Fandom row layout: rank, emoji, fandom name, members, total points. */
@@ -1880,13 +1943,13 @@
     font-size: 13px;
   }
   .lb-fandom-row:last-child { border-bottom: none; }
-  .lb-fandom-row.you { background: rgba(139,92,246,0.10); font-weight: 600; }
+  .lb-fandom-row.you { background: rgba(246, 196, 83, 0.12); box-shadow: inset 3px 0 0 var(--gold); font-weight: 600; }
   .lb-fandom-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
   .lb-fandom-row .fe { font-size: 18px; line-height: 1; text-align: center; }
   .lb-fandom-row .fn { color: var(--thi); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lb-fandom-row .fn small { display: block; color: var(--tlo); font-weight: 500; font-size: 10px; }
   .lb-fandom-row .members { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tmd); text-align: right; }
-  .lb-fandom-row .total   { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); text-align: right; }
+  .lb-fandom-row .total   { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--gold); text-align: right; }
   .battle-lb-row .lb-fandom {
     display: inline-flex;
     align-items: center;
@@ -1910,8 +1973,6 @@
   #shareModal.open { display: flex; }
   .share-card-wrap {
     position: relative;
-    background: var(--l1);
-    border-radius: 18px;
     padding: 16px;
     max-width: min(380px, calc(100vw - 32px));
     width: 100%;
@@ -1925,32 +1986,16 @@
   .share-card-wrap canvas {
     width: 100%;
     height: auto;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
-    background: #0f172a;
+    border-radius: var(--r-2);
+    border: 2px solid var(--ink);
+    background: var(--ink);
   }
   .share-actions {
     display: flex;
     gap: 8px;
     width: 100%;
   }
-  .share-actions button {
-    flex: 1 1 0;
-    padding: 12px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--bd);
-    background: var(--l2);
-    color: var(--thi);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .share-actions button.primary {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: white;
-  }
-  .share-actions button:active { transform: scale(0.97); }
+  .share-actions button { flex: 1 1 0; }
   .share-hint {
     font-size: 11px;
     color: var(--tlo);
@@ -1963,7 +2008,7 @@
     top: 6px; right: 8px;
     width: 32px; height: 32px;
     border: none;
-    border-radius: 50%;
+    border-radius: var(--r-2);
     background: transparent;
     color: var(--tmd);
     font-size: 24px;
@@ -1975,8 +2020,8 @@
   .battle-lb-empty { padding: 18px 14px; text-align: center; font-size: 12px; color: var(--tlo); }
   .battle-lb-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
   .battle-lb-row .n { color: var(--thi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .battle-lb-row .lv { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--blue); text-align: right; white-space: nowrap; }
-  .battle-lb-row .pts { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); text-align: right; white-space: nowrap; }
+  .battle-lb-row .lv { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--tmd); text-align: right; white-space: nowrap; }
+  .battle-lb-row .pts { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--gold); text-align: right; white-space: nowrap; }
   .battle-lb-row.ellipsis { justify-content: center; color: var(--tlo); font-size: 16px; letter-spacing: 4px; grid-template-columns: 1fr; text-align: center; }
   .battle-lb-loading { padding: 14px; text-align: center; font-size: 12px; color: var(--tlo); }
   .battle-lb-stale {
@@ -1996,8 +2041,8 @@
     margin-top: 14px;
     padding: 8px 14px;
     background: var(--l2);
-    border: 1px solid var(--bd);
-    border-radius: 8px;
+    border: 2px solid var(--bd);
+    border-radius: var(--r-2);
     color: var(--tmd);
     font-size: 12px;
     font-weight: 600;
@@ -2013,8 +2058,7 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba(15, 23, 42, 0.52);
-    backdrop-filter: blur(6px);
+    background: rgba(10, 12, 22, 0.66);
   }
   .profile-modal-card {
     width: 100%;
@@ -2023,16 +2067,15 @@
     max-height: calc(100dvh - 40px);
     overflow-y: auto;
     overscroll-behavior: contain;
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 16px;
     padding: 24px 24px 22px;
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
   }
   .profile-modal-card h3 {
-    margin: 0 0 4px;
-    font-size: 18px;
-    color: var(--thi);
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 24px;
+    letter-spacing: 0.02em;
+    color: var(--cream);
   }
   .profile-modal-card p {
     margin: 0 0 18px;
@@ -2053,9 +2096,10 @@
   .profile-field input,
   .profile-field select {
     width: 100%;
+    min-height: 44px;
     padding: 10px 12px;
-    border: 1px solid var(--bd);
-    border-radius: 8px;
+    border: 2px solid var(--bdhi);
+    border-radius: var(--r-2);
     background: var(--l2);
     color: var(--thi);
     font: inherit;
@@ -2063,8 +2107,8 @@
   .profile-field input:focus,
   .profile-field select:focus {
     outline: none;
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(246, 196, 83, 0.3);
   }
   .profile-modal-actions {
     display: flex;
@@ -2072,21 +2116,7 @@
     gap: 10px;
     margin-top: 18px;
   }
-  .profile-modal-card .primary {
-    background: var(--blue);
-    color: white;
-    border: 1px solid var(--blue);
-    border-radius: 8px;
-    padding: 7px 12px;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .profile-modal-card .primary:hover {
-    background: #1d4ed8;
-    border-color: #1d4ed8;
-  }
+  .profile-modal-actions .rpg-btn { min-height: 44px; }
 
   /* ── 필살기 (Special Move) HUD + effects ── */
   .special-meter {
@@ -2095,7 +2125,7 @@
     padding: 6px 10px;
     background: var(--l2);
     border: 2px solid var(--bd);
-    border-radius: 3px;
+    border-radius: var(--r-2);
   }
   .special-meter .sm-label {
     font-size: 11px;
@@ -2128,7 +2158,7 @@
   }
   .special-pip.charged::after { display: none; }
   .special-pip.charged {
-    background: #f59e0b;
+    background: var(--yellow);
     border-color: var(--thi);
     box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
     animation: pip-pulse 1.6s steps(2) infinite;
@@ -2145,7 +2175,7 @@
   /* Lives HUD pulse when at 1 life */
   .lives-danger {
     animation: lives-danger-pulse 0.6s ease-in-out 4;
-    color: #ef4444 !important;
+    color: var(--red) !important;
   }
   @keyframes lives-danger-pulse {
     0%, 100% { transform: scale(1); }
@@ -2163,7 +2193,7 @@
   }
   .special-kill-bar {
     height: 100%;
-    background: #f59e0b;
+    background: var(--yellow);
     border-radius: 2px;
     transition: width 0.15s ease;
     width: 0%;
@@ -2187,7 +2217,7 @@
     top: 38%; left: 50%;
     z-index: 320;
     pointer-events: none;
-    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-display);
     font-size: 140px;
     font-weight: 900;
     color: #dc2626;
@@ -2367,7 +2397,7 @@
     from { transform: translateX(-50%) scale(1); }
     to   { transform: translateX(-50%) scale(1.06); }
   }
-  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px) { .fast-fall-badge { display: none !important; } }
+  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px), (hover: none) and (pointer: coarse) { .fast-fall-badge { display: none !important; } }
 
   /* Power-up drops */
   .powerup {
@@ -2404,8 +2434,8 @@
   .powerup-chip {
     display: inline-flex; align-items: center; gap: 4px;
     background: var(--l2);
-    border: 1px solid var(--bd);
-    border-radius: 14px;
+    border: 2px solid var(--bd);
+    border-radius: var(--r-2);
     padding: 3px 9px;
     font-size: 11px;
     font-weight: 700;
@@ -2434,7 +2464,7 @@
   }
 
   /* Boss intro cutscene: letterbox bars slide in, the boss portrait (the
-     384px art from sprites/portraits when the boss has one) rises in a
+     768px art from sprites/portraits when the boss has one) rises in a
      framed medallion, then the name card. 1.5s total; playBossCutscene
      removes it at 1.55s. */
   .boss-cutscene {
@@ -2500,7 +2530,7 @@
     100% { transform: translateY(0) scale(0.96);   opacity: 0; }
   }
   .boss-cutscene .boss-name {
-    font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(36px, min(9vh, 11vw), 88px);
     color: #fee2e2;
     letter-spacing: 4px;
@@ -2548,7 +2578,7 @@
   .phase-callout {
     position: absolute;
     transform: translate(-50%, 0);
-    font-family: 'Black Han Sans', 'Inter', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(24px, 5vw, 36px);
     letter-spacing: 2px;
     color: #fff7ed;
@@ -2653,21 +2683,10 @@
   }
 
   /* Audio toggle button — pixel-art era styling matches .menu-btn. */
-  .audio-toggle {
-    background: var(--l1);
-    border: 2px solid var(--thi);
-    border-radius: 3px;
-    padding: 7px 11px;
-    font-size: 16px;
-    cursor: pointer;
-    line-height: 1;
-    color: var(--thi);
-    box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.25);
-    transition: transform 0.06s, box-shadow 0.06s;
-  }
-  .audio-toggle:active { transform: translate(2px, 2px); box-shadow: 0 0 0 rgba(15,23,42,0); }
-  .audio-toggle:hover { background: var(--l3); border-color: var(--bdhi); }
-  .audio-toggle.muted { color: var(--tlo); opacity: 0.7; }
+  /* Paired with .rpg-btn (ui.css), which draws the frame */
+  .audio-toggle { padding: 7px 12px; font-size: 16px; line-height: 1; }
+  .audio-toggle:hover::before, .audio-toggle:focus-visible::before { content: none; }
+  .audio-toggle.muted { color: var(--tlo); opacity: 0.6; }
 
   /* Recall-mode monster — first syllable visible, rest blank.
      Player reads the English meaning and recalls the Korean spelling.
@@ -2850,6 +2869,9 @@
   .monster.tier-3 .sprite-img { animation-duration: var(--tier3-anim, 1.25s); }
   .monster.tier-4 .sprite-img { animation-duration: var(--tier4-anim, 1.45s); }
   .monster.tier-5 .sprite-img { animation-duration: var(--tier5-anim, 1.10s); }
+  .monster.tier-6 .sprite-img { animation-duration: var(--tier6-anim, 1.40s); }
+  .monster.tier-7 .sprite-img { animation-duration: var(--tier7-anim, 1.60s); }
+  .monster.tier-8 .sprite-img { animation-duration: var(--tier8-anim, 2.40s); }
   .monster.boss .sprite-img {
     animation: sprite-walk-boss 1.6s ease-in-out infinite;
     transform-origin: 50% 95%;
@@ -2871,7 +2893,7 @@
      double-animate (the new breathe-img on the img is richer + per-tier). */
   .monster .sprite { animation: none; }
   /* Keep in sync with TOUCH_LAYOUT_MQ in the script. */
-  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px) {
+  @media (max-width: 720px), (pointer: coarse) and (max-height: 500px), (hover: none) and (pointer: coarse) {
     .stage { perspective: 620px; perspective-origin: 50% 46%; }
     .battle-floor {
       top: 42%;
@@ -2882,12 +2904,161 @@
     .battle-foreground::after { opacity: 0.22; }
   }
 </style>
+<style id="monster-voice-style">
+  /* Enemy speech bubble (monsterSay): dark pixel panel, cream frame. Uses
+     ui.css tokens when present, with literal fallbacks. */
+  .monster-say {
+    position: absolute; left: 0; top: 0;
+    z-index: 2;
+    pointer-events: none;
+    padding: 6px 10px 5px;
+    background: var(--ink, #1c1724);
+    color: var(--cream, #f4e9cf);
+    border: 2px solid var(--cream, #f4e9cf);
+    border-radius: 0;
+    box-shadow: 0 0 0 2px var(--ink, #1c1724), 3px 3px 0 2px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+    word-break: keep-all;
+    text-align: left;
+    will-change: transform;
+  }
+  .monster-say .say-ko {
+    font-family: var(--korean, 'Noto Sans KR', sans-serif);
+    font-size: 15px; font-weight: 700; line-height: 1.25;
+  }
+  .monster-say .say-en {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10px; line-height: 1.2; margin-top: 2px;
+    color: var(--gold, #f6c453);
+  }
+  /* Pixel tail pointing back at the demon (left edge by default). */
+  .monster-say::before {
+    content: '';
+    position: absolute; top: 50%; left: -8px;
+    width: 6px; height: 6px; margin-top: -3px;
+    background: var(--cream, #f4e9cf);
+    box-shadow: -2px 0 0 var(--ink, #1c1724);
+  }
+  .monster-say.tail-right::before { left: auto; right: -8px; box-shadow: 2px 0 0 var(--ink, #1c1724); }
+  .monster-say.in { animation: say-pop 0.18s steps(3, end); }
+  .monster-say.out { opacity: 0; transition: opacity 0.2s steps(2, end); }
+  @keyframes say-pop { from { opacity: 0; scale: 0.7; } to { opacity: 1; scale: 1; } }
+  @media (max-width: 720px) {
+    .monster-say { padding: 4px 8px 4px; }
+    .monster-say .say-ko { font-size: 13px; }
+    .monster-say .say-en { font-size: 9px; }
+  }
+  /* 무당 여왕 blink: sprite vanishes, the word label dims but stays typeable. */
+  .monster .sprite, .monster .word { transition: opacity 0.2s ease; }
+  .monster.blinking .sprite { opacity: 0; }
+  .monster.blinking .word { opacity: 0.4; }
+
+  /* First-kill toast for the bestiary. */
+  .bestiary-toast {
+    position: fixed; left: 50%; top: 74px; z-index: 620;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    background: var(--ink, #1c1724);
+    color: var(--gold, #f6c453);
+    border: 2px solid var(--cream, #f4e9cf);
+    font: 700 13px/1.2 var(--korean, 'Noto Sans KR', sans-serif);
+    pointer-events: none;
+    animation: bestiary-toast 2.4s steps(12, end) forwards;
+  }
+  @keyframes bestiary-toast {
+    0% { opacity: 0; translate: 0 -6px; } 10%, 85% { opacity: 1; translate: 0 0; } 100% { opacity: 0; }
+  }
+
+  /* 요괴 도감 modal */
+  .bestiary-open-btn { white-space: nowrap; }
+  .bestiary-veil {
+    position: fixed; inset: 0; z-index: 640;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    background: rgba(10, 8, 16, 0.62);
+  }
+  .bestiary-veil[hidden] { display: none; }
+  /* Shares .modal-card + .rpg-panel with the other modals; undo the card's
+     narrow centered layout for the wide grid. */
+  .bestiary-panel {
+    padding: 0; text-align: left; max-width: none; overflow: hidden;
+    width: min(960px, 100%);
+    max-height: min(88vh, 900px);
+    display: flex; flex-direction: column;
+    background: var(--panel, #241d2e);
+    color: var(--cream, #f4e9cf);
+    border: 3px solid var(--frame, var(--cream, #f4e9cf));
+    box-shadow: 0 0 0 3px var(--ink, #1c1724), 6px 6px 0 3px rgba(0, 0, 0, 0.45);
+  }
+  .bestiary-head {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 14px 18px 10px;
+    border-bottom: 2px solid rgba(244, 233, 207, 0.18);
+  }
+  .bestiary-head h2 {
+    margin: 0;
+    font-family: var(--font-display, 'Black Han Sans', 'Noto Sans KR', sans-serif);
+    font-size: 26px; font-weight: 400; color: var(--gold, #f6c453);
+    letter-spacing: 0.02em;
+  }
+  .bestiary-head .bestiary-count { font: 600 13px/1 'Inter', sans-serif; opacity: 0.75; }
+  .bestiary-close { margin-left: auto; }
+  .bestiary-body { overflow-y: auto; padding: 12px 18px 18px; }
+  .bestiary-section {
+    margin: 10px 0 8px;
+    font: 700 12px/1 'Inter', sans-serif; color: var(--gold, #f6c453);
+  }
+  .bestiary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .bestiary-card {
+    display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: start;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 2px solid rgba(244, 233, 207, 0.22);
+  }
+  .bestiary-card.boss { border-color: var(--gold, #f6c453); }
+  .bestiary-card .bc-art {
+    width: 76px; height: 76px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(244, 233, 207, 0.06);
+  }
+  .bestiary-card .bc-art img {
+    width: 100%; height: 100%; object-fit: contain;
+    image-rendering: pixelated;
+  }
+  .bestiary-card.locked .bc-art img { filter: brightness(0); opacity: 0.85; }
+  .bestiary-card .bc-name {
+    font: 700 17px/1.2 var(--korean, 'Noto Sans KR', sans-serif);
+    word-break: keep-all;
+  }
+  .bestiary-card .bc-roman { font: 500 11px/1.3 'Inter', sans-serif; opacity: 0.7; }
+  .bestiary-card .bc-en { font: 600 12px/1.3 'Inter', sans-serif; color: var(--gold, #f6c453); margin-top: 2px; }
+  .bestiary-card .bc-note {
+    font: 400 12px/1.4 'Inter', sans-serif; opacity: 0.88; margin-top: 4px;
+    text-wrap: pretty; word-break: keep-all;
+  }
+  .bestiary-card .bc-kills { font: 700 11px/1 'JetBrains Mono', monospace; margin-top: 6px; opacity: 0.8; }
+  .bestiary-card.locked .bc-name, .bestiary-card.locked .bc-en { opacity: 0.5; }
+  @media (max-width: 520px) {
+    .bestiary-veil { padding: 8px; }
+    .bestiary-panel { max-height: 94vh; }
+    .bestiary-grid { grid-template-columns: 1fr; }
+    .bestiary-head h2 { font-size: 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .monster-say.in { animation: none; }
+    .bestiary-toast { animation: none; }
+  }
+</style>
 </head>
 <body>
 
 <div class="backdrop"><div class="bg-layer"></div><div class="bg-layer"></div></div>
 
-<header class="hud">
+<header class="hud rpg-dark">
   <div class="hud-left">
     <div class="stat">
       <span class="stat-label">Level</span>
@@ -2921,9 +3092,9 @@
       <span class="stat-label">Combo</span>
       <span class="stat-value combo zero" id="hudCombo">×1</span>
     </div>
-    <button class="audio-toggle" id="btnAudio" title="Toggle Korean pronunciation audio">🔊</button>
-    <button class="audio-toggle" id="btnBgm" title="Toggle background music">🎵</button>
-    <button class="menu-btn" id="btnMenu">⏸ Pause</button>
+    <button class="audio-toggle rpg-btn" id="btnAudio" title="Toggle Korean pronunciation audio">🔊</button>
+    <button class="audio-toggle rpg-btn" id="btnBgm" title="Toggle background music">🎵</button>
+    <button class="menu-btn rpg-btn" id="btnMenu">⏸ Pause</button>
   </div>
 </header>
 
@@ -2941,7 +3112,7 @@
 <input class="shield" id="shield" tabindex="-1" aria-hidden="true" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
 <div id="introModal" class="modal-veil" role="dialog" aria-modal="true" aria-labelledby="introModalTitle">
-  <div class="modal-card">
+  <div class="modal-card rpg-panel">
     <div class="intro-hero-row">
       <img src="sprites/player/01-baegui-front.png" class="intro-player-sprite" alt="Player character" aria-hidden="true">
       <div class="intro-hero-text">
@@ -2951,9 +3122,9 @@
     </div>
     <p class="subtitle">Type the Korean word above each demon to defeat it. Build combo and unleash 필살기 to clear the screen.</p>
     <div class="intro-cta-band">
-      <button class="primary intro-start-btn" id="btnStart">Start Battle</button>
+      <button class="primary rpg-btn rpg-btn--primary intro-start-btn" id="btnStart">Start Battle</button>
       <div class="intro-cta-row2">
-        <button id="btnDailyRun" class="intro-daily-btn">🗓️ Daily Run <span id="introStreak" style="display:none;"></span></button>
+        <button id="btnDailyRun" class="rpg-btn intro-daily-btn">🗓️ Daily Run <span id="introStreak" style="display:none;"></span></button>
         <label class="intro-slow-pill">
           <input type="checkbox" id="slowModeToggle" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
           🌱 Slow
@@ -2970,7 +3141,7 @@
           <button class="lb-tab active" data-tab="players">Players</button>
           <button class="lb-tab" data-tab="fandoms">Fandoms</button>
         </div>
-        <button class="menu-btn" id="btnEditProfileIntro">Edit profile</button>
+        <button class="menu-btn rpg-btn rpg-btn--ghost" id="btnEditProfileIntro">Edit profile</button>
         <button class="lb-expand-btn" id="introLbExpander" aria-expanded="false">Show all ▾</button>
       </div>
       <div id="battleLbIntroContainer" class="battle-lb lb-collapsed" data-tab="players">
@@ -2978,16 +3149,18 @@
       </div>
     </div>
     <div style="margin:8px 0 4px;text-align:center;font-size:12px;">
-      <a href="index.html" style="color:var(--blue);text-decoration:none;">New to Korean typing? Learn the keys first →</a>
+      <a href="index.html#practice" style="color:var(--gold);text-decoration:none;">New to Korean typing? Learn the keys first →</a>
     </div>
     <div class="actions" style="margin-top:8px;">
-      <button id="btnBack">← Back to practice</button>
+      <button id="btnBestiaryIntro" class="rpg-btn bestiary-open-btn" type="button">📖 요괴 도감</button>
+      <button id="btnBack" class="rpg-btn rpg-btn--ghost">← Back to practice</button>
+      <a class="rpg-btn rpg-btn--ghost modal-title-link" href="index.html">Title</a>
     </div>
   </div>
 </div>
 
 <div id="gameOverModal" class="modal-veil" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
-  <div class="modal-card">
+  <div class="modal-card rpg-panel">
     <div class="badge danger">Game Over</div>
     <h1 id="gameOverTitle">전사 · Fallen</h1>
     <p class="subtitle" id="gameOverFlavor">The demons broke through. Try again?</p>
@@ -3003,7 +3176,7 @@
         <button class="lb-tab active" data-tab="players">Players</button>
         <button class="lb-tab" data-tab="fandoms">Fandoms</button>
       </div>
-      <button class="menu-btn" id="btnEditProfile">Edit profile</button>
+      <button class="menu-btn rpg-btn rpg-btn--ghost" id="btnEditProfile">Edit profile</button>
     </div>
     <div id="battleLbContainer" class="battle-lb lb-collapsed" data-tab="players">
       <div class="battle-lb-loading">Loading battle rankings…</div>
@@ -3012,28 +3185,32 @@
     <div id="overCheckpointNote" style="display:none;">📍 Checkpoint run · LB off</div>
     <div id="overSlowModeNote" style="display:none;">🌱 Slow mode · points halved</div>
     <div class="actions">
-      <button class="primary" id="btnRetry" data-autofocus>Retry</button>
-      <button id="btnCheckpointRetry" style="display:none;">Restart from Chapter</button>
-      <button id="btnShareResult">📸 Share my result</button>
-      <button id="btnHome">Back to practice</button>
+      <button class="primary rpg-btn rpg-btn--primary" id="btnRetry" data-autofocus>Retry</button>
+      <button id="btnCheckpointRetry" class="rpg-btn" style="display:none;">Restart from Chapter</button>
+      <button id="btnShareResult" class="rpg-btn">📸 Share my result</button>
+      <button id="btnBestiaryOver" class="rpg-btn bestiary-open-btn" type="button">📖 요괴 도감</button>
+    </div>
+    <div class="modal-nav">
+      <button id="btnHome" class="rpg-btn rpg-btn--ghost">← Back to practice</button>
+      <a class="rpg-btn rpg-btn--ghost modal-title-link" href="index.html">Title</a>
     </div>
   </div>
 </div>
 
 <div id="shareModal" class="modal-veil" style="display:none;">
-  <div class="share-card-wrap">
+  <div class="share-card-wrap rpg-panel">
     <button class="share-close" id="shareClose" aria-label="Close">×</button>
     <canvas id="shareCanvas" width="1080" height="1920"></canvas>
     <div class="share-actions">
-      <button class="primary" id="shareDownload">⬇ Save image</button>
-      <button id="shareNative">📤 Share…</button>
+      <button class="primary rpg-btn rpg-btn--primary" id="shareDownload">⬇ Save image</button>
+      <button id="shareNative" class="rpg-btn">📤 Share…</button>
     </div>
     <div class="share-hint">Save the image and post it on Instagram / KakaoTalk / X. Tag <strong>@typehangeul</strong>!</div>
   </div>
 </div>
 
 <div id="profileModal" class="profile-modal">
-  <div class="profile-modal-card">
+  <div class="profile-modal-card rpg-panel">
     <h3>Your profile</h3>
     <p>Pick a display name and default country. This is saved in your browser and reused the next time you play.</p>
     <div class="profile-field">
@@ -3049,8 +3226,8 @@
       <select id="profileFandomSelect"></select>
     </div>
     <div class="profile-modal-actions">
-      <button class="menu-btn" id="profileCancel">Cancel</button>
-      <button class="primary" id="profileSave">Save</button>
+      <button class="menu-btn rpg-btn rpg-btn--ghost" id="profileCancel">Cancel</button>
+      <button class="primary rpg-btn rpg-btn--primary" id="profileSave">Save</button>
     </div>
     <div style="text-align:center;margin-top:12px;">
       <button type="button" id="profileReplayIntro" style="background:none;border:none;color:var(--tlo);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 8px;">Watch intro story again</button>
@@ -3058,13 +3235,24 @@
   </div>
 </div>
 
-<div id="pauseOverlay" class="pause-overlay" style="display:none;">
+<div id="pauseOverlay" class="pause-overlay rpg-dark" style="display:none;">
   <div class="pause-title">PAUSED</div>
-  <div class="pause-hint">press Esc to resume</div>
-  <a class="menu-btn pause-back-btn" href="index.html">← Back to practice</a>
-  <div class="pause-controls">
+  <div class="pause-hint" id="pauseHint">press Esc to resume</div>
+  <button type="button" class="menu-btn rpg-btn rpg-btn--primary pause-resume-btn" id="btnResume">▶ Resume</button>
+  <div class="pause-nav">
+    <a class="menu-btn rpg-btn rpg-btn--ghost pause-back-btn" href="index.html#practice">← Back to practice</a>
+    <a class="menu-btn rpg-btn rpg-btn--ghost pause-back-btn" href="index.html">Title</a>
+  </div>
+  <div class="pause-controls rpg-panel">
     <div class="pause-controls-title">조작법 / Controls</div>
-    <div class="pause-controls-list">
+    <div class="pause-controls-list pause-keys-touch">
+      <span class="pause-key">TAP</span><span class="pause-key-desc">tap the keys at the bottom to type the word on a monster</span>
+      <span class="pause-key">⇧</span><span class="pause-key-desc">shift for ㄲ ㄸ ㅃ ㅆ ㅉ ㅒ ㅖ</span>
+      <span class="pause-key">⌫</span><span class="pause-key-desc">let go of the current monster</span>
+      <span class="pause-key">⏸</span><span class="pause-key-desc">pause / resume</span>
+      <span class="pause-key">한글</span><span class="pause-key-desc">kills charge 필살기, type 한글 to unleash</span>
+    </div>
+    <div class="pause-controls-list pause-keys-desktop">
       <span class="pause-key">TYPE</span><span class="pause-key-desc">type the Korean word above a monster to attack</span>
       <span class="pause-key">TAB</span><span class="pause-key-desc">hold to fast-fall the monsters</span>
       <span class="pause-key">ESC</span><span class="pause-key-desc">release current lock, or pause / resume</span>
@@ -3078,12 +3266,12 @@
   <div class="story-portrait-player" id="storyPortraitPlayer"></div>
   <div class="story-portrait-teacher" id="storyPortraitTeacher" style="display:none;"></div>
   <div class="story-portrait-demon"  id="storyPortraitDemon"   style="display:none;"></div>
-  <div class="story-card">
+  <div class="story-card rpg-panel">
     <div class="story-speaker" id="storySpeaker">Narrator</div>
     <div class="story-text" id="storyText"></div>
     <div class="story-meta">
       <span class="story-prompt" id="storyPrompt">▼</span>
-      <button class="story-skip" id="storySkip" type="button">Skip · Esc</button>
+      <button class="story-skip rpg-btn rpg-btn--ghost" id="storySkip" type="button">Skip · Esc</button>
     </div>
   </div>
 </div>
@@ -3803,33 +3991,43 @@ function renderPlayerSprite(lv) {
 // Kept in a module-scope array so GC cannot drop an Image before it loads.
 // Backgrounds are NOT preloaded here: setBackdropImage loads the current
 // theme and prewarmNextTheme warms only the next one.
-const _preloadedSprites = (function preloadBattleFrames() {
-  const imgs = [];
-  const add = (src) => {
-    const im = new Image();
-    im.src = src;
-    if (im.decode) im.decode().catch(() => {});
-    imgs.push(im);
-  };
-  for (const sp of PLAYER_SPRITES) {
-    if (sp.spriteStrike) {
-      for (const n of [1, 2, 3, 4]) add(`sprites/${sp.spriteStrike}-${n}.png`);
-    }
-    if (sp.spriteBack) {
-      for (const suf of ['jump-1', 'jump-2', 'land-1', 'land-2']) add(`sprites/${sp.spriteBack}-${suf}.png`);
-    }
-  }
+// Warm the frames a run is about to swap to, so src swaps never flash an
+// empty box. Only the current level and the next one: the player tier, the
+// enemy tiers that can spawn (a tier's last level previews the next tier),
+// and any boss due within two levels. Loading every tier up front cost ~9 MB
+// before the first battle, mostly on phones.
+const _preloadedSprites = [];
+const _preloadedSrc = new Set();
+function preloadSprite(src) {
+  if (_preloadedSrc.has(src)) return;
+  _preloadedSrc.add(src);
+  const im = new Image();
+  im.src = src;
+  if (im.decode) im.decode().catch(() => {});
+  _preloadedSprites.push(im);
+}
+function preloadFramesForLevel(lv) {
   const cfg = window.BATTLE_CONFIG || {};
-  for (const file of Object.values(cfg.enemyTiers || {})) {
-    for (const suf of ['-walk-1', '-walk-2', '-walk-3', '-walk-4', '-hit-1', '-hit-2']) add(`sprites/${file}${suf}.png`);
+  for (const l of [lv, lv + 1]) {
+    const sp = playerForLevel(l);
+    if (sp && sp.spriteStrike) for (const n of [1, 2, 3, 4]) preloadSprite(`sprites/${sp.spriteStrike}-${n}.png`);
+    if (sp && sp.spriteBack) {
+      for (const suf of ['jump-1', 'jump-2', 'land-1', 'land-2']) preloadSprite(`sprites/${sp.spriteBack}-${suf}.png`);
+    }
+    for (const kind of [tierForLevel(l), ...lateKindsForLevel(l)]) {
+      const file = tierSpriteFile(kind);
+      if (file) for (const suf of ['-walk-1', '-walk-2', '-walk-3', '-walk-4', '-hit-1', '-hit-2']) preloadSprite(`sprites/${file}${suf}.png`);
+    }
   }
   for (const boss of (cfg.bosses || [])) {
     if (!boss.sprite) continue;
-    add(`sprites/${boss.sprite}.png`);
-    add(`sprites/${boss.sprite}-step.png`);
+    // Past the last act the bosses cycle, so any of them can show up
+    if (lv < 23 && !(boss.act >= lv && boss.act <= lv + 2)) continue;
+    preloadSprite(`sprites/${boss.sprite}.png`);
+    preloadSprite(`sprites/${boss.sprite}-step.png`);
   }
-  return imgs;
-})();
+}
+window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => preloadFramesForLevel(1)));
 
 // Play the 4-frame attack animation. Called from advanceLock() on every
 // successful keystroke that lands an attack. Each tier auto-advances through
@@ -3955,6 +4153,95 @@ function teleportFlash(m) {
   m._tpAnim = spriteEl.animate(kf, { duration: 320, easing: 'ease-out' });
 }
 
+// ─── Late-tier motions (6 hopper, 7 blink, 8 heavy) ───────────────────────
+// hopper: one leap per HOP_CYCLE_MS, airborne for HOP_AIR_MS, then a landing
+// squash. The leap arc and squash are visual only (on .sprite); m.y moves in
+// the main loop.
+const TRACKER_DRIFT_PX = 80;  // tier-5 처녀귀신: max drift from spawn lane
+// True when moving m to x = nx would push its word label further into a
+// nearby monster's label. Moves that open the gap are always allowed, so
+// two overlapping monsters can still separate.
+function labelBlocked(m, nx) {
+  const myHalf = (m._wordW || 120) / 2;
+  return state.monsters.some(o => o !== m &&
+    Math.abs((o.y || 0) - m.y) < 90 &&
+    Math.abs(o.x - nx) < (o._wordW || 120) / 2 + myHalf + 8 &&
+    Math.abs(o.x - nx) < Math.abs(o.x - m.x));
+}
+const HOP_CYCLE_MS = 950;
+const HOP_AIR_MS = 420;
+function hopLeap(m) {
+  if (REDUCED.matches) return;
+  const spriteEl = m && m.el && m.el.querySelector('.sprite');
+  if (!spriteEl || !spriteEl.animate) return;
+  if (m._hopAnim) m._hopAnim.cancel();
+  m._hopAnim = spriteEl.animate([
+    { transform: 'translateY(0) scale(1, 1)', transformOrigin: '50% 100%' },
+    { transform: 'translateY(0) scale(1.06, 0.92)', transformOrigin: '50% 100%', offset: 0.12 },
+    { transform: 'translateY(-26px) scale(0.96, 1.05)', transformOrigin: '50% 100%', offset: 0.42 },
+    { transform: 'translateY(0) scale(1.14, 0.84)', transformOrigin: '50% 100%', offset: 0.72 },
+    { transform: 'translateY(0) scale(0.97, 1.03)', transformOrigin: '50% 100%', offset: 0.86 },
+    { transform: 'translateY(0) scale(1, 1)', transformOrigin: '50% 100%' }
+  ], { duration: 600, easing: 'ease-out' });
+}
+
+// blink: once, somewhere in the upper half of its walk, the demon fades out
+// and comes back to one side. The new x stays inside the spawn lanes and off
+// any nearby monster's word label; if nothing fits it reappears in place.
+const BLINK_FADE_MS = 200;
+const BLINK_HOLD_MS = 140;
+function pickBlinkX(m) {
+  const w = window.innerWidth;
+  const marginX = w <= NARROW_STAGE_PX ? 56 : Math.min(380, Math.max(120, Math.floor(w * 0.28)));
+  const lo = Math.min(marginX, w / 2), hi = Math.max(w - marginX, w / 2);
+  const myHalf = (m._wordW || 120) / 2;
+  const first = Math.random() < 0.5 ? -1 : 1;
+  for (let i = 0; i < 10; i++) {
+    const dir = i % 2 ? -first : first;
+    const x = Math.max(lo, Math.min(hi, m.x + dir * (110 + Math.random() * 130)));
+    if (Math.abs(x - m.x) < 70) continue;
+    const clash = state.monsters.some(o => o !== m && Math.abs((o.y || 0) - m.y) < 160 &&
+      Math.abs(o.x - x) < (o._wordW || 120) / 2 + myHalf + 16);
+    if (!clash) return x;
+  }
+  return null;
+}
+function tickBlink(m, ms, floorY) {
+  if (!m.blinked) {
+    if (m.y < floorY * m.blinkAtFrac) return;
+    m.blinked = true;
+    m.blinkMs = BLINK_FADE_MS * 2 + BLINK_HOLD_MS;
+    if (m.el) m.el.classList.add('blinking');
+    return;
+  }
+  if (m.blinkMs <= 0) return;
+  const before = m.blinkMs;
+  m.blinkMs -= ms;
+  // Hidden: hop sideways, then start the fade back in.
+  if (before > BLINK_FADE_MS && m.blinkMs <= BLINK_FADE_MS) {
+    const x = pickBlinkX(m);
+    if (x != null) { m.x = x; m.originX = x; }
+    if (m.el) m.el.classList.remove('blinking');
+  }
+}
+
+// heavy: slower walk frames; every foot plant gives the stage a tiny shake.
+// cameraShake already no-ops under prefers-reduced-motion. Throttled across
+// all heavy demons, and never interrupts a bigger shake (hurt, boss hit).
+const HEAVY_FRAME_MS = 300;
+let _lastStompAt = 0;
+function heavyStep(m) {
+  const frame = Math.floor((m.walkT || 0) / HEAVY_FRAME_MS) % 4;
+  if (frame === m._lastFrame) return;
+  m._lastFrame = frame;
+  if (frame % 2 || m.hitMs > 0 || m.y < 0) return;
+  const now = performance.now();
+  if (now - _lastStompAt < 450) return;
+  if (STAGE._shakeAnim && STAGE._shakeAnim.playState === 'running') return;
+  _lastStompAt = now;
+  cameraShake(1.6, 130);
+}
+
 // Single-img src-swap walk + hit cycle, advanced from the main loop with the
 // game's scaled dt (so pause, hit-stop and slow-mo freeze or slow it). One
 // <img> per monster, always opacity 1, only its src changes: nothing can
@@ -3970,7 +4257,7 @@ function tickMonsterFrames(m, dt) {
   }
   if (!src) {
     m.walkT = (m.walkT || 0) + dt;
-    const frameMs = m.isBoss ? BOSS_FRAME_MS : WALK_FRAME_MS;
+    const frameMs = m.isBoss ? BOSS_FRAME_MS : m.motion === 'heavy' ? HEAVY_FRAME_MS : WALK_FRAME_MS;
     src = m._frames[Math.floor(m.walkT / frameMs) % m._frames.length];
   }
   if (src !== m._src) {
@@ -4055,6 +4342,29 @@ function tierForLevel(lv) {
   if (lv < ADMIN.levelTiers.tier5Start)  return 4;
   return 5;
 }
+
+// Late-game demons (tiers 6-8) carry tier-5 words but MIX IN with the tier-5
+// ghosts instead of replacing them: ~30% of late spawns from their unlock
+// level, ~40% once two are out, ~50% at 40+. The level before each unlock
+// sends the odd scout, like previewLevels does for tiers 2-5.
+function lateKindsForLevel(lv) {
+  const lt = ADMIN.levelTiers;
+  const kinds = [];
+  if (lv >= (lt.tier6Start || 24)) kinds.push(6);
+  if (lv >= (lt.tier7Start || 30)) kinds.push(7);
+  if (lv >= (lt.tier8Start || 40)) kinds.push(8);
+  return kinds;
+}
+function monsterKindFor(lv, vocabTier) {
+  if (vocabTier !== 5) return vocabTier;
+  const kinds = lateKindsForLevel(lv);
+  const scout = lateKindsForLevel(lv + 1).find(k => !kinds.includes(k));
+  if (scout && gameRand() < 0.15) return scout;
+  if (!kinds.length) return 5;
+  const share = Math.min(0.5, 0.2 + kinds.length * 0.1);
+  if (gameRand() >= share) return 5;
+  return kinds[Math.floor(gameRand() * kinds.length)];
+}
 function firstKeystrokeForWord(word) {
   const ko = typeof word === 'string' ? word : (word && word.ko) || '';
   return wordToKeystrokes(ko)[0] || '';
@@ -4095,9 +4405,12 @@ const ADMIN_DEFAULTS = {
     "3":    { speedMul: 0.80, motion: "zigzag",   fontPx: 112, animS: 2.0 },
     "4":    { speedMul: 0.85, motion: "dive",     fontPx: 130, animS: 2.2 },
     "5":    { speedMul: 0.95, motion: "tracker",  fontPx: 151, animS: 1.5 },
+    "6":    { speedMul: 0.90, motion: "hopper",   fontPx: 137, animS: 1.4 },
+    "7":    { speedMul: 0.90, motion: "blink",    fontPx: 153, animS: 1.6 },
+    "8":    { speedMul: 0.60, motion: "heavy",    fontPx: 170, animS: 2.4 },
     "boss": { speedMul: 0.55, motion: "teleport", fontPx: 173, animS: 2.5 }
   },
-  levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19 },
+  levelTiers: { tier2Start: 5, tier3Start: 9, tier4Start: 14, tier5Start: 19, tier6Start: 24, tier7Start: 30, tier8Start: 40 },
   pace: {
     baseSpeedBase: 12, baseSpeedLevelMul: 0.9, baseSpeedTierMul: 1.0,
     spawnIntervalFloor: 900, spawnIntervalStart: 2300, spawnIntervalLevelStep: 70,
@@ -4148,7 +4461,8 @@ function loadAdminOverrides() {
 }
 const ADMIN = loadAdminOverrides();
 // Apply tier CSS variables (font-size + animation duration per tier)
-for (const t of ['1','2','3','4','5']) {
+for (const t of ['1','2','3','4','5','6','7','8']) {
+  if (!ADMIN.tier[t]) continue;
   document.documentElement.style.setProperty(`--tier${t}-font`, ADMIN.tier[t].fontPx + 'px');
   document.documentElement.style.setProperty(`--tier${t}-anim`, ADMIN.tier[t].animS + 's');
 }
@@ -4162,6 +4476,9 @@ const TIER_BEHAVIORS = {
   3:    { speedMul: ADMIN.tier['3'].speedMul, motion: ADMIN.tier['3'].motion },  // 두억시니 — sinusoidal sweep, gentler intro
   4:    { speedMul: ADMIN.tier['4'].speedMul, motion: ADMIN.tier['4'].motion },  // 저승사자 — accelerates as it falls
   5:    { speedMul: ADMIN.tier['5'].speedMul, motion: ADMIN.tier['5'].motion },  // 처녀귀신 — drifts toward the player
+  6:    { speedMul: ADMIN.tier['6'].speedMul, motion: ADMIN.tier['6'].motion },  // 도깨비 장수: short leaps, landing squash
+  7:    { speedMul: ADMIN.tier['7'].speedMul, motion: ADMIN.tier['7'].motion },  // 무당 여왕: fades out once, reappears to the side
+  8:    { speedMul: ADMIN.tier['8'].speedMul, motion: ADMIN.tier['8'].motion },  // 염라대왕: slow heavy steps that shake the ground
   boss: { speedMul: ADMIN.tier['boss'].speedMul, motion: ADMIN.tier['boss'].motion }   // 한글왕 — pause, jump, repeat
 };
 function behaviorForTier(t) { return TIER_BEHAVIORS[t] || TIER_BEHAVIORS[1]; }
@@ -5105,6 +5422,39 @@ function maybeSpawnHeart() {
   return true;
 }
 
+// Spawn x for a regular monster. Reserves enough horizontal margin for the
+// word bubble (max 720px wide, centered above the sprite) so it doesn't get
+// clipped or wrap near a screen edge. Narrow stages (phones) use a small
+// margin, since renderMonsterDepth slides bubbles back inside the stage.
+// Every stage picks the best of a few tries so fresh labels don't stack on
+// top of each other. Short stages also keep new spawns out of the player's
+// column.
+const NARROW_STAGE_PX = 480;
+const SPAWN_LABEL_GAP = 96;   // ~one word bubble wide at phone scale
+function pickSpawnX() {
+  const w = window.innerWidth;
+  const narrow = w <= NARROW_STAGE_PX;
+  const marginX = narrow ? 56 : Math.min(380, Math.max(120, Math.floor(w * 0.28)));
+  const spawnRange = Math.max(80, w - marginX * 2);
+  const rand = () => Math.random() * spawnRange + marginX;
+  const short = isShortStage();
+  const playerHalf = (PLAYER_EL.offsetWidth || 80) / 2 + SPAWN_LABEL_GAP / 2;
+  // Only monsters still near the top compete for label space.
+  const nearTopY = monsterSpawnY(1) + (getStageRect().height || 600) * 0.18;
+  const others = state.monsters.filter(m => !m.isBoss && m.y < nearTopY).map(m => m.x);
+  let best = null, bestGap = -1;
+  for (let i = 0; i < 10; i++) {
+    const x = rand();
+    if (short && Math.abs(x - w / 2) < playerHalf) continue;
+    const gap = others.length ? Math.min(...others.map(o => Math.abs(o - x))) : Infinity;
+    if (gap >= SPAWN_LABEL_GAP) return { x, crowded: false };
+    if (gap > bestGap) { bestGap = gap; best = x; }
+  }
+  if (best == null) best = w / 2 + (Math.random() < 0.5 ? -1 : 1) * Math.min(w / 2 - 60, playerHalf + 10);
+  // No clear lane: the caller spawns it a bit higher so the labels stagger.
+  return { x: best, crowded: true };
+}
+
 function spawnMonster(forceBoss) {
   if (forceBoss) {
     return spawnBoss();
@@ -5142,6 +5492,10 @@ function spawnMonster(forceBoss) {
   if (!history.some(w => w.ko === word.ko)) {
     history.push({ ko: word.ko, en: word.en, tier });
   }
+  // tier from here on is the demon kind (1-8); vtier stays the word's vocab
+  // tier so speed, XP and score keep following word difficulty.
+  const vtier = tier;
+  tier = monsterKindFor(state.level, vtier);
   const sprites = TIER_SPRITES[tier] || TIER_SPRITES[1];
   const sprite = sprites[Math.floor(Math.random() * sprites.length)];
   const spriteFile = tierSpriteFile(tier);
@@ -5150,28 +5504,30 @@ function spawnMonster(forceBoss) {
   const beh = behaviorForTier(tier);
   const _assistMul = state.assistMul || 1.0;
   const _slowMul = state.slowMode ? 0.6 : 1.0;
-  const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(tier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * _assistMul * _slowMul;
-  // Reserve enough horizontal margin for the word bubble (max 720px wide,
-  // centered above the sprite) so it doesn't get clipped or wrap when the
-  // monster spawns near a screen edge. Falls back to a tighter margin on
-  // narrow viewports so we always have a valid range to spawn into.
-  const marginX = Math.min(380, Math.max(120, Math.floor(window.innerWidth * 0.28)));
-  const spawnRange = Math.max(80, window.innerWidth - marginX * 2);
-  const startX = Math.random() * spawnRange + marginX;
+  const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(vtier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * _assistMul * _slowMul;
+  const spot = pickSpawnX();
+  const startX = spot.x;
+  const nudgeY = spot.crowded ? Math.round((getStageRect().height || 600) * 0.09) : 0;
   const monster = {
-    id, sprite, spriteFile, word: word.ko, en: word.en, tier,
+    id, sprite, spriteFile, word: word.ko, en: word.en, tier, vtier,
     ks, hp: ks.length, maxHp: ks.length,
     speed: recall ? baseSpeed * 0.75 : baseSpeed,
     motion: beh.motion,
     x: startX,
     originX: startX,
-    y: monsterSpawnY(tier),
+    // Crowded nudge never lifts the sprite above the stage top (on phones
+    // the head used to clip under the HUD).
+    y: Math.max(4, monsterSpawnY(tier) - nudgeY),
     // Per-motion state
     zigT: Math.random() * Math.PI * 2,
     zigAmp: 90 + Math.random() * 50,
     zigFreq: 1.6 + Math.random() * 1.2,
     diveSpeed: baseSpeed,
     tpT: 0, tpHoldUntil: 600,
+    // hopper: ms into the current leap cycle (random so a pair doesn't sync)
+    hopT: Math.random() * HOP_CYCLE_MS,
+    // blink: fraction of the walk at which it vanishes, then the fade clock
+    blinkAtFrac: 0.28 + Math.random() * 0.2, blinkMs: 0, blinked: false,
     isBoss: false, recall, el: null,
     // First reveal in 3.5s, subsequent reveals every 2.2s
     // ms until the next hint, counted down by the loop's scaled dt so pause
@@ -5181,6 +5537,7 @@ function spawnMonster(forceBoss) {
   };
   buildMonsterEl(monster);
   state.monsters.push(monster);
+  maybeMonsterSay(monster, 'spawn');
 }
 
 // triggerBossFight: chains act-break (already shown) -> cutscene -> spawnBoss.
@@ -5200,6 +5557,7 @@ function spawnBoss() {
   pulseBattleCamera('heavy');
   state.bossActive = true;
   document.body.classList.add('boss-alive');
+  if (typeof Bgm !== 'undefined') Bgm.setBoss(true);
   // Phase 1: tier pool for current level; Phase 2: next tier (capped at 5); Phase 3: VOCAB.boss
   const tier = tierForLevel(state.level);
   const tier2 = Math.min(tier + 1, 5);
@@ -5218,7 +5576,14 @@ function spawnBoss() {
   const ks3 = wordToKeystrokes(phase3Word.ko);
   const totalKs = ks1.length + ks2.length + ks3.length;
   const profile = nextBossProfile(state.level);
-  const startX = window.innerWidth / 2;
+  // Short stages: centered, the boss's word bubble lands behind the player
+  // (who draws in front). Stand it just off to the side instead.
+  let startX = window.innerWidth / 2;
+  if (isShortStage()) {
+    const bossHalf = ((window.BATTLE_CONFIG.tierSizePx && window.BATTLE_CONFIG.tierSizePx.boss) || 351) * spriteScale() * DEPTH.nearScale / 2;
+    const playerHalf = (PLAYER_EL.offsetWidth || 80) / 2;
+    startX = Math.max(bossHalf + 12, startX - (bossHalf + playerHalf + 16));
+  }
   const beh = behaviorForTier('boss');
   const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * (state.assistMul || 1.0) * (state.slowMode ? 0.6 : 1.0);
   // Per-phase deadline: derived from word length so longer words get more time.
@@ -5227,7 +5592,7 @@ function spawnBoss() {
   const perKey = Math.max(420, 950 - _pkLevel * 20);
   const windows = [ks1, ks2, ks3].map(ks => Math.min(20000, Math.max(4000, ks.length * perKey + 1500)));
   const monster = {
-    id: ++monsterId, sprite: profile.emoji, spriteFile: profile.sprite, name: profile.name,
+    id: ++monsterId, sprite: profile.emoji, spriteFile: profile.sprite, name: profile.name, profile,
     word: phase1Word.ko, en: phase1Word.en, tier: 'boss',
     ks: ks1, hp: totalKs, maxHp: totalKs,
     speed: bossSpeed,
@@ -5314,6 +5679,8 @@ function advanceBossPhase(m) {
   triggerMonsterHit(m);
   particleBurst(m.x, m.y + 30, 15);
   bossPhaseCallout(m, 'Phase ' + m.phase + ' !');
+  const phaseLine = m.profile && m.profile.phaseLines && m.profile.phaseLines[m.phase - 2];
+  if (phaseLine) monsterSay(m, phaseLine, { force: true, delayMs: 450 });
   tone({ freq: 440, type: 'triangle', dur: 0.25, gain: 0.07, slide: 660 });
 }
 
@@ -5360,7 +5727,7 @@ function showBossRewardModal() {
   veil.setAttribute('aria-modal', 'true');
   veil.setAttribute('aria-label', 'Boss Reward Choice');
   veil.innerHTML = `
-    <div class="modal-card" style="max-width:480px;">
+    <div class="modal-card rpg-panel" style="max-width:480px;">
       <div class="badge">BOSS DEFEATED</div>
       <h1>Choose Your Reward</h1>
       <p class="subtitle">${window.matchMedia(TOUCH_LAYOUT_MQ).matches ? 'Tap a card (or press 1, 2, 3)' : 'Press 1, 2, or 3'}</p>
@@ -5548,6 +5915,135 @@ function monsterCenter(m) {
   return { x: m.x, y: m.y + h * 0.5, h };
 }
 
+// ─── Enemy voice: pixel speech bubbles ────────────────────────────────────
+// Short lines from battle-config.js `lines` (reading practice, A1-A2). One
+// bubble on screen at most, beside the demon's head on the side facing the
+// middle of the stage; the word label hangs under the feet, so it is never
+// covered. Lives in the fx layer (pointer-events: none), so it can't take
+// input. Minion lines skip boss fights and slow mode; boss phase / defeat
+// lines pass { force: true }.
+const SAY_MS = 1600;
+let _sayEl = null, _sayM = null, _sayLeftMs = 0, _sayDelayMs = 0;
+function clearMonsterSay() {
+  if (_sayEl) _sayEl.remove();
+  _sayEl = null; _sayM = null; _sayLeftMs = 0; _sayDelayMs = 0;
+}
+function maybeMonsterSay(m, kind) {
+  const cfg = window.BATTLE_CONFIG || {};
+  if (!m || m.isBoss || m.isHeart || state.slowMode || state.bossActive || _sayEl) return;
+  const pool = cfg.lines && cfg.lines[m.tier] && cfg.lines[m.tier][kind];
+  if (!pool || !pool.length) return;
+  const chance = (cfg.lineChance && cfg.lineChance[kind]) || 0;
+  if (Math.random() >= chance) return;
+  monsterSay(m, pool[Math.floor(Math.random() * pool.length)]);
+}
+function monsterSay(m, line, opts) {
+  opts = opts || {};
+  if (!m || !line || !line.ko || !FX_LAYER) return;
+  if (_sayEl && !opts.force) return;
+  clearMonsterSay();
+  const el = document.createElement('div');
+  el.className = 'monster-say';
+  el.setAttribute('aria-hidden', 'true');
+  const ko = document.createElement('div');
+  ko.className = 'say-ko';
+  ko.lang = 'ko';
+  ko.textContent = line.ko;
+  el.appendChild(ko);
+  if (line.en) {
+    const en = document.createElement('div');
+    en.className = 'say-en';
+    en.textContent = line.en;
+    el.appendChild(en);
+  }
+  FX_LAYER.appendChild(el);
+  _sayEl = el; _sayM = m;
+  _sayLeftMs = SAY_MS;
+  _sayDelayMs = opts.delayMs || 0;
+  el._w = el.offsetWidth; el._h = el.offsetHeight;
+  if (_sayDelayMs > 0) el.style.visibility = 'hidden';
+  else el.classList.add('in');
+  positionMonsterSay();
+}
+function positionMonsterSay() {
+  const el = _sayEl, m = _sayM;
+  if (!el || !m) return;
+  const scale = depthScaleAtPx(Number(m.y) || 0);
+  const h = (m.basePx || MONSTER_BASE_PX[m.isBoss ? 'boss' : m.tier] || 120) * spriteScale() * scale;
+  const sw = getStageRect().width || window.innerWidth;
+  const side = m.x <= sw / 2 ? 1 : -1;
+  let left = side > 0 ? m.x + h * 0.26 : m.x - h * 0.26 - el._w;
+  left = Math.max(6, Math.min(sw - el._w - 6, left));
+  const top = Math.max(6, m.y + h * 0.16 - el._h / 2);
+  el.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
+  el.classList.toggle('tail-right', side < 0);
+}
+function tickMonsterSay(ms) {
+  if (!_sayEl) return;
+  // A minion's line is cut when a boss fight starts.
+  if (state.bossActive && _sayM && !_sayM.isBoss) { clearMonsterSay(); return; }
+  if (_sayDelayMs > 0) {
+    _sayDelayMs -= ms;
+    if (_sayDelayMs > 0) return;
+    _sayEl.style.visibility = '';
+    _sayEl.classList.add('in');
+  }
+  _sayLeftMs -= ms;
+  if (_sayLeftMs <= 0) { clearMonsterSay(); return; }
+  if (_sayLeftMs < 220) _sayEl.classList.add('out');
+  positionMonsterSay();
+}
+
+// ─── 요괴 도감 (bestiary) ──────────────────────────────────────────────────
+// Kill counts per regular tier ('tier:N') and per boss ('boss:<sprite>'),
+// persisted in localStorage. First kill of a kind shows a small toast.
+const BESTIARY_KEY = 'hangul-bestiary-v1';
+function loadBestiary() {
+  try {
+    const d = JSON.parse(localStorage.getItem(BESTIARY_KEY) || 'null');
+    if (d && typeof d === 'object' && d.kills && typeof d.kills === 'object') return d;
+  } catch (e) {}
+  return { kills: {} };
+}
+function saveBestiary(d) {
+  try { localStorage.setItem(BESTIARY_KEY, JSON.stringify(d)); } catch (e) {}
+}
+function bestiaryKeyFor(m) {
+  if (!m || m.isHeart) return null;
+  if (m.isBoss) return m.spriteFile ? 'boss:' + m.spriteFile : null;
+  return bestiaryTierInfo()[m.tier] ? 'tier:' + m.tier : null;
+}
+function bestiaryTierInfo() { return (window.BATTLE_CONFIG && window.BATTLE_CONFIG.tierInfo) || {}; }
+function recordBestiaryKill(m) {
+  const key = bestiaryKeyFor(m);
+  if (!key) return;
+  const d = loadBestiary();
+  const first = !d.kills[key];
+  d.kills[key] = (d.kills[key] || 0) + 1;
+  saveBestiary(d);
+  if (first) {
+    const info = m.isBoss ? m.profile : bestiaryTierInfo()[m.tier];
+    showBestiaryToast(info && info.name);
+  }
+}
+// One toast at a time: a second first-kill inside the window (a 필살 sweep)
+// joins the names in the same toast and restarts its clock.
+let _bestiaryToast = null;
+function showBestiaryToast(name) {
+  const t = _bestiaryToast;
+  if (t) {
+    clearTimeout(t.timer);
+    t.el.remove();
+  }
+  const names = (t ? t.names : []).concat(name || []);
+  const el = document.createElement('div');
+  el.className = 'bestiary-toast';
+  el.setAttribute('role', 'status');
+  el.textContent = (names.length > 1 ? '📖 New entries! ' : '📖 New entry! ') + names.join(', ');
+  document.body.appendChild(el);
+  _bestiaryToast = { el, names, timer: setTimeout(() => { el.remove(); _bestiaryToast = null; }, 2400) };
+}
+
 function killMonster(m, byPlayer) {
   // Drop out of the frame ticker and hold the pain frame for the defeat fade.
   if (m._img && m._hitFrames && m.tier !== 'boss') m._img.setAttribute('src', m._hitFrames[1]);
@@ -5564,8 +6060,8 @@ function killMonster(m, byPlayer) {
   // check (WAVE CLEAR bonus) sees the real field.
   state.monsters = state.monsters.filter(x => x.id !== m.id);
   if (byPlayer) {
-    let xp = xpForKill(m.tier);
-    let sc = scoreForKill(m.tier, state.combo);
+    let xp = xpForKill(m.vtier || m.tier);
+    let sc = scoreForKill(m.vtier || m.tier, state.combo);
     // Variable rewards: 5% crit (3× score), 1% heart drop (only if not full HP), bosses guarantee crit.
     const isCrit = m.isBoss || Math.random() < 0.05;
     // Score pops stack upward with a stagger instead of overprinting.
@@ -5634,9 +6130,16 @@ function killMonster(m, byPlayer) {
     // the audio confirms what they just produced. Suppressed during 필살.
     if (!state.specialMoveBurst) speakKoreanWord(m.word);
     sfxKill();
+    recordBestiaryKill(m);
+    if (m.isBoss) {
+      if (m.profile && m.profile.defeatLine) monsterSay(m, m.profile.defeatLine, { force: true });
+    } else if (!state.specialMoveBurst) {
+      maybeMonsterSay(m, 'death');
+    }
     if (m.isBoss) {
       state.bossActive = false;
       document.body.classList.remove('boss-alive');
+      if (typeof Bgm !== 'undefined') Bgm.setBoss(false);
       // Record this act level as cleared so gameOver can advance the checkpoint
       if (LEVEL_ACTS[state.level]) {
         state.actsCleared = state.actsCleared || [];
@@ -5693,8 +6196,18 @@ const ALL_THEMES = ['village','forest','study','courtyard','camp','battlefield',
 const THEME_BG_FILES = { village: '01-village', forest: '02-forest', study: '03-study',
                          courtyard: '04-courtyard', camp: '05-camp',
                          battlefield: '06-battlefield', palace: '07-palace' };
+// Themes that have tall 2:3 art at sprites/backgrounds/portrait/<same name>.webp.
+// Only list a theme once its portrait file is in the repo, so nothing
+// requests a missing image.
+const PORTRAIT_BGS = new Set(['village', 'forest', 'study', 'courtyard', 'camp', 'battlefield', 'palace']);
+const PORTRAIT_MQ = window.matchMedia('(orientation: portrait)');
+function usePortraitBg(theme) {
+  return PORTRAIT_MQ.matches && PORTRAIT_BGS.has(theme);
+}
 function themeBgUrl(theme) {
-  return THEME_BG_FILES[theme] ? 'sprites/backgrounds/' + THEME_BG_FILES[theme] + '.webp' : null;
+  if (!THEME_BG_FILES[theme]) return null;
+  const dir = usePortraitBg(theme) ? 'sprites/backgrounds/portrait/' : 'sprites/backgrounds/';
+  return dir + THEME_BG_FILES[theme] + '.webp';
 }
 function applyTheme(theme) {
   const body = document.body;
@@ -5707,9 +6220,12 @@ function applyTheme(theme) {
 // newer request supersedes one still decoding.
 let _bgTheme = null;
 let _bgFront = 0;
+let _bgUrl = null;
 function setBackdropImage(theme) {
-  if (theme === _bgTheme) return;
+  const want = themeBgUrl(theme);
+  if (theme === _bgTheme && want === _bgUrl) return;
   _bgTheme = theme;
+  _bgUrl = want;
   const layers = BACKDROP_EL ? BACKDROP_EL.querySelectorAll('.bg-layer') : [];
   if (layers.length < 2) return;
   const url = themeBgUrl(theme);
@@ -5719,14 +6235,19 @@ function setBackdropImage(theme) {
   const img = new Image();
   img.src = url;
   const show = () => {
-    if (_bgTheme !== theme) return;
+    if (_bgTheme !== theme || _bgUrl !== url) return;
     next.style.backgroundImage = `url('${url}')`;
+    next.classList.toggle('bg-portrait', url.includes('/portrait/'));
     next.classList.add('on');
     prev.classList.remove('on');
     _bgFront = 1 - _bgFront;
   };
   if (img.decode) img.decode().then(show, show); else img.onload = img.onerror = show;
 }
+// Rotating the phone swaps between the landscape and portrait art.
+const _onBgOrientation = () => { if (_bgTheme) setBackdropImage(_bgTheme); };
+if (PORTRAIT_MQ.addEventListener) PORTRAIT_MQ.addEventListener('change', _onBgOrientation);
+else if (PORTRAIT_MQ.addListener) PORTRAIT_MQ.addListener(_onBgOrientation);
 // Warm the next band's scene one level ahead so its crossfade is instant.
 const _prewarmedBgs = [];
 function prewarmNextTheme(lv) {
@@ -5740,240 +6261,638 @@ function prewarmNextTheme(lv) {
   _prewarmedBgs.push(img);
 }
 
-// ─── BGM (per-theme Korean lofi-hiphop loops) ─────────────────────────────
-// Procedural so the game ships zero music files. Each theme gets a distinct
-// chord progression voiced from a Korean-pentatonic-ish scale plus a soft
-// kick/snare/hat lofi groove, all scheduled via WebAudio. (The old
-// bgm/{theme}.mp3 override was removed: no bgm/ folder ships, so its HEAD
-// probe only produced a 404 per theme change.)
+// ─── BGM (gugak x 16-bit RPG, one song per map + a boss theme) ────────────
+// Procedural so the game ships zero music files. Korean instruments are
+// synthesized (gayageum via Karplus-Strong, daegeum as breathy sine with a
+// buzzing membrane, janggu/buk/kkwaenggwari/jing drums) over a chiptune
+// backing (pulse lead + arpeggio, triangle bass, soft pad). Each song rides a
+// real jangdan (rhythm cycle) and a Korean mode, and is scheduled ahead on the
+// audio clock so busy frames can't make it stutter.
 //
-// Each preset = { root, chords (semitone-offset arrays), melody (motif),
-// bpm, lowpass cutoff (mojo) }. Tempo stays in the lofi pocket (60–82 bpm).
-const BGM_PRESETS = {
-  // village — bright, hopeful morning. C major-pentatonic. 72 bpm.
-  village:     { root: 261.63, bpm: 72,
-                 chords: [[0,4,7,11], [-2,3,7,10], [-4,0,5,9], [-5,2,5,9]],
-                 melody: [12, 14, 17, 14, 12, 9, 7, 9],
-                 cutoff: 1500 },
-  // forest — mellow, woodsy. A minor-pentatonic. 76 bpm.
-  forest:      { root: 220.00, bpm: 76,
-                 chords: [[0,3,7,10], [-3,0,5,9], [-7,0,3,7], [-2,3,7,10]],
-                 melody: [12, 10, 7, 5, 7, 10, 12, 15],
-                 cutoff: 1200 },
-  // study — quiet, contemplative. F major7 / Dm7. 64 bpm.
-  study:       { root: 174.61, bpm: 64,
-                 chords: [[0,4,7,11], [-3,2,5,9], [2,5,9,12], [-5,0,4,7]],
-                 melody: [16, 14, 12, 9, 12, 14, 16, 19],
-                 cutoff: 1700 },
-  // courtyard — formal, warm. G major. 78 bpm.
-  courtyard:   { root: 196.00, bpm: 78,
-                 chords: [[0,4,7,11], [-5,0,4,7], [-3,2,5,9], [-7,-2,2,5]],
-                 melody: [12, 11, 9, 7, 9, 11, 12, 14],
-                 cutoff: 1400 },
-  // camp — military readiness, slightly tense. E minor. 80 bpm.
-  camp:        { root: 164.81, bpm: 80,
-                 chords: [[0,3,7,10], [-2,3,7,10], [-5,0,3,7], [-7,-3,0,5]],
-                 melody: [12, 10, 7, 10, 12, 15, 12, 10],
-                 cutoff: 1100 },
-  // battlefield — moody, low-end heavy. D minor. 82 bpm.
-  battlefield: { root: 146.83, bpm: 82,
-                 chords: [[0,3,7,10], [-5,0,3,7], [-2,3,5,10], [-7,-3,0,5]],
-                 melody: [12, 15, 10, 12, 10, 7, 10, 15],
-                 cutoff:  900 },
-  // palace — regal, shimmery, bittersweet. A major. 70 bpm.
-  palace:      { root: 220.00, bpm: 70,
-                 chords: [[0,4,7,11], [-3,0,4,7], [2,5,9,12], [-5,-1,2,7]],
-                 melody: [12, 14, 16, 19, 16, 14, 12, 9],
-                 cutoff: 1800 }
+// Melody notation, one token per step:
+//   integer = scale degree (0-4 is the first octave, 5 is the octave above,
+//             negatives go below). Suffix ~ = shake (nonghyeon vibrato),
+//             v = fall at the end (kkeokneun sori), ^ = scoop up into the note.
+//   -  hold previous note      .  rest
+// Janggu hits: D = deong (both heads), K = kung (low), T = deok (sharp),
+//              k = kideok (light deok).
+const BGM_SCALES = {
+  pyeongjo:    [0, 2, 5, 7, 9],    // sol la do re mi: bright
+  gyemyeonjo:  [0, 3, 5, 7, 10],   // mi sol la do re: plaintive
 };
+const BGM_JANGDAN = {
+  semachi:   { hits: 'D..T.KT..',    beats: [0, 3, 6] },
+  gutgeori:  { hits: 'D.kK.TK.kK.T', beats: [0, 3, 6, 9] },
+  jinyang:   { hits: 'D.....T..K..', beats: [0, 6] },
+  jungmori:  { hits: 'D..K.kT..K.T', beats: [0, 3, 6, 9] },
+  jajinmori: { hits: 'D.KT.KT.KT.k', beats: [0, 3, 6, 9] },
+  hwimori:   { hits: 'D.TKkTK.',     beats: [0, 2, 4, 6] },
+  eotmori:   { hits: 'D..K..T.K.',   beats: [0, 3, 6, 8] },
+};
+// Song = { root Hz (bass octave), scale, jangdan, step seconds, sections, form }.
+// A section can reuse another's melody (mel: 'A') with different instruments.
+// Section keys: lead/echo instrument ('gayageum' | 'daegeum' | 'pulse'),
+// arp, pad, jing (gong at section start). Song keys: bass style
+// ('drone' | 'pulse' | 'walk' | 'drive'), drums (janggu level), buk, kkw.
+const BGM_SONGS = {
+  // Village: bright semachi, the folk-song lilt. Gayageum, then chip lead.
+  village: {
+    root: 196.00, scale: 'pyeongjo', jangdan: 'semachi', step: 0.2,
+    bass: 'pulse', drums: 0.8,
+    sections: {
+      A: { lead: 'gayageum', pad: true,
+        mel: ['2 - - 3 - 4 5 - 4', '4 - 3 2 - 3 4 - -', '5 - - 6 - 5 4 - 3', '2~ - - - - - . . .',
+              '5 - - 4 - 5 6 - 7', '6 - 5 4 - 3 4 - -', '3 - 4 2 - 1 0 - 1', '2~ - - - - - . . 4'],
+        bass: [2, 2, 0, 2, 0, 1, 3, 2] },
+      A2: { mel: 'A', lead: 'pulse', echo: 'gayageum', arp: true, pad: true },
+      B: { lead: 'gayageum', echo: 'pulse', pad: true,
+        mel: ['7 - - 7 - 6 5 - 6', '7 - 8 7 - 6 5 - -', '4 - - 5 - 4 3 - 2', '3^ - - - - - . . .',
+              '5 - - 6 - 7 8 - 7', '6 - 5 6 - 4 5 - -', '4 - 3 2 - 3 4 - 3', '2~ - - - - - . . .'],
+        bass: [2, 0, 1, 3, 0, 1, 3, 2] },
+    },
+    form: ['A', 'A2', 'B', 'A'],
+  },
+  // Forest: misty gutgeori sway. Daegeum leads, gayageum shadows it.
+  forest: {
+    root: 164.81, scale: 'gyemyeonjo', jangdan: 'gutgeori', step: 0.3,
+    bass: 'drone', drums: 0.55, reverb: 0.4,
+    sections: {
+      A: { lead: 'daegeum', pad: true,
+        mel: ['2 - - - - - 3 - 2 1 - -', '2~ - - - - - - - - . . .', '4 - - 3 - - 2 - 3 4 - 5', '5 - - 4 - 3 2~ - - - - -',
+              '7~ - - - - - 6 - 5 6 - -', '5 - 4 3v - - 2 - - - - -', '1 - - 2 - 3 2 - 1 0 - -', '2~ - - - - - - - - . . .'],
+        bass: [2, 2, 4, 2, 2, 3, 1, 2] },
+      B: { lead: 'gayageum', echo: 'daegeum', pad: true,
+        mel: ['7 - - 8 - - 7~ - - 6 - 5', '6 - - 5 - - 4 - 3 4 - -', '5 - - - - 4 3v - - 2 - -', '3 - 2 1 - - 2~ - - - - -'],
+        bass: [2, 4, 3, 2] },
+      A2: { mel: 'A', lead: 'daegeum', echo: 'gayageum', pad: true },
+    },
+    form: ['A', 'B', 'A2'],
+  },
+  // Study: slow and sparse, like a scholar's room. Gayageum with long space.
+  study: {
+    root: 174.61, scale: 'pyeongjo', jangdan: 'jinyang', step: 0.36,
+    bass: 'drone', drums: 0.4, reverb: 0.45,
+    sections: {
+      A: { lead: 'gayageum', pad: true,
+        mel: ['2 - - 4 - - 5 - - . . .', '4 - 3 2~ - - - - - . . .', '1 - - 2 - - 3 - 4 3 - -', '2~ - - - - - - - - . . .'],
+        bass: [2, 2, 1, 2] },
+      B: { lead: 'gayageum', pad: true,
+        mel: ['5 - - 6 - - 7 - - 6 - 5', '4 - - - - - 5 - 4 3 - -', '2 - - 1 - - 0 - - 1 - -', '2~ - - - - - - - - . . .'],
+        bass: [2, 3, 0, 2] },
+      A2: { mel: 'A', lead: 'daegeum', echo: 'gayageum', pad: true },
+    },
+    form: ['A', 'B', 'A2', 'B'],
+  },
+  // Courtyard: stately jungmori. Daegeum over a warm pad, chip echo.
+  courtyard: {
+    root: 146.83, scale: 'pyeongjo', jangdan: 'jungmori', step: 0.25,
+    bass: 'pulse', drums: 0.7,
+    sections: {
+      A: { lead: 'daegeum', echo: 'gayageum', pad: true,
+        mel: ['5 - - - - - 4 - 5 6 - -', '7 - - 6 - 5 4 - - - - -', '5 - 6 7 - - 8 - 7 6 - 5', '4~ - - - - - - - - . . .',
+              '2 - - 3 - - 4 - 5 4 - 3', '2 - 1 0 - - 1 - - 2 - -', '3 - - 4 - 3 2 - 1 2 - 3', '2~ - - - - - - - - . . .'],
+        bass: [2, 0, 2, 2, 2, 0, 3, 2] },
+      B: { lead: 'pulse', echo: 'daegeum', arp: true, pad: true,
+        mel: ['7 - - - - - 8 - 7 6 - -', '5 - - 6 - 7 6~ - - - - -', '5 - 4 3 - - 4 - - 5 - -', '4 - 3 2~ - - - - - . . .'],
+        bass: [2, 3, 0, 2] },
+      A2: { mel: 'A', lead: 'gayageum', echo: 'daegeum', pad: true, jing: true },
+    },
+    form: ['A', 'B', 'A2'],
+  },
+  // Camp: tense jajinmori march. Chip lead, buk drum, walking bass.
+  camp: {
+    root: 146.83, scale: 'gyemyeonjo', jangdan: 'jajinmori', step: 0.16,
+    bass: 'walk', drums: 0.9, buk: true,
+    sections: {
+      A: { lead: 'pulse', arp: true,
+        mel: ['0 - 2 3 - 2 0 - 2 3 - 4', '5 - - 4 - 3 2 - - - - -', '0 - 2 3 - 2 0 - 2 4 - 3', '2 - 1 0 - - - - - . . .'],
+        bass: [0, 2, 0, 0] },
+      A2: { mel: 'A', lead: 'gayageum', echo: 'pulse' },
+      B: { lead: 'pulse', echo: 'gayageum', arp: true, jing: true,
+        mel: ['5 - 7 6 - 5 4 - 5 3 - -', '4 - 3 2 - 3 4 - - - - -', '5 - 7 8 - 7 6 - 5 4 - 3', '2~ - - - - - 0 - - . . .'],
+        bass: [3, 1, 3, 2] },
+      B2: { mel: 'B', lead: 'daegeum', echo: 'pulse', arp: true },
+    },
+    form: ['A', 'A2', 'B', 'B2', 'A'],
+  },
+  // Battlefield: hwimori at a run. Everything playing, gong on each section.
+  battlefield: {
+    root: 130.81, scale: 'gyemyeonjo', jangdan: 'hwimori', step: 0.12,
+    bass: 'drive', drums: 1, buk: true, kkw: true,
+    sections: {
+      A: { lead: 'pulse', arp: true, jing: true,
+        mel: ['0 - 2 3 2 - 0 -', '3 - 4 5 4 - 3 -', '2 - 3 2 0 - -1 -', '0 - - - . . . .',
+              '5 - 7 5 4 - 3 -', '4 - 5 4 3 - 2 -', '3 - 2 0 2 - 3 -', '2~ - - - . . . .'],
+        bass: [0, 3, 0, 0, 3, 1, 0, 2] },
+      A2: { mel: 'A', lead: 'gayageum', echo: 'pulse', arp: true },
+      B: { lead: 'daegeum', echo: 'pulse', jing: true,
+        mel: ['7 - - 5 7 - 8 -', '7 - 5 4 5 - - -', '7 - - 5 7 - 9 -', '8 - 7 5 7 - - -',
+              '5 - 4 3 4 - 5 -', '3 - 2 0 2 - 3 -', '2 - 0 -1 0 - 2 -', '0 - - - . . . .'],
+        bass: [2, 1, 2, 3, 1, 3, 4, 0] },
+    },
+    form: ['A', 'A2', 'B', 'A2'],
+  },
+  // Palace: regal eotmori (3+3+2+2). Full ensemble, gong on the return.
+  palace: {
+    root: 146.83, scale: 'pyeongjo', jangdan: 'eotmori', step: 0.18,
+    bass: 'pulse', drums: 0.85, reverb: 0.35,
+    sections: {
+      A: { lead: 'daegeum', echo: 'gayageum', pad: true, jing: true,
+        mel: ['2 - - 4 - - 5 - 4 -', '5 - - 7 - - 6 - 5 -', '4 - - 5 - - 4 - 3 -', '2~ - - - - - . . . .',
+              '7 - - 8 - - 7 - 6 -', '5 - - 6 - - 7 - 8 -', '7 - - 6 - - 5 - 4 -', '5~ - - - - - . . 4 -'],
+        bass: [2, 0, 1, 2, 2, 0, 3, 0] },
+      B: { lead: 'gayageum', echo: 'pulse', arp: true, pad: true,
+        mel: ['2 - - 3 - - 4 - 5 -', '4 - - 3 - - 2 - 1 -', '0 - - 1 - - 2 - 4 -', '3~ - - - - - . . . .',
+              '5 - - 7 - - 8 - 9 -', '8 - - 7 - - 6 - 5 -', '4 - - 5 - - 4 - 3 -', '2~ - - - - - - - . .'],
+        bass: [2, 3, 0, 3, 0, 1, 3, 2] },
+      A2: { mel: 'A', lead: 'pulse', echo: 'daegeum', arp: true, pad: true, jing: true },
+    },
+    form: ['A', 'B', 'A2'],
+  },
+  // Boss: hwimori pushed hard, low and ominous. Interrupts the map song.
+  boss: {
+    root: 138.59, scale: 'gyemyeonjo', jangdan: 'hwimori', step: 0.105,
+    bass: 'drive', drums: 1, buk: true, kkw: true,
+    sections: {
+      A: { lead: 'pulse', echo: 'daegeum', jing: true,
+        mel: ['0 - 0 3 - 2 0 -', '-1 - 0 2 - 0 -1 -', '0 - 0 3 - 4 5 -', '4 - 3 2 - - - -',
+              '5 - 5 7 - 6 5 -', '4 - 5 3 - 2 0 -', '2 - 3 0 - -1 0 -', '0~ - - - . . . .'],
+        bass: [0, -1, 0, 2, 3, 2, 0, 0] },
+      B: { lead: 'pulse', echo: 'gayageum', arp: true,
+        mel: ['5 5 7 5 8 7 5 4', '5 5 7 5 3 - 2 -', '5 5 7 5 8 7 9 8', '7 - 5 - 4 - 3 -'],
+        bass: [3, 3, 2, 0] },
+      A2: { mel: 'A', lead: 'daegeum', echo: 'pulse', arp: true, jing: true },
+    },
+    form: ['A', 'B', 'A2', 'B'],
+  },
+};
+
+// Flatten a song into one step timeline so echoes and holds can cross bars.
+function compileBgmSong(song) {
+  const jd = BGM_JANGDAN[song.jangdan];
+  const L = jd.hits.length;
+  const mel = [], bars = [];
+  song.form.forEach(key => {
+    const sec = song.sections[key];
+    const src = typeof sec.mel === 'string' ? song.sections[sec.mel] : sec;
+    const startStep = mel.length;
+    src.mel.forEach((barStr, bi) => {
+      const toks = barStr.trim().split(/\s+/);
+      if (toks.length !== L) console.warn('[bgm] bar length', key, bi, toks.length, '!=', L);
+      bars.push({ sec, bass: src.bass[bi], first: bi === 0 });
+      for (let s = 0; s < L; s++) {
+        const tok = toks[s] || '.';
+        if (tok === '-') {
+          // extend the most recent note in this section
+          for (let j = mel.length - 1; j >= startStep; j--) { if (mel[j]) { mel[j].len++; break; } if (mel[j] === null) break; }
+          mel.push(undefined);
+        } else if (tok === '.') {
+          mel.push(null);
+        } else {
+          const m = tok.match(/^(-?\d+)([~v^]?)$/);
+          mel.push(m ? { deg: +m[1], orn: m[2], len: 1 } : null);
+        }
+      }
+    });
+  });
+  return { song, jd, L, mel, bars, total: mel.length };
+}
 
 const Bgm = (function () {
   let currentTheme = null;
-  let masterGain = null;
-  let lpFilter = null;
-  let stepTimer = null;
-  let step = 0;
+  let boss = false;
+  let playingKey = null;
   let muted = false;
   let paused = false;      // run paused / ended: fade out without tearing down
-  let themeGen = 0;        // bumps on every setTheme so stale timeouts bail
-  let activePreset = null;
-  let vinylNoise = null;
+  let themeGen = 0;        // bumps on every switch so stale timeouts bail
+  let live = null;         // { c, master, bus, verb, noise, pulse25, pulse12 }
+  let player = null;       // { P, g, nextT }
+  let timer = null;
+  const ksCache = new Map();
 
-  function ctx() { return ac(); }
-
-  function ensureMaster() {
-    if (masterGain) return masterGain;
-    const c = ctx();
-    masterGain = c.createGain();
-    masterGain.gain.value = 0;
-    // Master lowpass for that lofi muffled feel
-    lpFilter = c.createBiquadFilter();
-    lpFilter.type = 'lowpass';
-    lpFilter.frequency.value = 1400;
-    lpFilter.Q.value = 0.6;
-    masterGain.connect(lpFilter);
-    lpFilter.connect(c.destination);
-    return masterGain;
-  }
-
-  function tearDown() {
-    if (stepTimer) { clearInterval(stepTimer); stepTimer = null; }
-    if (vinylNoise) { try { vinylNoise.stop(); vinylNoise.disconnect(); } catch (_) {} vinylNoise = null; }
-    activePreset = null;
-  }
-
-  function noteHz(rootHz, semitone) {
-    return rootHz * Math.pow(2, semitone / 12);
-  }
-
-  // ── Voice helpers ──
-  function pluck(rootHz, semi, t0, dur, gain, type) {
-    const c = ctx();
-    const o = c.createOscillator();
-    o.type = type || 'triangle';
-    o.frequency.value = noteHz(rootHz, semi);
-    const g = c.createGain();
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g); g.connect(masterGain);
-    o.start(t0);
-    o.stop(t0 + dur + 0.05);
-  }
-
-  function chordPad(rootHz, semis, t0, dur, gain) {
-    semis.forEach(s => pluck(rootHz, s, t0, dur, gain, 'sine'));
-  }
-
-  function kick(t0) {
-    const c = ctx();
-    const o = c.createOscillator();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(120, t0);
-    o.frequency.exponentialRampToValueAtTime(40, t0 + 0.12);
-    const g = c.createGain();
-    g.gain.setValueAtTime(0.001, t0);
-    g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.20);
-    o.connect(g); g.connect(masterGain);
-    o.start(t0); o.stop(t0 + 0.22);
-  }
-
-  function snare(t0) {
-    const c = ctx();
-    // Noise burst through bandpass
-    const len = c.sampleRate * 0.18;
-    const buf = c.createBuffer(1, len, c.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
-    const src = c.createBufferSource();
-    src.buffer = buf;
-    const f = c.createBiquadFilter();
-    f.type = 'bandpass';
-    f.frequency.value = 1800;
-    f.Q.value = 0.7;
-    const g = c.createGain();
-    g.gain.value = 0.06;
-    src.connect(f); f.connect(g); g.connect(masterGain);
-    src.start(t0);
-  }
-
-  function hat(t0, open) {
-    const c = ctx();
-    const len = c.sampleRate * (open ? 0.10 : 0.04);
-    const buf = c.createBuffer(1, len, c.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
-    const src = c.createBufferSource();
-    src.buffer = buf;
-    const f = c.createBiquadFilter();
-    f.type = 'highpass';
-    f.frequency.value = 6000;
-    const g = c.createGain();
-    g.gain.value = open ? 0.025 : 0.018;
-    src.connect(f); f.connect(g); g.connect(masterGain);
-    src.start(t0);
-  }
-
-  function startVinylCrackle() {
-    const c = ctx();
-    // 2-second loop of pinkish noise (cheap pink-ish via filtered white)
-    const len = Math.floor(c.sampleRate * 2);
-    const buf = c.createBuffer(1, len, c.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) {
-      // Sparse crackle: low background noise + occasional pops
-      data[i] = (Math.random() * 2 - 1) * 0.10;
-      if (Math.random() < 0.0008) data[i] = (Math.random() > 0.5 ? 1 : -1) * 0.55;
+  // ── Audio graph per context (live game, or an offline render) ──
+  function makeEnv(c, master) {
+    const bus = c.createGain();
+    bus.gain.value = 0.9;
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 3; comp.attack.value = 0.01; comp.release.value = 0.25;
+    bus.connect(comp); comp.connect(master);
+    // Generated hall impulse: stereo noise with a squared exponential tail
+    const verb = c.createConvolver();
+    const len = Math.floor(c.sampleRate * 2.4);
+    const ir = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < len; i++) { const k = 1 - i / len; d[i] = (Math.random() * 2 - 1) * k * k * k; }
     }
-    const src = c.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    const f = c.createBiquadFilter();
-    f.type = 'highpass';
-    f.frequency.value = 1500;
-    const g = c.createGain();
-    g.gain.value = 0.025;
-    src.connect(f); f.connect(g); g.connect(masterGain);
-    src.start();
-    vinylNoise = src;
+    verb.buffer = ir;
+    const verbOut = c.createGain();
+    verbOut.gain.value = 0.5;
+    verb.connect(verbOut); verbOut.connect(comp);
+    const noiseLen = c.sampleRate * 2;
+    const noise = c.createBuffer(1, noiseLen, c.sampleRate);
+    const nd = noise.getChannelData(0);
+    for (let i = 0; i < noiseLen; i++) nd[i] = Math.random() * 2 - 1;
+    return { c, master, bus, verb, noise, pulse25: pulseWave(c, 0.25), pulse12: pulseWave(c, 0.125) };
   }
 
-  function buildSynth(preset) {
-    activePreset = preset;
-    const c = ctx();
-    ensureMaster();
-    startVinylCrackle();
-    // Step length: 8th notes = lofi half-time feel
-    const stepMs = 60000 / preset.bpm / 2;
-    step = 0;
-    stepTimer = setInterval(() => {
-      if (muted || paused) { step++; return; }
-      const t0 = c.currentTime + 0.03;
-      const beat = step % 8;             // 8 sixteenth-positions per "bar"
-      const bar = Math.floor(step / 8);  // chord index
-      const chord = preset.chords[bar % preset.chords.length];
-      // Chord pad on beat 0 (every bar) — quiet sustain
-      if (beat === 0) chordPad(preset.root, chord, t0, 1.6, 0.025);
-      // Drums: kick on 1+5, snare on 3+7, hats on every step (closed) + open on 4
-      if (beat === 0 || beat === 4) kick(t0);
-      if (beat === 2 || beat === 6) snare(t0);
-      hat(t0, beat === 4);
-      // Melody motif: trigger a note every other 8th, alternating notes
-      if (beat % 2 === 0) {
-        const idx = (beat / 2 + bar * 4) % preset.melody.length;
-        pluck(preset.root, preset.melody[idx], t0, 0.45, 0.045, 'triangle');
+  function pulseWave(c, duty) {
+    const n = 32, re = new Float32Array(n), im = new Float32Array(n);
+    for (let k = 1; k < n; k++) re[k] = (4 / (k * Math.PI)) * Math.sin(k * Math.PI * duty);
+    return c.createPeriodicWave(re, im);
+  }
+
+  function ensureLive() {
+    if (live) return live;
+    const c = ac();
+    const master = c.createGain();
+    master.gain.value = 0;
+    master.connect(c.destination);
+    live = makeEnv(c, master);
+    return live;
+  }
+
+  // Route a voice to the dry bus plus an optional reverb send.
+  function route(E, node, send) {
+    node.connect(E.bus);
+    if (send > 0) {
+      const s = E.c.createGain();
+      s.gain.value = send;
+      node.connect(s); s.connect(E.verb);
+    }
+  }
+
+  function env(E, t, attack, peak, hold, release) {
+    const g = E.c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.setValueAtTime(peak, t + attack + hold);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + hold + release);
+    return g;
+  }
+
+  function noiseSrc(E, t, dur) {
+    const src = E.c.createBufferSource();
+    src.buffer = E.noise;
+    src.start(t, Math.random() * 1.5, dur + 0.05);
+    return src;
+  }
+
+  // ── Melodic voices: (E, freq, t, dur seconds, gain, ornament) ──
+  // Gayageum: Karplus-Strong plucked silk string, cached per pitch.
+  function ksBuffer(c, f) {
+    const key = c.sampleRate + ':' + Math.round(f * 10);
+    let buf = ksCache.get(key);
+    if (buf) return buf;
+    const sr = c.sampleRate, N = Math.max(2, Math.round(sr / f));
+    const len = Math.floor(sr * 2.2);
+    const ring = new Float32Array(N);
+    for (let i = 0; i < N; i++) ring[i] = Math.random() * 2 - 1;
+    for (let pass = 0; pass < 2; pass++) for (let i = 1; i < N; i++) ring[i] = (ring[i] + ring[i - 1]) * 0.5;
+    buf = c.createBuffer(1, len, sr);
+    const out = buf.getChannelData(0);
+    let idx = 0;
+    for (let i = 0; i < len; i++) {
+      const cur = ring[idx], nxt = ring[(idx + 1) % N];
+      out[i] = cur;
+      ring[idx] = (cur + nxt) * 0.4985;
+      idx = (idx + 1) % N;
+    }
+    let peak = 0;
+    for (let i = 0; i < Math.min(len, 4000); i++) peak = Math.max(peak, Math.abs(out[i]));
+    if (peak > 0) for (let i = 0; i < len; i++) out[i] /= peak;
+    if (ksCache.size > 80) ksCache.clear();
+    ksCache.set(key, buf);
+    return buf;
+  }
+
+  function gayageum(E, f, t, dur, gain, orn) {
+    const c = E.c;
+    const src = c.createBufferSource();
+    src.buffer = ksBuffer(c, f);
+    const ring = Math.min(Math.max(dur + 0.5, 0.8), 2.1);
+    if (orn === '~') {
+      // nonghyeon: the left hand presses the string behind the bridge
+      const lfo = c.createOscillator(); lfo.frequency.value = 5.5;
+      const depth = c.createGain();
+      depth.gain.setValueAtTime(0, t);
+      depth.gain.linearRampToValueAtTime(0, t + 0.18);
+      depth.gain.linearRampToValueAtTime(38, t + 0.45);
+      lfo.connect(depth); depth.connect(src.detune);
+      lfo.start(t); lfo.stop(t + ring);
+    } else if (orn === '^') {
+      src.detune.setValueAtTime(-200, t);
+      src.detune.linearRampToValueAtTime(0, t + 0.12);
+    } else if (orn === 'v') {
+      src.detune.setValueAtTime(0, t + Math.max(0.1, dur - 0.2));
+      src.detune.linearRampToValueAtTime(-200, t + dur);
+    }
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3200; lp.Q.value = 0.5;
+    const g = c.createGain();
+    g.gain.setValueAtTime(gain, t);
+    g.gain.setValueAtTime(gain, t + ring - 0.12);
+    g.gain.linearRampToValueAtTime(0, t + ring);
+    src.connect(lp); lp.connect(g);
+    route(E, g, 0.28);
+    src.start(t); src.stop(t + ring + 0.02);
+  }
+
+  // Daegeum: breathy bamboo flute. Sine body, octave overtone, the buzzing
+  // cheongong membrane (bandpassed saw), breath noise, delayed vibrato.
+  function daegeum(E, f, t, dur, gain, orn) {
+    const c = E.c;
+    const d = Math.max(dur, 0.18);
+    const end = t + d + 0.14;
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+    const o2 = c.createOscillator(); o2.type = 'triangle'; o2.frequency.value = f * 2;
+    const saw = c.createOscillator(); saw.type = 'sawtooth'; saw.frequency.value = f;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(f * 5, 6000); bp.Q.value = 4;
+    const g2 = c.createGain(); g2.gain.value = 0.18;
+    const gb = c.createGain(); gb.gain.value = 0.09;
+    const lfo = c.createOscillator(); lfo.frequency.value = 5;
+    const depth = c.createGain();
+    const vib = orn === '~' ? 45 : 18;
+    depth.gain.setValueAtTime(0, t);
+    depth.gain.linearRampToValueAtTime(0, t + Math.min(0.3, d * 0.5));
+    depth.gain.linearRampToValueAtTime(vib, t + d);
+    lfo.connect(depth);
+    [o, o2, saw].forEach(osc => {
+      depth.connect(osc.detune);
+      if (orn === '^') {
+        osc.detune.setValueAtTime(-180, t);
+        osc.detune.linearRampToValueAtTime(0, t + 0.1);
+      } else if (orn === 'v') {
+        osc.detune.setValueAtTime(0, t + Math.max(0.1, d - 0.18));
+        osc.detune.linearRampToValueAtTime(-250, t + d + 0.1);
       }
-      step++;
-    }, stepMs);
+    });
+    const a = env(E, t, 0.06, gain, Math.max(0.01, d - 0.06), 0.14);
+    o.connect(a); o2.connect(g2); g2.connect(a); saw.connect(bp); bp.connect(gb); gb.connect(a);
+    // breath on the attack
+    const br = noiseSrc(E, t, 0.25);
+    const bbp = c.createBiquadFilter(); bbp.type = 'bandpass'; bbp.frequency.value = Math.min(f * 3, 7000); bbp.Q.value = 0.8;
+    const bg = env(E, t, 0.02, gain * 0.35, 0.03, 0.18);
+    br.connect(bbp); bbp.connect(bg);
+    route(E, a, 0.35); route(E, bg, 0.2);
+    [o, o2, saw, lfo].forEach(osc => { osc.start(t); osc.stop(end + 0.02); });
+  }
+
+  // Pulse lead: the SNES-era square with a touch of delayed vibrato.
+  function pulse(E, f, t, dur, gain, orn) {
+    const c = E.c;
+    const d = Math.max(dur * 0.92, 0.06);
+    const o = c.createOscillator();
+    o.setPeriodicWave(E.pulse25);
+    o.frequency.value = f;
+    if (orn === '~' && d > 0.25) {
+      const lfo = c.createOscillator(); lfo.frequency.value = 6;
+      const depth = c.createGain();
+      depth.gain.setValueAtTime(0, t);
+      depth.gain.linearRampToValueAtTime(0, t + 0.15);
+      depth.gain.linearRampToValueAtTime(30, t + d);
+      lfo.connect(depth); depth.connect(o.detune);
+      lfo.start(t); lfo.stop(t + d + 0.1);
+    } else if (orn === '^') {
+      o.detune.setValueAtTime(-100, t);
+      o.detune.linearRampToValueAtTime(0, t + 0.05);
+    } else if (orn === 'v') {
+      o.detune.setValueAtTime(0, t + Math.max(0.05, d - 0.12));
+      o.detune.linearRampToValueAtTime(-200, t + d);
+    }
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 4200;
+    const a = env(E, t, 0.005, gain, Math.max(0.01, d - 0.05), 0.06);
+    o.connect(lp); lp.connect(a);
+    route(E, a, 0.15);
+    o.start(t); o.stop(t + d + 0.1);
+  }
+
+  const VOICES = { gayageum, daegeum, pulse };
+  const VOICE_GAIN = { gayageum: 0.2, daegeum: 0.16, pulse: 0.07 };
+
+  function bassNote(E, f, t, dur, gain) {
+    const o = E.c.createOscillator();
+    o.type = 'triangle'; o.frequency.value = f;
+    const a = env(E, t, 0.008, gain, Math.max(0.01, dur - 0.06), 0.06);
+    o.connect(a); route(E, a, 0);
+    o.start(t); o.stop(t + dur + 0.1);
+  }
+
+  function padChord(E, freqs, t, dur) {
+    const c = E.c;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.3;
+    const a = env(E, t, Math.min(0.5, dur * 0.3), 0.022, Math.max(0.01, dur * 0.5), dur * 0.4);
+    lp.connect(a); route(E, a, 0.5);
+    freqs.forEach(f => [-7, 7].forEach(cents => {
+      const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = cents;
+      o.connect(lp); o.start(t); o.stop(t + dur + 0.1);
+    }));
+  }
+
+  function arpNote(E, f, t, dur) {
+    const o = E.c.createOscillator();
+    o.setPeriodicWave(E.pulse12); o.frequency.value = f;
+    const a = env(E, t, 0.003, 0.022, Math.max(0.01, dur * 0.5), dur * 0.3);
+    o.connect(a); route(E, a, 0.2);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  // ── Percussion ──
+  function kung(E, t, gain) {
+    const c = E.c;
+    const o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(72, t + 0.09);
+    const a = env(E, t, 0.004, 0.32 * gain, 0.02, 0.32);
+    o.connect(a); route(E, a, 0.12);
+    o.start(t); o.stop(t + 0.4);
+  }
+
+  function deok(E, t, gain) {
+    const c = E.c;
+    const n = noiseSrc(E, t, 0.1);
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2900; bp.Q.value = 1.4;
+    const a = env(E, t, 0.002, 0.22 * gain, 0.005, 0.07);
+    n.connect(bp); bp.connect(a); route(E, a, 0.18);
+    const o = c.createOscillator(); o.type = 'triangle';
+    o.frequency.setValueAtTime(780, t);
+    o.frequency.exponentialRampToValueAtTime(380, t + 0.04);
+    const b = env(E, t, 0.002, 0.1 * gain, 0.003, 0.045);
+    o.connect(b); route(E, b, 0.1);
+    o.start(t); o.stop(t + 0.08);
+  }
+
+  function buk(E, t, gain) {
+    const c = E.c;
+    const o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(95, t);
+    o.frequency.exponentialRampToValueAtTime(46, t + 0.18);
+    const a = env(E, t, 0.004, 0.42 * gain, 0.03, 0.5);
+    o.connect(a); route(E, a, 0.15);
+    o.start(t); o.stop(t + 0.6);
+    const n = noiseSrc(E, t, 0.08);
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500;
+    const b = env(E, t, 0.002, 0.18 * gain, 0.005, 0.06);
+    n.connect(lp); lp.connect(b); route(E, b, 0);
+  }
+
+  // Kkwaenggwari: the small brass gong that drives pungmul.
+  function kkwaenggwari(E, t, gain) {
+    const c = E.c;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 1.8;
+    const a = env(E, t, 0.002, 0.05 * gain, 0.01, 0.12);
+    bp.connect(a); route(E, a, 0.2);
+    [1180, 1735, 2410].forEach(f => {
+      const o = c.createOscillator(); o.type = 'square'; o.frequency.value = f;
+      o.connect(bp); o.start(t); o.stop(t + 0.16);
+    });
+  }
+
+  // Jing: the big gong, slow swell with beating partials.
+  function jing(E, t, gain) {
+    const c = E.c;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+    const a = c.createGain();
+    a.gain.setValueAtTime(0.0001, t);
+    a.gain.exponentialRampToValueAtTime(0.12 * gain, t + 0.08);
+    a.gain.exponentialRampToValueAtTime(0.0001, t + 4.2);
+    lp.connect(a); route(E, a, 0.45);
+    [[152, 1], [153.6, 0.8], [306.5, 0.35], [458, 0.18], [611, 0.08]].forEach(([f, lvl]) => {
+      const o = c.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(f * 1.01, t);
+      o.frequency.exponentialRampToValueAtTime(f, t + 1.2);
+      const g = c.createGain(); g.gain.value = lvl;
+      o.connect(g); g.connect(lp); o.start(t); o.stop(t + 4.3);
+    });
+  }
+
+  // ── Sequencer ──
+  function degHz(P, deg, oct) {
+    const sc = BGM_SCALES[P.song.scale];
+    const o = Math.floor(deg / 5);
+    const i = ((deg % 5) + 5) % 5;
+    return P.song.root * Math.pow(2, oct + o + sc[i] / 12);
+  }
+
+  function scheduleStep(E, P, g, t) {
+    const song = P.song, L = P.L, st = song.step;
+    const barIdx = Math.floor(g / L), s = g % L;
+    const bar = P.bars[barIdx];
+    const sec = bar.sec;
+    const isBeat = P.jd.beats.includes(s);
+    const drums = song.drums == null ? 0.8 : song.drums;
+    // janggu
+    const hit = P.jd.hits[s];
+    if (hit === 'D') { kung(E, t, drums); deok(E, t, drums); }
+    else if (hit === 'K') kung(E, t, drums * 0.85);
+    else if (hit === 'T') deok(E, t, drums * 0.9);
+    else if (hit === 'k') deok(E, t, drums * 0.45);
+    if (song.buk && (s === 0 || (s === P.jd.beats[2] && L > 8))) buk(E, t, 1);
+    if (song.kkw) {
+      if (isBeat) kkwaenggwari(E, t, s === 0 ? 1.2 : 0.9);
+      else if (s % 2 === 1) kkwaenggwari(E, t, 0.45);
+    }
+    if (s === 0 && bar.first && sec.jing) jing(E, t, 1);
+    // bass
+    const bd = bar.bass;
+    const style = song.bass;
+    if (style === 'drone') {
+      if (s === 0) bassNote(E, degHz(P, bd, -1), t, L * st * 0.98, 0.16);
+    } else if (style === 'pulse') {
+      if (isBeat) bassNote(E, degHz(P, bd, -1), t, st * 2.4, 0.15);
+    } else if (style === 'walk') {
+      if (isBeat) {
+        const bi = P.jd.beats.indexOf(s);
+        bassNote(E, degHz(P, bi % 2 ? bd + 3 : bd, -1), t, st * 2.2, 0.15);
+      }
+    } else if (style === 'drive') {
+      bassNote(E, degHz(P, s % 4 === 3 ? bd + 5 : bd, -1), t, st * 0.85, isBeat ? 0.16 : 0.11);
+    }
+    if (s === 0 && sec.pad) padChord(E, [degHz(P, bd, 0), degHz(P, bd + 2, 0), degHz(P, bd + 4, 0)], t, L * st);
+    if (sec.arp) {
+      const cyc = [0, 2, 4, 5, 4, 2];
+      arpNote(E, degHz(P, bd + 5 + cyc[g % cyc.length], 0), t, st);
+    }
+    // lead + heterophonic echo (same line, a beat late, an octave down)
+    const ev = P.mel[g];
+    if (ev && sec.lead) {
+      VOICES[sec.lead](E, degHz(P, ev.deg, 1), t, ev.len * st, VOICE_GAIN[sec.lead], ev.orn);
+    }
+    if (sec.echo) {
+      const lag = P.jd.beats[1] || 2;
+      const ev2 = P.mel[(g - lag + P.total) % P.total];
+      if (ev2) VOICES[sec.echo](E, degHz(P, ev2.deg, sec.echo === 'gayageum' ? 0 : 1), t, ev2.len * st, VOICE_GAIN[sec.echo] * 0.55, '');
+    }
+  }
+
+  const LOOKAHEAD = 0.2;
+  function tick() {
+    if (!player || !live) return;
+    const c = live.c;
+    if (player.nextT < c.currentTime) player.nextT = c.currentTime + 0.05;
+    const st = player.P.song.step;
+    while (player.nextT < c.currentTime + LOOKAHEAD) {
+      if (!muted && !paused) scheduleStep(live, player.P, player.g, player.nextT);
+      player.g = (player.g + 1) % player.P.total;
+      player.nextT += st;
+    }
+  }
+
+  const compiled = {};
+  function getCompiled(key) {
+    if (!compiled[key] && BGM_SONGS[key]) compiled[key] = compileBgmSong(BGM_SONGS[key]);
+    return compiled[key];
+  }
+
+  function stopPlayer() {
+    if (timer) { clearInterval(timer); timer = null; }
+    player = null;
+  }
+
+  function startPlayer(key) {
+    const E = ensureLive();
+    player = { P: getCompiled(key), g: 0, nextT: E.c.currentTime + 0.08 };
+    tick();
+    timer = setInterval(tick, 50);
   }
 
   function fadeMaster(targetGain, ms) {
-    const c = ctx();
-    const m = ensureMaster();
-    const t0 = c.currentTime;
+    const E = ensureLive();
+    const m = E.master, t0 = E.c.currentTime;
     m.gain.cancelScheduledValues(t0);
     m.gain.setValueAtTime(m.gain.value || 0.0001, t0);
     m.gain.linearRampToValueAtTime(targetGain, t0 + ms / 1000);
   }
 
-  function audibleGain() { return (muted || paused || !currentTheme) ? 0 : 1; }
+  function audibleGain() { return (muted || paused || !playingKey) ? 0 : 1; }
 
-  function setTheme(theme) {
-    if (theme === currentTheme) return;
-    const preset = BGM_PRESETS[theme];
-    if (!preset) return;
-    currentTheme = theme;
-    // Two quick theme changes (e.g. a double level-up) used to race: both
-    // timeouts built a synth and the first one leaked. Only the latest wins.
+  // Crossfade to a song. Two quick switches (a double level-up, boss death
+  // followed by a map change) race; only the latest generation builds.
+  function switchTo(key) {
+    if (!key || key === playingKey || !BGM_SONGS[key]) return;
+    playingKey = key;
     const gen = ++themeGen;
-    fadeMaster(0, 600);
+    fadeMaster(0, 500);
     setTimeout(() => {
       if (gen !== themeGen) return;
-      tearDown();
-      buildSynth(preset);
-      fadeMaster(audibleGain(), 1200);
-    }, 650);
+      stopPlayer();
+      startPlayer(key);
+      fadeMaster(audibleGain(), 1100);
+    }, player ? 540 : 0);
+  }
+
+  function setTheme(theme) {
+    if (!BGM_SONGS[theme] || theme === 'boss') return;
+    currentTheme = theme;
+    if (!boss) switchTo(theme);
+  }
+
+  // Boss fights interrupt the map song; it comes back when the boss falls.
+  function setBoss(v) {
+    v = !!v;
+    if (v === boss) return;
+    boss = v;
+    switchTo(boss ? 'boss' : currentTheme);
   }
 
   function setMuted(v) {
@@ -5989,45 +6908,61 @@ const Bgm = (function () {
 
   function isMuted() { return muted; }
 
+  // Render a song offline (tests and previews). Returns an AudioBuffer.
+  function render(key, seconds, sampleRate) {
+    const sr = sampleRate || 44100;
+    const c = new OfflineAudioContext(2, Math.ceil(sr * seconds), sr);
+    const master = c.createGain();
+    master.connect(c.destination);
+    const E = makeEnv(c, master);
+    const P = getCompiled(key);
+    for (let g = 0, t = 0.05; t < seconds - 0.5; g++, t += P.song.step) scheduleStep(E, P, g % P.total, t);
+    return c.startRendering();
+  }
+
+  function state() { return { playing: playingKey, theme: currentTheme, boss, muted, paused, step: player ? player.g : -1 }; }
+
   try {
     const stored = localStorage.getItem('hangul-type-bgm-muted');
     if (stored === '1') muted = true;
   } catch (_) {}
 
-  return { setTheme, setMuted, setPaused, isMuted };
+  return { setTheme, setBoss, setMuted, setPaused, isMuted, render, state, songs: Object.keys(BGM_SONGS) };
 })();
 
 // ─── Story acts (level-milestone narrative beats) ─────────────────────────
 const LEVEL_ACTS = {
+  // Each act names the place the backdrop shows at that level (themeForLevel)
+  // and the boss nextBossProfile spawns for it (battle-config.js bosses.act).
   5: {
     chapter: 'Chapter 2',
-    title: '바람',
-    subtitle: 'The Bamboo Forest',
-    flavor: 'The village is safe, but at the treeline, the air bends. Spirits of the bamboo grove stir, and they remember every word the demons stole.'
+    title: '숲',
+    subtitle: 'The Bamboo Forest · 구미호 여왕',
+    flavor: 'The village is safe, but past the treeline the bamboo whispers. Something with nine tails is following you, and it is hungry.'
   },
   9: {
     chapter: 'Chapter 3',
-    title: '산',
-    subtitle: 'The Mountain Shrine',
-    flavor: 'You climb past the last lantern. A 산신령 watches in silence from the ridge, and the words come faster now: zigzagging like wind through pine.'
+    title: '도깨비',
+    subtitle: 'Deep in the Forest · 도깨비 대장',
+    flavor: 'Deeper in the forest you hear drums and laughter. The goblin chieftain has called his whole clan, and he wants a wrestling match.'
   },
   14: {
     chapter: 'Chapter 4',
-    title: '단청',
-    subtitle: 'Temple of Painted Eaves',
-    flavor: 'Inside the sanctuary, 단청 patterns burn red and gold. The 저승사자 rises through them. Type fast: even the dead can read here.'
+    title: '산',
+    subtitle: 'The Mountain Hermitage · 저승사자',
+    flavor: 'You climb above the clouds to an old hermitage. A man in a black hat waits at the gate with a list of names. Yours is on it.'
   },
   19: {
     chapter: 'Chapter 5',
     title: '궁궐',
-    subtitle: 'The Royal Palace',
-    flavor: 'Gyeongbokgung lies broken. Lanterns flicker on the ruined courtyard. Royal guards have fallen. Only one path remains, and it climbs.'
+    subtitle: 'The Palace Courtyard · 처녀귀신',
+    flavor: 'Plum blossoms fall on an empty palace courtyard. A pale figure in white stands under the trees. She has waited a long time for you.'
   },
   23: {
     chapter: 'Final Chapter',
-    title: '별',
-    subtitle: 'Cosmos · 한글왕 awaits',
-    flavor: 'The seal breaks the sky open. You stand among constellations, the keyboard glowing in your hands. One Demon King left. One language to save.'
+    title: '진영',
+    subtitle: 'The Army Camp · 한글왕 awaits',
+    flavor: 'The army camp is silent, banners down and fires out. The Demon King of Hangeul sits in the general\'s tent with every stolen letter.'
   }
 };
 
@@ -6043,7 +6978,7 @@ function showActBreak(act) {
       <div class="act-title">${escapeHtml(act.title)}</div>
       <div class="act-subtitle">${escapeHtml(act.subtitle)}</div>
       <div class="act-flavor">${escapeHtml(act.flavor)}</div>
-      <div class="act-prompt">click or press space to continue</div>
+      <div class="act-prompt">${window.matchMedia(TOUCH_LAYOUT_MQ).matches ? 'tap to continue' : 'click or press space to continue'}</div>
     </div>`;
   document.body.appendChild(overlay);
   // Stinger sound — soft gong
@@ -6143,6 +7078,7 @@ function onLevelUp() {
   // longer count, the player gets a clean recognition→recall arc per level.
   state.levelWordHistory = [];
   prewarmNextTheme(state.level);
+  preloadFramesForLevel(state.level);
 }
 
 // Banner queue: at most 3 items, no consecutive dupes, never overlaps.
@@ -6476,6 +7412,24 @@ function invalidateStageRect() {
 }
 window.addEventListener('resize', invalidateStageRect, { passive: true });
 window.addEventListener('orientationchange', invalidateStageRect, { passive: true });
+// Touch layouts pin the stage under the HUD, whose height changes with the
+// notch inset, the compact landscape row, and font loading. Publish it as
+// --hud-h so the stage and XP bar start right below it.
+(function trackHudHeight() {
+  const hud = document.querySelector('.hud');
+  if (!hud) return;
+  let last = -1;
+  const publish = () => {
+    const h = Math.ceil(hud.getBoundingClientRect().height);
+    if (h === last || !h) return;
+    last = h;
+    document.documentElement.style.setProperty('--hud-h', h + 'px');
+    invalidateStageRect();
+  };
+  publish();
+  if (window.ResizeObserver) new ResizeObserver(publish).observe(hud);
+  window.addEventListener('resize', publish, { passive: true });
+})();
 
 function clamp01(n) {
   return Math.max(0, Math.min(1, n));
@@ -6518,6 +7472,69 @@ function monsterDepth(m) {
   return clamp01((yPx - horizonY) / Math.max(1, floorY - horizonY));
 }
 
+// Counter-scale for the word bubble at a given depth scale (see the
+// comment in renderMonsterDepth).
+function wordCounterScale(scale) {
+  const ss = spriteScale();
+  const farBoost = 1 + 0.55 * clamp01((ss - 0.42) / 0.58) * clamp01((ss - 0.42) / 0.58);
+  const wordFit = Math.max(0.7, Math.min(1, ss * 1.4));
+  return Math.min(1 / scale, farBoost) * wordFit;
+}
+
+// Short stages (landscape phones, under 250px tall): the stock kill line let
+// word bubbles slide off the stage bottom (behind the keyboard) and over the
+// player. These helpers find the lowest monster.y whose bubble bottom stays
+// above a limit, from the untransformed layout box and the depth scale.
+const SHORT_STAGE_PX = 250;
+function isShortStage() {
+  const r = getStageRect();
+  return !!(r && r.height && r.height < SHORT_STAGE_PX);
+}
+function bubbleBottomAt(m, y) {
+  const scale = depthScaleAtPx(y);
+  return y + scale * (m._wordTop + m._wordH * wordCounterScale(scale));
+}
+function maxYForBubble(m, limit) {
+  let lo = -200, hi = getStageRect().height;
+  if (bubbleBottomAt(m, lo) > limit) return lo;
+  for (let i = 0; i < 18; i++) {
+    const mid = (lo + hi) / 2;
+    if (bubbleBottomAt(m, mid) <= limit) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+// Caches, per monster and stage height: the y where the bubble meets the
+// stage bottom (inStage) and where it meets the player's head (abovePlayer),
+// plus a travel multiplier that keeps the old time-to-reach on the shorter
+// path. Returns null on normal stages.
+function shortStageLimits(m, defaultKillY) {
+  if (!m.el || !isShortStage()) return null;
+  const r = getStageRect();
+  if (m._limits && m._limits.h === r.height) return m._limits;
+  const word = m.el.querySelector('.word');
+  if (!word) return null;
+  m._wordTop = word.offsetTop;
+  m._wordH = word.offsetHeight;
+  const playerH = PLAYER_EL.offsetHeight || r.height * 0.4;
+  const playerTop = r.height - parseFloat(getComputedStyle(PLAYER_EL).bottom || 0) - playerH;
+  const inStage = Math.min(defaultKillY, maxYForBubble(m, r.height - 6));
+  const abovePlayer = Math.min(inStage, maxYForBubble(m, playerTop - 4));
+  if (m._spawnY == null) m._spawnY = m.y;
+  const startY = m._spawnY;
+  const oldPath = Math.max(1, defaultKillY - startY);
+  const travelMul = Math.max(0.2, Math.min(1, (inStage - startY) / oldPath));
+  m._limits = { h: r.height, inStage, abovePlayer, travelMul };
+  return m._limits;
+}
+// True when the bubble's horizontal span overlaps the player's column.
+function overlapsPlayerColumn(m) {
+  const r = getStageRect();
+  const sc = depthScaleAtPx(m.y);
+  const half = ((m._wordW || 80) * sc * wordCounterScale(sc)) / 2 + 6;
+  const pHalf = (PLAYER_EL.offsetWidth || 80) / 2;
+  return Math.abs(m.x - r.width / 2) < half + pHalf;
+}
+
 // Writes only what changed since the last frame: a monster that is holding
 // still (boss at its floor, hit-stop, slow drift) costs no style writes.
 function renderMonsterDepth(m) {
@@ -6548,10 +7565,7 @@ function renderMonsterDepth(m) {
   // short phone stages the far boost fades out with spriteScale, so far
   // bubbles shrink along with their monster, and every bubble shrinks with
   // the sprites (to no less than 0.7).
-  const ss = spriteScale();
-  const farBoost = 1 + 0.55 * clamp01((ss - 0.42) / 0.58) * clamp01((ss - 0.42) / 0.58);
-  const wordFit = Math.max(0.7, Math.min(1, ss * 1.4));
-  const wcNum = Math.min(1 / scale, farBoost) * wordFit;
+  const wcNum = wordCounterScale(scale);
   const wc = wcNum.toFixed(3);
   if (wc !== m._wc) { m._wc = wc; m.el.style.setProperty('--word-counter', wc); }
   // Keep the bubble inside the stage: slide it (never the monster) back from
@@ -6639,7 +7653,7 @@ const PLAYER_BASE_PX = 237;
 // (reaches his stomach when they stand together), tier 2 (gumiho) a touch
 // bigger, tier 4 (jeoseung) ≈ the player's height, tier 5 a touch bigger.
 // Used to land the player flush against the monster regardless of its size.
-const MONSTER_BASE_PX = { 1: 119, 2: 150, 3: 190, 4: 237, 5: 270, boss: 351 };
+const MONSTER_BASE_PX = { 1: 119, 2: 150, 3: 190, 4: 237, 5: 270, 6: 245, 7: 275, 8: 330, boss: 351 };
 
 function teleportPlayerTo(x, y, monster) {
   // Smoke at current position (departure puff)
@@ -7285,7 +8299,7 @@ function nextBossProfile(level) {
   return p;
 }
 
-// Boss entrance: letterbox bars, the boss's 384px portrait (falls back to
+// Boss entrance: letterbox bars, the boss's 768px portrait (falls back to
 // the battle sprite for bosses without one) in a framed medallion, then
 // name / subtitle / flavor.
 function playBossCutscene(profile) {
@@ -7315,10 +8329,18 @@ function playBossCutscene(profile) {
     <div class="boss-subtitle">${subtitle}</div>
     <div class="boss-flavor">${flavor}</div>`;
   // Replace inline onerror=… (attribute-injection prone) with a safe handler.
+  // Missing portrait: fall back to the battle sprite, then to the emoji.
   const img = cs.querySelector('.sprite-img');
-  if (img) img.addEventListener('error', () => {
+  const onImgError = () => {
+    if (portraitFile && spriteFile && !img.src.endsWith(`sprites/${spriteFile}.png`)) {
+      cs.querySelector('.boss-portrait').classList.add('sprite-only');
+      img.src = `sprites/${spriteFile}.png`;
+      return;
+    }
+    img.removeEventListener('error', onImgError);
     img.replaceWith(document.createTextNode(profile.emoji || ''));
-  }, { once: true });
+  };
+  if (img) img.addEventListener('error', onImgError);
   document.body.appendChild(cs);
   setTimeout(() => { cs.remove(); flushPendingAutoPause(); }, 1550);
 }
@@ -7519,8 +8541,9 @@ const SHIELD = document.getElementById('shield');
 // ── Per-jamo miss tracking (shared with practice mode stats store) ────────
 const JAMO_STATS_KEY = 'hangul-type-stats-v1';
 // Phones in either orientation (portrait by width, landscape by coarse
-// pointer + short viewport). Mirrors the touch-layout @media query in CSS.
-const TOUCH_LAYOUT_MQ = '(max-width: 720px), (pointer: coarse) and (max-height: 500px)';
+// pointer + short viewport) and tablets (touch-only, no hover). Mirrors the
+// touch-layout @media query in CSS.
+const TOUCH_LAYOUT_MQ = '(max-width: 720px), (pointer: coarse) and (max-height: 500px), (hover: none) and (pointer: coarse)';
 // Per-keystroke localStorage read/parse/write was a hot-path cost; tally in
 // memory and merge into the shared store at game over (and on page hide).
 let _jamoStatsPending = {};
@@ -7892,6 +8915,7 @@ function loop(t) {
     tickPowerups(dt);
     // Progressive recall hints (fade hidden syllables in over time)
     tickRecallReveals(dt);
+    tickMonsterSay(frameDt);
     // Daily run: tick countdown timer and end run when it hits zero
     if (state.dailyRun) {
       state.dailyTimeLeft = (state.dailyTimeLeft || 0) - frameDt;
@@ -7938,43 +8962,72 @@ function loop(t) {
 
     const dts = (dt / 1000) * slowMul * fastMul;
     for (const m of state.monsters) {
+      // Short stages walk a shorter path at a matching slower pace.
+      const lim = shortStageLimits(m, m.isBoss ? bossFloorY() : baseY - 50);
+      const dtsM = lim && !m.isBoss ? dts * lim.travelMul : dts;
       // Per-tier flight pattern
       if (m.motion === 'zigzag') {
-        m.y += m.speed * dts;
-        m.zigT += dts;
-        m.x = m.originX + Math.sin(m.zigT * m.zigFreq) * m.zigAmp;
+        m.y += m.speed * dtsM;
+        // Swing scales with the stage so phones don't fold a wave into one
+        // column; the sweep pauses (zigT held) rather than slide onto a label.
+        const amp = Math.min(m.zigAmp, getStageRect().width * 0.15);
+        const zt = m.zigT + dtsM;
+        const nx = m.originX + Math.sin(zt * m.zigFreq) * amp;
+        if (!labelBlocked(m, nx)) { m.zigT = zt; m.x = nx; }
       } else if (m.motion === 'dive') {
-        m.diveSpeed += 16 * dts;       // gentler gravity-like accel (was 30)
-        m.y += m.diveSpeed * dts;
+        m.diveSpeed += 16 * dtsM;       // gentler gravity-like accel (was 30)
+        m.y += m.diveSpeed * dtsM;
       } else if (m.motion === 'hold') {
         // Boss stays framed in place; the cutscene and attack VFX carry the beat.
       } else if (m.motion === 'bossAdvance') {
-        m.y = Math.min(bossFloorY(), m.y + m.speed * dts);
+        m.y = Math.min(bossFloorY(), m.y + m.speed * dtsM);
       } else if (m.motion === 'tracker') {
-        m.y += m.speed * dts;
-        const targetX = window.innerWidth / 2; // player is centered at bottom
+        m.y += m.speed * dtsM;
+        // Lean toward the player (centered at bottom) but stay within
+        // TRACKER_DRIFT_PX of the spawn lane, so a wave of ghosts doesn't
+        // collapse into one column of stacked labels.
+        const center = window.innerWidth / 2;
+        const targetX = Math.max(m.originX - TRACKER_DRIFT_PX, Math.min(m.originX + TRACKER_DRIFT_PX, center));
         const dx = targetX - m.x;
-        const step = Math.sign(dx) * Math.min(Math.abs(dx), 50 * dts);
-        m.x += step;
+        const step = Math.sign(dx) * Math.min(Math.abs(dx), 50 * dtsM);
+        // Hold instead of sliding onto a nearby monster's word label.
+        const nx = m.x + step;
+        if (step !== 0 && !labelBlocked(m, nx)) m.x = nx;
       } else if (m.motion === 'teleport') {
         m.tpT += dt;
         if (m.tpT < m.tpHoldUntil) {
-          m.y += m.speed * dts * 0.4;  // slow drift between hops
+          m.y += m.speed * dtsM * 0.4;  // slow drift between hops
         } else {
           m.tpT = 0;
           m.x = 100 + Math.random() * (window.innerWidth - 200);
           teleportFlash(m);
         }
+      } else if (m.motion === 'hopper') {
+        // Leap for HOP_AIR_MS, then sit; the leap covers the whole cycle's
+        // distance so the average pace matches m.speed.
+        const prev = m.hopT;
+        m.hopT = (m.hopT + dtsM * 1000) % HOP_CYCLE_MS;
+        if (m.hopT < prev) hopLeap(m);
+        if (m.hopT < HOP_AIR_MS) m.y += m.speed * dtsM * (HOP_CYCLE_MS / HOP_AIR_MS);
+      } else if (m.motion === 'blink') {
+        m.y += m.speed * dtsM;
+        tickBlink(m, dtsM * 1000, baseY - 50);
+      } else if (m.motion === 'heavy') {
+        m.y += m.speed * dtsM;
+        heavyStep(m);
       } else {
-        m.y += m.speed * dts;
+        m.y += m.speed * dtsM;
       }
       // Keep within stage bounds horizontally
       const minX = 60, maxX = window.innerWidth - 60;
       if (m.x < minX) m.x = minX;
       if (m.x > maxX) m.x = maxX;
+      // Short stages: the boss holds where its bubble still fits.
+      if (lim && m.isBoss && m.y > lim.inStage) m.y = Math.max(m._spawnY, lim.inStage);
       renderMonsterDepth(m);
       tickMonsterFrames(m, dt * slowMul);
-      if (m.y > baseY - 50) {
+      const killY = lim && !m.isBoss ? (overlapsPlayerColumn(m) ? lim.abovePlayer : lim.inStage) : baseY - 50;
+      if (m.y > killY) {
         // A heart that slips past is a missed pickup, not a hit.
         if (!m.isHeart) {
           state.levelLeaks = (state.levelLeaks || 0) + 1;
@@ -8217,8 +9270,10 @@ function clearRunOverlays() {
   _runTimers.clear();
   state.bossSpawnInMs = 0;
   document.body.classList.remove('boss-alive');
+  if (typeof Bgm !== 'undefined') Bgm.setBoss(false);
   document.querySelectorAll('.act-break, #bossRewardModal, .boss-cutscene').forEach(el => el.remove());
   _bannerQueue.length = 0;
+  clearMonsterSay();
   setFastFall(false);
 }
 
@@ -8226,6 +9281,7 @@ function clearRunOverlays() {
 // mode flags, spawn interval and timers afterwards, then call startRunLoop.
 function resetRunState(startLevel) {
   clearRunOverlays();
+  preloadFramesForLevel(startLevel);
   clearPlayerAnimationTimers();
   state.running = true; state.paused = false;
   state.lives = ADMIN.player.lives;
@@ -8447,6 +9503,14 @@ function setPauseUi(paused) {
   const _compact = window.matchMedia(TOUCH_LAYOUT_MQ).matches;
   document.getElementById('btnMenu').textContent =
     paused ? (_compact ? '▶' : '▶ Resume') : (_compact ? '⏸' : '⏸ Pause');
+  document.getElementById('pauseHint').textContent =
+    _compact ? 'tap Resume to keep playing' : 'press Esc to resume';
+  // Keyboard players: focus Resume so Enter / Space resume too (Esc still
+  // works from the global keydown), then hand focus back to the shield.
+  // Touch layouts skip focus moves so no OS keyboard pops up.
+  if (_compact) return;
+  if (paused) document.getElementById('btnResume').focus({ preventScroll: true });
+  else if (document.activeElement && document.activeElement.id === 'btnResume') SHIELD.focus({ preventScroll: true });
 }
 
 function togglePause() {
@@ -8528,7 +9592,7 @@ document.getElementById('btnDailyRun').addEventListener('click', () => {
   }
   startDailyGame();
 });
-document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html');
+document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html#practice');
 
 // ─── Shareable result card ────────────────────────────────────────────────
 // Renders a 1080×1920 (Instagram story) canvas summarizing the player's run:
@@ -8738,8 +9802,138 @@ document.getElementById('shareNative').addEventListener('click', async () => {
   link.href = cv.toDataURL('image/png');
   link.click();
 });
-document.getElementById('btnBack').addEventListener('click', () => location.href = 'index.html');
+document.getElementById('btnBack').addEventListener('click', () => location.href = 'index.html#practice');
+
+// ─── 요괴 도감 modal ───────────────────────────────────────────────────────
+// One card per regular tier and per boss. Locked (never defeated) entries
+// show a black silhouette and ???. While open, a capture-phase keydown
+// listener keeps every key away from the battle handlers; Esc closes.
+(function setupBestiary() {
+  const cfg = window.BATTLE_CONFIG || {};
+  let veil = null, opener = null;
+
+  function card({ key, img, emoji, name, roman, en, note, boss }, kills) {
+    const unlocked = kills > 0;
+    const c = document.createElement('div');
+    c.className = 'bestiary-card' + (boss ? ' boss' : '') + (unlocked ? '' : ' locked');
+    c.dataset.key = key;
+    const art = document.createElement('div');
+    art.className = 'bc-art';
+    const im = document.createElement('img');
+    im.alt = '';
+    im.loading = 'lazy';
+    im.src = img;
+    im.addEventListener('error', () => { art.textContent = unlocked ? emoji : '?'; }, { once: true });
+    art.appendChild(im);
+    const text = document.createElement('div');
+    const line = (cls, s) => { const d = document.createElement('div'); d.className = cls; d.textContent = s; text.appendChild(d); };
+    line('bc-name', unlocked ? name : '???');
+    if (unlocked) {
+      line('bc-roman', roman || '');
+      line('bc-en', en || '');
+      line('bc-note', note || '');
+    } else {
+      line('bc-note', boss ? 'Defeat this boss to learn its story.' : 'Defeat one to fill in this page.');
+    }
+    line('bc-kills', unlocked ? `처치 ${kills}` : '처치 0');
+    c.append(art, text);
+    return c;
+  }
+
+  function entries() {
+    const info = cfg.tierInfo || {};
+    const tiers = Object.keys(cfg.enemyTiers || {}).map(Number).sort((a, b) => a - b).map(t => ({
+      key: 'tier:' + t, boss: false,
+      img: `sprites/${cfg.enemyTiers[t]}-walk-1.png`,
+      emoji: ((cfg.tierEmoji || {})[t] || ['👹'])[0],
+      name: (info[t] && info[t].name) || 'Tier ' + t,
+      roman: info[t] && info[t].roman, en: info[t] && info[t].en, note: info[t] && info[t].note
+    }));
+    const bosses = (cfg.bosses || []).slice().sort((a, b) => a.act - b.act).map(b => ({
+      key: 'boss:' + b.sprite, boss: true,
+      img: `sprites/${b.sprite}.png`, emoji: b.emoji,
+      name: b.name, roman: b.roman, en: b.subtitle, note: b.note
+    }));
+    return { tiers, bosses };
+  }
+
+  function render() {
+    const kills = loadBestiary().kills;
+    const { tiers, bosses } = entries();
+    const body = veil.querySelector('.bestiary-body');
+    body.innerHTML = '';
+    const section = (label, list) => {
+      const h = document.createElement('div');
+      h.className = 'bestiary-section';
+      h.textContent = label;
+      const g = document.createElement('div');
+      g.className = 'bestiary-grid';
+      list.forEach(e => g.appendChild(card(e, kills[e.key] || 0)));
+      body.append(h, g);
+    };
+    section('요괴 · Demons', tiers);
+    section('두목 · Bosses', bosses);
+    const all = tiers.concat(bosses);
+    const found = all.filter(e => kills[e.key] > 0).length;
+    veil.querySelector('.bestiary-count').textContent = `${found} / ${all.length} found`;
+  }
+
+  function build() {
+    veil = document.createElement('div');
+    veil.className = 'modal-veil bestiary-veil';
+    veil.id = 'bestiaryModal';
+    veil.hidden = true;
+    veil.setAttribute('role', 'dialog');
+    veil.setAttribute('aria-modal', 'true');
+    veil.setAttribute('aria-labelledby', 'bestiaryTitle');
+    veil.innerHTML = `
+      <div class="modal-card rpg-panel bestiary-panel">
+        <div class="bestiary-head">
+          <h2 id="bestiaryTitle">요괴 도감</h2>
+          <span class="bestiary-count"></span>
+          <button type="button" class="rpg-btn rpg-btn--ghost bestiary-close" aria-label="Close bestiary">✕ Close</button>
+        </div>
+        <div class="bestiary-body"></div>
+      </div>`;
+    veil.addEventListener('click', (e) => { if (e.target === veil) close(); });
+    veil.querySelector('.bestiary-close').addEventListener('click', close);
+    document.body.appendChild(veil);
+  }
+
+  function onKey(e) {
+    if (!veil || veil.hidden) return;
+    e.stopPropagation();
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Tab') { e.preventDefault(); veil.querySelector('.bestiary-close').focus(); }
+  }
+
+  function open(surface) {
+    if (!veil) build();
+    opener = document.activeElement;
+    render();
+    veil.hidden = false;
+    window.addEventListener('keydown', onKey, true);
+    veil.querySelector('.bestiary-close').focus({ preventScroll: true });
+    if (typeof track === 'function') track('bestiary_open', { surface: surface || 'unknown' });
+  }
+
+  function close() {
+    if (!veil || veil.hidden) return;
+    veil.hidden = true;
+    window.removeEventListener('keydown', onKey, true);
+    if (opener && opener.focus) { try { opener.focus({ preventScroll: true }); } catch (e) {} }
+    opener = null;
+  }
+
+  window.openBestiary = open;
+  window.closeBestiary = close;
+  const bi = document.getElementById('btnBestiaryIntro');
+  const bo = document.getElementById('btnBestiaryOver');
+  if (bi) bi.addEventListener('click', () => open('intro'));
+  if (bo) bo.addEventListener('click', () => open('game_over'));
+})();
 document.getElementById('btnMenu').addEventListener('click', () => state.running && togglePause());
+document.getElementById('btnResume').addEventListener('click', () => { if (state.running && state.paused) togglePause(); });
 document.getElementById('btnAudio').addEventListener('click', toggleAudio);
 (function wireBgmToggle() {
   const btn = document.getElementById('btnBgm');
@@ -8754,13 +9948,6 @@ document.getElementById('btnAudio').addEventListener('click', toggleAudio);
     const wasMuted = Bgm.isMuted();
     Bgm.setMuted(!wasMuted);
     try { localStorage.setItem('hangul-type-bgm-muted', wasMuted ? '0' : '1'); } catch (_) {}
-    // Kick the current theme on un-mute (in case nothing is playing yet)
-    if (wasMuted && document.body.className.match(/theme-(\w+)/)) {
-      const t = document.body.className.match(/theme-(\w+)/)[1];
-      // Force re-trigger by clearing the cached theme via setTheme(null)-like trick:
-      // easiest path is to re-call setTheme on a different value first, then back.
-      Bgm.setTheme('__reset__'); Bgm.setTheme(t);
-    }
     render();
   });
   render();

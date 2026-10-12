@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Type Hangeul · Korean Typing Practice for TOPIK IBT &amp; Online Exam</title>
 <meta name="description" content="Practice Korean typing on a QWERTY keyboard, no IME needed. Free tool built for TOPIK IBT: TOPIK 1 &amp; TOPIK 2 vocabulary, per-jamo accuracy heatmap, and a live WPM counter so you can track your speed before the online exam.">
 <meta name="keywords" content="TOPIK IBT typing, TOPIK online exam typing, type Korean for TOPIK, korean typing practice, TOPIK 2 typing, Korean keyboard TOPIK, learn korean keyboard, hangul typing, 한글 타자, TOPIK internet based test, korean keyboard practice, type korean QWERTY, korean wpm, TOPIK writing typing">
@@ -36,13 +36,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ui.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: inherit; }
   :root {
-    --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
-    --bd: #e2e8f0;   --bdhi: #cbd5e1;
-    --thi: #0f172a;  --tmd: #475569;   --tlo: #64748b; /* slate-500: 4.6:1 on white, WCAG AA */
+    /* Hanji-light surfaces: warm paper, ink text (tokens from ui.css) */
+    --bg: var(--hanji); --l1: var(--paper); --l2: #fbf3e2;   --l3: #f3e7cc;
+    --bd: #e0d0ae;   --bdhi: #b9a37a;
+    --thi: var(--ink); --tmd: #4a4436;  --tlo: #6b6250; /* 5.3:1 on paper, WCAG AA */
     --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
     --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
     --korean: 'Noto Sans KR', 'Inter', sans-serif;
@@ -53,10 +55,11 @@
   html, body { margin: 0; padding: 0; }
   body {
     background-color: var(--bg);
+    /* Hanji paper: long fibers + fine grain, both very low contrast */
     background-image:
-      linear-gradient(rgba(96,165,250,0.32) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(96,165,250,0.32) 1px, transparent 1px);
-    background-size: 18px 18px;
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.22' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0 0.28 0 0 0 0.9 -0.52'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.33 0 0 0 0 0.2 0 0 0 0.28 -0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 320px 320px, 160px 160px;
     color: var(--thi);
     font-family: 'Inter', system-ui, sans-serif;
     font-size: 14px;
@@ -69,13 +72,14 @@
     gap: 16px;
     margin-bottom: 24px;
     padding-bottom: 14px;
-    border-bottom: 1px solid var(--bd);
+    border-bottom: 2px solid var(--ink);
+    box-shadow: 0 3px 0 -1px var(--hanji-edge);
   }
   .brand { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-  .brand-logo { display: block; width: 32px; height: 32px; border-radius: 8px; }
+  .brand-logo { display: block; width: 32px; height: 32px; border-radius: var(--r-2); box-shadow: 0 0 0 2px var(--ink); }
   .brand h1 {
     margin: 0;
-    font-family: 'Black Han Sans', 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+    font-family: var(--font-display);
     font-size: 22px;
     font-weight: 400;
     letter-spacing: 0.02em;
@@ -117,12 +121,8 @@
     padding: 28px 36px;
     flex: 1 1 0;
     min-width: 0;
-    background-image:
-      linear-gradient(rgba(96,165,250,0.10) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(96,165,250,0.10) 1px, transparent 1px);
-    background-size: 18px 18px;
   }
-  @media (max-width: 700px) {
+  @media (max-width: 720px) {
     .practice-main { flex-direction: column; align-items: stretch; }
   }
 
@@ -133,14 +133,16 @@
     display: none;
     align-items: center;
     justify-content: center;
-    width: 40px; height: 40px;
-    border: 1px solid var(--bd);
-    border-radius: 10px;
-    background: var(--l1);
+    width: 44px; height: 44px;
+    border: 2px solid var(--ink);
+    border-radius: var(--r-2);
+    background: var(--paper);
+    box-shadow: 0 3px 0 var(--ink);
     color: var(--thi);
     cursor: pointer;
     padding: 0;
   }
+  .mobile-menu-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
   .mobile-menu-btn .bars,
   .mobile-menu-btn .bars::before,
   .mobile-menu-btn .bars::after {
@@ -155,7 +157,7 @@
   .mobile-menu-btn .bars::before { position: absolute; top: -6px; left: 0; }
   .mobile-menu-btn .bars::after { position: absolute; top: 6px; left: 0; }
   .mobile-menu-popover { display: none; }
-  @media (max-width: 700px) {
+  @media (max-width: 720px) {
     body { font-size: 14px; }
     .wrap { padding: 14px 10px 28px; }
     header {
@@ -173,7 +175,7 @@
     .header-mid { display: none; }
     .stats { justify-content: flex-end; gap: 10px; width: auto; }
     .stat { text-align: right; }
-    .stat-label { font-size: 8px; }
+    .stat-label { font-size: 10px; }
     .stat-value { font-size: 12px; }
     .stat.primary .stat-value { font-size: 22px; }
     .mobile-menu-btn { display: inline-flex; }
@@ -183,20 +185,19 @@
       right: 0;
       z-index: 60;
       min-width: 196px;
-      padding: 8px;
-      background: var(--l1);
-      border: 1px solid var(--bd);
-      border-radius: 12px;
-      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+      padding: 10px;
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      border-radius: var(--r-2);
+      box-shadow: 3px 3px 0 rgba(16, 19, 31, 0.16);
     }
     .mobile-menu-popover.open { display: grid; gap: 6px; }
     .mobile-actions .home-btn,
     .mobile-actions .icon-btn {
       width: 100%;
-      min-height: 40px;
+      min-height: 44px;
       justify-content: flex-start;
-      border-radius: 9px;
-      padding: 8px 14px;
+      padding: 8px 14px 8px 22px;
       gap: 12px;
       font-size: 14px;
     }
@@ -221,7 +222,7 @@
     .target .word.sm { font-size: 22px; gap: 6px; }
     .keyboard { display: block; }
 
-    .btn { min-height: 36px; padding: 9px 14px; font-size: 13px; }
+    .btn { min-height: 44px; padding: 9px 14px; font-size: 13px; }
     .topics { gap: 8px; }
   }
   @media (max-width: 400px) {
@@ -230,10 +231,15 @@
     .target .word.md { font-size: 22px; }
     .target .word.sm { font-size: 20px; }
   }
+  /* Paper panel with an ink frame (matches .rpg-panel--light in ui.css) */
   .card {
-    background: rgba(255,255,255,0.92);
-    border: 1px solid var(--bd);
-    border-radius: 14px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--r-2);
+    box-shadow:
+      inset 0 0 0 3px var(--paper),
+      inset 0 0 0 4px var(--hanji-edge),
+      3px 3px 0 rgba(16, 19, 31, 0.16);
     padding: 22px;
   }
 
@@ -261,11 +267,12 @@
     top: 32px; left: 50%;
     transform: translateX(-50%) translateY(-20px);
     z-index: 9999;
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
+    background: var(--panel-solid);
+    color: var(--cream);
+    border: 3px solid var(--frame);
     padding: 12px 20px;
-    border-radius: 14px;
-    box-shadow: 0 10px 28px rgba(16, 185, 129, 0.45);
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px var(--ink), 0 12px 28px rgba(16, 19, 31, 0.4);
     display: flex; align-items: center; gap: 12px;
     pointer-events: none;
     animation: topic-toast-pop 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
@@ -277,7 +284,7 @@
     font-size: 14px; font-weight: 600;
     line-height: 1.3;
   }
-  .topic-complete-toast .msg strong { font-weight: 800; letter-spacing: 0.01em; }
+  .topic-complete-toast .msg strong { font-weight: 800; letter-spacing: 0.01em; color: var(--gold); }
   .topic-complete-toast .next {
     font-size: 11px; font-weight: 600;
     opacity: 0.85; letter-spacing: 0.04em;
@@ -292,18 +299,8 @@
   }
 
   /* Header button back to the title screen */
-  .home-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px;
-    border-radius: 16px;
-    background: var(--l2);
-    border: 1px solid var(--bd);
-    font: inherit; font-size: 12px; font-weight: 600;
-    color: var(--thi);
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .home-btn:hover { background: var(--l3); border-color: var(--bdhi); }
+  /* Header buttons: frame, shadow and cursor come from .rpg-btn--light */
+  .home-btn, .profile-chip { min-height: 36px; padding: 6px 14px 6px 20px; font-size: 12px; }
 
   /* Topics shelf — single-row curriculum with section tabs */
   .topics-shelf {
@@ -324,9 +321,9 @@
   }
   .cr-tab {
     padding: 4px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--bd);
-    background: rgba(255,255,255,0.7);
+    border-radius: var(--r-2);
+    border: 2px solid var(--bd);
+    background: var(--paper);
     font-size: 11px;
     font-weight: 600;
     color: var(--tmd);
@@ -335,9 +332,9 @@
   }
   .cr-tab:hover { border-color: var(--bdhi); color: var(--thi); }
   .cr-tab.on {
-    border-color: var(--blue);
-    background: rgba(37,99,235,0.08);
-    color: var(--blue);
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--gold);
   }
   .cr-track {
     display: flex;
@@ -358,9 +355,9 @@
     gap: 2px;
     padding: 10px 13px;
     min-width: 108px;
-    border-radius: 10px;
-    border: 1.5px solid var(--bd);
-    background: rgba(255,255,255,0.92);
+    border-radius: var(--r-2);
+    border: 2px solid var(--bd);
+    background: var(--paper);
     cursor: pointer;
     text-align: left;
     opacity: 1;
@@ -370,16 +367,16 @@
   .cr-fill {
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    background: rgba(37,99,235,0.07);
+    background: color-mix(in srgb, var(--gold) 22%, transparent);
     z-index: 0;
     transition: width 0.3s ease;
   }
   .cr-next-label {
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(37,99,235,0.45);
+    color: var(--gold-deep);
     position: relative; z-index: 1;
     margin-bottom: 1px;
   }
@@ -396,7 +393,7 @@
   }
   .cr-prog {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
+    font-size: 10px;
     color: var(--tlo);
     position: relative; z-index: 1;
   }
@@ -409,24 +406,24 @@
   /* Done: muted */
   .cr-card.cr-done { opacity: 0.45; }
   .cr-card.cr-done .cr-name::after { content: ' ✓'; color: var(--green); }
-  /* Active: blue glow */
+  /* Active: ink frame + hard shadow, like a selected menu slot */
   .cr-card.cr-active {
-    border-color: var(--blue);
-    background: rgba(37,99,235,0.06);
-    box-shadow: 0 0 0 2px rgba(37,99,235,0.2), 0 4px 14px rgba(37,99,235,0.13);
+    border-color: var(--ink);
+    background: var(--paper);
+    box-shadow: 0 3px 0 var(--ink);
   }
-  .cr-card.cr-active .cr-fill { background: rgba(37,99,235,0.14); }
-  .cr-card.cr-active .cr-name { color: var(--blue); font-weight: 700; }
-  .cr-card.cr-active .cr-unit-num { color: var(--blue); }
-  .cr-card.cr-active .cr-prog { color: rgba(37,99,235,0.55); }
+  .cr-card.cr-active .cr-fill { background: color-mix(in srgb, var(--gold) 45%, transparent); }
+  .cr-card.cr-active .cr-name { color: var(--ink); font-weight: 700; }
+  .cr-card.cr-active .cr-unit-num { color: var(--gold-deep); }
+  .cr-card.cr-active .cr-prog { color: var(--tmd); }
   /* Next: dashed neutral outline — clearly "coming up", not a second selected card */
   .cr-card.cr-next {
     border-style: dashed;
     border-color: var(--bdhi);
-    background: rgba(255,255,255,0.92);
+    background: var(--paper);
     box-shadow: none;
   }
-  .cr-card.cr-next .cr-fill { background: rgba(37,99,235,0.04); }
+  .cr-card.cr-next .cr-fill { background: color-mix(in srgb, var(--gold) 12%, transparent); }
   .cr-card.just-completed {
     animation: card-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
     border-color: var(--green);
@@ -461,29 +458,31 @@
     .keyboard { display: block; }
   }
   .icon-btn {
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 8px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--r-2);
+    box-shadow: 0 2px 0 var(--ink);
     padding: 6px 10px;
     font-size: 16px;
     cursor: pointer;
     color: var(--tmd);
     line-height: 1;
-    transition: all 0.12s;
+    transition: transform 0.06s, box-shadow 0.06s;
   }
-  .icon-btn:hover { border-color: var(--bdhi); color: var(--thi); }
+  .icon-btn:hover { background: var(--l2); color: var(--thi); }
+  .icon-btn:active { transform: translateY(2px); box-shadow: 0 0 0 var(--ink); }
   .settings-wrap { position: relative; display: inline-block; }
   .settings-menu {
     position: absolute;
     bottom: 100%;
     left: 0;
     margin-bottom: 6px;
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 10px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--r-2);
     padding: 6px;
     min-width: 180px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 3px 3px 0 rgba(16, 19, 31, 0.16);
     z-index: 10;
     display: flex;
     flex-direction: column;
@@ -504,7 +503,7 @@
   }
   .setting-row:hover { background: var(--l2); }
   .setting-row.danger { color: var(--red); }
-  .setting-row.danger:hover { background: #fef2f2; }
+  .setting-row.danger:hover { background: color-mix(in srgb, var(--red) 10%, transparent); }
 
   /* Keyboard legend — small color swatch + label */
   .kb-legend {
@@ -588,7 +587,7 @@
     opacity: 0.28;
     transform: translateY(6px);
   }
-  @media (max-width: 700px) {
+  @media (max-width: 720px) {
     .target.char-mode .target-preview {
       display: none;
     }
@@ -611,9 +610,10 @@
     display: inline-block;
     position: relative;
     vertical-align: bottom;
-    border: 1.5px solid rgba(96,165,250,0.38);
-    border-radius: 3px;
-    background: rgba(219,234,254,0.12);
+    /* manuscript-paper (원고지) cell in sepia, on hanji */
+    border: 1.5px solid rgba(138, 90, 12, 0.32);
+    border-radius: var(--r-1);
+    background: rgba(255, 255, 255, 0.45);
     padding: 3px;
   }
   .target .word .syl canvas {
@@ -657,8 +657,8 @@
   /* Keyboard */
   .keyboard {
     background: var(--l2);
-    border: 1px solid var(--bd);
-    border-radius: 12px;
+    border: 2px solid var(--bd);
+    border-radius: var(--r-3);
     padding: 14px;
   }
   .kb-legend-row {
@@ -679,9 +679,10 @@
     height: 50px;
     min-height: 50px;
     max-height: 50px;
-    background: rgba(248,252,255,0.96);
-    border: 1px solid rgba(96,165,250,0.38);
-    border-radius: 6px;
+    background: #fffdf8;
+    border: 1px solid rgba(16, 19, 31, 0.24);
+    border-radius: var(--r-2);
+    box-shadow: 0 2px 0 rgba(16, 19, 31, 0.12);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     font-size: 11px; color: var(--tmd);
     transition: background 0.1s, border-color 0.1s, color 0.1s;
@@ -770,7 +771,7 @@
   .fbar-f.active[data-f$="-ring"]   { background: var(--f-ring);   box-shadow: 0 2px 10px color-mix(in srgb, var(--f-ring) 38%, transparent); transform: none; }
   .fbar-f.active[data-f$="-middle"] { background: var(--f-middle); box-shadow: 0 2px 10px color-mix(in srgb, var(--f-middle) 38%, transparent); transform: none; }
   .fbar-f.active[data-f$="-index"]  { background: var(--f-index);  box-shadow: 0 2px 10px color-mix(in srgb, var(--f-index) 38%, transparent); transform: none; }
-  @media (max-width: 700px) {
+  @media (max-width: 720px) {
     .keyboard {
       padding: 10px 8px;
       border-radius: 10px;
@@ -817,15 +818,16 @@
     .kb-row { gap: 2px; }
     .key { height: 40px; min-height: 40px; max-height: 40px; }
     .key .jamo { font-size: 14px; }
-    .key .qwerty { font-size: 7px; }
+    .key .qwerty { font-size: 9px; }
   }
 
   /* On-screen tappable keyboard — mobile only.
      Desktop ignores everything below; the keys keep their guide-only behavior
-     above the (max-width: 700px) breakpoint. */
+     above the (max-width: 720px) breakpoint, except on touch screens
+     (landscape phones, tablets) that have no keys to press. */
   .kb-row.mobile-only { display: none; }
   .key.kb-special { display: none; }
-  @media (max-width: 700px) {
+  @media (max-width: 720px), (hover: none) and (pointer: coarse) {
     body { padding-bottom: calc(232px + env(safe-area-inset-bottom)); }
     .keyboard {
       position: fixed;
@@ -940,11 +942,27 @@
     .key.shifted .qwerty, .key.shifted .shift { color: var(--orange); }
   }
   @media (max-width: 400px) {
-    body { padding-bottom: calc(212px + env(safe-area-inset-bottom)); }
-    .key { height: 40px; min-height: 40px; max-height: 40px; }
+    body { padding-bottom: calc(228px + env(safe-area-inset-bottom)); }
+    .key { height: 44px; min-height: 44px; max-height: 44px; }
     .key .jamo { font-size: 16px; }
     .kb-row { gap: 3px; margin-bottom: 3px; }
     .key.kb-shift, .key.kb-back { flex: 0 0 48px; min-width: 48px; }
+  }
+
+  /* Landscape phones: the keyboard can't take half of a 390px screen.
+     Shorter, capped keys and a tighter target card keep the word visible
+     above it (the page is also scrolled to the card, see fitShortScreen). */
+  @media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+    body { padding-bottom: calc(170px + env(safe-area-inset-bottom)); }
+    .keyboard .key:not(.kb-special), .keyboard .key[data-key="m"] {
+      flex: 0 0 min(calc((100vw - 48px) / 10), 64px);
+      width: min(calc((100vw - 48px) / 10), 64px);
+      height: 34px; min-height: 34px; max-height: 34px;
+    }
+    .keyboard .kb-row { gap: 3px; margin-bottom: 3px; }
+    .practice-content > .target { padding: 6px 0 4px; }
+    .target.char-mode .char-row { min-height: 104px; }
+    .target.char-mode .word { font-size: 64px; }
   }
 
   /* Feedback line under the target word: one slim line, announced to screen
@@ -976,7 +994,7 @@
   }
   /* Skip button: phones have no Esc key */
   .skip-btn { display: none; margin: 10px auto 0; }
-  @media (max-width: 700px) {
+  @media (max-width: 720px), (hover: none) and (pointer: coarse) {
     .skip-btn { display: inline-flex; }
   }
 
@@ -1008,6 +1026,10 @@
     max-width: 701px;
     margin: 0;
     padding: 16px 20px;
+    /* nested inside the practice card: single quiet frame */
+    background: var(--l2);
+    border-color: var(--bd);
+    box-shadow: none;
   }
   .jamo-toggle {
     display: flex;
@@ -1080,49 +1102,32 @@
   .coachmark-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15,23,42,0.65);
-    backdrop-filter: blur(3px);
+    background: rgba(10, 12, 22, 0.66);
     display: flex; align-items: center; justify-content: center;
     z-index: 11000;
     animation: fadeIn 0.25s ease;
   }
+  /* Dark dialogue box; surface + frame from .rpg-panel */
   .coachmark-card {
-    background: var(--l1);
-    border-radius: 18px;
-    padding: 32px 36px;
+    padding: 28px 32px;
     max-width: 400px;
     width: 90%;
-    box-shadow: 0 20px 56px rgba(0,0,0,0.3);
     text-align: center;
   }
   .coachmark-card .cm-emoji { font-size: 40px; margin-bottom: 12px; }
-  .coachmark-card h2 { font-size: 20px; font-weight: 800; color: var(--thi); margin: 0 0 10px; }
+  .coachmark-card h2 { font-family: var(--font-display); font-size: 26px; font-weight: 400; letter-spacing: 0.02em; color: var(--cream); margin: 0 0 12px; }
   .coachmark-card p { font-size: 14px; color: var(--tmd); line-height: 1.6; margin: 0 0 20px; }
-  .coachmark-card button {
-    background: var(--blue); color: white; border: 0;
-    padding: 12px 28px; border-radius: 10px;
-    font-size: 14px; font-weight: 700; cursor: pointer;
-    width: 100%;
-  }
-  .coachmark-card button:hover { background: #1d4ed8; }
+  .coachmark-card button { width: 100%; min-height: 48px; font-size: 15px; }
   /* Battle nudge toast (shown once per session after a lesson completes) */
   .battle-nudge {
     position: fixed;
     bottom: 24px; left: 50%;
     transform: translateX(-50%);
-    background: var(--l1);
-    border: 1px solid var(--bdhi);
-    border-radius: 12px;
-    padding: 10px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--thi);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     z-index: 9500;
     white-space: nowrap;
     animation: fadeIn 0.25s ease;
   }
-  .battle-nudge a { color: var(--blue); text-decoration: none; }
+  .battle-nudge a { color: var(--gold); text-decoration: none; font-weight: 700; }
   .battle-nudge a:hover { text-decoration: underline; }
   .jamo-cell .acc {
     position: absolute;
@@ -1157,18 +1162,7 @@
   /* ── Gamification UI ─────────────────────────────────── */
   .brand { gap: 14px; }
 
-  .profile-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px;
-    border-radius: 16px;
-    background: var(--l2);
-    border: 1px solid var(--bd);
-    font-size: 12px; font-weight: 600;
-    color: var(--thi);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .profile-chip:hover { background: var(--l3); border-color: var(--bdhi); }
+  .profile-chip { gap: 6px; }
   .profile-chip .profile-flag { font-size: 16px; line-height: 1; }
   .profile-chip .profile-name { line-height: 1; }
   .profile-chip .profile-edit { font-size: 11px; opacity: 0.4; }
@@ -1176,22 +1170,19 @@
 
   .profile-modal {
     position: fixed; inset: 0;
-    background: rgba(15,23,42,0.7);
-    backdrop-filter: blur(4px);
+    background: rgba(10, 12, 22, 0.66);
     display: flex; align-items: center; justify-content: center;
     z-index: 10001;
     animation: fadeIn 0.25s ease;
   }
+  /* Dark dialogue box; surface + frame from .rpg-panel */
   .profile-modal-card {
-    background: var(--l1);
-    border-radius: 18px;
     padding: 28px;
     width: 460px;
     max-width: calc(100vw - 32px);
-    box-shadow: 0 24px 64px rgba(0,0,0,0.35);
   }
   .profile-modal-card h3 {
-    margin: 0 0 4px; font-size: 18px; color: var(--thi);
+    margin: 0 0 6px; font-family: var(--font-display); font-size: 24px; font-weight: 400; letter-spacing: 0.02em; color: var(--cream);
   }
   .profile-modal-card p {
     margin: 0 0 20px; font-size: 13px; color: var(--tmd);
@@ -1203,14 +1194,14 @@
     color: var(--tlo); margin-bottom: 6px;
   }
   .profile-field input, .profile-field select {
-    width: 100%; padding: 10px 12px;
-    border: 1px solid var(--bd); border-radius: 8px;
+    width: 100%; min-height: 44px; padding: 10px 12px;
+    border: 2px solid var(--bdhi); border-radius: var(--r-2);
     font-size: 14px; color: var(--thi);
-    background: var(--l1);
+    background: var(--l2);
     box-sizing: border-box;
   }
   .profile-field input:focus, .profile-field select:focus {
-    outline: 2px solid var(--blue); outline-offset: -1px; border-color: var(--blue);
+    outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold);
   }
   .profile-modal-actions {
     display: flex; gap: 8px; justify-content: flex-end;
@@ -1240,7 +1231,7 @@
     position: fixed;
     top: 80px; right: 32px;
     z-index: 9100;
-    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    background: linear-gradient(135deg, var(--yellow), var(--red));
     color: white;
     padding: 10px 18px;
     border-radius: 20px;
@@ -1261,11 +1252,11 @@
   .combo-chip.t5.bump { animation: pop 0.25s ease, rainbowShift 2s linear infinite; }
   .combo-chip.t1 { font-size: 18px; }
   .combo-chip.t2 { font-size: 22px; padding: 12px 22px; }
-  .combo-chip.t3 { font-size: 26px; padding: 14px 26px; background: linear-gradient(135deg, #ef4444, #8b5cf6); }
-  .combo-chip.t4 { font-size: 30px; padding: 16px 28px; background: linear-gradient(135deg, #8b5cf6, #ec4899); }
+  .combo-chip.t3 { font-size: 26px; padding: 14px 26px; background: linear-gradient(135deg, var(--red), var(--purple)); }
+  .combo-chip.t4 { font-size: 30px; padding: 16px 28px; background: linear-gradient(135deg, var(--purple), #ec4899); }
   .combo-chip.t5 {
     font-size: 34px; padding: 18px 32px;
-    background: linear-gradient(135deg, #ef4444, #f59e0b, #84cc16, #06b6d4, #8b5cf6);
+    background: linear-gradient(135deg, var(--red), var(--yellow), #84cc16, #06b6d4, var(--purple));
     background-size: 200% 100%;
     animation: pop 0.25s ease, rainbowShift 2s linear infinite;
   }
@@ -1285,32 +1276,22 @@
     header { padding-bottom: 12px; }
     .practice-card { padding: 16px 12px; }
   }
-  .btn {
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 12px; font-weight: 600;
-    color: var(--tmd);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
-  .btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
-  .btn.primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: white; }
+  /* .btn is always paired with .rpg-btn (ui.css), which draws it */
+  .btn { min-height: 40px; padding: 8px 16px 8px 20px; font-size: 13px; }
 
   .help {
     text-align: center; color: var(--tlo); font-size: 12px;
     margin-top: 24px;
   }
   /* Touch devices have no Esc key; the Skip button covers it there */
-  @media (hover: none) and (pointer: coarse), (max-width: 700px) {
+  @media (hover: none) and (pointer: coarse), (max-width: 720px) {
     .help { display: none; }
   }
   .help kbd {
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    padding: 2px 6px; border-radius: 4px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: 0 2px 0 var(--ink);
+    padding: 1px 6px; border-radius: var(--r-1);
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px; color: var(--thi);
   }
@@ -1334,7 +1315,7 @@
     color: var(--tlo);
   }
   .site-footer-meta a { color: var(--tmd); text-decoration: none; }
-  .site-footer-meta a:hover { color: var(--blue); }
+  .site-footer-meta a:hover { color: var(--gold-deep); }
   .site-footer-meta span[aria-hidden="true"] { color: var(--bd); }
 
   /* SEO content section — informational text for search engines and curious users */
@@ -1345,13 +1326,19 @@
     color: var(--tmd);
     font-size: 13px;
     line-height: 1.7;
-    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92));
-    border-top: 1px solid var(--bd);
-    border-bottom: 1px solid var(--bd);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--r-2);
+    box-shadow:
+      inset 0 0 0 3px var(--paper),
+      inset 0 0 0 4px var(--hanji-edge),
+      3px 3px 0 rgba(16, 19, 31, 0.16);
   }
   .seo-section h2 {
-    font-size: 18px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
     color: var(--thi);
     margin: 0 0 10px;
   }
@@ -1370,10 +1357,9 @@
     gap: 8px;
   }
   .seo-accordion details, .faq-accordion details {
-    background: var(--l1);
-    border: 1px solid var(--bd);
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    background: var(--l2);
+    border: 2px solid var(--bd);
+    border-radius: var(--r-2);
     overflow: hidden;
   }
   .seo-accordion summary, .faq-accordion summary {
@@ -1421,7 +1407,7 @@
     font-weight: 700;
     color: var(--thi);
   }
-  @media (max-width: 700px) {
+  @media (max-width: 720px) {
     .seo-section { font-size: 13px; padding: 20px 16px 24px; }
     .seo-section h2 { font-size: 16px; }
     .seo-accordion summary, .faq-accordion summary { padding: 12px 14px; font-size: 13px; }
@@ -1430,7 +1416,7 @@
 
   /* Mobile placement for floating chips: clear of the fixed keyboard and
      the header stats */
-  @media (max-width: 700px) {
+  @media (max-width: 720px), (hover: none) and (pointer: coarse) {
     .combo-chip {
       top: auto; right: 12px;
       bottom: calc(244px + env(safe-area-inset-bottom));
@@ -1464,13 +1450,14 @@
 
   /* ── Title screen ─────────────────────────────────────────────────── */
   .title-screen {
-    --ts-ink: #10131f;          /* outlines and the deepest shade */
-    --ts-cream: #fff4d6;        /* title + menu text */
-    --ts-gold: #f6c453;         /* active menu item, cursor */
-    --ts-panel: rgba(14, 18, 34, 0.82);
-    --ts-frame: #efe4c8;        /* dialogue box border */
-    --ts-sakura: #f9c4d2;
-    --ts-sakura-deep: #f29bb4;
+    /* Aliases of the shared tokens in ui.css */
+    --ts-ink: var(--ink);       /* outlines and the deepest shade */
+    --ts-cream: var(--cream);   /* title + menu text */
+    --ts-gold: var(--gold);     /* active menu item, cursor */
+    --ts-panel: var(--panel);
+    --ts-frame: var(--frame);   /* dialogue box border */
+    --ts-sakura: var(--sakura);
+    --ts-sakura-deep: var(--sakura-deep);
     position: fixed; inset: 0;
     z-index: 12000;
     overflow: hidden;
@@ -1486,6 +1473,10 @@
     background: url('sprites/backgrounds/01-village.webp') center bottom / cover no-repeat;
     animation: ts-drift 40s ease-in-out infinite alternate;
     will-change: transform;
+  }
+  /* Tall screens get the portrait cut of the village, houses at the top */
+  @media (orientation: portrait) {
+    .ts-bg { background-image: url('sprites/backgrounds/portrait/01-village.webp'); background-position: center 6%; }
   }
   @keyframes ts-drift {
     from { transform: translate3d(-2%, 0, 0) scale(1.04); }
@@ -1522,7 +1513,7 @@
   .ts-logo { text-align: center; }
   .ts-title {
     margin: 0;
-    font-family: 'Black Han Sans', 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+    font-family: var(--font-display);
     font-weight: 400;
     font-size: clamp(44px, 9vw, 108px);
     line-height: 1;
@@ -1636,20 +1627,30 @@
     text-shadow: 0 2px 0 var(--ts-ink);
     animation: ts-blink 1.6s steps(1) infinite;
   }
-  @media (hover: none) and (pointer: coarse), (max-width: 700px) {
+  @media (hover: none) and (pointer: coarse), (max-width: 720px) {
     .ts-hint { display: none; }
     .ts-item { padding: 16px 14px 16px 44px; font-size: 20px; min-height: 60px; }
   }
-  @media (max-width: 700px) {
+  @media (max-width: 720px) {
     .ts-content { padding: max(56px, 9vh) 16px max(24px, calc(16px + env(safe-area-inset-bottom))); }
     .ts-title { letter-spacing: 0.02em; }
     .ts-scene { padding: 0; }
-    .ts-bg { background-position: 6% bottom; }
-    .ts-hero { height: 196px; }
-    .ts-imp { height: 132px; }
+    .ts-hero { height: min(260px, 30dvh); }
+    .ts-imp { height: min(176px, 20dvh); }
     .ts-panel { width: 100%; }
   }
-  @media (max-height: 760px) and (min-width: 701px) {
+  /* Landscape phones: smaller title, actors scaled to the short screen */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .ts-content { padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+    .ts-title { font-size: clamp(30px, 10vh, 52px); }
+    .ts-hero { height: 30dvh; }
+    .ts-imp { height: 21dvh; }
+    .ts-item { min-height: 48px; padding-top: 10px; padding-bottom: 10px; }
+  }
+  @media (pointer: coarse) {
+    .cr-tab { min-height: 40px; padding: 8px 14px; }
+  }
+  @media (max-height: 760px) and (min-width: 721px) {
     .ts-hero { height: 210px; }
     .ts-imp { height: 140px; }
   }
@@ -1715,12 +1716,12 @@
     </div>
 
     <div class="header-mid">
-      <button id="profileChip" class="profile-chip" type="button" title="Click to edit your name and country">
+      <button id="profileChip" class="profile-chip rpg-btn rpg-btn--light" type="button" title="Click to edit your name and country">
         <span class="profile-flag">🏳️</span>
         <span class="profile-name">Player</span>
         <span class="profile-edit">✏️</span>
       </button>
-      <button id="btnTitle" class="home-btn" type="button" title="Back to the title menu">🏠 Menu</button>
+      <button id="btnTitle" class="home-btn rpg-btn rpg-btn--light" type="button" title="Back to the title menu">🏠 Menu</button>
     </div>
 
     <div class="stats">
@@ -1757,7 +1758,7 @@
 
             <div class="romanization" id="romanization"></div>
             <div class="diag" id="diag" role="status" aria-live="polite"></div>
-            <button class="btn skip-btn" id="btnSkip" type="button">Skip word</button>
+            <button class="btn rpg-btn rpg-btn--light skip-btn" id="btnSkip" type="button">Skip word</button>
           </div>
 
           <div class="keyboard">
@@ -3252,7 +3253,7 @@ function maybeShowBattleNudge() {
     sessionStorage.setItem(BATTLE_NUDGE_KEY, '1');
   } catch (e) { return; }
   const nudge = document.createElement('div');
-  nudge.className = 'battle-nudge';
+  nudge.className = 'battle-nudge rpg-toast';
   nudge.innerHTML = 'Nice! Fight monsters with these words: <a href="game.html">⚔️ Battle</a>';
   document.body.appendChild(nudge);
   setTimeout(() => { nudge.style.transition = 'opacity 0.4s'; nudge.style.opacity = '0'; setTimeout(() => nudge.remove(), 450); }, 4000);
@@ -3319,7 +3320,7 @@ function openProfileModal() {
     `<option value="${code}" ${code === cc ? 'selected' : ''}>${flagEmoji(code)} ${label}</option>`
   ).join('');
   el.innerHTML = `
-    <div class="profile-modal-card">
+    <div class="profile-modal-card rpg-panel">
       <h3>Your profile</h3>
       <p>Pick a display name and a country flag. We auto-detected ${flagEmoji(cc)} ${COUNTRY_NAMES[cc] || cc} from your timezone.</p>
       <div class="profile-field">
@@ -3331,8 +3332,8 @@ function openProfileModal() {
         <select id="profileCountrySelect">${options}</select>
       </div>
       <div class="profile-modal-actions">
-        <button class="btn" id="profileCancel">Cancel</button>
-        <button class="btn primary" id="profileSave">Save</button>
+        <button class="btn rpg-btn rpg-btn--ghost" id="profileCancel">Cancel</button>
+        <button class="btn rpg-btn rpg-btn--primary" id="profileSave">Save</button>
       </div>
     </div>
   `;
@@ -4891,8 +4892,21 @@ function handleKoreanJamoInput(jamo) {
 }
 
 // Layout switches between the desktop guide keyboard and the tappable phone
-// keyboard at this width. CSS uses the same (max-width: 700px) breakpoint.
-const mobileMq = window.matchMedia('(max-width: 700px)');
+// keyboard at this width. CSS uses the same (max-width: 720px) breakpoint.
+const mobileMq = window.matchMedia('(max-width: 720px)');
+// Tappable keyboard: phones, plus landscape phones and tablets with a touch
+// screen. Hardware keys still work there through the document keydown path.
+const touchKbMq = window.matchMedia('(max-width: 720px), (hover: none) and (pointer: coarse)');
+const shortLandMq = window.matchMedia('(max-height: 500px) and (orientation: landscape) and (pointer: coarse)');
+// On a landscape phone the header alone would push the word under the fixed
+// keyboard, so scroll the practice card to the top of the screen.
+function fitShortScreen() {
+  if (!shortLandMq.matches || titleOpen()) return;
+  const card = document.querySelector('.practice-card');
+  if (card) card.scrollIntoView({ block: 'start' });
+}
+if (shortLandMq.addEventListener) shortLandMq.addEventListener('change', fitShortScreen);
+window.addEventListener('load', fitShortScreen);
 
 // Physical key → QWERTY letter. e.code names the key position, so the 2-set
 // map stays right on AZERTY, QWERTZ and Dvorak layouts. Falls back to e.key
@@ -4929,7 +4943,7 @@ function attachInput() {
   // keyboard drives input, and focusing the offscreen input would pop the OS
   // keyboard (and scroll the page to it).
   const focusShield = () => {
-    if (!shield || mobileMq.matches || titleOpen()) return;
+    if (!shield || touchKbMq.matches || titleOpen()) return;
     shield.focus({ preventScroll: true });
   };
   focusShield();
@@ -4994,7 +5008,7 @@ function attachInput() {
     }
     kbEl.addEventListener('pointerdown', (e) => {
       // Strictly mobile-only: on desktop the keyboard stays a visual guide.
-      if (!mobileMq.matches) return;
+      if (!touchKbMq.matches) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       handleKbTap(e.target);
       e.preventDefault();
@@ -5139,7 +5153,7 @@ function isFirstRun() {
 function dismissIntro(overlay) {
   try { localStorage.setItem(INTRO_FLAG, '1'); } catch (e) {}
   overlay.remove();
-  if (!mobileMq.matches) {
+  if (!touchKbMq.matches) {
     const shield = document.getElementById('shield');
     if (shield) shield.focus({ preventScroll: true });
   }
@@ -5152,11 +5166,13 @@ function showCoachmark() {
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-label', 'Welcome to Type Hangeul');
   overlay.innerHTML = `
-    <div class="coachmark-card">
+    <div class="coachmark-card rpg-panel">
       <div class="cm-emoji">⌨️</div>
       <h2>Welcome to Type Hangeul!</h2>
-      <p>Type the Korean word shown using your regular keyboard. The next key lights up in the color of the finger that presses it. No Korean keyboard needed.</p>
-      <button id="coachmarkStart">Start typing</button>
+      <p>${touchKbMq.matches
+        ? 'Tap the keys below to spell the Korean word. The next key lights up.'
+        : 'Type the Korean word shown using your regular keyboard. The next key lights up in the color of the finger that presses it. No Korean keyboard needed.'}</p>
+      <button id="coachmarkStart" class="rpg-btn rpg-btn--primary">Start typing</button>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -5215,7 +5231,8 @@ function chooseTitleItem(choice) {
     el.hidden = true;
     el.classList.remove('closing');
     document.body.classList.remove('title-open');
-    if (!mobileMq.matches) document.getElementById('shield').focus({ preventScroll: true });
+    if (!touchKbMq.matches) document.getElementById('shield').focus({ preventScroll: true });
+    fitShortScreen();
     if (isFirstRun()) showCoachmark();
   }, prefersReducedMotion() ? 0 : 350);
 }

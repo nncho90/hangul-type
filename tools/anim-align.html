@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Anim Align Tool</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0f172a; color: #e2e8f0; font: 13px/1.4 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* ── toolbar ── */
+#toolbar {
+  display: flex; align-items: center; gap: 12px; padding: 8px 14px;
+  background: #1e293b; border-bottom: 1px solid #334155; flex-shrink: 0; flex-wrap: wrap;
+}
+#toolbar button {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid #475569;
+  background: #334155; color: #e2e8f0; cursor: pointer; font-size: 12px;
+  transition: background 0.1s;
+}
+#toolbar button:hover { background: #475569; }
+#toolbar button.active { background: #3b82f6; border-color: #3b82f6; }
+#toolbar label { font-size: 12px; color: #94a3b8; }
+#toolbar input[type=range] { width: 80px; accent-color: #3b82f6; }
+#toolbar select { padding: 4px 8px; border-radius: 6px; border: 1px solid #475569; background: #334155; color: #e2e8f0; font-size: 12px; }
+#toolbar input[type=number] { width: 52px; padding: 4px 6px; border-radius: 6px; border: 1px solid #475569; background: #334155; color: #e2e8f0; font-size: 12px; }
+.sep { width: 1px; height: 20px; background: #334155; }
+#fps-val, #scale-val { color: #38bdf8; min-width: 28px; display: inline-block; }
+
+/* ── main layout ── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── stage ── */
+#stage-wrap { flex: 1; position: relative; overflow: hidden; cursor: crosshair; }
+#stage-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  transition: background 0.3s;
+}
+#stage-bg.village  { background: linear-gradient(180deg, #87ceeb 0%, #c8e6c9 60%, #8bc34a 100%); }
+#stage-bg.forest   { background: linear-gradient(180deg, #2d5a1b 0%, #1a3a0d 100%); }
+#stage-bg.study    { background: linear-gradient(180deg, #fde68a 0%, #fef9f0 14%, #e9eef5 42%, #cdd9e8 100%); }
+#stage-bg.courtyard{ background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
+#stage-bg.camp     { background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
+#stage-bg.battlefield{ background: linear-gradient(180deg, #7c2d12 0%, #ea580c 50%, #1f2937 100%); }
+#stage-bg.palace   { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #0f0a1e 100%); }
+#stage-bg-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center bottom; opacity: 0.7; pointer-events: none;
+}
+
+/* ground line */
+#ground-line {
+  position: absolute; left: 0; right: 0; height: 0;
+  border-top: 2px dashed rgba(74, 222, 128, 0.7);
+  cursor: ns-resize; z-index: 10;
+  top: 70%;
+}
+#ground-line::after {
+  content: 'ground'; position: absolute; right: 8px; top: 4px;
+  font-size: 10px; color: rgba(74,222,128,0.7); letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+/* sprite */
+#sprite-container {
+  position: absolute; cursor: grab; user-select: none; z-index: 5;
+  transform-origin: bottom center;
+}
+#sprite-container:active { cursor: grabbing; }
+#sprite-img {
+  display: block; image-rendering: pixelated;
+  transform-origin: bottom center;
+}
+/* transform-origin dot */
+#origin-dot {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  background: #ef4444; border: 1px solid #fff; transform: translate(-50%,-50%);
+  z-index: 20; cursor: crosshair; display: none;
+}
+
+/* onion skin */
+#onion-prev, #onion-next {
+  position: absolute; pointer-events: none; image-rendering: pixelated;
+  display: block; transform-origin: bottom center;
+}
+#onion-prev { opacity: 0.25; filter: hue-rotate(-40deg); }
+#onion-next { opacity: 0.25; filter: hue-rotate(140deg); }
+
+/* position crosshair */
+#crosshair-h, #crosshair-v {
+  position: absolute; pointer-events: none; opacity: 0.3;
+  background: #f59e0b;
+}
+#crosshair-h { left: 0; right: 0; height: 1px; }
+#crosshair-v { top: 0; bottom: 0; width: 1px; }
+
+/* ── sidebar ── */
+#sidebar {
+  width: 240px; background: #1e293b; border-left: 1px solid #334155;
+  display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0;
+}
+.panel { padding: 12px 14px; border-bottom: 1px solid #334155; }
+.panel h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 10px; }
+
+.ctrl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ctrl-row label { font-size: 12px; color: #94a3b8; width: 38px; flex-shrink: 0; }
+.ctrl-row input[type=number] {
+  width: 68px; padding: 4px 6px; border-radius: 5px; border: 1px solid #475569;
+  background: #0f172a; color: #e2e8f0; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+}
+.ctrl-row input[type=range] { flex: 1; accent-color: #3b82f6; }
+.ctrl-row span.val { font-size: 12px; color: #38bdf8; width: 36px; text-align: right; font-family: monospace; }
+
+/* output box */
+#output-box {
+  background: #0f172a; border-radius: 6px; border: 1px solid #334155;
+  padding: 10px; font-size: 11px; font-family: 'JetBrains Mono', 'Courier New', monospace;
+  color: #7dd3fc; white-space: pre-wrap; line-height: 1.6; min-height: 80px;
+}
+#copy-btn {
+  margin-top: 8px; width: 100%; padding: 6px; border-radius: 6px;
+  background: #1d4ed8; border: none; color: #fff; cursor: pointer; font-size: 12px;
+}
+#copy-btn:hover { background: #2563eb; }
+#copy-btn.copied { background: #16a34a; }
+
+/* frame indicator */
+#frame-info { font-size: 11px; color: #64748b; text-align: center; margin-top: 6px; }
+
+/* per-frame table */
+#frame-table { font-size: 11px; max-height: 180px; overflow-y: auto; }
+#frame-table table { width: 100%; border-collapse: collapse; }
+#frame-table th { color: #64748b; font-weight: 400; padding: 3px 4px; text-align: left; border-bottom: 1px solid #334155; }
+#frame-table td { padding: 3px 4px; border-bottom: 1px solid #1e293b; }
+#frame-table tr.active td { background: #1d4ed840; }
+#frame-table input { width: 46px; padding: 2px 4px; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-size: 11px; font-family: monospace; }
+
+/* ── frame strip ── */
+#strip {
+  height: 72px; background: #0f172a; border-top: 1px solid #334155;
+  display: flex; align-items: center; padding: 4px 8px; gap: 4px; overflow-x: auto; flex-shrink: 0;
+}
+.frame-thumb {
+  height: 60px; min-width: 44px; border-radius: 4px; border: 2px solid #334155;
+  cursor: pointer; object-fit: contain; background: #1e293b; image-rendering: pixelated;
+  transition: border-color 0.1s; flex-shrink: 0;
+}
+.frame-thumb.active { border-color: #3b82f6; }
+#strip-empty { color: #475569; font-size: 12px; margin: auto; }
+
+/* drop overlay */
+#drop-overlay {
+  position: fixed; inset: 0; background: rgba(59,130,246,0.15);
+  border: 3px dashed #3b82f6; z-index: 100; display: none; align-items: center; justify-content: center;
+  font-size: 20px; color: #3b82f6; pointer-events: none;
+}
+#drop-overlay.active { display: flex; }
+
+/* kbd hints */
+.kbd-hint { font-size: 10px; color: #475569; margin-top: 6px; line-height: 1.8; }
+kbd { background: #334155; border-radius: 3px; padding: 1px 4px; font-size: 10px; }
+
+/* toggle switch */
+.toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.toggle input { display: none; }
+.toggle-track { width: 28px; height: 16px; background: #334155; border-radius: 8px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle input:checked + .toggle-track { background: #3b82f6; }
+.toggle-track::after { content:''; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:#fff; transition:left 0.2s; }
+.toggle input:checked + .toggle-track::after { left:14px; }
+.toggle span { font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<div id="drop-overlay">Drop PNG frames here</div>
+
+<!-- toolbar -->
+<div id="toolbar">
+  <button id="load-btn">Load Frames</button>
+  <input id="file-input" type="file" accept="image/png,image/gif" multiple style="display:none">
+  <div class="sep"></div>
+  <button id="play-btn">▶ Play</button>
+  <label>FPS <input id="fps-range" type="range" min="1" max="30" value="8"> <span id="fps-val">8</span></label>
+  <div class="sep"></div>
+  <label>Scale <input id="scale-range" type="range" min="10" max="300" value="100"> <span id="scale-val">100%</span></label>
+  <div class="sep"></div>
+  <label>BG
+    <select id="bg-select">
+      <option value="">Dark</option>
+      <option value="village">Village</option>
+      <option value="forest">Forest</option>
+      <option value="study">Study</option>
+      <option value="courtyard">Courtyard</option>
+      <option value="camp">Camp</option>
+      <option value="battlefield">Battlefield</option>
+      <option value="palace">Palace</option>
+    </select>
+  </label>
+  <div class="sep"></div>
+  <label class="toggle"><input id="loop-toggle" type="checkbox" checked><div class="toggle-track"></div><span>Loop</span></label>
+  <label class="toggle"><input id="onion-toggle" type="checkbox"><div class="toggle-track"></div><span>Onion</span></label>
+  <label class="toggle"><input id="crosshair-toggle" type="checkbox"><div class="toggle-track"></div><span>Crosshair</span></label>
+  <div class="sep"></div>
+  <button id="prev-frame">◀</button>
+  <span id="frame-counter" style="font-size:12px;color:#64748b">—</span>
+  <button id="next-frame">▶</button>
+</div>
+
+<!-- main -->
+<div id="main">
+  <!-- stage -->
+  <div id="stage-wrap">
+    <div id="stage-bg"></div>
+    <img id="stage-bg-img" src="" alt="" style="display:none">
+    <div id="ground-line"></div>
+    <div id="crosshair-h" class="crosshair-h" style="display:none"></div>
+    <div id="crosshair-v" class="crosshair-v" style="display:none"></div>
+    <div id="sprite-container">
+      <img id="onion-prev" src="" alt="" style="display:none">
+      <img id="onion-next" src="" alt="" style="display:none">
+      <img id="sprite-img" src="" alt="" draggable="false">
+      <div id="origin-dot"></div>
+    </div>
+  </div>
+
+  <!-- sidebar -->
+  <div id="sidebar">
+    <div class="panel">
+      <h3>Position</h3>
+      <div class="ctrl-row">
+        <label>X</label>
+        <input type="number" id="x-input" value="0" step="1">
+        <span style="font-size:11px;color:#475569">px</span>
+      </div>
+      <div class="ctrl-row">
+        <label>Y</label>
+        <input type="number" id="y-input" value="0" step="1">
+        <span style="font-size:11px;color:#475569">px</span>
+      </div>
+      <div class="kbd-hint">
+        <kbd>↑↓←→</kbd> nudge 1px &nbsp;
+        <kbd>Shift+arrow</kbd> 10px<br>
+        <kbd>G</kbd> move ground line to sprite bottom
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Per-frame offsets</h3>
+      <label class="toggle" style="margin-bottom:8px">
+        <input id="per-frame-toggle" type="checkbox">
+        <div class="toggle-track"></div>
+        <span>Enable per-frame</span>
+      </label>
+      <div id="frame-table"><table>
+        <thead><tr><th>#</th><th>File</th><th>X</th><th>Y</th></tr></thead>
+        <tbody id="frame-tbody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h3>Output</h3>
+      <div id="output-box">Load frames to begin.</div>
+      <button id="copy-btn">Copy CSS</button>
+      <div id="frame-info"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Ground line</h3>
+      <div class="ctrl-row">
+        <label>Y pos</label>
+        <input type="number" id="ground-y-input" value="70" step="1">
+        <span style="font-size:11px;color:#475569">%</span>
+      </div>
+      <div class="ctrl-row">
+        <label>Feet Y</label>
+        <span id="feet-y-val" style="font-size:12px;color:#4ade80;font-family:monospace">—</span>
+      </div>
+      <div class="kbd-hint">Drag the green dashed line or type % above.<br>Drag sprite to align feet to line.</div>
+    </div>
+  </div>
+</div>
+
+<!-- frame strip -->
+<div id="strip"><span id="strip-empty">Drop PNG files anywhere or click Load Frames</span></div>
+
+<script>
+// ── state ──
+let frames = [];       // {url, name, img, offX, offY}
+let cur = 0;
+let playing = false;
+let playTimer = null;
+let fps = 8;
+let scale = 1;
+let globalX = 0, globalY = 0;
+let groundPct = 70; // % from top
+let perFrame = false;
+let onionOn = false;
+let loopOn = true;
+let crosshairOn = false;
+
+// ── elements ──
+const stageWrap   = document.getElementById('stage-wrap');
+const stageBg     = document.getElementById('stage-bg');
+const stageBgImg  = document.getElementById('stage-bg-img');
+const groundLine  = document.getElementById('ground-line');
+const spriteCont  = document.getElementById('sprite-container');
+const spriteImg   = document.getElementById('sprite-img');
+const onionPrev   = document.getElementById('onion-prev');
+const onionNext   = document.getElementById('onion-next');
+const xInput      = document.getElementById('x-input');
+const yInput      = document.getElementById('y-input');
+const groundYInp  = document.getElementById('ground-y-input');
+const feetYVal    = document.getElementById('feet-y-val');
+const outputBox   = document.getElementById('output-box');
+const copyBtn     = document.getElementById('copy-btn');
+const frameCounter= document.getElementById('frame-counter');
+const frameInfo   = document.getElementById('frame-info');
+const frameTbody  = document.getElementById('frame-tbody');
+const strip       = document.getElementById('strip');
+const stripEmpty  = document.getElementById('strip-empty');
+const fpsRange    = document.getElementById('fps-range');
+const fpsVal      = document.getElementById('fps-val');
+const scaleRange  = document.getElementById('scale-range');
+const scaleVal    = document.getElementById('scale-val');
+const bgSelect    = document.getElementById('bg-select');
+const playBtn     = document.getElementById('play-btn');
+const crosshairH  = document.getElementById('crosshair-h');
+const crosshairV  = document.getElementById('crosshair-v');
+
+// ── helpers ──
+function px(n) { return Math.round(n) + 'px'; }
+
+function getOffset() {
+  if (perFrame && frames[cur]) {
+    return { x: globalX + (frames[cur].offX || 0), y: globalY + (frames[cur].offY || 0) };
+  }
+  return { x: globalX, y: globalY };
+}
+
+function groundPx() {
+  return stageWrap.clientHeight * groundPct / 100;
+}
+
+function updateSprite() {
+  if (!frames.length) return;
+  const f = frames[cur];
+  spriteImg.src = f.url;
+  const { x, y } = getOffset();
+  const cx = stageWrap.clientWidth / 2 + x;
+  const cy = groundPx() + y;
+  spriteCont.style.left = px(cx);
+  spriteCont.style.top  = px(cy);
+  spriteCont.style.transform = `translate(-50%, -100%) scale(${scale})`;
+
+  // onion
+  if (onionOn) {
+    const pi = (cur - 1 + frames.length) % frames.length;
+    const ni = (cur + 1) % frames.length;
+    const pf = frames[pi], nf = frames[ni];
+    const po = perFrame ? { x: globalX + (pf.offX||0), y: globalY + (pf.offY||0) } : { x, y };
+    const no = perFrame ? { x: globalX + (nf.offX||0), y: globalY + (nf.offY||0) } : { x, y };
+    onionPrev.src = pf.url; onionPrev.style.display = frames.length > 1 ? 'block' : 'none';
+    onionPrev.style.cssText = `display:block;position:absolute;top:${px(groundPx()+po.y - (cy))};left:${px(stageWrap.clientWidth/2+po.x - cx)};width:${spriteImg.naturalWidth * scale}px;opacity:0.25;filter:hue-rotate(-40deg);image-rendering:pixelated;transform-origin:bottom center;`;
+    onionNext.src = nf.url; onionNext.style.display = frames.length > 1 ? 'block' : 'none';
+    onionNext.style.cssText = `display:block;position:absolute;top:${px(groundPx()+no.y - cy)};left:${px(stageWrap.clientWidth/2+no.x - cx)};width:${spriteImg.naturalWidth * scale}px;opacity:0.25;filter:hue-rotate(140deg);image-rendering:pixelated;transform-origin:bottom center;`;
+  } else {
+    onionPrev.style.display = 'none';
+    onionNext.style.display = 'none';
+  }
+
+  // crosshair
+  const ch = crosshairOn;
+  crosshairH.style.display = ch ? 'block' : 'none';
+  crosshairV.style.display = ch ? 'block' : 'none';
+  crosshairH.style.top = px(cy);
+  crosshairV.style.left = px(cx);
+
+  // feet Y relative to ground
+  const feetAbsY = cy; // sprite bottom is at cy (transform-origin bottom)
+  const groundAbsY = groundPx();
+  const diff = Math.round(feetAbsY - groundAbsY);
+  feetYVal.textContent = diff === 0 ? '0 (on ground)' : (diff > 0 ? '+' + diff + ' (below)' : diff + ' (above)');
+  feetYVal.style.color = diff === 0 ? '#4ade80' : '#f87171';
+
+  updateOutput();
+  updateFrameCounter();
+  updateStrip();
+  updateTable();
+  updateGroundInput();
+}
+
+function updateOutput() {
+  if (!frames.length) { outputBox.textContent = 'Load frames to begin.'; return; }
+  const { x, y } = getOffset();
+  const lines = [];
+  lines.push(`/* Frame ${cur + 1}/${frames.length}: ${frames[cur].name} */`);
+  lines.push(`transform: translateX(${x}px) translateY(${y}px) scale(${scale.toFixed(2)});`);
+  lines.push(`transform-origin: bottom center;`);
+  if (perFrame && frames.length > 1) {
+    lines.push('');
+    lines.push('/* All frame offsets: */');
+    frames.forEach((f, i) => {
+      lines.push(`/* ${i+1}. ${f.name}: X=${f.offX||0}px Y=${f.offY||0}px */`);
+    });
+  }
+  lines.push('');
+  lines.push(`/* Game values — global position */`);
+  lines.push(`globalX: ${Math.round(globalX)}   globalY: ${Math.round(globalY)}`);
+  outputBox.textContent = lines.join('\n');
+}
+
+function updateFrameCounter() {
+  frameCounter.textContent = frames.length ? `${cur + 1} / ${frames.length}` : '—';
+}
+
+function updateStrip() {
+  document.querySelectorAll('.frame-thumb').forEach((el, i) => {
+    el.classList.toggle('active', i === cur);
+  });
+}
+
+function updateTable() {
+  const rows = frameTbody.querySelectorAll('tr');
+  rows.forEach((r, i) => r.classList.toggle('active', i === cur));
+}
+
+function updateGroundInput() {
+  groundYInp.value = Math.round(groundPct);
+  groundLine.style.top = px(groundPx());
+}
+
+// ── frame loading ──
+function loadFiles(files) {
+  const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) return;
+  imgs.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  frames = imgs.map(f => ({ url: URL.createObjectURL(f), name: f.name, offX: 0, offY: 0, img: null }));
+  cur = 0;
+  globalX = 0; globalY = 0;
+  xInput.value = 0; yInput.value = 0;
+  rebuildStrip();
+  rebuildTable();
+  preloadFrames();
+}
+
+function preloadFrames() {
+  frames.forEach(f => {
+    const img = new Image();
+    img.onload = () => { f.img = img; };
+    img.src = f.url;
+    f.imgEl = img;
+  });
+  updateSprite();
+}
+
+function rebuildStrip() {
+  strip.innerHTML = '';
+  if (!frames.length) { strip.innerHTML = '<span id="strip-empty">Drop PNG files anywhere or click Load Frames</span>'; return; }
+  frames.forEach((f, i) => {
+    const img = document.createElement('img');
+    img.className = 'frame-thumb' + (i === cur ? ' active' : '');
+    img.src = f.url;
+    img.title = f.name;
+    img.addEventListener('click', () => { cur = i; updateSprite(); });
+    strip.appendChild(img);
+  });
+}
+
+function rebuildTable() {
+  frameTbody.innerHTML = '';
+  frames.forEach((f, i) => {
+    const tr = document.createElement('tr');
+    tr.className = i === cur ? 'active' : '';
+    tr.innerHTML = `<td>${i+1}</td><td title="${f.name}" style="max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name.replace(/\.[^.]+$/, '')}</td>
+      <td><input type="number" value="${f.offX||0}" data-i="${i}" data-axis="x" style="width:46px"></td>
+      <td><input type="number" value="${f.offY||0}" data-i="${i}" data-axis="y" style="width:46px"></td>`;
+    frameTbody.appendChild(tr);
+  });
+  frameTbody.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const i = +e.target.dataset.i;
+      const axis = e.target.dataset.axis;
+      if (axis === 'x') frames[i].offX = +e.target.value;
+      else frames[i].offY = +e.target.value;
+      updateSprite();
+    });
+  });
+}
+
+// ── playback ──
+function tick() {
+  if (!playing) return;
+  cur = (cur + 1) % frames.length;
+  if (!loopOn && cur === 0) { playing = false; playBtn.textContent = '▶ Play'; return; }
+  updateSprite();
+  playTimer = setTimeout(tick, 1000 / fps);
+}
+
+playBtn.addEventListener('click', () => {
+  if (!frames.length) return;
+  playing = !playing;
+  playBtn.textContent = playing ? '⏸ Pause' : '▶ Play';
+  if (playing) tick();
+  else clearTimeout(playTimer);
+});
+
+document.getElementById('prev-frame').addEventListener('click', () => {
+  if (!frames.length) return;
+  playing = false; playBtn.textContent = '▶ Play'; clearTimeout(playTimer);
+  cur = (cur - 1 + frames.length) % frames.length;
+  updateSprite();
+});
+
+document.getElementById('next-frame').addEventListener('click', () => {
+  if (!frames.length) return;
+  playing = false; playBtn.textContent = '▶ Play'; clearTimeout(playTimer);
+  cur = (cur + 1) % frames.length;
+  updateSprite();
+});
+
+fpsRange.addEventListener('input', () => { fps = +fpsRange.value; fpsVal.textContent = fps; });
+scaleRange.addEventListener('input', () => {
+  scale = +scaleRange.value / 100;
+  scaleVal.textContent = scaleRange.value + '%';
+  updateSprite();
+});
+
+// ── background ──
+const bgImages = {
+  village: '../sprites/backgrounds/01-village.png',
+  forest: '../sprites/backgrounds/02-forest.png',
+  study: '../sprites/backgrounds/03-study.png',
+  courtyard: '../sprites/backgrounds/04-courtyard.png',
+  camp: '../sprites/backgrounds/05-camp.png',
+  battlefield: '../sprites/backgrounds/06-battlefield.png',
+  palace: '../sprites/backgrounds/07-palace.png',
+};
+
+bgSelect.addEventListener('change', () => {
+  const v = bgSelect.value;
+  stageBg.className = v ? v : '';
+  if (v && bgImages[v]) {
+    stageBgImg.src = bgImages[v];
+    stageBgImg.style.display = 'block';
+  } else {
+    stageBgImg.style.display = 'none';
+  }
+});
+
+// ── position controls ──
+function applyXY() {
+  globalX = +xInput.value;
+  globalY = +yInput.value;
+  updateSprite();
+}
+xInput.addEventListener('input', applyXY);
+yInput.addEventListener('input', applyXY);
+
+groundYInp.addEventListener('input', () => {
+  groundPct = +groundYInp.value;
+  updateSprite();
+});
+
+// ── toggles ──
+document.getElementById('per-frame-toggle').addEventListener('change', e => {
+  perFrame = e.target.checked;
+  updateSprite();
+});
+document.getElementById('onion-toggle').addEventListener('change', e => {
+  onionOn = e.target.checked;
+  updateSprite();
+});
+document.getElementById('loop-toggle').addEventListener('change', e => { loopOn = e.target.checked; });
+document.getElementById('crosshair-toggle').addEventListener('change', e => {
+  crosshairOn = e.target.checked;
+  updateSprite();
+});
+
+// ── sprite drag ──
+let dragStartX, dragStartY, dragStartGX, dragStartGY;
+spriteCont.addEventListener('mousedown', e => {
+  e.preventDefault();
+  dragStartX = e.clientX; dragStartY = e.clientY;
+  dragStartGX = globalX; dragStartGY = globalY;
+  const onMove = ev => {
+    globalX = dragStartGX + ev.clientX - dragStartX;
+    globalY = dragStartGY + ev.clientY - dragStartY;
+    xInput.value = Math.round(globalX);
+    yInput.value = Math.round(globalY);
+    updateSprite();
+  };
+  const onUp = () => {
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onUp);
+  };
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+});
+
+// ── ground line drag ──
+let groundDragStart, groundDragStartPct;
+groundLine.addEventListener('mousedown', e => {
+  e.preventDefault();
+  groundDragStart = e.clientY;
+  groundDragStartPct = groundPct;
+  const onMove = ev => {
+    const dy = ev.clientY - groundDragStart;
+    groundPct = Math.max(0, Math.min(100, groundDragStartPct + dy / stageWrap.clientHeight * 100));
+    updateSprite();
+  };
+  const onUp = () => {
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onUp);
+  };
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+});
+
+// ── keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const step = e.shiftKey ? 10 : 1;
+  if (e.key === 'ArrowLeft')  { globalX -= step; xInput.value = Math.round(globalX); updateSprite(); e.preventDefault(); }
+  if (e.key === 'ArrowRight') { globalX += step; xInput.value = Math.round(globalX); updateSprite(); e.preventDefault(); }
+  if (e.key === 'ArrowUp')    { globalY -= step; yInput.value = Math.round(globalY); updateSprite(); e.preventDefault(); }
+  if (e.key === 'ArrowDown')  { globalY += step; yInput.value = Math.round(globalY); updateSprite(); e.preventDefault(); }
+  if (e.key === 'g' || e.key === 'G') {
+    // snap ground line to sprite feet
+    const cy = groundPx() + globalY;
+    groundPct = cy / stageWrap.clientHeight * 100;
+    globalY = 0; yInput.value = 0;
+    updateSprite();
+  }
+  if (e.key === ' ') { playBtn.click(); e.preventDefault(); }
+  if (e.key === 'ArrowLeft' && e.altKey) { document.getElementById('prev-frame').click(); }
+  if (e.key === 'ArrowRight' && e.altKey) { document.getElementById('next-frame').click(); }
+});
+
+// ── file input ──
+document.getElementById('load-btn').addEventListener('click', () => document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', e => loadFiles(e.target.files));
+
+// ── drag and drop ──
+document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('drop-overlay').classList.add('active'); });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.getElementById('drop-overlay').classList.remove('active'); });
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  document.getElementById('drop-overlay').classList.remove('active');
+  loadFiles(e.dataTransfer.files);
+});
+
+// ── copy ──
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(outputBox.textContent).then(() => {
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => { copyBtn.textContent = 'Copy CSS'; copyBtn.classList.remove('copied'); }, 1500);
+  });
+});
+
+// ── resize ──
+window.addEventListener('resize', () => updateSprite());
+</script>
+</body>
+</html>

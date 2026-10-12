@@ -354,7 +354,7 @@ function renderEnemies() {
   const host = document.getElementById('panel-enemies');
   host.innerHTML = '';
   const grid = el('div', 'grid');
-  for (const tier of [1,2,3,4,5]) {
+  for (const tier of Object.keys(CFG.enemyTiers).map(Number)) {
     const file = CFG.enemyTiers[tier];
     if (!file) continue;
     const sizePx = CFG.tierSizePx[tier] || 101;

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>원고지 Widget Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0f4f8;
+  --l1: #ffffff;
+  --bd: #e2e8f0;
+  --bdhi: #cbd5e1;
+  --thi: #0f172a;
+  --tmd: #475569;
+  --tlo: #94a3b8;
+  --blue: #2563eb;
+  --green: #10b981;
+}
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(96,165,250,0.32) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(96,165,250,0.32) 1px, transparent 1px);
+  background-size: 18px 18px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+/* ── Widget ── */
+.wongoji-card {
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid rgba(96,165,250,0.5);
+  border-radius: 14px;
+  padding: 14px 16px;
+  width: 300px;
+  flex-shrink: 0;
+}
+.wg-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.wg-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(37,99,235,0.8);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+}
+.wg-count {
+  font-size: 11px;
+  color: var(--tmd);
+  font-family: 'JetBrains Mono', monospace;
+}
+.wg-grid-wrap {
+  display: flex;
+  align-items: stretch;
+}
+.wg-row-nums {
+  display: flex;
+  flex-direction: column;
+  width: 12px;
+  flex-shrink: 0;
+  margin-right: 5px;
+  padding-top: 1px;
+}
+.wg-row-num {
+  flex: 1;
+  font-size: 7px;
+  color: rgba(59,130,246,0.55);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 1px;
+  line-height: 1;
+}
+.wg-grid {
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  border: 1.5px solid rgba(96,165,250,0.6);
+  border-radius: 4px;
+  overflow: hidden;
+  flex: 1;
+}
+.wongoji-cell {
+  aspect-ratio: 1;
+  border-right: 1px solid rgba(96,165,250,0.25);
+  border-bottom: 1px solid rgba(96,165,250,0.25);
+  font-family: 'Nanum Pen Script', cursive;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.wongoji-cell:nth-child(20n)        { border-right: none; }
+.wongoji-cell:nth-last-child(-n+20) { border-bottom: none; }
+.wongoji-cell:nth-child(n+81):nth-child(-n+100) {
+  border-bottom: 1.5px solid rgba(96,165,250,0.45);
+}
+.wongoji-cell.wc-typed {
+  background: rgba(219,234,254,0.4);
+  color: #1e40af;
+}
+.wongoji-cell.wc-space {
+  background: rgba(219,234,254,0.15);
+}
+.wongoji-cell.wc-cursor {
+  box-shadow: inset 0 0 0 1.5px rgba(37,99,235,0.5);
+  background: rgba(37,99,235,0.05);
+}
+.wg-footer { margin-top: 8px; }
+.wg-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wg-progress-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(96,165,250,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.wg-progress-fill {
+  height: 100%;
+  background: rgba(37,99,235,0.5);
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+.wg-pct {
+  font-size: 9px;
+  color: var(--tlo);
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 28px;
+  text-align: right;
+}
+.wg-rule {
+  margin-top: 8px;
+  font-size: 10px;
+  color: #94a3b8;
+  border-top: 1px solid rgba(96,165,250,0.18);
+  padding-top: 6px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Demo controls ── */
+.demo-panel {
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid var(--bd);
+  border-radius: 14px;
+  padding: 20px;
+  width: 280px;
+}
+.demo-panel h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--thi);
+  margin-bottom: 12px;
+}
+.demo-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--bd);
+  border-radius: 8px;
+  font-size: 18px;
+  font-family: 'Nanum Pen Script', cursive;
+  background: rgba(255,255,255,0.8);
+  color: var(--thi);
+  outline: none;
+  margin-bottom: 10px;
+}
+.demo-input:focus { border-color: var(--blue); }
+.demo-hint {
+  font-size: 11px;
+  color: var(--tlo);
+  line-height: 1.6;
+}
+.demo-hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--bdhi);
+  border-radius: 4px;
+  font-size: 10px;
+  background: var(--bg);
+}
+.demo-reset {
+  margin-top: 12px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--bd);
+  background: var(--bg);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tmd);
+  cursor: pointer;
+}
+.demo-reset:hover { border-color: var(--bdhi); }
+
+.wongoji-card.wg-done {
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.35);
+}
+.wongoji-card.wg-done .wg-count { color: var(--green); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<aside class="wongoji-card" id="wongoji-card">
+  <div class="wg-header">
+    <span class="wg-title">원고지</span>
+    <span class="wg-count"><span id="wgCount">0</span>&nbsp;/ 200자</span>
+  </div>
+  <div class="wg-grid-wrap">
+    <div class="wg-row-nums" id="wgRowNums"></div>
+    <div class="wg-grid" id="wgGrid"></div>
+  </div>
+  <div class="wg-footer">
+    <div class="wg-progress-wrap">
+      <div class="wg-progress-track"><div class="wg-progress-fill" id="wgBar" style="width:0%"></div></div>
+      <span class="wg-pct" id="wgPct">0%</span>
+    </div>
+    <div class="wg-rule">한 칸에 한 글자 · 띄어쓰기는 빈 칸</div>
+  </div>
+</aside>
+
+<div class="demo-panel">
+  <h3>Live demo — type here</h3>
+  <input class="demo-input" id="demoInput" type="text" placeholder="한국어 입력…" autocomplete="off" spellcheck="false">
+  <div class="demo-hint">
+    Type any Korean — each character fills a cell.<br>
+    <kbd>Space</kbd> = blank cell &nbsp; <kbd>⌫</kbd> = undo last cell
+  </div>
+  <button class="demo-reset" onclick="resetDemo()">Reset</button>
+</div>
+
+<script>
+const grid    = document.getElementById('wgGrid');
+const rowNums = document.getElementById('wgRowNums');
+const countEl = document.getElementById('wgCount');
+const barEl   = document.getElementById('wgBar');
+const pctEl   = document.getElementById('wgPct');
+const card    = document.getElementById('wongoji-card');
+const input   = document.getElementById('demoInput');
+
+let committed = '';
+
+// Build grid
+for (let r = 1; r <= 10; r++) {
+  const d = document.createElement('div');
+  d.className = 'wg-row-num';
+  d.textContent = r;
+  rowNums.appendChild(d);
+}
+for (let i = 0; i < 200; i++) {
+  const cell = document.createElement('div');
+  cell.className = 'wongoji-cell';
+  grid.appendChild(cell);
+}
+
+function refresh(composingChar) {
+  const text = committed + (composingChar || '');
+  const cells = document.querySelectorAll('.wongoji-cell');
+  const filled = Math.min(text.length, 200);
+  let cursorSet = false;
+
+  cells.forEach((cell, i) => {
+    const ch = text[i];
+    if (ch === undefined) {
+      cell.className = 'wongoji-cell';
+      cell.textContent = '';
+      if (!cursorSet && i === filled) {
+        cell.className = 'wongoji-cell wc-cursor';
+        cursorSet = true;
+      }
+    } else if (ch === ' ') {
+      cell.className = 'wongoji-cell wc-space';
+      cell.textContent = '';
+    } else {
+      cell.className = 'wongoji-cell wc-typed';
+      cell.textContent = ch;
+    }
+  });
+
+  countEl.textContent = filled;
+  const pct = Math.round((filled / 200) * 100);
+  barEl.style.width = pct + '%';
+  pctEl.textContent = pct + '%';
+  card.classList.toggle('wg-done', filled >= 200);
+}
+
+function resetDemo() {
+  committed = '';
+  input.value = '';
+  refresh('');
+}
+
+// Track input changes
+let lastVal = '';
+input.addEventListener('input', e => {
+  const val = input.value;
+  if (val.length > lastVal.length) {
+    // Character added — commit all but last char (composing), show last as composing
+    const newChars = val.slice(lastVal.length);
+    if (newChars.length > 1) {
+      committed += newChars.slice(0, -1);
+    }
+    refresh(val[val.length - 1] || '');
+  } else {
+    // Backspace
+    if (committed.length > 0 && val.length < lastVal.length) {
+      committed = committed.slice(0, -1);
+    }
+    refresh(val[val.length - 1] || '');
+  }
+  lastVal = val;
+});
+
+input.addEventListener('keydown', e => {
+  if (e.key === ' ') {
+    e.preventDefault();
+    committed += input.value + ' ';
+    input.value = '';
+    lastVal = '';
+    refresh('');
+  }
+  if (e.key === 'Enter') {
+    committed += input.value;
+    input.value = '';
+    lastVal = '';
+    refresh('');
+  }
+});
+
+// Seed some sample text
+committed = '안녕하세요 저는 한국어를 공부하고 있습니다 오늘도 열심히 ';
+refresh('');
+</script>
+</body>
+</html>
