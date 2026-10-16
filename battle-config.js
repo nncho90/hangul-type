@@ -95,7 +95,9 @@
     },
 
     // Bubble frequency. Regular minions only (bosses use phaseLines).
-    lineChance: { spawn: 0.20, death: 0.35 },
+    // Death lines are off (2026-10-16): too distracting mid-kill. The
+    // `death` pools above are kept in case they come back.
+    lineChance: { spawn: 0.20, death: 0 },
 
     // ─── Emoji fallbacks per tier ───────────────────────────────────────────
     // Used by spriteHtml's onerror swap when the PNG 404s.
