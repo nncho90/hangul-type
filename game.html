@@ -1027,6 +1027,19 @@
     pointer-events: none;
     will-change: transform, opacity;
   }
+  .particle.ember {
+    width: 6px; height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: #fef3c7;
+    box-shadow: 0 0 8px 2px rgba(251, 146, 60, 0.9);
+  }
+  .particle.spark {
+    width: 16px; height: 4px;
+    margin: -2px 0 0 -8px;
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(253, 230, 138, 0.9);
+  }
 
   /* Score pop */
   .score-pop {
@@ -4126,15 +4139,110 @@ function hitReact(m) {
   const spriteEl = m && m.el && m.el.querySelector('.sprite');
   if (!spriteEl || !spriteEl.animate) return;
   if (m._hitAnim) m._hitAnim.cancel();
+  // Knock back along the hit direction (player -> monster), then settle.
+  const d = hitDir(m);
+  const kx = (d.x * 7).toFixed(1), ky = (d.y * 7).toFixed(1);
+  const rx = (-d.x * 2).toFixed(1), ry = (-d.y * 2).toFixed(1);
   const kf = REDUCED.matches
     ? [{ filter: 'brightness(0) invert(1)' }, { filter: 'brightness(1.5)', offset: 0.3 }, { filter: 'none' }]
     : [
         { filter: 'brightness(0) invert(1)', transform: 'translate(0, 0) scale(1.06)' },
-        { filter: 'brightness(1.5)', transform: 'translate(-4px, -3px) scale(1.03)', offset: 0.3 },
-        { filter: 'none', transform: 'translate(2px, 0) scale(1.01)', offset: 0.65 },
+        { filter: 'brightness(1.5)', transform: `translate(${kx}px, ${ky}px) scale(1.03)`, offset: 0.3 },
+        { filter: 'none', transform: `translate(${rx}px, ${ry}px) scale(1.01)`, offset: 0.65 },
         { filter: 'none', transform: 'none' }
       ];
   m._hitAnim = spriteEl.animate(kf, { duration: 180, easing: 'ease-out' });
+}
+
+// Aftermath: a few embers linger where the monster died, drift up, and
+// die down, so the kill doesn't vanish the instant the smoke clears.
+function spawnEmbers(x, y, count) {
+  if (REDUCED.matches || !FX_LAYER) return;
+  const ss = Math.max(0.7, spriteScale());
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle ember';
+    p.style.left = (x + (Math.random() - 0.5) * 50 * ss) + 'px';
+    p.style.top = (y + (Math.random() - 0.2) * 30 * ss) + 'px';
+    frag.appendChild(p);
+    const rise = (40 + Math.random() * 40) * ss, sway = (Math.random() - 0.5) * 24 * ss;
+    const a = p.animate([
+      { transform: 'translate(0, 0) scale(0.4)', opacity: 0 },
+      { transform: `translate(${(sway * 0.4).toFixed(1)}px, ${(-rise * 0.3).toFixed(1)}px) scale(1)`, opacity: 1, offset: 0.2 },
+      { transform: `translate(${sway.toFixed(1)}px, ${(-rise).toFixed(1)}px) scale(0.3)`, opacity: 0 }
+    ], { duration: 800 + Math.random() * 500, delay: 120 + Math.random() * 200, easing: 'ease-out', fill: 'both' });
+    a.playbackRate = fxRate();
+    a.onfinish = () => p.remove();
+  }
+  FX_LAYER.appendChild(frag);
+}
+
+// Attacker recoil for ranged/spell casts (melee already has its swing):
+// the body squashes back toward the camera for a beat, then settles.
+function playerRecoil() {
+  if (REDUCED.matches) return;
+  playerFx([
+    { transform: 'translateY(0) scale(1, 1)', transformOrigin: '50% 100%' },
+    { transform: 'translateY(4px) scale(1.03, 0.96)', transformOrigin: '50% 100%', offset: 0.3 },
+    { transform: 'translateY(0) scale(1, 1)', transformOrigin: '50% 100%' }
+  ], { duration: 150, easing: 'ease-out' });
+}
+
+// Unit vector from the player's hands to the monster: the direction a hit
+// travels, so knockback and sparks fly away from the attacker.
+function hitDir(m) {
+  const from = playerHomeMuzzle();
+  const to = monsterCenter(m);
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: dx / len, y: dy / len };
+}
+
+// Everything that sells one landed keystroke, fired on the impact frame
+// (ranged: when the arrow arrives). Flash + knockback (hitReact), a crack
+// of sound, sparks sprayed out the far side, and a 2px shake with a
+// two-frame freeze. Kills layer their bigger versions on top of this.
+function landHit(m) {
+  if (!m || !m.el || m.el.classList.contains('dying')) return;
+  triggerMonsterHit(m);
+  sfxHit();
+  // Sparks start at the sprite's far edge so they aren't hidden behind it.
+  const c = monsterCenter(m), d = hitDir(m);
+  hitSparks(c.x + d.x * c.h * 0.3, c.y + d.y * c.h * 0.3, d);
+  if (!state.specialMoveBurst) {
+    hitStop(30);
+    microShake();
+  }
+}
+
+// A short cone of hot streaks, aimed along dir with a +-35deg spread.
+const HIT_SPARK_COLORS = ['#ffffff', '#fde68a', '#fbbf24'];
+function hitSparks(x, y, dir) {
+  if (REDUCED.matches || !FX_LAYER) return;
+  const ss = Math.max(0.7, spriteScale());
+  const base = Math.atan2(dir.y, dir.x);
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle spark';
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.background = HIT_SPARK_COLORS[i % HIT_SPARK_COLORS.length];
+    frag.appendChild(p);
+    const ang = base + (Math.random() - 0.5) * 1.2;
+    const dist = (44 + Math.random() * 40) * ss;
+    const deg = (ang * 180 / Math.PI).toFixed(1);
+    const tx = (Math.cos(ang) * dist).toFixed(1), ty = (Math.sin(ang) * dist).toFixed(1);
+    const a = p.animate([
+      { transform: `translate(0, 0) rotate(${deg}deg) scaleX(1.6)`, opacity: 1, easing: 'cubic-bezier(.2,.8,.3,1)' },
+      { transform: `translate(${(tx * 0.8).toFixed(1)}px, ${(ty * 0.8).toFixed(1)}px) rotate(${deg}deg) scaleX(0.9)`, opacity: 1, offset: 0.5 },
+      { transform: `translate(${tx}px, ${ty}px) rotate(${deg}deg) scaleX(0.3)`, opacity: 0 }
+    ], { duration: 260 + Math.random() * 100, fill: 'forwards' });
+    a.playbackRate = fxRate();
+    a.onfinish = () => p.remove();
+  }
+  FX_LAYER.appendChild(frag);
 }
 
 // Teleporting monster: blink in at its new spot. Scale/filter/opacity on the
@@ -4530,6 +4638,13 @@ function noiseBurst({ dur=0.08, gain=0.05, freq=1200 }) {
   src.start();
 }
 function sfxShoot()   { tone({ freq: 1200, type:'sine',     dur:0.04, gain:0.03, slide:1700 }); }
+// Impact crack: a bright noise snap over a falling thump. Pitch wobbles a
+// few percent per hit so fast typing doesn't sound like a machine gun.
+function sfxHit() {
+  const j = 0.94 + Math.random() * 0.12;
+  noiseBurst({ dur: 0.045, gain: 0.045, freq: 2400 * j });
+  tone({ freq: 220 * j, type: 'triangle', dur: 0.07, gain: 0.05, slide: 90 * j });
+}
 function sfxKill()    { tone({ freq: 880,  type:'sine',     dur:0.16, gain:0.05 }); noiseBurst({ dur:0.12, gain:0.03, freq:1200 }); }
 function sfxMiss()    { tone({ freq: 200,  type:'square',   dur:0.08, gain:0.03 }); }
 function sfxLevelUp() {
@@ -6054,7 +6169,14 @@ function killMonster(m, byPlayer) {
   const isBossKill = !!m.isBoss;
   // Removal waits out the defeat fade, stretched by any hit-stop / boss slow-mo.
   let removeAfterMs = 550;
-  particleBurst(center.x, center.y, isBossKill ? 30 : 12, tierParticleColors(m.tier));
+  const killColors = tierParticleColors(m.tier);
+  if (byPlayer) {
+    particleBurst(center.x, center.y, isBossKill ? 14 : 5, killColors);
+    particleBurst(center.x, center.y, isBossKill ? 18 : 9, killColors, { dir: hitDir(m) });
+  } else {
+    particleBurst(center.x, center.y, isBossKill ? 30 : 12, killColors);
+  }
+  spawnEmbers(center.x, center.y, isBossKill ? 10 : 5);
   spawnSmokePuff(m.x, center.y + center.h * 0.3, { size: 64 * spriteScale() });
   // Drop the dead monster before maybeLevelUp so onLevelUp's empty-field
   // check (WAVE CLEAR bonus) sees the real field.
@@ -6069,7 +6191,7 @@ function killMonster(m, byPlayer) {
     if (isCrit) {
       sc *= 3; xp = Math.round(xp * 1.5);
       pops.push({ text: 'CRIT! x3', cls: 'crit' });
-      if (!isBossKill) particleBurst(center.x, center.y, 10, ['#fde68a', '#f59e0b', '#ffffff']);
+      if (!isBossKill) particleBurst(center.x, center.y, 10, ['#fde68a', '#f59e0b', '#ffffff'], { dir: hitDir(m) });
       pulseBattleCamera('pulse');
     }
     // Perfect recall bonus: killed without any syllable reveals
@@ -7153,8 +7275,11 @@ function tierParticleColors(tier) {
   const map = (window.BATTLE_CONFIG && window.BATTLE_CONFIG.tierParticles) || {};
   return map[tier] || DEFAULT_PARTICLE_COLORS;
 }
-function particleBurst(x, y, count, colors) {
+// opts.dir (unit vector) blasts the burst out along the hit instead of a ring.
+function particleBurst(x, y, count, colors, opts) {
   if (REDUCED.matches || !count) return;
+  const dir = opts && opts.dir;
+  const base = dir ? Math.atan2(dir.y, dir.x) : 0;
   const palette = colors && colors.length ? colors : DEFAULT_PARTICLE_COLORS;
   const ss = spriteScale();
   const rate = fxRate();
@@ -7169,10 +7294,12 @@ function particleBurst(x, y, count, colors) {
     p.style.width = p.style.height = size.toFixed(1) + 'px';
     frag.appendChild(p);
     // Launch velocity biased upward; g pulls it back down past the origin.
-    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-    const speed = (90 + Math.random() * 110) * ss;     // px/s
+    const angle = dir
+      ? base + (Math.random() - 0.5) * 1.8
+      : (Math.PI * 2 * i) / count + Math.random() * 0.5;
+    const speed = (dir ? 160 + Math.random() * 180 : 90 + Math.random() * 110) * ss;     // px/s
     const vx = Math.cos(angle) * speed;
-    const vy = Math.sin(angle) * speed - 160 * ss;
+    const vy = Math.sin(angle) * speed - (dir ? 90 : 160) * ss;
     const g = 900 * ss;                                 // px/s^2
     const dur = 650 + Math.random() * 250;
     const kf = [];
@@ -7602,6 +7729,7 @@ function pulseBattleCamera(kind) {
   if (REDUCED.matches) return;
   cameraShake(heavy ? 10 : 4, heavy ? 520 : 300);
 }
+let _shakeAmp = 0, _shakeUntil = 0;
 function cameraShake(amp, dur) {
   if (REDUCED.matches || !STAGE.animate) return;
   const kf = [];
@@ -7617,6 +7745,14 @@ function cameraShake(amp, dur) {
     if (el._shakeAnim) el._shakeAnim.cancel();
     el._shakeAnim = el.animate(kf, { duration: dur, easing: 'ease-out' });
   }
+  _shakeAmp = amp;
+  _shakeUntil = performance.now() + dur;
+}
+// Per-keystroke tremor. Never cuts short a bigger shake still running
+// (kill, boss slam), so a fast follow-up key can't swallow it.
+function microShake() {
+  if (performance.now() < _shakeUntil && _shakeAmp > 2) return;
+  cameraShake(2, 120);
 }
 
 // Short-lived effect on the player's sprite wrapper (.player-main): swing,
@@ -7878,7 +8014,11 @@ function fireBossShot(boss) {
   p.appendChild(body);
   flyProjectile(p, from, to, {
     dur: 300, trail: 'rgba(239,68,68,0.6)', bowSign: Math.random() < 0.5 ? -1 : 1,
-    onLand: () => particleBurst(to.x, to.y, 10, ['#fde68a', '#f97316', '#dc2626'])
+    onLand: () => {
+      const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+      particleBurst(to.x, to.y, 10, ['#fde68a', '#f97316', '#dc2626'],
+        { dir: { x: (to.x - from.x) / len, y: (to.y - from.y) / len } });
+    }
   });
 }
 
@@ -8725,14 +8865,17 @@ function advanceLock(m) {
   const style = combatStyle(state.level);
   triggerStrikePose();
   // Ranged: the monster reacts when the arrow lands, not on the keypress.
+  // Ranged gets a launch whoosh now and the impact on landing; melee and
+  // spells land on the keypress itself.
   if (style === 'ranged') {
-    fireProjectileAt(m, () => { if (state.monsters.includes(m)) triggerMonsterHit(m); });
+    sfxShoot();
+    playerRecoil();
+    fireProjectileAt(m, () => { if (state.monsters.includes(m)) landHit(m); });
   } else {
-    triggerMonsterHit(m);
+    landHit(m);
     if (style === 'melee') swingSword(m);
-    else                   castSpellAt(m);
+    else                 { castSpellAt(m); playerRecoil(); }
   }
-  sfxShoot();
   if (state.combo === 5 || state.combo === 10 || state.combo === 25 || state.combo === 50 || state.combo === 100) {
     flashCenterText(state.combo + '× combo');
   }
