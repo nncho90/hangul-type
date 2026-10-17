@@ -6,7 +6,7 @@
 <title>Type Hangeul · Korean Typing Practice for TOPIK IBT &amp; Online Exam</title>
 <meta name="description" content="Practice Korean typing on a QWERTY keyboard, no IME needed. Free tool built for TOPIK IBT: TOPIK 1 &amp; TOPIK 2 vocabulary, per-jamo accuracy heatmap, and a live WPM counter so you can track your speed before the online exam.">
 <meta name="keywords" content="TOPIK IBT typing, TOPIK online exam typing, type Korean for TOPIK, korean typing practice, TOPIK 2 typing, Korean keyboard TOPIK, learn korean keyboard, hangul typing, 한글 타자, TOPIK internet based test, korean keyboard practice, type korean QWERTY, korean wpm, TOPIK writing typing">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#f4ecda">
 <meta name="naver-site-verification" content="0266a71303dd634ab92441fb74848adb59f13acf">
 <link rel="canonical" href="https://typehangeul.com/">
 <meta property="og:type" content="website">
@@ -35,19 +35,16 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does the TOPIK online exam require typing in Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. The TOPIK IBT (Internet-Based Test) writing section requires candidates to type Korean characters directly into a text field. The long essay (Question 53/54) requires 400–500 characters typed in Korean. There is no handwriting or pen-and-paper component in the online format."}},{"@type":"Question","name":"How fast do I need to type Korean for TOPIK IBT?","acceptedAnswer":{"@type":"Answer","text":"Aim for at least 30–40 Korean syllables per minute to write comfortably within the time limit, which is roughly 15–20 on Type Hangeul's WPM counter. Practicing with TOPIK-level vocabulary lets you check your speed well before exam day."}},{"@type":"Question","name":"How do I type Korean on a QWERTY keyboard for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"South Korea uses the 2-set (두벌식) keyboard layout, where each QWERTY key maps to one Korean jamo (consonant or vowel). Type Hangeul shows the full key map live as you practice, and its built-in composition engine means no IME installation is required. Just open the site and start typing."}},{"@type":"Question","name":"How long does it take to learn Korean typing for TOPIK?","acceptedAnswer":{"@type":"Answer","text":"Most learners who can already read Hangeul reach a functional typing speed within 5–10 hours of deliberate practice. The 2-set layout puts 26 basic jamo on the 26 letter keys, so the learning curve is shorter than it appears."}},{"@type":"Question","name":"Can I practice TOPIK 2 vocabulary while learning to type Korean?","acceptedAnswer":{"@type":"Answer","text":"Yes. Type Hangeul includes separate word lists for TOPIK Level 1 and TOPIK Level 2, covering verbs, adjectives, nouns, and phrases. Select TOPIK 2 from the topic panel and the spaced-repetition system drills the most relevant vocabulary for the intermediate exam level."}}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Black Han Sans only draws the practice stamp, so fetch just its five syllables -->
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&text=%EC%B0%B8%EC%9E%98%ED%96%88%EC%96%B4%EC%9A%94&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/galmuri11-ui.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="ui.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: inherit; }
   :root {
-    /* Hanji-light surfaces: warm paper, ink text (tokens from ui.css) */
-    --bg: var(--hanji); --l1: var(--paper); --l2: #fbf3e2;   --l3: #f3e7cc;
-    --bd: #e0d0ae;   --bdhi: #b9a37a;
-    --thi: var(--ink); --tmd: #4a4436;  --tlo: #6b6250; /* 5.3:1 on paper, WCAG AA */
-    --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
-    --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
-    --korean: 'Noto Sans KR', 'Inter', sans-serif;
+    /* Surface, text and palette tokens live in ui.css */
     --green-ink: #047857; --red-ink: #b91c1c; /* AA text on white */
     /* Finger colors: target key fill, finger bar, and the canvas jamo color */
     --f-pinky: #9d8ee0; --f-ring: #de85a8; --f-middle: #62b882; --f-index: #c9a040;
@@ -61,9 +58,9 @@
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.33 0 0 0 0 0.2 0 0 0 0.28 -0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
     background-size: 320px 320px, 160px 160px;
     color: var(--thi);
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    line-height: 1.75;
     min-height: 100vh;
   }
   .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px 48px; }
@@ -97,16 +94,16 @@
   }
   .stat { text-align: right; line-height: 1.05; }
   .stat-label {
-    font-size: 9px; color: var(--tlo); font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 12px; color: var(--tlo);
+    text-transform: uppercase; letter-spacing: 0.04em;
   }
   .stat-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px; font-weight: 700; color: var(--tmd);
+    font-family: var(--font-mono);
+    font-size: 12px; color: var(--tmd);
     margin-top: 2px;
   }
   .stat.primary .stat-value {
-    font-size: 28px; color: var(--thi);
+    font-size: 24px; color: var(--thi);
   }
 
   /* Practice front and center — wider card, sidebar de-emphasized */
@@ -147,9 +144,9 @@
   .mobile-menu-btn .bars::before,
   .mobile-menu-btn .bars::after {
     display: block;
-    width: 17px;
+    width: 16px;
     height: 2px;
-    border-radius: 2px;
+    border-radius: 0;
     background: currentColor;
     content: "";
   }
@@ -158,7 +155,7 @@
   .mobile-menu-btn .bars::after { position: absolute; top: 6px; left: 0; }
   .mobile-menu-popover { display: none; }
   @media (max-width: 720px) {
-    body { font-size: 14px; }
+    body { font-size: 12px; }
     .wrap { padding: 14px 10px 28px; }
     header {
       display: grid;
@@ -175,9 +172,9 @@
     .header-mid { display: none; }
     .stats { justify-content: flex-end; gap: 10px; width: auto; }
     .stat { text-align: right; }
-    .stat-label { font-size: 10px; }
+    .stat-label { font-size: 12px; }
     .stat-value { font-size: 12px; }
-    .stat.primary .stat-value { font-size: 22px; }
+    .stat.primary .stat-value { font-size: 24px; }
     .mobile-menu-btn { display: inline-flex; }
     .mobile-menu-popover {
       position: absolute;
@@ -189,7 +186,7 @@
       background: var(--paper);
       border: 2px solid var(--ink);
       border-radius: var(--r-2);
-      box-shadow: 3px 3px 0 rgba(16, 19, 31, 0.16);
+      box-shadow: var(--shadow-hard);
     }
     .mobile-menu-popover.open { display: grid; gap: 6px; }
     .mobile-actions .home-btn,
@@ -199,14 +196,14 @@
       justify-content: flex-start;
       padding: 8px 14px 8px 22px;
       gap: 12px;
-      font-size: 14px;
+      font-size: 12px;
     }
     .mobile-actions #btnSettings::after {
       content: "Settings";
       margin-left: 8px;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
-      color: var(--tmd);
+      color: var(--ink);
     }
     .mobile-actions .settings-wrap { width: 100%; }
     .mobile-actions .settings-menu {
@@ -239,7 +236,7 @@
     box-shadow:
       inset 0 0 0 3px var(--paper),
       inset 0 0 0 4px var(--hanji-edge),
-      3px 3px 0 rgba(16, 19, 31, 0.16);
+      var(--shadow-hard);
     padding: 22px;
   }
 
@@ -264,38 +261,37 @@
   /* Sub-category complete celebration banner */
   .topic-complete-toast {
     position: fixed;
-    top: 32px; left: 50%;
+    top: 104px; left: 50%;
     transform: translateX(-50%) translateY(-20px);
     z-index: 9999;
-    background: var(--panel-solid);
-    color: var(--cream);
-    border: 3px solid var(--frame);
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
     padding: 12px 20px;
-    border-radius: 6px;
-    box-shadow: 0 0 0 3px var(--ink), 0 12px 28px rgba(16, 19, 31, 0.4);
+    border-radius: 0;
+    box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--hanji-edge), var(--shadow-hard);
     display: flex; align-items: center; gap: 12px;
     pointer-events: none;
-    animation: topic-toast-pop 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: topic-toast-pop 2.4s linear forwards;
     max-width: 92vw;
   }
   .topic-complete-toast .ico { font-size: 28px; line-height: 1; }
   .topic-complete-toast .msg {
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 14px; font-weight: 600;
-    line-height: 1.3;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    line-height: 1.5;
   }
-  .topic-complete-toast .msg strong { font-weight: 800; letter-spacing: 0.01em; color: var(--gold); }
+  .topic-complete-toast .msg strong { font-weight: 700; letter-spacing: 0.01em; color: var(--ink); }
   .topic-complete-toast .next {
-    font-size: 11px; font-weight: 600;
-    opacity: 0.85; letter-spacing: 0.04em;
+    font-size: 12px;
+    color: var(--tlo); letter-spacing: 0.04em;
     text-transform: uppercase;
   }
   @keyframes topic-toast-pop {
-    0%   { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.8); }
-    10%  { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1.05); }
-    18%  { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1); }
-    85%  { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.95); }
+    0%   { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+    6%   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    88%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(0); }
   }
 
   /* Header button back to the title screen */
@@ -321,20 +317,19 @@
   }
   .cr-tab {
     padding: 4px 12px;
-    border-radius: var(--r-2);
-    border: 2px solid var(--bd);
+    border-radius: 0;
+    border: 2px solid var(--ink);
     background: var(--paper);
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--tmd);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--ink);
     cursor: pointer;
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
   }
-  .cr-tab:hover { border-color: var(--bdhi); color: var(--thi); }
+  .cr-tab:hover { background: var(--l3); }
   .cr-tab.on {
     border-color: var(--ink);
     background: var(--ink);
-    color: var(--gold);
+    color: var(--paper);
   }
   .cr-track {
     display: flex;
@@ -372,7 +367,7 @@
     transition: width 0.3s ease;
   }
   .cr-next-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
@@ -382,8 +377,8 @@
   }
   .cr-ico  { font-size: 15px; line-height: 1; position: relative; z-index: 1; }
   .cr-name {
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: 400;
+    font-size: 12px;
     line-height: 1.3;
     color: var(--thi);
     white-space: nowrap;
@@ -392,20 +387,20 @@
     position: relative; z-index: 1;
   }
   .cr-prog {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
     color: var(--tlo);
     position: relative; z-index: 1;
   }
   .cr-unit-num {
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--thi);
     position: relative; z-index: 1;
   }
   /* Done: muted */
   .cr-card.cr-done { opacity: 0.45; }
-  .cr-card.cr-done .cr-name::after { content: ' ✓'; color: var(--green); }
+  .cr-card.cr-done .cr-name::after { content: ' ✓'; color: var(--ink); }
   /* Active: ink frame + hard shadow, like a selected menu slot */
   .cr-card.cr-active {
     border-color: var(--ink);
@@ -425,13 +420,13 @@
   }
   .cr-card.cr-next .cr-fill { background: color-mix(in srgb, var(--gold) 12%, transparent); }
   .cr-card.just-completed {
-    animation: card-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-    border-color: var(--green);
+    animation: card-pop 0.6s steps(3);
+    border-color: var(--ink);
   }
   @keyframes card-pop {
-    0%   { transform: scale(1); }
-    35%  { transform: scale(1.08); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35); }
-    100% { transform: scale(1); }
+    0%   { transform: translateY(0); }
+    35%  { transform: translateY(-3px); box-shadow: 0 3px 0 var(--ink); }
+    100% { transform: translateY(0); }
   }
   .practice-content {
     max-width: 780px;
@@ -462,10 +457,11 @@
     border: 2px solid var(--ink);
     border-radius: var(--r-2);
     box-shadow: 0 2px 0 var(--ink);
+    display: inline-flex; align-items: center; justify-content: center;
     padding: 6px 10px;
     font-size: 16px;
     cursor: pointer;
-    color: var(--tmd);
+    color: var(--ink);
     line-height: 1;
     transition: transform 0.06s, box-shadow 0.06s;
   }
@@ -482,7 +478,7 @@
     border-radius: var(--r-2);
     padding: 6px;
     min-width: 180px;
-    box-shadow: 3px 3px 0 rgba(16, 19, 31, 0.16);
+    box-shadow: var(--shadow-hard);
     z-index: 10;
     display: flex;
     flex-direction: column;
@@ -494,16 +490,16 @@
     border: 0;
     text-align: left;
     padding: 8px 10px;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--thi);
     cursor: pointer;
     font-family: inherit;
   }
   .setting-row:hover { background: var(--l2); }
-  .setting-row.danger { color: var(--red); }
-  .setting-row.danger:hover { background: color-mix(in srgb, var(--red) 10%, transparent); }
+  .setting-row.danger { color: var(--seal); }
+  .setting-row.danger:hover { background: var(--l2); }
 
   /* Keyboard legend — small color swatch + label */
   .kb-legend {
@@ -534,9 +530,8 @@
   }
   .target .romanization {
     color: var(--tlo);
-    font-size: 13px;
-    font-style: italic;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-family: var(--font-mono);
     letter-spacing: 0.4px;
     margin-top: 10px;
   }
@@ -545,6 +540,8 @@
     position: relative;
     min-height: 140px;
     width: 100%;
+    /* the word stamp's slam-in scale must not widen the page on phones */
+    overflow-x: clip;
   }
   .target-preview {
     display: none;
@@ -657,8 +654,8 @@
   /* Keyboard */
   .keyboard {
     background: var(--l2);
-    border: 2px solid var(--bd);
-    border-radius: var(--r-3);
+    border: 2px solid var(--ink);
+    border-radius: 0;
     padding: 14px;
   }
   .kb-legend-row {
@@ -691,8 +688,8 @@
     transform: none;
   }
   .key .qwerty {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px; color: var(--tlo);
+    font-family: var(--font-mono);
+    font-size: 12px; line-height: 1; color: var(--tlo);
     margin-top: 2px;
   }
   .key .jamo {
@@ -740,15 +737,15 @@
   }
   .fbar-hand {
     display: flex; align-items: flex-end; gap: 4px;
-    background: var(--l3); border-radius: 10px; padding: 8px 10px 6px;
+    background: var(--l3); border-radius: 0; padding: 8px 10px 6px;
   }
   .fbar-sep { width: 115px; flex-shrink: 0; }
 
   /* Shift / Enter special keys */
   .key.kb-label .jamo {
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 10px;
-    font-weight: 700;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 400;
     color: var(--tlo);
   }
   .key.kb-tab { flex: 0 0 58px; min-width: 58px; max-width: 58px; }
@@ -759,7 +756,7 @@
   .key.kb-enter { flex: 0 0 78.5px; min-width: 78.5px; max-width: 78.5px; }
   .key.kb-backslash { flex: 0 0 50px; min-width: 50px; max-width: 50px; }
   .fbar-f {
-    width: 13px; border-radius: 7px 7px 4px 4px;
+    width: 13px; border-radius: 0;
     background: var(--bdhi);
     transition: transform 0.1s;
   }
@@ -774,7 +771,7 @@
   @media (max-width: 720px) {
     .keyboard {
       padding: 10px 8px;
-      border-radius: 10px;
+      border-radius: 0;
       overflow: hidden;
     }
     .kb-legend-row {
@@ -801,7 +798,7 @@
       height: 44px;
       min-height: 44px;
       max-height: 44px;
-      border-radius: 5px;
+      border-radius: 0;
     }
     .key[data-key="m"] {
       flex: 0 1 32px;
@@ -810,7 +807,7 @@
       max-width: none;
     }
     .key .jamo { font-size: 15px; }
-    .key .qwerty { font-size: 8px; }
+    .key .qwerty { font-size: 12px; }
     .key .shift { font-size: 9px; top: 1px; right: 3px; }
   }
   @media (max-width: 400px) {
@@ -818,7 +815,7 @@
     .kb-row { gap: 2px; }
     .key { height: 40px; min-height: 40px; max-height: 40px; }
     .key .jamo { font-size: 14px; }
-    .key .qwerty { font-size: 9px; }
+    .key .qwerty { font-size: 12px; }
   }
 
   /* On-screen tappable keyboard — mobile only.
@@ -835,10 +832,10 @@
       z-index: 60;
       margin: 0;
       padding: 8px 6px calc(6px + env(safe-area-inset-bottom));
-      background: var(--l1);
-      border-top: 1px solid var(--bd);
+      background: var(--hanji);
+      border: 0;
       border-radius: 0;
-      box-shadow: 0 -2px 14px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 -2px 0 var(--ink);
     }
     .kb-legend-row { display: none; }
     /* Override desktop's width:fit-content so keys can stretch to viewport width */
@@ -875,9 +872,9 @@
       max-height: 44px;
       min-width: 0;
       max-width: none;
-      border-radius: 7px;
-      background: var(--l2);
-      border-color: var(--bdhi);
+      border-radius: 0;
+      background: var(--paper);
+      border-color: var(--ink);
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
@@ -891,23 +888,23 @@
       max-width: none;
     }
     .key .jamo { font-size: 17px; font-weight: 600; }
-    .key .qwerty { font-size: 9px; margin-top: 1px; }
+    .key .qwerty { font-size: 12px; margin-top: 1px; }
     .key .shift { font-size: 10px; top: 2px; right: 4px; }
     .key.kb-pressed,
     .key:active {
-      background: var(--blue);
-      border-color: var(--blue);
+      background: var(--ink);
+      border-color: var(--ink);
     }
     .key.kb-pressed .jamo, .key:active .jamo,
     .key.kb-pressed .qwerty, .key:active .qwerty,
-    .key.kb-pressed .shift, .key:active .shift { color: white; }
+    .key.kb-pressed .shift, .key:active .shift { color: var(--paper); }
     .kb-row.mobile-only { display: flex; gap: 4px; margin-bottom: 0; justify-content: center; }
     .key.kb-special {
       display: flex;
       flex: 0 0 calc((100vw - 12px - 36px) / 10);
       width: calc((100vw - 12px - 36px) / 10);
       padding: 0;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: var(--font-ui);
       font-size: 12px;
       font-weight: 700;
       color: var(--tmd);
@@ -926,9 +923,9 @@
       text-transform: uppercase;
     }
     .key.kb-shift.kb-armed {
-      background: var(--orange);
-      border-color: var(--orange);
-      color: white;
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
     }
     /* The shifted-target highlight from key.shifted is too aggressive on a
        small screen; tone it down to a ring instead of a fill so the actual
@@ -985,11 +982,11 @@
   .diag .ko { font-family: var(--korean); font-weight: 600; }
   .diag .key-hint {
     display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    background: white;
-    padding: 1px 6px; border-radius: 4px;
-    margin: 0 2px; border: 1px solid var(--bd);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--paper);
+    padding: 1px 6px; border-radius: 0;
+    margin: 0 2px; border: 1px solid var(--ink);
     color: var(--thi);
   }
   /* Skip button: phones have no Esc key */
@@ -1014,7 +1011,7 @@
     height: 50px;
     padding: 0;
     font-size: 18px;
-    border-radius: 12px;
+    border-radius: 0;
   }
   /* Menu sits on the far right, so open it leftward to avoid overflow */
   .jamo-settings-row .settings-menu { left: auto; right: 0; }
@@ -1070,7 +1067,7 @@
   .jamo-cell {
     aspect-ratio: 1;
     background: var(--l3);
-    border-radius: 6px;
+    border-radius: 0;
     display: flex; align-items: center; justify-content: center;
     font-family: var(--korean);
     font-size: 18px; font-weight: 500;
@@ -1102,22 +1099,21 @@
   .coachmark-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 12, 22, 0.66);
+    background: rgba(16, 19, 31, 0.55);
     display: flex; align-items: center; justify-content: center;
     z-index: 11000;
     animation: fadeIn 0.25s ease;
   }
-  /* Dark dialogue box; surface + frame from .rpg-panel */
+  /* Paper dialogue box; surface + frame from .rpg-panel */
   .coachmark-card {
     padding: 28px 32px;
     max-width: 400px;
     width: 90%;
     text-align: center;
   }
-  .coachmark-card .cm-emoji { font-size: 40px; margin-bottom: 12px; }
-  .coachmark-card h2 { font-family: var(--font-display); font-size: 26px; font-weight: 400; letter-spacing: 0.02em; color: var(--cream); margin: 0 0 12px; }
-  .coachmark-card p { font-size: 14px; color: var(--tmd); line-height: 1.6; margin: 0 0 20px; }
-  .coachmark-card button { width: 100%; min-height: 48px; font-size: 15px; }
+  .coachmark-card h2 { font-family: var(--font-display); font-size: 24px; font-weight: 400; letter-spacing: 0.02em; color: var(--ink); margin: 0 0 12px; }
+  .coachmark-card p { font-size: 12px; color: var(--tmd); line-height: 1.75; margin: 0 0 20px; }
+  .coachmark-card button { width: 100%; min-height: 48px; font-size: 12px; }
   /* Battle nudge toast (shown once per session after a lesson completes) */
   .battle-nudge {
     position: fixed;
@@ -1127,13 +1123,13 @@
     white-space: nowrap;
     animation: fadeIn 0.25s ease;
   }
-  .battle-nudge a { color: var(--gold); text-decoration: none; font-weight: 700; }
+  .battle-nudge a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
   .battle-nudge a:hover { text-decoration: underline; }
   .jamo-cell .acc {
     position: absolute;
     bottom: 2px;
     font-size: 9px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     color: var(--tlo);
     font-weight: 700;
   }
@@ -1165,43 +1161,41 @@
   .profile-chip { gap: 6px; }
   .profile-chip .profile-flag { font-size: 16px; line-height: 1; }
   .profile-chip .profile-name { line-height: 1; }
-  .profile-chip .profile-edit { font-size: 11px; opacity: 0.4; }
-  .profile-chip:hover .profile-edit { opacity: 0.9; }
 
   .profile-modal {
     position: fixed; inset: 0;
-    background: rgba(10, 12, 22, 0.66);
+    background: rgba(16, 19, 31, 0.55);
     display: flex; align-items: center; justify-content: center;
     z-index: 10001;
     animation: fadeIn 0.25s ease;
   }
-  /* Dark dialogue box; surface + frame from .rpg-panel */
+  /* Paper dialogue box; surface + frame from .rpg-panel */
   .profile-modal-card {
     padding: 28px;
     width: 460px;
     max-width: calc(100vw - 32px);
   }
   .profile-modal-card h3 {
-    margin: 0 0 6px; font-family: var(--font-display); font-size: 24px; font-weight: 400; letter-spacing: 0.02em; color: var(--cream);
+    margin: 0 0 6px; font-family: var(--font-display); font-size: 24px; font-weight: 400; letter-spacing: 0.02em; color: var(--ink);
   }
   .profile-modal-card p {
-    margin: 0 0 20px; font-size: 13px; color: var(--tmd);
+    margin: 0 0 20px; font-size: 12px; color: var(--tmd);
   }
   .profile-field { margin-bottom: 16px; }
   .profile-field label {
-    display: block; font-size: 11px; font-weight: 700;
+    display: block; font-size: 12px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.5px;
     color: var(--tlo); margin-bottom: 6px;
   }
   .profile-field input, .profile-field select {
     width: 100%; min-height: 44px; padding: 10px 12px;
-    border: 2px solid var(--bdhi); border-radius: var(--r-2);
-    font-size: 14px; color: var(--thi);
-    background: var(--l2);
+    border: 2px solid var(--ink); border-radius: 0;
+    font-family: var(--font-ui); font-size: 12px; color: var(--thi);
+    background: var(--hanji);
     box-sizing: border-box;
   }
   .profile-field input:focus, .profile-field select:focus {
-    outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold);
+    outline: none; background: var(--paper); box-shadow: var(--shadow-hard);
   }
   .profile-modal-actions {
     display: flex; gap: 8px; justify-content: flex-end;
@@ -1226,44 +1220,17 @@
     100% { opacity: 0; transform: var(--end-transform) scale(0.4); }
   }
 
-  /* Combo chip */
-  .combo-chip {
-    position: fixed;
-    top: 80px; right: 32px;
-    z-index: 9100;
-    background: linear-gradient(135deg, var(--yellow), var(--red));
-    color: white;
-    padding: 10px 18px;
-    border-radius: 20px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 18px; font-weight: 800;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  /* "참 잘했어요" teacher's seal pressed onto a finished word (stampWord) */
+  .word-stamp {
+    position: absolute;
+    z-index: 2;
     pointer-events: none;
-    animation: pop 0.25s ease;
+    color: var(--seal);
+    mix-blend-mode: multiply;
+    opacity: 0;
+    will-change: transform, opacity;
   }
-  @keyframes pop {
-    0% { transform: scale(0.6); }
-    60% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-  }
-  .combo-chip.bump { animation: pop 0.25s ease; }
-  .combo-chip.t5.bump { animation: pop 0.25s ease, rainbowShift 2s linear infinite; }
-  .combo-chip.t1 { font-size: 18px; }
-  .combo-chip.t2 { font-size: 22px; padding: 12px 22px; }
-  .combo-chip.t3 { font-size: 26px; padding: 14px 26px; background: linear-gradient(135deg, var(--red), var(--purple)); }
-  .combo-chip.t4 { font-size: 30px; padding: 16px 28px; background: linear-gradient(135deg, var(--purple), #ec4899); }
-  .combo-chip.t5 {
-    font-size: 34px; padding: 18px 32px;
-    background: linear-gradient(135deg, var(--red), var(--yellow), #84cc16, #06b6d4, var(--purple));
-    background-size: 200% 100%;
-    animation: pop 0.25s ease, rainbowShift 2s linear infinite;
-  }
-  @keyframes rainbowShift {
-    0% { background-position: 0% 0; }
-    100% { background-position: 200% 0; }
-  }
+  .word-stamp svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
   /* Celebration overlay */
 
@@ -1292,8 +1259,8 @@
     border: 2px solid var(--ink);
     box-shadow: 0 2px 0 var(--ink);
     padding: 1px 6px; border-radius: var(--r-1);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; color: var(--thi);
+    font-family: var(--font-mono);
+    font-size: 12px; color: var(--thi);
   }
 
   .site-footer {
@@ -1414,15 +1381,9 @@
     .seo-accordion details > p, .faq-accordion details > p { padding: 0 14px 14px; }
   }
 
-  /* Mobile placement for floating chips: clear of the fixed keyboard and
+  /* Mobile placement for the battle nudge: clear of the fixed keyboard and
      the header stats */
   @media (max-width: 720px), (hover: none) and (pointer: coarse) {
-    .combo-chip {
-      top: auto; right: 12px;
-      bottom: calc(244px + env(safe-area-inset-bottom));
-      padding: 6px 12px;
-    }
-    .combo-chip.t1, .combo-chip.t2, .combo-chip.t3, .combo-chip.t4, .combo-chip.t5 { font-size: 15px; padding: 6px 12px; }
     .battle-nudge {
       bottom: calc(244px + env(safe-area-inset-bottom));
       white-space: normal;
@@ -1433,9 +1394,9 @@
     .mobile-actions .profile-chip {
       width: 100%;
       min-height: 40px;
-      border-radius: 9px;
+      border-radius: 0;
       padding: 8px 14px;
-      font-size: 14px;
+      font-size: 12px;
     }
   }
 
@@ -1452,10 +1413,7 @@
   .title-screen {
     /* Aliases of the shared tokens in ui.css */
     --ts-ink: var(--ink);       /* outlines and the deepest shade */
-    --ts-cream: var(--cream);   /* title + menu text */
-    --ts-gold: var(--gold);     /* active menu item, cursor */
-    --ts-panel: var(--panel);
-    --ts-frame: var(--frame);   /* dialogue box border */
+    --ts-cream: var(--paper);   /* title text over the scene */
     --ts-sakura: var(--sakura);
     --ts-sakura-deep: var(--sakura-deep);
     position: fixed; inset: 0;
@@ -1528,7 +1486,7 @@
   }
   .ts-sub {
     margin: 22px 0 0;
-    font-family: var(--korean);
+    font-family: var(--font-display);
     font-size: clamp(15px, 2.2vw, 22px);
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -1536,7 +1494,7 @@
     word-break: keep-all;
     text-shadow: 2px 0 0 var(--ts-ink), -2px 0 0 var(--ts-ink), 0 2px 0 var(--ts-ink), 0 -2px 0 var(--ts-ink), 0 4px 0 var(--ts-ink);
   }
-  .ts-sub span { font-family: 'Inter', system-ui, sans-serif; }
+
   .ts-scene {
     flex: 1 1 auto;
     width: min(720px, 100%);
@@ -1579,57 +1537,58 @@
     40%      { transform: translateY(-10px) scale(0.98, 1.03); }
     60%      { transform: translateY(-10px) scale(0.98, 1.03); }
   }
+  /* Menu: the shared paper panel (ui.css .rpg-panel look) */
   .ts-panel {
     margin-top: 18px;
     width: min(380px, 100%);
-    padding: 14px 18px;
-    background: var(--ts-panel);
-    border: 3px solid var(--ts-frame);
-    border-radius: 6px;
-    box-shadow: 0 0 0 3px var(--ts-ink), 0 14px 30px rgba(0, 0, 0, 0.45);
+    padding: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--hanji-edge), var(--shadow-hard);
     display: flex; flex-direction: column; gap: 4px;
   }
   .ts-item {
     position: relative;
     display: flex; align-items: center; gap: 10px;
     width: 100%;
-    padding: 10px 12px 10px 40px;
+    padding: 12px 12px 12px 40px;
     background: transparent;
-    border: 0; border-radius: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 21px; font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--ts-cream);
+    border: 0; border-radius: 0;
+    font-family: var(--font-display);
+    font-size: 24px; font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    color: var(--ink);
     text-align: left;
     cursor: pointer;
   }
-  .ts-item .ts-ico { font-size: 18px; }
-  .ts-item.is-active { color: var(--ts-gold); background: rgba(255, 255, 255, 0.06); }
+  .ts-item.is-active { background: var(--hanji); box-shadow: inset 0 0 0 2px var(--ink); }
   .ts-item.is-active::before {
     content: '▶';
-    position: absolute; left: 12px; top: 50%;
+    position: absolute; left: 14px; top: 50%;
     transform: translateY(-50%);
-    font-size: 16px;
-    color: var(--ts-gold);
+    font-size: 12px;
+    color: var(--seal);
     animation: ts-blink 1s steps(1) infinite;
   }
-  /* The focused item is always the active one, and the gold highlight plus
-     cursor already mark it */
+  /* The focused item is always the active one, and the frame plus cursor
+     already mark it */
   .ts-item:focus-visible { outline: none; }
-  .ts-item.is-active { box-shadow: inset 0 0 0 2px rgba(246, 196, 83, 0.55); }
   @keyframes ts-blink { 50% { opacity: 0; } }
   .ts-hint {
     margin: 14px 0 0;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px; font-weight: 500;
+    padding: 3px 8px 2px;
+    font-family: var(--font-ui);
+    font-size: 12px;
     letter-spacing: 0.06em;
-    color: var(--ts-cream);
-    text-shadow: 0 2px 0 var(--ts-ink);
+    color: var(--ink);
+    background: var(--paper);
     animation: ts-blink 1.6s steps(1) infinite;
   }
   @media (hover: none) and (pointer: coarse), (max-width: 720px) {
     .ts-hint { display: none; }
-    .ts-item { padding: 16px 14px 16px 44px; font-size: 20px; min-height: 60px; }
+    .ts-item { padding: 16px 14px 16px 44px; font-size: 24px; min-height: 60px; }
   }
   @media (max-width: 720px) {
     .ts-content { padding: max(56px, 9vh) 16px max(24px, calc(16px + env(safe-area-inset-bottom))); }
@@ -1697,8 +1656,8 @@
       <div class="ts-actor ts-actor-imp"><img class="ts-imp" id="tsImp" src="sprites/title/imp.webp" alt="" width="380" height="440" decoding="async"></div>
     </div>
     <div class="ts-panel">
-      <button class="ts-item is-active" type="button" data-choice="game">START GAME <span class="ts-ico" aria-hidden="true">⚔️</span></button>
-      <button class="ts-item" type="button" data-choice="practice">PRACTICE <span class="ts-ico" aria-hidden="true">⌨️</span></button>
+      <button class="ts-item is-active" type="button" data-choice="game">START GAME</button>
+      <button class="ts-item" type="button" data-choice="practice">PRACTICE</button>
     </div>
     <p class="ts-hint" aria-hidden="true">↑↓ choose · Enter select</p>
   </div>
@@ -1717,11 +1676,10 @@
 
     <div class="header-mid">
       <button id="profileChip" class="profile-chip rpg-btn rpg-btn--light" type="button" title="Click to edit your name and country">
-        <span class="profile-flag">🏳️</span>
+        <span class="profile-flag"></span>
         <span class="profile-name">Player</span>
-        <span class="profile-edit">✏️</span>
       </button>
-      <button id="btnTitle" class="home-btn rpg-btn rpg-btn--light" type="button" title="Back to the title menu">🏠 Menu</button>
+      <button id="btnTitle" class="home-btn rpg-btn rpg-btn--light" type="button" title="Back to the title menu">Menu</button>
     </div>
 
     <div class="stats">
@@ -1740,7 +1698,6 @@
     <div id="mobileActions" class="mobile-menu-popover mobile-actions"></div>
   </header>
   <div id="fxLayer" class="fx-layer"></div>
-  <div id="comboChip" class="combo-chip" style="display:none;"></div>
   <div id="profileModal" class="profile-modal" style="display:none;"></div>
 
   <main class="practice-main">
@@ -1796,7 +1753,7 @@
                 <span class="jamo-toggle-caret">▾</span>
               </button>
               <div class="jamo-body">
-                <div class="csub">Where you struggle. New words are prioritized toward your weakest jamo. Tap a red or yellow key to drill it directly.</div>
+                <div class="csub">Your weakest jamo come up more. Tap a red or yellow key to drill it.</div>
                 <div id="jamoGrid"></div>
                 <div class="legend">
                   <span><span class="dot weak"></span>&lt; 70%</span>
@@ -1807,10 +1764,10 @@
             </section>
 
             <div class="settings-wrap" id="settingsWrap">
-              <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Settings" aria-haspopup="true" aria-expanded="false">⚙</button>
+              <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Settings" aria-haspopup="true" aria-expanded="false"></button>
               <div class="settings-menu" id="settingsMenu" hidden>
-                <button class="setting-row" id="btnAudio">🔊 Audio: ON</button>
-                <button class="setting-row" id="btnRomanize" title="Show romanization">🅰️ Romanize: OFF</button>
+                <button class="setting-row" id="btnAudio">Audio: ON</button>
+                <button class="setting-row" id="btnRomanize" title="Show romanization">Romanize: OFF</button>
                 <button class="setting-row danger" id="btnReset">Reset stats</button>
               </div>
             </div>
@@ -1828,7 +1785,7 @@
   </div>
 
   <div class="help">
-    Press <kbd>Esc</kbd> to skip · Type with QWERTY, no IME needed.
+    Press <kbd>Esc</kbd> to skip a word.
   </div>
 
   <footer class="site-footer">
@@ -3074,7 +3031,7 @@ function ensureAudio() {
   return audioCtx;
 }
 
-function playTone({ freq, type = 'sine', duration = 0.05, gain = 0.06 }) {
+function playTone({ freq, type = 'sine', duration = 0.05, gain = 0.06, slide = 0 }) {
   if (!state || !state.audioOn) return;
   const ctx = ensureAudio();
   if (!ctx) return;
@@ -3083,6 +3040,7 @@ function playTone({ freq, type = 'sine', duration = 0.05, gain = 0.06 }) {
   const g = ctx.createGain();
   o.type = type;
   o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + duration);
   g.gain.setValueAtTime(gain, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
   o.connect(g).connect(ctx.destination);
@@ -3095,7 +3053,31 @@ function playClick() {
 }
 function playMiss()  { playTone({ freq: 220, type: 'square', duration: 0.10, gain: 0.04 }); }
 function playWordDing() { playTone({ freq: 1320, type: 'sine', duration: 0.14, gain: 0.04 }); }
-function playComboTier() { playTone({ freq: 1100, type: 'triangle', duration: 0.10, gain: 0.05 }); }
+// Short decaying band-passed noise: the paper "crack" under the stamp.
+function noiseBurst({ dur = 0.08, gain = 0.05, freq = 1200 }) {
+  if (!state || !state.audioOn) return;
+  const c = ensureAudio();
+  if (!c || c.state !== 'running') return;
+  const buf = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const filt = c.createBiquadFilter();
+  filt.type = 'bandpass';
+  filt.frequency.value = freq;
+  const g = c.createGain();
+  g.gain.value = gain;
+  src.connect(filt).connect(g).connect(c.destination);
+  src.start();
+}
+// Word-complete reward: a low wooden thump plus a dry paper slap, with a
+// little pitch jitter so a run of words doesn't sound like a metronome.
+function playStamp() {
+  const j = 0.94 + Math.random() * 0.12;
+  noiseBurst({ dur: 0.05, gain: 0.05, freq: 1700 * j });
+  playTone({ freq: 150 * j, type: 'triangle', duration: 0.09, gain: 0.09, slide: 55 * j });
+}
 
 // Korean pronunciation audio. Battle uses the same manifest and fallback path:
 // pre-rendered MP3 first, then the browser's Korean speech voice if needed.
@@ -3175,22 +3157,9 @@ function prefersReducedMotion() {
   return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
 
-const COMBO_THRESHOLDS = [5, 10, 25, 50, 100];
-
-function comboTier(c) {
-  let t = 0;
-  for (const th of COMBO_THRESHOLDS) if (c >= th) t++;
-  return t;
-}
-
 function bumpCombo() {
   state.combo++;
   if (state.combo > state.comboMax) state.comboMax = state.combo;
-  const tier = comboTier(state.combo);
-  if (state.combo >= COMBO_THRESHOLDS[0]) {
-    showComboChip(state.combo, tier);
-    if (COMBO_THRESHOLDS.includes(state.combo)) playComboTier();
-  }
   if (state.combo > progress.comboBest) {
     progress.comboBest = state.combo;
     saveProgress(progress);
@@ -3199,26 +3168,111 @@ function bumpCombo() {
 
 function resetCombo() {
   state.combo = 0;
-  hideComboChip();
 }
 
-function showComboChip(c, tier) {
-  const el = document.getElementById('comboChip');
-  if (!el) return;
-  el.className = `combo-chip t${Math.max(1, tier)}`;
-  el.textContent = `${c}× combo`;
-  el.style.display = 'block';
-  // Re-trigger the pop on every increase, not only when the chip appears
-  void el.offsetWidth;
-  el.classList.add('bump');
-  if (state.comboHideTimer) clearTimeout(state.comboHideTimer);
-  state.comboHideTimer = setTimeout(hideComboChip, 1500);
+// ============================================================
+// Word-complete stamp: the word takes an ink-dark hit and a red teacher's
+// seal ("참 잘했어요") slams onto its right end, then both fade as the next
+// word loads. Character drills skip it so fast rows stay snappy.
+// ============================================================
+
+// Warm the Black Han Sans subset so the first stamp doesn't draw in a fallback.
+try { document.fonts && document.fonts.load('34px "Black Han Sans"', '참잘했어요').catch(() => {}); } catch (e) {}
+
+function stampSvg() {
+  const seed = Math.floor(Math.random() * 999);
+  return `<svg viewBox="0 0 120 100" aria-hidden="true">
+    <defs>
+      <filter id="stampInk" x="-4%" y="-4%" width="108%" height="108%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="${seed}" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="0.8" result="d"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -4 0 0 0 3.15" result="m"/>
+        <feComposite in="d" in2="m" operator="in"/>
+      </filter>
+    </defs>
+    <g filter="url(#stampInk)" fill="none" stroke="currentColor">
+      <rect x="3.5" y="3.5" width="113" height="93" rx="13" stroke-width="5"/>
+      <rect x="10" y="10" width="100" height="80" rx="7" stroke-width="1.6"/>
+      <text x="60" y="51" text-anchor="middle" fill="currentColor" stroke="none"
+        font-family="'Black Han Sans', 'Noto Sans KR', sans-serif" font-size="40">참</text>
+      <text x="60" y="81" text-anchor="middle" fill="currentColor" stroke="none" textLength="90" lengthAdjust="spacingAndGlyphs"
+        font-family="'Black Han Sans', 'Noto Sans KR', sans-serif" font-size="29">잘했어요</text>
+    </g>
+  </svg>`;
 }
 
-function hideComboChip() {
-  const el = document.getElementById('comboChip');
-  if (el) el.style.display = 'none';
-  if (state.comboHideTimer) { clearTimeout(state.comboHideTimer); state.comboHideTimer = null; }
+// Ink frame for the hit beat: colored glyphs crush to black while the light
+// cell paper clips back to white. Same function list both ends so it tweens.
+const INK_ON = 'grayscale(1) brightness(0.7) contrast(5)';
+const INK_OFF = 'grayscale(0) brightness(1) contrast(1)';
+
+function clearStamp() {
+  document.querySelectorAll('.word-stamp').forEach(el => el.remove());
+  const wordEl = document.getElementById('targetWord');
+  if (wordEl && wordEl._stampAnim) { wordEl._stampAnim.cancel(); wordEl._stampAnim = null; }
+}
+
+// holdMs matches the advance delay, so the exit fade ends as the next word
+// loads; loadWord() removes anything still on screen.
+function stampWord(target, holdMs) {
+  clearStamp();
+  const wordEl = document.getElementById('targetWord');
+  const row = wordEl && wordEl.closest('.char-row');
+  const syls = wordEl ? [...wordEl.querySelectorAll('.syl:not(.space)')] : [];
+  if (!row || !syls.length) return;
+  const reduce = prefersReducedMotion();
+  const fadeAt = Math.max(0.5, 1 - 140 / holdMs);
+
+  // 1) Hit beat on the word: ink-dark flash with a squash, settles in ~180ms,
+  //    then fades with the stamp. One restartable animation.
+  if (wordEl.animate) {
+    const beat = 180 / holdMs;
+    wordEl._stampAnim = wordEl.animate(reduce ? [
+      { offset: 0, opacity: 1 },
+      { offset: fadeAt, opacity: 1 },
+      { offset: 1, opacity: 0 },
+    ] : [
+      { offset: 0, filter: INK_ON, scale: '1.06 0.94', translate: '0 0', opacity: 1 },
+      { offset: 50 / holdMs, filter: INK_ON, scale: '1.04 0.96', translate: '0 0', opacity: 1, easing: 'ease-out' },
+      { offset: beat, filter: INK_OFF, scale: '1 1', translate: '0 0', opacity: 1, easing: 'ease-in' },
+      { offset: fadeAt, filter: INK_OFF, scale: '1 1', translate: '0 0', opacity: 1, easing: 'ease-in' },
+      { offset: 1, filter: INK_OFF, scale: '1 1', translate: '0 -6px', opacity: 0 },
+    ], { duration: holdMs, fill: 'forwards' });
+  }
+
+  // 2) The seal, pressed over the bottom-right corner of the last syllable so
+  //    the word stays readable under it.
+  const sentence = target.includes(' ');
+  const rowBox = row.getBoundingClientRect();
+  const last = syls[syls.length - 1].getBoundingClientRect();
+  const narrow = rowBox.width < 480;
+  const w = Math.round((sentence ? 132 : 112) * (narrow ? 0.75 : 1));
+  const h = Math.round(w * 100 / 120);
+  let cx = last.right - rowBox.left - w * 0.08;
+  cx = Math.min(cx, rowBox.width - w / 2 - 2);
+  const cy = last.bottom - rowBox.top - h * 0.12;
+  const tilt = -4 - Math.random() * 8;
+  const stamp = document.createElement('div');
+  stamp.className = 'word-stamp';
+  stamp.setAttribute('aria-hidden', 'true');
+  stamp.style.cssText = `left:${cx - w / 2}px;top:${cy - h / 2}px;width:${w}px;height:${h}px`;
+  stamp.innerHTML = stampSvg();
+  row.appendChild(stamp);
+  if (!stamp.animate) { stamp.style.opacity = '0.9'; return; }
+  const rot = `rotate(${tilt.toFixed(1)}deg)`;
+  const slam = 90 / holdMs;
+  const anim = stamp.animate(reduce ? [
+    { offset: 0, opacity: 0.9, transform: rot },
+    { offset: fadeAt, opacity: 0.9, transform: rot },
+    { offset: 1, opacity: 0, transform: rot },
+  ] : [
+    { offset: 0, opacity: 0, transform: `${rot} scale(1.6)`, easing: 'cubic-bezier(0.55, 0, 1, 0.45)' },
+    { offset: slam, opacity: 0.9, transform: `${rot} scale(1.05, 0.95)`, easing: 'ease-out' },
+    { offset: slam * 1.8, opacity: 0.9, transform: `${rot} scale(1)` },
+    { offset: fadeAt, opacity: 0.9, transform: `translateY(0) ${rot} scale(1)`, easing: 'ease-in' },
+    { offset: 1, opacity: 0, transform: `translateY(-6px) ${rot} scale(1)` },
+  ], { duration: holdMs, fill: 'forwards' });
+  anim.onfinish = () => stamp.remove();
 }
 
 function confettiBurst(anchorEl, count) {
@@ -3254,7 +3308,7 @@ function maybeShowBattleNudge() {
   } catch (e) { return; }
   const nudge = document.createElement('div');
   nudge.className = 'battle-nudge rpg-toast';
-  nudge.innerHTML = 'Nice! Fight monsters with these words: <a href="game.html">⚔️ Battle</a>';
+  nudge.innerHTML = 'Fight monsters with these words: <a href="game.html">Battle</a>';
   document.body.appendChild(nudge);
   setTimeout(() => { nudge.style.transition = 'opacity 0.4s'; nudge.style.opacity = '0'; setTimeout(() => nudge.remove(), 450); }, 4000);
 }
@@ -3500,7 +3554,7 @@ function celebrateTopicComplete(prev, next) {
   const banner = document.createElement('div');
   banner.className = 'topic-complete-toast';
   banner.setAttribute('role', 'status');
-  const ico = TOPIC_ICONS[prev.id] || '🎉';
+  const ico = TOPIC_ICONS[prev.id] || '';
   const nextName = (next && next.name) || 'Review mode';
   banner.innerHTML = `<span class="ico">${ico}</span><span class="msg"><strong>${escapeHtml(prev.name)}</strong> complete<br><span class="next">Next: ${escapeHtml(nextName)}</span></span>`;
   document.body.appendChild(banner);
@@ -3638,6 +3692,7 @@ function pickNextWordIdx(currentIdx) {
 
 function loadWord(i) {
   cancelAdvance();
+  clearStamp();
   if (state.activeWords.length === 0) return;
   state.wordIdx = i % state.activeWords.length;
   const w = state.activeWords[state.wordIdx];
@@ -4380,10 +4435,10 @@ const UNIT_TAGS = [
   '4급 ready', '5급 prep', '6급 path'
 ];
 const SHELF_TABS = [
-  { key: 'lessons',  ico: '📚', label: 'Lessons'  },
-  { key: 'topik1',   ico: '📗', label: 'TOPIK 1'  },
-  { key: 'topik2',   ico: '📘', label: 'TOPIK 2'  },
-  { key: 'position', ico: '⌨️', label: 'Position' },
+  { key: 'lessons',  label: 'Lessons'  },
+  { key: 'topik1',   label: 'TOPIK 1'  },
+  { key: 'topik2',   label: 'TOPIK 2'  },
+  { key: 'position', label: 'Position' },
 ];
 let shelfSection = null; // tab currently shown in the shelf
 
@@ -4471,7 +4526,7 @@ function buildTopicsPicker() {
   // A jamo drill has no card; keep showing whatever tab was open.
   if (!isDrillTopic(state.activeTopic) || !shelfSection) shelfSection = sectionForTopic(state.activeTopic);
   const tabsHtml = SHELF_TABS.filter(t => t.key !== 'lessons' || LESSONS.length > 0).map(t =>
-    `<button class="cr-tab ${shelfSection === t.key ? 'on' : ''}" data-section="${t.key}" type="button" aria-pressed="${shelfSection === t.key}">${t.ico} ${t.label}</button>`
+    `<button class="cr-tab ${shelfSection === t.key ? 'on' : ''}" data-section="${t.key}" type="button" aria-pressed="${shelfSection === t.key}">${t.label}</button>`
   ).join('');
   el.innerHTML = `<div class="cr-shelf">
     <div class="cr-tabs">${tabsHtml}</div>
@@ -4748,12 +4803,16 @@ function afterCorrectKeystroke() {
   const wAcc = Math.round((wordHits / Math.max(wordTotal, 1)) * 100);
   recordDailyStreak();
   track('word_complete', { topic_id: String(state.activeTopic), accuracy: wAcc });
-  confettiBurst(document.getElementById('targetWord'), 8);
   speakKoreanWord(target);
-  playWordDing();
-  setDiag('ok', `<span class="label">Nice.</span> <span class="ko">${escapeHtml(target)}</span> done.`);
 
   const topic = state.activeTopic;
+  if (isCharTopic(topic)) {
+    playWordDing();
+  } else {
+    const drillDone = isDrillTopic(topic) && state.wordsDone >= state.activeWords.length;
+    stampWord(target, drillDone ? 900 : 700);
+    playStamp();
+  }
   if (isCharTopic(topic)) {
     const done = recordCharProgress(topic);
     refreshTopicsShelf();
@@ -5167,7 +5226,6 @@ function showCoachmark() {
   overlay.setAttribute('aria-label', 'Welcome to Type Hangeul');
   overlay.innerHTML = `
     <div class="coachmark-card rpg-panel">
-      <div class="cm-emoji">⌨️</div>
       <h2>Welcome to Type Hangeul!</h2>
       <p>${touchKbMq.matches
         ? 'Tap the keys below to spell the Korean word. The next key lights up.'
@@ -5296,7 +5354,6 @@ function resetPracticeStats() {
   flushSaves();
   state.combo = 0;
   state.comboMax = 0;
-  hideComboChip();
   renderJamoGrid();
   setTopic(_initialActiveTopic(), 'auto');
 }
@@ -5366,7 +5423,7 @@ function boot() {
   });
   const btnAudio = document.getElementById('btnAudio');
   function syncAudioBtn() {
-    btnAudio.textContent = `${state.audioOn ? '🔊' : '🔇'} Audio: ${state.audioOn ? 'ON' : 'OFF'}`;
+    btnAudio.textContent = `Audio: ${state.audioOn ? 'ON' : 'OFF'}`;
     btnAudio.classList.toggle('primary', state.audioOn);
   }
   syncAudioBtn();
@@ -5384,7 +5441,7 @@ function boot() {
   });
   const btnRomanize = document.getElementById('btnRomanize');
   function syncRomanizeBtn() {
-    btnRomanize.textContent = `🅰️ Romanize: ${state.romanizeOn ? 'ON' : 'OFF'}`;
+    btnRomanize.textContent = `Romanize: ${state.romanizeOn ? 'ON' : 'OFF'}`;
     btnRomanize.classList.toggle('primary', state.romanizeOn);
   }
   syncRomanizeBtn();
@@ -5420,6 +5477,7 @@ function boot() {
 
   // Settings menu: dropdown holding Audio / Romanize / Reset
   const btnSettings = document.getElementById('btnSettings');
+  btnSettings.innerHTML = pixelIcon('gear', 2);
   const settingsMenu = document.getElementById('settingsMenu');
   if (btnSettings && settingsMenu) {
     btnSettings.addEventListener('click', (e) => {

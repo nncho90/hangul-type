@@ -346,24 +346,6 @@ test('checkpoint: only advances when boss was killed this run', async ({ page })
   expect(checkpointAfter).toBe(5);
 });
 
-// ── Daily regression: timer present, zero errors ─────────────────────────
-
-test('daily run: 90s timer present, zero errors', async ({ page }) => {
-  const errors = [];
-  page.on('pageerror', err => errors.push(err.message));
-  await seedGame(page);
-
-  await page.evaluate(() => window.startDailyGame());
-  await page.waitForTimeout(800);
-
-  const timerVisible = await page.evaluate(() => {
-    const el = document.getElementById('hudDailyTimer');
-    return el && el.style.display !== 'none';
-  });
-  expect(timerVisible).toBe(true);
-  expect(errors).toHaveLength(0);
-});
-
 // ── Mobile smoke: HUD fits 390px viewport ────────────────────────────────
 
 test('mobile: #btnMenu fully inside 390px viewport', async ({ browser }) => {

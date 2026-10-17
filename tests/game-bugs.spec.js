@@ -1,7 +1,7 @@
 // @ts-check
 // Regression tests for the game.html gameplay bug pass: double game over,
-// boss HP refills, pause-aware boss timer, heart leaks, daily-run death,
-// run-state leaks, and 필살기 on an empty field.
+// boss HP refills, pause-aware boss timer, heart leaks, run-state leaks,
+// and 필살기 on an empty field.
 const { test, expect } = require('./fixtures');
 
 const URL = '/game.html';
@@ -192,36 +192,6 @@ test('heart pickup reaching the bottom does not cost a life', async ({ page }) =
   expect(after.leaks).toBe(before.leaks);
 });
 
-test('daily run death goes through the daily end screen', async ({ page }) => {
-  await seedGame(page);
-  await page.evaluate(() => window.startDailyGame());
-  await page.waitForTimeout(300);
-
-  await page.evaluate(() => {
-    window.state.lives = 1;
-    window.state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
-    window.damagePlayer();
-  });
-  await page.waitForFunction(() => document.getElementById('gameOverModal').style.display === 'flex', { timeout: 8000 });
-
-  const res = await page.evaluate(() => {
-    const panel = document.getElementById('overDailyResult');
-    return {
-      running: window.state.running,
-      dailyPanel: panel ? panel.style.display : 'missing',
-      timerHud: document.getElementById('hudDailyTimer').style.display,
-    };
-  });
-  expect(res.running).toBe(false);
-  expect(res.dailyPanel).toBe('');
-  expect(res.timerHud).toBe('none');
-
-  // A following story run must not show the stale daily panel
-  await page.evaluate(() => { window.doStartGame(); window.state.lives = 0; window.gameOver(); });
-  const panelAfter = await page.evaluate(() => document.getElementById('overDailyResult').style.display);
-  expect(panelAfter).toBe('none');
-});
-
 test('boss state does not leak into the next run', async ({ page }) => {
   await seedGame(page);
   await startGame(page);
@@ -298,7 +268,7 @@ test('Esc while paused resumes even with a lock held', async ({ page }) => {
   expect(await page.evaluate(() => window.state.paused)).toBe(false);
 });
 
-test('WAVE CLEAR bonus fires when the last monster dies on a level-up', async ({ page }) => {
+test('wave-clear bonus fires when the last monster dies on a level-up', async ({ page }) => {
   await seedGame(page);
   await startGame(page);
   const res = await page.evaluate(() => {
@@ -339,20 +309,4 @@ test('tab hidden during the boss cutscene pauses once the cutscene ends', async 
   }));
   expect(res.paused).toBe(true);
   expect(res.overlay).toBe('flex');
-});
-
-test('daily run end shows the modal before the network settles', async ({ page }) => {
-  await seedGame(page);
-  // Hold every Supabase call open so only an eager modal can pass.
-  await page.route(/supabase\.co/, () => {});
-  await page.evaluate(() => window.startDailyGame());
-  await page.waitForTimeout(300);
-  await page.evaluate(() => {
-    window.state.lives = 1;
-    window.state.activePowerups = { shield: 0, slowmo: 0, xp: 0 };
-    window.damagePlayer();
-  });
-  await page.waitForFunction(() => document.getElementById('gameOverModal').style.display === 'flex', { timeout: 2000 });
-  const lb = await page.evaluate(() => document.getElementById('overDailyLb').textContent);
-  expect(lb).toContain('Loading');
 });

@@ -1,39 +1,82 @@
 /* Type Hangeul shared UI: tokens and pixel-RPG components used by both
    index.html (title + practice) and game.html (battle).
-   Dark surfaces follow the title screen dialogue box; light surfaces are
-   hanji paper with an ink frame. Page styles load after this file, so a
-   page rule with the same specificity wins. */
+   One look everywhere: hanji paper surfaces, ink frames and text, square
+   corners, hard offset shadows, a bitmap UI font. Page styles load after
+   this file, so a page rule with the same specificity wins. */
+
+/* UI pixel font: a subset of Galmuri11 (OFL-1.1, fonts/OFL.txt), renamed
+   per the OFL Reserved Font Name clause. It covers ASCII, Latin-1 and the
+   Hangul used in UI strings only; target words use --korean. Galmuri11 is
+   drawn on a 12px grid, so 12/24/36/48px render pixel-crisp. Rebuild the
+   subset with tools/subset-ui-font.py after adding Hangul UI copy. */
+@font-face {
+  font-family: 'TH Pixel';
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/galmuri11-ui.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'TH Pixel';
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/galmuri11-bold-ui.woff2') format('woff2');
+}
+/* Display alias: titles keep font-weight 400 in page CSS but draw bold */
+@font-face {
+  font-family: 'TH Pixel Bold';
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('fonts/galmuri11-bold-ui.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'TH Pixel Mono';
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('fonts/galmurimono11-ui.woff2') format('woff2');
+}
 
 :root {
-  /* Palette */
-  --ink: #10131f;            /* outlines, hard shadows, text on light */
+  /* Palette: paper, ink, one seal red, one gold. Nothing else in chrome. */
+  --ink: #10131f;            /* outlines, hard shadows, text */
   --ink-soft: #2b2f40;
-  --cream: #fff4d6;          /* text on dark */
-  --gold: #f6c453;           /* active item, cursor, primary fill */
+  --cream: #fff4d6;          /* text on ink fills */
+  --gold: #f6c453;           /* XP fill only */
   --gold-hi: #ffd978;
-  --gold-deep: #8a5a0c;      /* gold as text on light paper (AA) */
-  --panel: rgba(14, 18, 34, 0.82);
-  --panel-top: #1d2339;
-  --panel-solid: #161a2b;
-  --panel-hi: #232945;
-  --frame: #efe4c8;          /* dialogue box border */
-  --danger: #b3261e;         /* game over badge, fill only */
+  --gold-deep: #8a5a0c;      /* score / XP as text on paper (AA) */
+  --seal: #c8352e;           /* lives, danger, errors, the practice stamp */
+  --hanji: #f4ecda;          /* page background */
+  --hanji-edge: #e2d4b4;     /* paper fibers, inner frame lines */
+  --paper: #fffaf0;          /* panel fill */
+  --frame: var(--ink);       /* panel border */
+  --danger: var(--seal);
   --sakura: #f9c4d2;
   --sakura-deep: #f29bb4;
-  --hanji: #f4ecda;          /* paper background */
-  --hanji-edge: #e2d4b4;     /* paper fibers, inner frame lines */
-  --paper: #fffaf0;          /* light panel fill */
 
-  /* Shape */
-  --r-1: 2px;
-  --r-2: 4px;
-  --r-3: 8px;
+  /* Page surface and text tokens (both pages) */
+  --bg: var(--hanji); --l1: var(--paper); --l2: #fbf3e2; --l3: #f3e7cc;
+  --bd: #e0d0ae;   --bdhi: #b9a37a;
+  --thi: var(--ink); --tmd: #4a4436; --tlo: #6b6250; /* 5.3:1 on paper, WCAG AA */
+  /* Teaching colors (practice jamo feedback, finger map); not for chrome */
+  --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
+  --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
+
+  /* Panel surfaces (kept as names for older rules) */
+  --panel: var(--paper);
+  --panel-top: var(--paper);
+  --panel-solid: var(--paper);
+  --panel-hi: var(--l2);
+
+  /* Shape: pixel chrome is square */
+  --r-1: 0;
+  --r-2: 0;
+  --r-3: 0;
+  --shadow-hard: 3px 3px 0 var(--ink);
 
   /* Type */
-  --font-display: 'Black Han Sans', 'Noto Sans KR', sans-serif;
-  --font-ui: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --korean: 'Noto Sans KR', 'Inter', sans-serif;
+  --font-display: 'TH Pixel Bold', 'Noto Sans KR', system-ui, sans-serif;
+  --font-ui: 'TH Pixel', 'Noto Sans KR', system-ui, sans-serif;
+  --font-mono: 'TH Pixel Mono', 'TH Pixel', ui-monospace, monospace;
+  --korean: 'Noto Sans KR', system-ui, sans-serif;
 }
 
 /* Korean line breaking and wrapping for running text */
@@ -41,85 +84,59 @@ h1, h2, h3, p, li, label, summary, .rpg-panel, .rpg-toast { word-break: keep-all
 h1, h2, h3, .rpg-title { text-wrap: balance; }
 p, li, summary { text-wrap: pretty; }
 
-/* Dark scope: re-points the pages' surface/text tokens so existing
-   components inside it render on the dark panel. */
-.rpg-dark, .rpg-panel {
-  --l1: #1b2034;
-  --l2: #222842;
-  --l3: #2c3352;
-  --bd: rgba(239, 228, 200, 0.2);
-  --bdhi: rgba(239, 228, 200, 0.42);
-  --thi: var(--cream);
-  --tmd: #ddd3ba;
-  --tlo: #aea68f;
-  --blue: #8fb0ff;
-  --green: #5fd8a4;
-  --red: #ff8a8a;
-  --orange: #ffa95e;
-  --purple: #c9b8ff;
-  --yellow: var(--gold);
-  color: var(--cream);
-}
+/* Legacy scope name: everything is paper now, so it only sets ink text */
+.rpg-dark { color: var(--ink); }
 
-/* Panels */
-.rpg-panel {
-  background: linear-gradient(180deg, var(--panel-top) 0%, var(--panel-solid) 100%);
-  border: 3px solid var(--frame);
-  border-radius: 6px;
-  box-shadow: 0 0 0 3px var(--ink), 0 14px 30px rgba(0, 0, 0, 0.45);
-}
+/* Panels: paper, 2px ink frame, a hanji inner line, hard offset shadow */
+.rpg-panel,
 .rpg-panel--light {
   background: var(--paper);
   color: var(--ink);
   border: 2px solid var(--ink);
-  border-radius: var(--r-2);
+  border-radius: 0;
   box-shadow:
     inset 0 0 0 3px var(--paper),
     inset 0 0 0 4px var(--hanji-edge),
-    3px 3px 0 rgba(16, 19, 31, 0.16);
+    var(--shadow-hard);
 }
 
-/* Title text with the chunky stacked outline from the title screen */
+/* Title text: ink on paper, no outline */
 .rpg-title {
   font-family: var(--font-display);
   font-weight: 400;
   letter-spacing: 0.02em;
   line-height: 1.1;
-  color: var(--cream);
-  text-shadow:
-    2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 2px 0 var(--ink), 0 -2px 0 var(--ink),
-    2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink),
-    0 5px 0 var(--ink);
+  color: var(--ink);
 }
 
-/* Buttons. Dark by default (sits on .rpg-panel); --light for paper. */
+/* Buttons: paper key with an ink frame. --primary is a solid ink key. */
 .rpg-btn {
-  --btn-bg: var(--panel-hi);
-  --btn-bg-hi: #2f3758;
-  --btn-fg: var(--cream);
-  --btn-frame: var(--frame);
+  --btn-bg: var(--paper);
+  --btn-bg-hi: var(--l3);
+  --btn-fg: var(--ink);
+  --btn-frame: var(--ink);
   --btn-shadow: var(--ink);
-  --btn-cursor: var(--gold);
+  --btn-cursor: var(--seal);
   position: relative;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 44px;
   padding: 10px 20px;
   font-family: var(--font-ui);
-  font-size: 14px; font-weight: 700; line-height: 1.2;
-  letter-spacing: 0.01em;
+  font-size: 12px; font-weight: 700; line-height: 1.2;
+  letter-spacing: 0.02em;
   color: var(--btn-fg);
   background: var(--btn-bg);
   border: 2px solid var(--btn-frame);
-  border-radius: var(--r-2);
+  border-radius: 0;
   box-shadow: 0 3px 0 var(--btn-shadow);
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.06s, box-shadow 0.06s, background-color 0.12s, color 0.12s;
+  transition: transform 0.06s steps(1), box-shadow 0.06s steps(1);
 }
 .rpg-btn:hover { background: var(--btn-bg-hi); color: var(--btn-fg); }
 .rpg-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--btn-shadow); }
-.rpg-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-/* Gold menu cursor, like the title screen */
+.rpg-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+/* Menu cursor, like the title screen */
 .rpg-btn:hover::before,
 .rpg-btn:focus-visible::before {
   content: '▶';
@@ -130,42 +147,32 @@ p, li, summary { text-wrap: pretty; }
   animation: rpg-blink 1s steps(1) infinite;
 }
 .rpg-btn--primary {
-  --btn-bg: var(--gold);
-  --btn-bg-hi: var(--gold-hi);
-  --btn-fg: var(--ink);
+  --btn-bg: var(--ink);
+  --btn-bg-hi: var(--ink-soft);
+  --btn-fg: var(--paper);
   --btn-frame: var(--ink);
-  --btn-cursor: var(--ink);
+  --btn-cursor: var(--paper);
 }
-.rpg-panel .rpg-btn--primary { box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--frame); }
-.rpg-panel .rpg-btn--primary:active { box-shadow: 0 1px 0 var(--ink), 0 0 0 2px var(--frame); }
 .rpg-btn--ghost {
   --btn-bg: transparent;
-  --btn-bg-hi: rgba(255, 244, 214, 0.08);
-  --btn-frame: rgba(239, 228, 200, 0.42);
+  --btn-bg-hi: var(--l3);
   box-shadow: none;
 }
 .rpg-btn--ghost:active { box-shadow: none; }
-.rpg-btn--light {
-  --btn-bg: var(--paper);
-  --btn-bg-hi: #f6ead0;
-  --btn-fg: var(--ink);
-  --btn-frame: var(--ink);
-  --btn-cursor: var(--gold-deep);
-}
-.rpg-btn--light.rpg-btn--primary {
-  --btn-bg: var(--gold);
-  --btn-bg-hi: var(--gold-hi);
-  --btn-cursor: var(--ink);
-}
+/* Kept for markup that still names it; the default is already paper */
+.rpg-btn--light { --btn-cursor: var(--seal); }
 @keyframes rpg-blink { 50% { opacity: 0; } }
 
-/* Modal: dark veil + centered dark panel */
+/* Pixel icons from pixelIcon() (shared.js) */
+.px-icon { display: inline-block; vertical-align: -0.125em; flex: 0 0 auto; }
+
+/* Modal: dim veil + centered paper panel */
 .rpg-modal {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
-  background: rgba(10, 12, 22, 0.66);
-  animation: rpg-fade 0.25s ease;
+  background: rgba(16, 19, 31, 0.55);
+  animation: rpg-fade 0.2s linear;
 }
 .rpg-modal__card {
   width: 100%;
@@ -176,18 +183,18 @@ p, li, summary { text-wrap: pretty; }
 }
 @keyframes rpg-fade { from { opacity: 0; } to { opacity: 1; } }
 
-/* Toast: small dialogue box */
+/* Toast: small paper dialogue box */
 .rpg-toast {
-  background: var(--panel-solid);
-  color: var(--cream);
-  border: 2px solid var(--frame);
-  border-radius: var(--r-2);
-  box-shadow: 0 0 0 2px var(--ink), 0 8px 20px rgba(0, 0, 0, 0.35);
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: var(--shadow-hard);
   padding: 10px 16px;
   font-family: var(--font-ui);
-  font-size: 13px; font-weight: 600;
+  font-size: 12px; font-weight: 700;
 }
-.rpg-toast strong, .rpg-toast a { color: var(--gold); }
+.rpg-toast strong, .rpg-toast a { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
   .rpg-btn, .rpg-modal { transition: none; animation: none; }

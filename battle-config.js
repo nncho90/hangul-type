@@ -56,49 +56,6 @@
       8: { name: '염라대왕',  roman: 'yeomra daewang',  en: 'King of the Underworld', note: 'Judge of the dead. Every soul stands in his court and answers for what it did in life.' }
     },
 
-    // ─── Enemy voice lines (speech bubbles) ─────────────────────────────────
-    // Reading practice, so keep every line short and A1-A2 level.
-    // spawn = taunt when it appears, death = cry when it is defeated.
-    lines: {
-      1: {
-        spawn: [{ ko: '씨름 하자!', en: "Let's wrestle!" }, { ko: '메밀묵 줘!', en: 'Give me buckwheat jelly!' }, { ko: '나 배고파!', en: "I'm hungry!" }, { ko: '같이 놀자!', en: "Let's play!" }],
-        death: [{ ko: '아야!', en: 'Ouch!' }, { ko: '내 메밀묵!', en: 'My buckwheat jelly!' }, { ko: '또 놀자!', en: 'Play again later!' }]
-      },
-      2: {
-        spawn: [{ ko: '간 주세요.', en: 'Give me your liver.' }, { ko: '너 맛있겠다.', en: 'You look tasty.' }, { ko: '꼬리가 아홉 개!', en: 'Nine tails!' }, { ko: '사람이 되고 싶어.', en: 'I want to be human.' }],
-        death: [{ ko: '내 간!', en: 'My liver!' }, { ko: '꼬리가 아파!', en: 'My tails hurt!' }, { ko: '다시 올게.', en: "I'll be back." }]
-      },
-      3: {
-        spawn: [{ ko: '머리 조심해!', en: 'Watch your head!' }, { ko: '쾅! 쾅!', en: 'Bang! Bang!' }, { ko: '다 부술 거야!', en: "I'll smash it all!" }, { ko: '나는 힘이 세!', en: "I'm strong!" }],
-        death: [{ ko: '머리 아파!', en: 'My head hurts!' }, { ko: '졌다!', en: 'I lost!' }, { ko: '너무 세!', en: "You're too strong!" }]
-      },
-      4: {
-        spawn: [{ ko: '이름이 뭐예요?', en: 'What is your name?' }, { ko: '명단에 있어요.', en: "You're on the list." }, { ko: '같이 가요.', en: 'Come with me.' }, { ko: '시간이 됐어요.', en: 'It is time.' }],
-        death: [{ ko: '명단이 틀렸어!', en: 'The list was wrong!' }, { ko: '다음에 올게요.', en: "I'll come next time." }, { ko: '이름을 잃었어!', en: 'I lost the name!' }]
-      },
-      5: {
-        spawn: [{ ko: '억울해…', en: "It isn't fair..." }, { ko: '나를 기억해?', en: 'Do you remember me?' }, { ko: '한이 많아요.', en: 'I have so much grief.' }, { ko: '왜 나만…', en: 'Why only me...' }],
-        death: [{ ko: '이제 편해요.', en: "Now I'm at peace." }, { ko: '고마워요…', en: 'Thank you...' }, { ko: '안녕히…', en: 'Farewell...' }]
-      },
-      6: {
-        spawn: [{ ko: '씨름 한 판!', en: 'One round of wrestling!' }, { ko: '금 나와라, 뚝딱!', en: 'Gold, come out! Ttukttak!' }, { ko: '내 방망이 봐!', en: 'Look at my club!' }, { ko: '메밀묵 내놔!', en: 'Hand over the jelly!' }],
-        death: [{ ko: '씨름 졌다!', en: 'I lost the match!' }, { ko: '내 방망이!', en: 'My club!' }, { ko: '다음엔 이긴다!', en: "I'll win next time!" }]
-      },
-      7: {
-        spawn: [{ ko: '굿을 하자.', en: "Let's start the ritual." }, { ko: '점을 봐 줄게.', en: "I'll read your fortune." }, { ko: '방울 소리 들려?', en: 'Do you hear the bells?' }, { ko: '네 운명이 보여.', en: 'I see your fate.' }],
-        death: [{ ko: '점이 틀렸어!', en: 'My fortune was wrong!' }, { ko: '신이 떠났어…', en: 'The spirits left me...' }, { ko: '방울이 깨졌어!', en: 'My bells broke!' }]
-      },
-      8: {
-        spawn: [{ ko: '죄를 말해라.', en: 'Tell me your sins.' }, { ko: '재판을 시작한다.', en: 'The trial begins.' }, { ko: '거짓말 하지 마라.', en: 'Do not lie.' }, { ko: '너를 심판한다.', en: 'I judge you.' }],
-        death: [{ ko: '무죄다…', en: 'Not guilty...' }, { ko: '재판 끝!', en: 'The trial is over!' }, { ko: '너는 살아라.', en: 'You may live.' }]
-      }
-    },
-
-    // Bubble frequency. Regular minions only (bosses use phaseLines).
-    // Death lines are off (2026-10-16): too distracting mid-kill. The
-    // `death` pools above are kept in case they come back.
-    lineChance: { spawn: 0.20, death: 0 },
-
     // ─── Emoji fallbacks per tier ───────────────────────────────────────────
     // Used by spriteHtml's onerror swap when the PNG 404s.
     tierEmoji: {
@@ -122,29 +79,24 @@
     // chapter text and the boss that appears always match (14 names 저승사자,
     // 23 names 한글왕). Bosses past Lv.23 cycle through the list in order.
     // A missing portrait file falls back to the sprite in playBossCutscene.
-    // phaseLines = [phase 2, phase 3] taunts and defeatLine = last words,
-    // shown in the boss speech bubble. roman / note feed the 요괴 도감.
+    // phaseLines = [phase 2, phase 3] taunts, shown in the boss speech
+    // bubble. roman / note feed the 요괴 도감.
     bosses: [
       { act: 23, sprite: 'enemies/08-hangeulwang',     portrait: 'portraits/hangeulwang', emoji: '🐉', name: '한글왕',         subtitle: 'Demon King of Hangeul',     flavor: '"All who would speak my tongue, kneel."',
         roman: 'hangeul-wang', note: 'The demon who stole the letters. Win them back one word at a time.',
-        phaseLines: [{ ko: '아직 멀었다!', en: 'You are not there yet!' }, { ko: '무릎을 꿇어라!', en: 'Kneel!' }],
-        defeatLine: { ko: '한글이… 빛난다…', en: 'Hangeul... shines...' } },
+        phaseLines: [{ ko: '아직 멀었다!', en: 'You are not there yet!' }, { ko: '무릎을 꿇어라!', en: 'Kneel!' }] },
       { act: 5,  sprite: 'enemies/02-gumiho-mini',     portrait: 'portraits/gumiho',      emoji: '🦊', name: '구미호 여왕',     subtitle: 'Queen of Nine Tails',      flavor: '"Your syllables taste like fear, little one."',
         roman: 'gumiho yeowang', note: 'The oldest fox in the forest, one liver away from becoming human.',
-        phaseLines: [{ ko: '꼬리가 더 있어!', en: 'I have more tails!' }, { ko: '네 간은 내 거야!', en: 'Your liver is mine!' }],
-        defeatLine: { ko: '천 년이… 끝났어.', en: 'A thousand years... over.' } },
+        phaseLines: [{ ko: '꼬리가 더 있어!', en: 'I have more tails!' }, { ko: '네 간은 내 거야!', en: 'Your liver is mine!' }] },
       { act: 9,  sprite: 'enemies/05-dokkaebi-elder',  portrait: 'portraits/dokkaebi',    emoji: '👹', name: '도깨비 대장',     subtitle: 'Goblin Chieftain',         flavor: '"Hahaha! Type if you dare, mortal!"',
         roman: 'dokkaebi daejang', note: 'Chief of the forest goblins. Very loud, very proud, and a bad loser.',
-        phaseLines: [{ ko: '방망이, 뚝딱!', en: 'Magic club, ttukttak!' }, { ko: '씨름으로 끝내자!', en: "Let's settle it with ssireum!" }],
-        defeatLine: { ko: '졌다! 메밀묵 줄게!', en: 'I lose! Have some jelly!' } },
+        phaseLines: [{ ko: '방망이, 뚝딱!', en: 'Magic club, ttukttak!' }, { ko: '씨름으로 끝내자!', en: "Let's settle it with ssireum!" }] },
       { act: 14, sprite: 'enemies/06-jeoseung-saja',   portrait: 'portraits/jeoseung',    emoji: '🪦', name: '저승사자',        subtitle: 'Reaper of the Underworld', flavor: '"Your ledger… is incomplete."',
         roman: 'jeoseung saja', note: 'The senior reaper who keeps the master list. Nobody leaves it early.',
-        phaseLines: [{ ko: '명단을 다시 본다.', en: 'Checking the list again.' }, { ko: '네 이름을 부른다.', en: 'I call your name.' }],
-        defeatLine: { ko: '명단에… 없네.', en: "You're... not on the list." } },
+        phaseLines: [{ ko: '명단을 다시 본다.', en: 'Checking the list again.' }, { ko: '네 이름을 부른다.', en: 'I call your name.' }] },
       { act: 19, sprite: 'enemies/03-cheonyeo-gwisin', portrait: 'portraits/cheonyeo',    emoji: '👻', name: '처녀귀신',        subtitle: 'Maiden of Vengeance',      flavor: '"You forgot me. I have not forgotten you."',
         roman: 'cheonyeo gwisin', note: 'The first of the maiden ghosts. Her grudge has waited a hundred years.',
-        phaseLines: [{ ko: '더 억울해!', en: 'It is even more unfair!' }, { ko: '나를 잊지 마!', en: "Don't forget me!" }],
-        defeatLine: { ko: '이제… 가요.', en: 'Now... I go.' } }
+        phaseLines: [{ ko: '더 억울해!', en: 'It is even more unfair!' }, { ko: '나를 잊지 마!', en: "Don't forget me!" }] }
     ],
 
     // ─── Per-tier sprite sizes (px) on the battle stage ─────────────────────

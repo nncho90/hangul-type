@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>한글 BATTLE — Type Hangeul</title>
+<title>한글 BATTLE · Type Hangeul</title>
 <meta name="description" content="Type Korean words to defeat 한글 demons in Hangeul Battle. Learn the 2-set 한글 keyboard while clearing waves, racking combos, and ranking on the global leaderboard.">
 <meta name="keywords" content="korean typing game, hangul game, 한글 타자 게임, learn korean typing, type korean to attack, korean keyboard game, hangul battle">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#f4ecda">
 <link rel="canonical" href="https://typehangeul.com/game.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="한글 BATTLE — Type Hangeul">
+<meta property="og:title" content="한글 BATTLE · Type Hangeul">
 <meta property="og:description" content="A typing game that teaches the 한글 keyboard. Defeat 한글 demons by typing Korean words.">
 <meta property="og:url" content="https://typehangeul.com/game.html">
 <meta property="og:site_name" content="Type Hangeul">
@@ -20,7 +20,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="한글 BATTLE — Type Hangeul">
+<meta name="twitter:title" content="한글 BATTLE · Type Hangeul">
 <meta name="twitter:description" content="A typing game that teaches the 한글 keyboard. Defeat 한글 demons by typing Korean words.">
 <meta name="twitter:image" content="https://typehangeul.com/og-image.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -29,18 +29,15 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-180.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Hangeul Battle","url":"https://typehangeul.com/game.html","applicationCategory":"GameApplication","genre":"Educational","operatingSystem":"Web","inLanguage":["en","ko"],"description":"Browser typing game where players defeat Korean 한글 demons by typing the Korean word floating above each one.","image":"https://typehangeul.com/og-image.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"],"isPartOf":{"@type":"WebApplication","name":"Type Hangeul","url":"https://typehangeul.com/","image":"https://typehangeul.com/og-image.png","logo":"https://typehangeul.com/logo.png","sameAs":["https://www.wikidata.org/wiki/Q139665467"]},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/galmuri11-ui.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/galmuri11-bold-ui.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="ui.css">
 <style>
   *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  /* Surface, text and palette tokens come from ui.css */
   :root {
-    --bg: #f0f4f8;   --l1: #ffffff;    --l2: #f8fafc;   --l3: #f1f5f9;
-    --bd: #e2e8f0;   --bdhi: #cbd5e1;
-    --thi: #0f172a;  --tmd: #475569;   --tlo: #64748b; /* slate-500: 4.6:1 on white, WCAG AA */
-    --blue: #2563eb; --green: #10b981; --yellow: #f59e0b;
-    --red: #ef4444;  --orange: #f97316; --purple: #8b5cf6;
-    --korean: 'Noto Sans KR', 'Inter', sans-serif;
     --floor-a: rgba(255, 255, 255, 0.38);
     --floor-b: rgba(15, 23, 42, 0.08);
     --floor-line: rgba(15, 23, 42, 0.12);
@@ -49,27 +46,19 @@
     height: 100%;
     overflow: hidden;
     background: var(--bg);
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-ui);
     color: var(--thi);
     user-select: none;
     -webkit-user-select: none;
   }
 
   /* Soft gradient backdrop — base layer. Theme classes on body recolor it. */
-  /* Before a theme loads (intro, story): the title screen's night ink */
+  /* Before a theme loads (intro, story): plain hanji paper */
   .backdrop {
     position: fixed; inset: 0;
-    background-color: var(--ink);
-    background-image: radial-gradient(ellipse 80% 70% at 50% 35%, var(--panel-hi) 0%, var(--ink) 100%);
+    background-color: var(--hanji);
     z-index: 0;
     transition: background-color 1.6s ease;
-  }
-  .backdrop::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-size: cover;
-    background-position: center bottom;
-    transition: opacity 1.2s ease;
   }
   /* Painted theme scenes. Two stacked layers so a theme change crossfades:
      applyTheme loads the next image into the hidden layer, waits for decode,
@@ -107,8 +96,8 @@
 
   /* ── Korean-coded level themes ────────────────────────────────────────── */
   /* Each level band evokes a different setting in Korean folklore. The
-     gradient is on .backdrop; foreground decoration (silhouette) is on
-     .backdrop::before; particle drift on ::after stays universal. */
+     tinted gradient is on .backdrop (fallback while the painted scene
+     decodes); particle drift on ::after stays universal. */
 
   /* lv 1-4 — 마을 (Village): cherry-blossom dawn, hanok rooftops */
   body.theme-village .backdrop {
@@ -118,15 +107,6 @@
     --floor-a: rgba(254, 205, 211, 0.55);
     --floor-b: rgba(180, 83, 9, 0.14);
     --floor-line: rgba(120, 53, 15, 0.20);
-  }
-  body.theme-village .backdrop::before {
-    background:
-      /* Hanok rooftop silhouette */
-      linear-gradient(180deg, transparent 78%, rgba(120, 53, 15, 0.55) 78%, rgba(75, 32, 9, 0.85) 100%),
-      /* Sun */
-      radial-gradient(circle 80px at 50% 30%, rgba(255, 230, 200, 0.5), transparent 65%);
-    /* Subtle hanok ridges using repeating gradient (curved roof feel) */
-    box-shadow: inset 0 -90px 60px rgba(75, 32, 9, 0.15);
   }
 
   /* lv 5-8 — 대숲 (Bamboo Forest): jade green, vertical bamboo, mist */
@@ -138,84 +118,17 @@
     --floor-b: rgba(6, 95, 70, 0.28);
     --floor-line: rgba(6, 78, 59, 0.30);
   }
-  body.theme-forest .backdrop::before {
-    background:
-      /* Vertical bamboo stripes — semi-transparent green columns */
-      repeating-linear-gradient(90deg,
-        transparent 0px, transparent 80px,
-        rgba(6, 78, 59, 0.18) 80px, rgba(6, 78, 59, 0.18) 92px,
-        transparent 92px, transparent 100px),
-      /* Mist near bottom */
-      linear-gradient(180deg, transparent 60%, rgba(255, 255, 255, 0.35) 100%);
-  }
-
-  /* lv 9-13 — 산사 (Mountain Shrine): indigo dusk, peaks, paper lanterns */
-  body.theme-shrine .backdrop {
-    background-image: linear-gradient(180deg, #1e1b4b 0%, #4338ca 25%, #7c3aed 60%, #c026d3 100%);
-  }
-  body.theme-shrine .backdrop::before {
-    background:
-      /* Mountain ridges (jagged) */
-      linear-gradient(180deg, transparent 65%, rgba(15, 23, 42, 0.7) 65%, rgba(15, 23, 42, 0.85) 80%, rgba(15, 23, 42, 0.95) 100%),
-      /* Distant moon */
-      radial-gradient(circle 60px at 80% 18%, rgba(254, 240, 138, 0.7), rgba(254, 240, 138, 0) 70%);
-    clip-path: polygon(
-      0% 100%, 0% 70%, 8% 60%, 14% 68%, 22% 55%, 30% 65%, 38% 50%,
-      46% 62%, 54% 52%, 62% 64%, 70% 55%, 78% 66%, 86% 58%, 94% 62%,
-      100% 70%, 100% 100%);
-  }
-
-  /* lv 14-18 — 사찰 (Buddhist Temple): red/gold 단청 dancheong, painted eaves */
-  body.theme-temple .backdrop {
-    background-image: linear-gradient(180deg, #7c2d12 0%, #b91c1c 25%, #dc2626 55%, #f59e0b 100%);
-  }
-  body.theme-temple .backdrop::before {
-    background:
-      /* Pagoda silhouette */
-      linear-gradient(180deg, transparent 70%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.6) 100%),
-      /* Dancheong stripes — alternating red/teal/yellow at top */
-      repeating-linear-gradient(0deg,
-        transparent 0px, transparent 6px,
-        rgba(254, 240, 138, 0.18) 6px, rgba(254, 240, 138, 0.18) 9px,
-        transparent 9px, transparent 18px,
-        rgba(20, 184, 166, 0.22) 18px, rgba(20, 184, 166, 0.22) 21px,
-        transparent 21px, transparent 30px);
-  }
 
   /* lv 19-22 — 궁궐 (Royal Palace): regal blue/jade, Gyeongbokgung */
   body.theme-palace .backdrop {
     background-image: linear-gradient(180deg, #0c4a6e 0%, #0369a1 30%, #0891b2 65%, #06b6d4 100%);
   }
-  body.theme-palace .backdrop::before {
-    background:
-      /* Palace silhouette — multi-tier */
-      linear-gradient(180deg, transparent 60%, rgba(7, 50, 70, 0.7) 60%, rgba(7, 50, 70, 0.85) 100%),
-      /* Lantern dots */
-      radial-gradient(circle 5px at 22% 78%, rgba(254, 240, 138, 0.95), transparent),
-      radial-gradient(circle 5px at 38% 76%, rgba(254, 240, 138, 0.95), transparent),
-      radial-gradient(circle 5px at 50% 75%, rgba(254, 240, 138, 0.95), transparent),
-      radial-gradient(circle 5px at 62% 76%, rgba(254, 240, 138, 0.95), transparent),
-      radial-gradient(circle 5px at 78% 78%, rgba(254, 240, 138, 0.95), transparent);
-  }
 
   /* ── New 7-tier image backgrounds (sprite-art match) ─────────────────── */
   /* The painted scenes (sprites/backgrounds/0N-name.webp) live on the two
-     .bg-layer elements, set by setBackdropImage(). Blank the legacy
-     ::before decorations so they never paint over the image. The gradient
-     on .backdrop itself stays as a tinted base while the image decodes. */
-  body.theme-village .backdrop::before,
-  body.theme-forest .backdrop::before,
-  body.theme-study .backdrop::before,
-  body.theme-courtyard .backdrop::before,
-  body.theme-camp .backdrop::before,
-  body.theme-battlefield .backdrop::before,
-  body.theme-palace .backdrop::before {
-    background: none;
-    clip-path: none;
-    box-shadow: none;
-  }
-  /* Tinted gradient base (fallback if image missing). Each tier picks a
-     dominant tone matching the painted scene. */
+     .bg-layer elements, set by setBackdropImage(). The gradient on
+     .backdrop itself stays as a tinted base while the image decodes (or
+     if it is missing), picking the scene's dominant tone. */
   body.theme-study .backdrop      { background-image: linear-gradient(180deg, #fde68a 0%, #fef9f0 14%, #e9eef5 42%, #cdd9e8 100%); }
   body.theme-courtyard .backdrop  { background-image: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
   body.theme-camp .backdrop       { background-image: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 60%, #475569 100%); }
@@ -246,104 +159,71 @@
     --floor-line: rgba(14, 116, 144, 0.32);
   }
 
-  /* ── Theme accent tokens (consumed by HUD border, word pill, XP bar) ── */
-  body { --theme-accent: var(--blue); --theme-accent-soft: rgba(37,99,235,0.12); }
-  body.theme-village   { --theme-accent: #b45309; --theme-accent-soft: rgba(180,83,9,0.12); }
-  body.theme-forest    { --theme-accent: #047857; --theme-accent-soft: rgba(4,120,87,0.12); }
-  body.theme-study     { --theme-accent: #0369a1; --theme-accent-soft: rgba(3,105,161,0.12); }
-  body.theme-courtyard { --theme-accent: #7c3aed; --theme-accent-soft: rgba(124,58,237,0.12); }
-  body.theme-camp      { --theme-accent: #b45309; --theme-accent-soft: rgba(180,83,9,0.12); }
-  body.theme-battlefield { --theme-accent: #c2410c; --theme-accent-soft: rgba(194,65,12,0.12); }
-  body.theme-palace    { --theme-accent: #0e7490; --theme-accent-soft: rgba(14,116,144,0.12); }
-
-  /* lv 23+ — 별나라 (Cosmos): deep night, constellations, nebula */
-  body.theme-cosmos .backdrop {
-    background-image: radial-gradient(ellipse at 50% 30%, #312e81 0%, #1e1b4b 40%, #0f0c29 80%, #000 100%);
-  }
-  body.theme-cosmos .backdrop::before {
-    background:
-      /* Bright stars */
-      radial-gradient(circle 1.5px at 12% 18%, rgba(255,255,255,1), transparent 70%),
-      radial-gradient(circle 1.5px at 28% 32%, rgba(255,255,255,1), transparent 70%),
-      radial-gradient(circle 2px at 41% 14%, rgba(254, 240, 138, 1), transparent 60%),
-      radial-gradient(circle 1.5px at 56% 24%, rgba(255,255,255,1), transparent 70%),
-      radial-gradient(circle 1.5px at 72% 18%, rgba(255,255,255,1), transparent 70%),
-      radial-gradient(circle 2px at 84% 38%, rgba(254, 240, 138, 1), transparent 60%),
-      radial-gradient(circle 1.5px at 18% 56%, rgba(255,255,255,1), transparent 70%),
-      radial-gradient(circle 1.5px at 36% 64%, rgba(255,255,255,1), transparent 70%),
-      radial-gradient(circle 1.5px at 60% 58%, rgba(255,255,255,1), transparent 70%),
-      radial-gradient(circle 1.5px at 88% 70%, rgba(255,255,255,1), transparent 70%),
-      /* Nebula */
-      radial-gradient(ellipse 240px 180px at 30% 70%, rgba(139, 92, 246, 0.25), transparent 65%),
-      radial-gradient(ellipse 200px 140px at 75% 45%, rgba(236, 72, 153, 0.2), transparent 65%);
-  }
-
   /* Act-break overlay (chapter transition card) */
   .act-break {
     position: fixed; inset: 0;
     z-index: 450;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95));
-    animation: act-fade 0.5s ease forwards;
+    background: var(--hanji);
+    color: var(--ink);
+    animation: act-fade 0.3s steps(3) forwards;
     cursor: pointer;
     padding: 28px;
   }
   @keyframes act-fade {
-    0%   { opacity: 0; backdrop-filter: blur(0); }
-    100% { opacity: 1; backdrop-filter: blur(8px); }
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
   }
   .act-break .act-card {
     text-align: center;
     max-width: 580px;
-    animation: act-slide 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: act-slide 0.3s steps(3);
   }
   @keyframes act-slide {
-    0%   { opacity: 0; transform: translateY(40px) scale(0.85); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
+    0%   { opacity: 0; transform: translateY(24px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
   .act-break .act-eyebrow {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 800;
-    color: #fde68a;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--seal);
     text-transform: uppercase;
-    letter-spacing: 0.4em;
-    margin-bottom: 16px;
+    letter-spacing: 0.3em;
+    margin-bottom: 18px;
   }
   .act-break .act-title {
     font-family: var(--font-display);
-    font-size: 88px;
-    color: #fef9c3;
-    letter-spacing: 0.06em;
+    font-size: 72px;
+    color: var(--ink);
+    letter-spacing: 0.04em;
     line-height: 1;
     margin-bottom: 12px;
-    text-shadow: 0 4px 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(220, 38, 38, 0.4);
   }
   .act-break .act-subtitle {
     font-family: var(--font-display);
     font-size: 24px;
-    color: #fef3c7;
+    color: var(--ink);
     letter-spacing: 0.04em;
     margin-bottom: 18px;
   }
   .act-break .act-flavor {
-    font-family: 'Inter', sans-serif;
-    font-style: italic;
-    font-size: 15px;
-    color: #cbd5e1;
-    line-height: 1.6;
-    margin-bottom: 26px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--tmd);
+    line-height: 2;
+    margin-bottom: 24px;
     max-width: 480px;
     margin-left: auto; margin-right: auto;
   }
   .act-break .act-prompt {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    color: #94a3b8;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tlo);
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    animation: prompt-pulse 1.6s ease-in-out infinite;
+    animation: prompt-pulse 1.6s steps(1) infinite;
   }
   @keyframes prompt-pulse {
     0%, 100% { opacity: 0.45; }
@@ -378,10 +258,10 @@
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     padding: 14px 22px;
-    /* Dark dialogue strip: cream frame line with an ink rule outside it */
-    background: linear-gradient(180deg, var(--panel-top) 0%, var(--panel-solid) 100%);
-    border-top: 3px solid var(--frame);
-    box-shadow: 0 -3px 0 var(--ink);
+    /* Paper strip with an ink rule and a hanji inner line */
+    background: var(--paper);
+    border-top: 2px solid var(--ink);
+    box-shadow: inset 0 3px 0 var(--hanji-edge);
   }
   .hud-left { display: flex; align-items: center; gap: 22px; }
   .hud-right { display: flex; align-items: center; gap: 22px; justify-content: flex-end; }
@@ -394,24 +274,22 @@
     height: 44px;
     display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
-    background: var(--ink);
-    border: 2px solid var(--bdhi);
-    border-radius: var(--r-2);
+    background: var(--hanji);
+    border: 2px solid var(--ink);
+    border-radius: 0;
     font-family: var(--korean);
     min-width: 0;
     overflow: hidden;
   }
   .hud-center .type-prompt {
-    font-size: 14px;
-    color: var(--gold);
+    font-size: 12px;
+    color: var(--seal);
     font-weight: 700;
   }
   .hud-center .live {
     font-size: 24px;
     font-weight: 700;
-    color: var(--cream);
-    /* ink outline keeps it readable when pinned over the stage on mobile */
-    text-shadow: 1px 0 0 var(--ink), -1px 0 0 var(--ink), 0 1px 0 var(--ink), 0 -1px 0 var(--ink), 0 2px 0 var(--ink);
+    color: var(--ink);
     letter-spacing: 1px;
     line-height: 1;
     flex: 1;
@@ -422,7 +300,7 @@
   .hud-center .ime-cursor {
     display: inline-block;
     width: 2px; height: 24px;
-    background: var(--gold);
+    background: var(--ink);
     vertical-align: middle;
     animation: blink 0.9s steps(2) infinite;
   }
@@ -431,50 +309,65 @@
     line-height: 1.1;
   }
   .stat-label {
-    font-size: 10px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     color: var(--tlo);
-    font-weight: 700;
+    font-weight: 400;
   }
   .stat-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--thi);
-    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-top: 2px;
+    line-height: 1;
   }
-  .stat-value.level   { color: var(--gold); }
-  .stat-value.score   { color: var(--gold); font-size: 26px; }
-  .stat-value.combo   { color: var(--orange); min-width: 68px; text-align: right; transition: color 0.2s, transform 0.2s; }
+  .stat-value.score   { color: var(--gold-deep); }
+  .stat-value.combo   { color: var(--ink); min-width: 68px; text-align: right; }
   .stat-value.combo.zero { color: var(--tlo); }
-  .stat-value.combo.hot { color: var(--orange); transform: scale(1.1); }
-  .stat-value.combo.blazing { color: var(--red); transform: scale(1.15); text-shadow: 0 0 12px rgba(239,68,68,0.6); }
-  .stat-value.combo.legendary { color: var(--purple); transform: scale(1.2); text-shadow: 0 0 12px rgba(139,92,246,0.7); }
+  /* Lives: pixel hearts from pixelIcon(); currentColor fills them */
   .lives {
-    font-size: 28px;
-    letter-spacing: 5px;
-    color: var(--red);
+    display: flex; gap: 4px;
+    color: var(--seal);
+    height: 24px; align-items: center;
   }
-  .lives .lost { color: var(--bd); }
+  .lives { flex-shrink: 0; }
+  .lives .px-icon { display: block; height: 100%; width: auto; flex-shrink: 0; }
+  .lives .lost { display: flex; gap: inherit; height: 100%; color: var(--bdhi); }
 
   /* .menu-btn is paired with .rpg-btn (ui.css), which draws it */
   .menu-btn { padding: 8px 16px; font-size: 13px; }
 
   /* XP bar — sits just above the Command Bar on desktop. */
+  /* 8px tall: a 2px ink rule on each side of a 4px gold fill */
   .xpbar {
     position: fixed;
     bottom: 80px; left: 0; right: 0;
-    height: 6px;
-    background: var(--ink);
+    height: 8px;
+    background: var(--hanji-edge);
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
     z-index: 99;
-    overflow: hidden;
   }
   .xpbar-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--theme-accent, var(--blue)), var(--purple));
-    transition: width 0.3s, background 1.6s;
+    background: var(--gold);
+    transition: width 0.3s steps(6);
+  }
+  /* Level chip at the left end of the XP bar; grows away from the HUD
+     (up on desktop where the HUD is below, down on mobile) so it never
+     overlaps the HUD's ink rule. */
+  .xpbar-lv {
+    position: absolute;
+    left: 8px; bottom: -2px;
+    padding: 1px 6px 0;
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    font: 400 12px/12px var(--font-mono);
+    pointer-events: none;
   }
 
   /* Stage — fills the desktop viewport. The HUD is at the bottom on desktop,
@@ -579,9 +472,11 @@
   .battle-foreground {
     z-index: 58;
     background:
-      linear-gradient(180deg, rgba(15,23,42,0) 72%, rgba(15,23,42,0.30) 100%),
-      radial-gradient(ellipse 52% 12% at 50% 98%, rgba(15,23,42,0.38), rgba(15,23,42,0) 72%);
+      linear-gradient(180deg, rgba(16,19,31,0) 72%, rgba(16,19,31,0.30) 100%),
+      radial-gradient(ellipse 52% 12% at 50% 98%, rgba(16,19,31,0.38), rgba(16,19,31,0) 72%);
   }
+  /* No scene yet (intro, story): the dark foreground would float on bare hanji */
+  body:not([class*="theme-"]) .battle-foreground { display: none; }
   .battle-foreground::before,
   .battle-foreground::after {
     content: '';
@@ -589,7 +484,7 @@
     bottom: -10px;
     width: clamp(90px, 12vw, 190px);
     height: clamp(130px, 24vh, 310px);
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.44));
+    background: linear-gradient(180deg, rgba(16, 19, 31, 0), rgba(16, 19, 31, 0.44));
     filter: blur(0.2px);
   }
   .battle-foreground::before {
@@ -727,7 +622,6 @@
      the .sprite wrapper doubled the sway. */
   .monster.boss .sprite { font-size: 480px; }
   .monster.locked .sprite {
-    filter: drop-shadow(0 0 18px rgba(37, 99, 235, 0.5)) brightness(1.05);
     animation: locked-pulse 1.0s ease-in-out infinite;
   }
   @keyframes locked-pulse {
@@ -750,16 +644,17 @@
      on the .sprite only, so the inline translate3d on .monster is never
      overwritten (the old .monster keyframe snapped it to the stage's
      top-left for a frame). */
+  /* Word label: paper slip, ink frame, square corners, hard shadow */
   .monster .word {
     margin-top: 10px;
-    background: var(--l1);
-    border: 2px solid var(--bdhi);
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.22);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
     padding: 9px 16px;
-    border-radius: 10px;
-    color: var(--thi);
+    border-radius: 0;
+    color: var(--ink);
     position: relative;
-    transition: border-color 1.6s, box-shadow 0.18s, transform 0.12s;
+    transition: transform 0.12s;
     max-width: min(720px, calc(100vw - 64px));
     white-space: nowrap;
     /* --word-shift slides the bubble (not the monster) back inside the
@@ -774,7 +669,7 @@
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 3px;
-    border-radius: 0 0 10px 10px;
+    border-radius: 0;
     background: var(--tmd);
     opacity: 0.45;
     transform: scaleX(var(--hp-frac, 1));
@@ -794,15 +689,14 @@
   }
   .monster .word .word-row .syl-space {
     display: inline-block;
-    width: 14px; height: 5px;
+    width: 14px; height: 4px;
     background: var(--bd);
-    border-radius: 2px;
+    border-radius: 0;
     align-self: center;
     margin: 0 4px 8px;
-    transition: background 0.2s;
   }
-  .monster .word .word-row .syl-space.done { background: var(--green); }
-  .monster .word .word-row .syl-space.now  { background: var(--blue); }
+  .monster .word .word-row .syl-space.done { background: var(--ink); }
+  .monster .word .word-row .syl-space.now  { background: var(--seal); }
   .monster .word .word-row .syl-fallback {
     font-family: var(--korean);
     font-size: 24px;
@@ -819,21 +713,21 @@
     width: 0; height: 0;
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
-    border-bottom: 8px solid var(--bdhi);
-    transition: border-bottom-color 1.6s;
+    border-bottom: 8px solid var(--ink);
   }
+  /* Locked target: seal-red frame, thicker hard shadow, slightly larger */
   .monster.locked .word {
-    border: 3px solid var(--orange);
-    box-shadow: 0 0 0 3px rgba(249,115,22,0.22), 0 10px 26px rgba(249,115,22,0.30);
+    border-color: var(--seal);
+    box-shadow: 0 0 0 2px var(--seal), 4px 4px 0 2px var(--ink);
     transform: translateX(var(--word-shift, 0px)) scale(calc(var(--word-counter, 1) * 1.08));
     transform-origin: 50% 0%;
   }
-  .monster.locked .word::before { border-bottom-color: var(--orange); }
+  .monster.locked .word::before { border-bottom-color: var(--seal); }
   body.has-lock .monster:not(.locked) .word { opacity: 0.72; }
   /* Per-keystroke word tick: a Web Animation on .word-row in advanceLock
      (no class restart, so no forced reflow per keystroke). */
   .monster .word .typed {
-    color: var(--green);
+    color: var(--tlo);
   }
   .monster .word .pending { color: var(--thi); }
   .monster.boss .word {
@@ -841,13 +735,8 @@
     max-width: 600px;
     white-space: normal;
     line-height: 1.35;
-    border-color: var(--red);
     border-width: 3px;
   }
-  .monster.boss .word::before { border-bottom-color: var(--red); }
-
-  .monster .hp-bar { display: none; }
-  .monster .hp-fill { display: none; }
 
   .monster .ground-shadow {
     position: absolute;
@@ -1060,16 +949,16 @@
     position: absolute;
     z-index: 75;
     pointer-events: none;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--green);
-    text-shadow: 0 1px 0 white;
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--gold-deep);
+    text-shadow: 2px 2px 0 var(--paper);
     animation: pop-rise 900ms ease-out both;
     white-space: nowrap;
   }
-  .score-pop.crit   { color: #d97706; font-size: 20px; }
-  .score-pop.recall { color: var(--purple); font-size: 14px; }
+  .score-pop.crit   { color: var(--seal); }
+  .score-pop.recall { color: var(--ink); font-size: 12px; }
   @keyframes pop-rise {
     0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
     20%  { opacity: 1; transform: translate(-50%, -10px) scale(1.15); }
@@ -1083,20 +972,26 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 200;
+    display: flex; align-items: center; gap: 12px;
     font-family: var(--font-display);
-    color: var(--orange);
-    font-size: 36px;
-    text-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    color: var(--ink);
+    font-size: 24px;
+    line-height: 1;
+    padding: 10px 16px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: var(--shadow-hard);
     pointer-events: none;
-    animation: combo-banner 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    letter-spacing: 2px;
+    animation: combo-banner 1.2s linear;
+    letter-spacing: 1px;
     white-space: nowrap;
   }
+  .combo-banner .px-icon { color: var(--seal); }
   @keyframes combo-banner {
-    0%   { opacity: 0; transform: translateX(-50%) scale(0.4); }
-    25%  { opacity: 1; transform: translateX(-50%) scale(1.15); }
-    70%  { opacity: 1; transform: translateX(-50%) scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) scale(1); }
+    0%   { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    10%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    80%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(0); }
   }
 
   /* Level-up banner: bigger and longer than combo-banner, tier-colored */
@@ -1107,17 +1002,24 @@
     transform: translateX(-50%);
     z-index: 200;
     font-family: var(--font-display);
-    font-size: clamp(26px, 7vw, 52px);
+    font-size: 36px;
+    line-height: 1;
+    color: var(--ink);
+    padding: 14px 24px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--hanji-edge), var(--shadow-hard);
     pointer-events: none;
-    animation: level-banner 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    letter-spacing: 3px;
+    animation: level-banner 2s linear forwards;
+    letter-spacing: 2px;
     white-space: nowrap;
   }
+  @media (max-width: 520px) { .level-banner { font-size: 24px; } }
   @keyframes level-banner {
-    0%   { opacity: 0; transform: translateX(-50%) scale(0.3); }
-    20%  { opacity: 1; transform: translateX(-50%) scale(1.2); }
-    60%  { opacity: 1; transform: translateX(-50%) scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) scale(1); }
+    0%   { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    8%   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    85%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(0); }
   }
 
   /* Cursor blink — used by the in-HUD typing display */
@@ -1127,11 +1029,11 @@
   .modal-veil {
     position: fixed; inset: 0;
     z-index: 500;
-    background: rgba(10, 12, 22, 0.62);
+    background: rgba(16, 19, 31, 0.55);
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fade-in 0.3s ease;
+    animation: fade-in 0.2s linear;
     padding: 20px;
   }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -1149,7 +1051,7 @@
     max-height: calc(100dvh - 40px);
     overflow-y: auto;
     overscroll-behavior: contain;
-    animation: modal-rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: modal-rise 0.2s steps(3);
   }
   /* Game-over modal: pin Retry above the fold by making the leaderboard the
      only scrolling region. Header (badge/title/stats/tabs) stays at top,
@@ -1161,7 +1063,6 @@
     padding: 22px 28px 18px;
     gap: 10px;
   }
-  #gameOverModal .modal-card .badge { margin-bottom: 0; }
   #gameOverModal .modal-card h1 { font-size: 28px; margin: 0; }
   #gameOverModal .modal-card .subtitle { display: none; }
   #gameOverModal .modal-card .stat-grid { margin: 4px 0 6px; gap: 8px; }
@@ -1176,23 +1077,23 @@
     overscroll-behavior: contain;
   }
   #gameOverModal .modal-card .actions { margin-top: 6px; flex-shrink: 0; }
+  #gameOverModal #btnRetry { flex: 1 1 auto; max-width: 280px; font-size: 18px; }
   #gameOverModal .modal-card .battle-lb.lb-collapsed {
     flex: 0 0 auto;
     min-height: 0;
   }
   /* Hero score in game-over */
-  #gameOverModal #overScore { font-size: 44px; color: var(--gold); font-weight: 800; }
+  #gameOverModal #overScore { font-size: 48px; color: var(--gold-deep); }
   /* Run-state chips */
-  #overCheckpointNote, #overSlowModeNote {
+  #overCheckpointNote {
     font-size: 11px;
     color: var(--tmd);
     background: var(--l2);
-    border: 2px solid var(--bd);
-    border-radius: var(--r-2);
+    border: 2px solid var(--bdhi);
     padding: 3px 10px;
     display: inline-block;
     margin: 2px;
-    font-weight: 700;
+    font-size: 12px;
   }
   /* Leaderboard collapse */
   .lb-collapsed {
@@ -1210,48 +1111,45 @@
   .lb-expand-btn {
     background: none;
     border: none;
-    color: var(--gold);
+    color: var(--ink);
+    font: inherit;
     font-size: 12px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
     cursor: pointer;
     padding: 4px 6px;
-    font-weight: 600;
   }
   @keyframes modal-rise {
-    0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
+    0%   { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
   .modal-card .badge {
     display: inline-block;
     background: var(--ink);
-    color: var(--gold);
-    font-size: 11px;
-    font-weight: 800;
-    padding: 4px 12px;
-    border: 2px solid var(--gold);
-    border-radius: var(--r-2);
-    letter-spacing: 0.12em;
+    color: var(--paper);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px 3px;
+    border: 0;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-bottom: 14px;
   }
-  .modal-card .badge.danger {
-    background: var(--danger);
-    border-color: var(--ink);
-    color: var(--cream);
-  }
+  .modal-card .badge.danger { background: var(--seal); }
   .modal-card h1 {
     font-family: var(--font-display);
     font-weight: 400;
     font-size: 36px;
-    color: var(--cream);
+    line-height: 1.2;
+    color: var(--ink);
     margin-bottom: 8px;
     letter-spacing: 0.02em;
-    text-shadow: 0 3px 0 var(--ink);
   }
   .modal-card .subtitle {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--tmd);
     margin-bottom: 24px;
-    line-height: 1.5;
+    line-height: 1.75;
   }
   .modal-card .stat-grid {
     display: grid;
@@ -1260,61 +1158,67 @@
     margin: 20px 0;
   }
   .modal-card .stat-grid > div {
-    background: rgba(0, 0, 0, 0.22);
-    border: 2px solid var(--bd);
-    border-radius: var(--r-2);
+    background: var(--hanji);
+    border: 2px solid var(--hanji-edge);
     padding: 12px;
   }
   .modal-card .stat-grid .k {
-    font-size: 10px;
+    font-size: 12px;
     color: var(--tlo);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 700;
+    letter-spacing: 0.04em;
   }
   .modal-card .stat-grid .v {
     font-family: var(--font-mono);
-    font-size: 22px;
-    color: var(--gold);
-    font-weight: 800;
-    margin-top: 4px;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--ink);
+    margin-top: 6px;
   }
   .modal-card .actions {
     display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
     margin-top: 18px;
   }
   /* Legacy buttons without .rpg-btn (e.g. JS-built modals) */
-  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.boss-reward-card) {
-    background: var(--l2);
-    border: 2px solid var(--frame);
-    border-radius: var(--r-2);
-    color: var(--cream);
+  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.modal-link):not(.boss-reward-card) {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    color: var(--ink);
     padding: 12px 22px;
     font: inherit;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     box-shadow: 0 3px 0 var(--ink);
     transition: transform 0.06s, box-shadow 0.06s;
   }
-  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.boss-reward-card):active {
+  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.modal-link):not(.boss-reward-card):active {
     transform: translateY(2px);
     box-shadow: 0 1px 0 var(--ink);
   }
-  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.boss-reward-card):hover { background: var(--l3); }
+  .modal-card button:not(.rpg-btn):not(.lb-tab):not(.lb-expand-btn):not(.modal-link):not(.boss-reward-card):hover { background: var(--l3); }
   .modal-card button.primary:not(.rpg-btn) {
-    background: var(--gold);
+    background: var(--ink);
     border-color: var(--ink);
-    color: var(--ink);
+    color: var(--paper);
   }
-  .modal-card button.primary:not(.rpg-btn):hover { background: var(--gold-hi); }
+  .modal-card button.primary:not(.rpg-btn):hover { background: var(--ink-soft); }
   .modal-card .actions .rpg-btn { padding: 12px 22px; }
   /* Practice / Title exits under the main actions */
   .modal-nav {
     display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
     margin-top: 2px; flex-shrink: 0;
   }
-  .modal-nav .rpg-btn, .modal-title-link { min-height: 40px; padding: 8px 16px 8px 20px; font-size: 13px; }
+  .modal-nav { gap: 4px 18px; margin-top: 10px; }
+  .modal-link {
+    background: none; border: none; padding: 6px 4px; min-height: 32px;
+    font: 700 12px/1 var(--font-ui); color: var(--tmd);
+    text-decoration: underline; text-underline-offset: 3px;
+    cursor: pointer; display: inline-flex; align-items: center;
+  }
+  .modal-link:hover { color: var(--ink); }
+  @media (pointer: coarse) { .modal-link { min-height: 44px; } }
 
   /* ── Intro modal redesign ── */
   #introModal .modal-card {
@@ -1323,7 +1227,7 @@
   }
   #introModal .modal-card .subtitle {
     margin-bottom: 6px;
-    font-size: 13px;
+    font-size: 12px;
   }
   .intro-hero-row {
     display: flex;
@@ -1339,22 +1243,9 @@
     flex-shrink: 0;
   }
   .intro-hero-text { text-align: left; }
-  .intro-hero-text .badge { margin-bottom: 6px; }
   .intro-hero-text h1 { margin: 0; font-size: 28px; }
   .intro-cta-band { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
-  .intro-start-btn { width: 100%; height: 52px; font-size: 16px !important; }
-  .intro-cta-row2 { display: flex; gap: 8px; }
-  .intro-daily-btn { flex: 1; }
-  .intro-slow-pill {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 12px;
-    background: var(--l2);
-    border: 2px solid var(--bdhi);
-    border-radius: var(--r-2);
-    font-size: 13px; color: var(--tmd);
-    cursor: pointer;
-    white-space: nowrap;
-  }
+  .intro-start-btn { width: 100%; height: 52px; font-size: 24px !important; }
   .lb-section { margin: 8px 0; }
   .lb-section-header {
     display: flex; align-items: center; gap: 8px;
@@ -1365,31 +1256,23 @@
 
   .new-high {
     display: inline-block;
-    background: var(--gold);
-    color: var(--ink);
-    border: 2px solid var(--ink);
-    box-shadow: 0 0 0 2px var(--gold);
+    background: var(--paper);
+    color: var(--gold-deep);
+    border: 2px solid var(--gold-deep);
     padding: 6px 14px;
-    border-radius: var(--r-2);
-    font-weight: 800;
+    font-weight: 700;
     font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-bottom: 10px;
   }
-  .new-high-claim {
-    font-size: 11px;
-    color: var(--tlo);
-    margin-top: 4px;
-    text-align: center;
-  }
   @keyframes profile-cta-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
-    50%       { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 var(--seal); }
+    50%       { box-shadow: 0 0 0 3px var(--seal); }
   }
   .profile-cta-pulse {
-    animation: profile-cta-pulse 1.2s ease-in-out 4;
-    border-color: var(--yellow) !important;
+    animation: profile-cta-pulse 1.2s steps(1) 4;
+    border-color: var(--seal) !important;
   }
 
   /* Story dialog — Pokemon-style with character portraits */
@@ -1398,29 +1281,28 @@
     left: 0; right: 0; bottom: 0;
     z-index: 600;
     padding: 140px 24px 32px;
-    background: linear-gradient(to top, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.5) 55%, transparent 100%);
-    animation: fade-in 0.3s ease;
+    animation: fade-in 0.2s linear;
   }
-  /* Portrait base — circular, positioned absolutely within the dialog */
+  /* Portrait base: square paper frame, positioned absolutely within the dialog */
   .story-portrait-player,
   .story-portrait-teacher,
   .story-portrait-demon {
     position: absolute;
     width: 128px; height: 128px;
-    border-radius: 50%;
+    border-radius: 0;
     background-size: 180%;
     background-position: 50% 8%;
     background-repeat: no-repeat;
-    background-color: var(--ink);
-    border: 3px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.06);
-    transition: filter 0.38s ease, opacity 0.38s ease, border-color 0.38s ease, box-shadow 0.38s ease;
+    background-color: var(--hanji);
+    border: 2px solid var(--ink);
+    box-shadow: inset 0 0 0 3px var(--paper), var(--shadow-hard);
+    image-rendering: pixelated;
     z-index: 2;
   }
   /* Player: left side, anchored off the card's left edge */
   .story-portrait-player {
     left: max(28px, calc(50% - 338px));
-    bottom: 152px;
+    bottom: 196px;
     background-image: url('sprites/player/01-baegui-front.png');
     background-size: 220%;
     background-position: 48% 5%;
@@ -1428,41 +1310,36 @@
   /* Teacher: right of player, slightly higher — flanking look */
   .story-portrait-teacher {
     left: max(28px, calc(50% - 220px));
-    bottom: 182px;
+    bottom: 226px;
     background-image: url('sprites/portraits/teacher.webp');
   }
   /* Demon: right side, mirrored so they face the player */
   .story-portrait-demon {
     right: max(28px, calc(50% - 338px));
-    bottom: 152px;
+    bottom: 196px;
     transform: scaleX(-1);
     background-image: url('sprites/portraits/hangeulwang.webp');
   }
-  /* Active speaker: full brightness, blue ring */
+  /* Active speaker: full color, raised on a thicker ink shadow */
   .story-portrait-player.sp-active,
   .story-portrait-teacher.sp-active,
   .story-portrait-demon.sp-active {
-    filter: brightness(1.15);
-    border-color: var(--blue);
-    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6), 0 0 0 3px var(--blue), 0 0 18px rgba(37, 99, 235, 0.5);
+    box-shadow: inset 0 0 0 3px var(--paper), 5px 5px 0 var(--ink);
     opacity: 1;
   }
-  /* Inactive: dimmed and desaturated */
+  /* Inactive: faded back into the paper */
   .story-portrait-player.sp-inactive,
   .story-portrait-teacher.sp-inactive,
   .story-portrait-demon.sp-inactive {
-    filter: brightness(0.45) saturate(0.35);
-    opacity: 0.75;
-    border-color: transparent;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    filter: saturate(0.35);
+    opacity: 0.55;
   }
-  /* Narrator beats: everyone at medium dim (no single speaker) */
+  /* Narrator beats: everyone slightly faded (no single speaker) */
   .story-portrait-player.sp-narrator,
   .story-portrait-teacher.sp-narrator,
   .story-portrait-demon.sp-narrator {
-    filter: brightness(0.75) saturate(0.7);
-    opacity: 0.85;
-    border-color: rgba(255, 255, 255, 0.15);
+    filter: saturate(0.7);
+    opacity: 0.8;
   }
   /* Dialogue box: surface + cream frame from .rpg-panel (ui.css) */
   .story-card {
@@ -1473,39 +1350,40 @@
     z-index: 1;
   }
   .story-speaker {
-    font-size: 11px; font-weight: 800;
-    color: var(--gold);
+    display: inline-block;
+    font-size: 12px; font-weight: 700;
+    color: var(--paper);
+    background: var(--ink);
+    padding: 3px 8px 2px;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
   }
   .story-text {
     font-size: 18px;
-    line-height: 1.55;
-    color: var(--thi);
+    line-height: 1.67;
+    color: var(--ink);
     min-height: 64px;
-    font-weight: 500;
   }
   .story-text .ko {
     font-family: var(--korean);
-    font-weight: 800;
-    color: var(--gold);
+    font-weight: 700;
+    color: var(--ink);
   }
   .story-meta {
     position: absolute;
     bottom: 8px; right: 14px;
     display: flex; align-items: center; gap: 12px;
-    font-size: 11px; color: var(--tlo);
+    font-size: 12px; color: var(--tlo);
   }
   .story-meta .story-prompt {
-    color: var(--gold);
-    font-size: 14px;
+    color: var(--ink);
+    font-size: 12px;
     opacity: 0;
-    transition: opacity 0.2s;
-    animation: prompt-bounce 0.9s ease-in-out infinite;
+    animation: prompt-bounce 0.9s steps(2) infinite;
   }
   .story-meta .story-prompt.ready { opacity: 1; }
-  .story-meta .story-skip { min-height: 32px; padding: 4px 10px 4px 16px; font-size: 11px; }
+  .story-meta .story-skip { min-height: 32px; padding: 4px 10px 4px 16px; font-size: 12px; }
   .story-meta .story-skip::after { content: ''; position: absolute; inset: -6px; } /* 44px hit area */
   @keyframes prompt-bounce {
     0%, 100% { transform: translateY(0); }
@@ -1548,31 +1426,33 @@
     transition: filter 0.6s ease-out;
   }
   body.game-over-beat #gameOverModal { animation: fade-in 0.3s ease 0.6s both; }
-  body.game-over-beat #gameOverModal .modal-card { animation: modal-rise 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both; }
+  body.game-over-beat #gameOverModal .modal-card { animation: modal-rise 0.2s steps(3) 0.6s both; }
 
   /* Pause overlay */
   .pause-overlay {
     position: fixed; inset: 0; z-index: 400;
-    background: rgba(10, 12, 22, 0.72);
-    backdrop-filter: blur(3px);
+    background: rgba(16, 19, 31, 0.55);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 12px;
   }
+  /* The overlay itself is the dim veil; everything on it sits on paper */
   .pause-overlay .pause-title {
     font-family: var(--font-display);
-    font-size: 56px;
-    line-height: 1.1;
-    color: var(--cream);
+    font-size: 48px;
+    line-height: 1;
+    color: var(--ink);
     letter-spacing: 4px;
-    text-shadow:
-      3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 3px 0 var(--ink), 0 -3px 0 var(--ink),
-      3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink),
-      0 7px 0 var(--ink);
+    padding: 14px 28px 12px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--hanji-edge), var(--shadow-hard);
   }
   .pause-overlay .pause-hint {
-    font-size: 13px;
-    color: var(--tlo, #94a3b8);
+    font-size: 12px;
+    color: var(--ink);
+    background: var(--paper);
+    padding: 2px 8px;
     letter-spacing: 0.04em;
   }
   .pause-nav { display: flex; gap: 8px; margin-top: 4px; }
@@ -1581,8 +1461,9 @@
     min-height: 52px;
     min-width: 200px;
     padding: 12px 28px;
-    font-size: 18px;
+    font-size: 24px;
   }
+  .pause-overlay .rpg-btn--ghost { --btn-bg: var(--paper); }
   .pause-controls-list.pause-keys-touch { display: none; }
   .pause-controls {
     margin-top: 12px;
@@ -1590,9 +1471,9 @@
     min-width: 280px;
   }
   .pause-controls-title {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.14em;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--tlo);
     margin-bottom: 10px;
@@ -1607,13 +1488,13 @@
   }
   .pause-key {
     display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    font-family: var(--font-ui);
+    font-size: 12px;
     font-weight: 700;
-    color: var(--cream);
-    background: var(--ink);
-    border: 2px solid var(--frame);
-    border-radius: var(--r-2);
+    color: var(--ink);
+    background: var(--hanji);
+    border: 2px solid var(--ink);
+    border-radius: 0;
     box-shadow: 0 2px 0 var(--ink);
     padding: 2px 7px;
     white-space: nowrap;
@@ -1621,7 +1502,7 @@
   }
   .pause-key-desc {
     font-size: 12px;
-    color: var(--tmd);
+    color: var(--ink);
     text-align: left;
   }
 
@@ -1642,8 +1523,8 @@
       padding-left: max(10px, env(safe-area-inset-left, 0px));
       padding-right: max(10px, env(safe-area-inset-right, 0px));
       border-top: none;
-      border-bottom: 3px solid var(--frame);
-      box-shadow: 0 3px 0 var(--ink);
+      border-bottom: 2px solid var(--ink);
+      box-shadow: inset 0 -3px 0 var(--hanji-edge);
       flex-wrap: nowrap;
     }
     .hud-right {
@@ -1654,7 +1535,7 @@
     }
     .hud-right #btnBgm { display: none; }
     .hud-right .audio-toggle { padding: 6px; }
-    .menu-btn#btnMenu { padding: 6px 8px; font-size: 11px; white-space: nowrap; }
+    .menu-btn#btnMenu { padding: 6px 8px; font-size: 12px; white-space: nowrap; }
     /* Tap targets: at least 44x44 on touch. */
     #btnMenu, #btnAudio, #btnBgm {
       min-width: 44px; min-height: 44px;
@@ -1667,18 +1548,30 @@
     #shareModal .share-close { top: 6px; right: 6px; width: 44px; height: 44px; }
     .pause-controls-list.pause-keys-desktop { display: none; }
     .pause-controls-list.pause-keys-touch { display: grid; }
-    .hud-left, .hud-right { gap: 10px; }
+    .hud-left { gap: 8px; }
+    .hud-right { gap: 4px; }
     /* .hud-center is hidden in the HUD on mobile; re-shown as a fixed strip above keyboard (below) */
     .hud-center { display: none; }
-    .stat-label { font-size: 8px; }
-    .stat-value { font-size: 14px; }
-    .stat-value.score { font-size: 16px; }
-    .stat-value.combo { min-width: 36px; font-size: 13px; }
-    .lives { font-size: 18px; letter-spacing: 2px; }
-    .menu-btn { padding: 6px 9px; font-size: 11px; }
+    /* Phone HUD is one tight row: values only, no labels */
+    .hud .stat-label, .special-meter .sm-label { display: none; }
+    .stat-value, .stat-value.score { font-size: 12px; margin-top: 0; }
+    .stat-value.combo { min-width: 28px; font-size: 12px; }
+    .lives { height: 16px; gap: 2px; }
+    .special-meter { padding: 4px 2px; gap: 2px; }
+    .special-pip { width: 12px; height: 12px; }
+    .special-kill-track { display: none; }
+    .powerup-hud { gap: 4px; }
+    .powerup-chip { padding: 2px 4px; gap: 3px; white-space: nowrap; }
+    .powerup-chip .pc-label { display: none; }
+    /* Flex row: the left stats keep their size, the right cluster shrinks */
+    .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .hud-left { flex: 0 0 auto; }
+    .menu-btn { padding: 6px 9px; font-size: 12px; }
     /* --hud-h is the HUD's measured height (JS, incl. the notch inset), so
-       the stage and XP bar always start below it. */
-    .xpbar { top: var(--hud-h, calc(50px + env(safe-area-inset-top, 0px))); bottom: auto; }
+       the stage and XP bar always start below it. The bar tucks under the
+       HUD's ink rule and the level chip hangs down into the stage. */
+    .xpbar { top: calc(var(--hud-h, calc(50px + env(safe-area-inset-top, 0px))) - 2px); bottom: auto; border-top: 0; height: 6px; }
+    .xpbar-lv { bottom: auto; top: 0; border-top: 0; }
     .stage { inset: var(--hud-h, calc(54px + env(safe-area-inset-top, 0px))) 0 calc(224px + env(safe-area-inset-bottom)) 0; }
     .hud-center .live { font-size: 16px; letter-spacing: 0; }
     .hud-center .ime-cursor { height: 16px; }
@@ -1707,12 +1600,9 @@
     .modal-card .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .modal-card .stat-grid .v { font-size: 18px; }
     .modal-card .actions button { padding: 10px 14px; font-size: 13px; min-height: 44px; }
-    .battle-lb-row { grid-template-columns: 40px 22px 1fr 44px 70px; padding: 6px 10px; font-size: 12px; }
+    .battle-lb-row { padding: 6px 10px; gap: 8px; }
     .battle-lb-list { max-height: 260px; }
 
-    /* M1: game-over LB toolbar wraps on mobile so Edit profile is reachable */
-    #gameOverModal .battle-lb-toolbar { flex-wrap: wrap; row-gap: 8px; }
-    #gameOverModal .battle-lb-toolbar #btnEditProfile { order: 3; flex: 1 1 100%; text-align: center; }
 
     /* M2: live IME buffer pinned just above the on-screen keyboard */
     .hud-center {
@@ -1722,6 +1612,9 @@
       z-index: 109; pointer-events: none; margin: 0;
       border: none;
     }
+    /* Pinned over the stage: a paper slip behind the live text */
+    .hud-center .live { flex: 0 1 auto; background: var(--paper); border: 2px solid var(--ink); padding: 2px 8px; }
+    .hud-center .live:empty, .hud-center .type-prompt, .hud-center .ime-cursor { display: none; }
 
     /* m2: boss reward cards stack vertically on mobile */
     .boss-reward-cards { flex-direction: column; }
@@ -1737,11 +1630,10 @@
          subtract the same --kb-px so the rows still fit. */
       --kb-px: max(6px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
       padding: 8px var(--kb-px) calc(6px + env(safe-area-inset-bottom));
-      /* Dark tray with paper keycaps; frame drawn by shadows so the
+      /* Hanji tray with paper keycaps; the ink rule is a shadow so the
          keyboard height (and the stage inset above it) stays the same */
-      background: var(--panel-solid);
-      border-top: 1px solid var(--frame);
-      box-shadow: 0 -2px 0 var(--frame), 0 -5px 0 var(--ink);
+      background: var(--hanji);
+      box-shadow: 0 -2px 0 var(--ink);
     }
     .battle-kb .kb-row {
       display: flex;
@@ -1762,7 +1654,7 @@
       height: 44px;
       background: var(--paper);
       border: 1px solid var(--ink);
-      border-radius: var(--r-2);
+      border-radius: 0;
       box-shadow: 0 2px 0 var(--ink);
       display: flex;
       flex-direction: column;
@@ -1785,30 +1677,33 @@
       color: var(--thi);
     }
     .battle-kb .key .qwerty {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1;
       color: var(--tlo);
       margin-top: 1px;
     }
     .battle-kb .key .shift {
       font-family: var(--korean);
       font-size: 10px;
-      color: var(--orange);
+      color: var(--seal);
       position: absolute;
       top: 2px; right: 4px;
       font-weight: 600;
     }
     .battle-kb .key.kb-pressed,
     .battle-kb .key:active {
-      background: var(--blue);
-      border-color: var(--blue);
+      background: var(--ink);
+      border-color: var(--ink);
+      box-shadow: none;
+      transform: translateY(2px);
     }
     .battle-kb .key.kb-pressed .jamo,
     .battle-kb .key:active .jamo,
     .battle-kb .key.kb-pressed .qwerty,
     .battle-kb .key:active .qwerty,
     .battle-kb .key.kb-pressed .shift,
-    .battle-kb .key:active .shift { color: white; }
+    .battle-kb .key:active .shift { color: var(--paper); }
     .battle-kb .kb-row.r4 { gap: 4px; padding-left: 0; margin-bottom: 0; }
     /* Utility row keys (shift, space, ⌫) sized to the same uniform key width
        as the letter keys, except space which spans 4 key-widths so it stays
@@ -1817,10 +1712,10 @@
       flex: 0 0 calc((100vw - 2 * var(--kb-px) - 36px) / 10);
       width: calc((100vw - 2 * var(--kb-px) - 36px) / 10);
       padding: 0;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: var(--font-ui);
       font-size: 12px;
       font-weight: 700;
-      color: var(--tmd);
+      color: var(--ink);
     }
     .battle-kb .key.kb-space {
       flex: 0 0 calc(((100vw - 2 * var(--kb-px) - 36px) / 10) * 4 + 12px);
@@ -1832,21 +1727,23 @@
       flex: 1 1 auto;
       min-width: 0;
       color: var(--tlo);
-      font-size: 11px;
+      font-size: 12px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
     .battle-kb .key.kb-shift.kb-armed {
-      background: var(--orange);
-      border-color: var(--orange);
-      color: white;
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
     }
     .battle-kb .key.kb-hint-correct {
-      background: var(--blue);
-      border-color: var(--blue);
-      color: white;
-      transition: background 0.1s, border-color 0.1s;
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
     }
+    .battle-kb .key.kb-hint-correct .jamo,
+    .battle-kb .key.kb-hint-correct .qwerty,
+    .battle-kb .key.kb-hint-correct .shift { color: var(--paper); }
   }
   /* Landscape phones: the full-height keyboard left the stage ~110px tall,
      shorter than the player sprite. Compact the keys so the stage keeps
@@ -1870,7 +1767,7 @@
     .hud .stat-label { display: none; }
     .hud .stat-value { margin-top: 0; font-size: 15px; }
     .hud .stat-value.score { font-size: 16px; }
-    .hud .lives { font-size: 15px; letter-spacing: 1px; }
+    .hud .lives { height: 16px; }
     .hud-left { gap: 14px; }
     .hud .special-meter { padding: 2px 8px; }
     .hud .special-meter .sm-label { white-space: nowrap; }
@@ -1902,7 +1799,7 @@
     opacity: 0;
   }
   /* ── Battle leaderboard ── */
-  .battle-lb { margin: 16px 0 4px; border: 2px solid var(--bd); border-radius: var(--r-2); overflow: hidden; background: rgba(0, 0, 0, 0.22); }
+  .battle-lb { margin: 16px 0 4px; border: 2px solid var(--ink); overflow: hidden; background: var(--paper); text-align: left; }
   .battle-lb-toolbar {
     display: flex;
     justify-content: space-between;
@@ -1911,7 +1808,7 @@
     margin: 10px 0 8px;
   }
   .battle-lb-toolbar .title {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1919,20 +1816,20 @@
   }
   .battle-lb-toolbar .meta {
     margin-top: 2px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--tlo);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
   }
-  .battle-lb-header { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 14px; background: var(--l2); border-bottom: 1px solid var(--bd); }
-  .battle-lb-header .title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tmd); }
-  .battle-lb-header .meta { font-size: 11px; color: var(--tlo); font-family: 'JetBrains Mono', monospace; }
+  .battle-lb-header { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 14px; background: var(--hanji); border-bottom: 2px solid var(--ink); }
+  .battle-lb-header .title { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tmd); }
+  .battle-lb-header .meta { font-size: 12px; color: var(--tlo); font-family: var(--font-mono); }
   .battle-lb-header .meta strong { color: var(--thi); }
   .battle-lb-list { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; }
-  .battle-lb-row { display: grid; grid-template-columns: 44px 24px 1fr 52px 92px; align-items: center; gap: 6px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 13px; }
+  .battle-lb-row { display: grid; grid-template-columns: 36px 22px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 7px 14px; border-bottom: 1px solid var(--bd); font-size: 12px; }
   .battle-lb-row:last-child { border-bottom: none; }
-  .battle-lb-row:nth-child(-n+3) .r { color: var(--gold); font-weight: 700; }
-  .battle-lb-row.you { background: rgba(246, 196, 83, 0.12); box-shadow: inset 3px 0 0 var(--gold); font-weight: 600; cursor: pointer; }
-  .battle-lb-row.you.below { border-top: 2px solid var(--bdhi); background: rgba(246, 196, 83, 0.16); }
+  .battle-lb-row:nth-child(-n+3) .r { color: var(--ink); font-weight: 700; }
+  .battle-lb-row.you { background: var(--hanji); box-shadow: inset 4px 0 0 var(--ink); font-weight: 700; cursor: pointer; }
+  .battle-lb-row.you.below { border-top: 2px solid var(--ink); }
   /* Fandom badge — appears next to the current player's display name on the
      leaderboard. Tiny, colored, doesn't overflow narrow rows. */
   /* Players / Fandoms tab toggle. Sits in the toolbar where the title +
@@ -1942,21 +1839,21 @@
   .lb-tab {
     min-height: 36px;
     padding: 6px 14px;
-    border-radius: var(--r-2);
-    border: 2px solid var(--bdhi);
-    background: transparent;
-    color: var(--tmd);
+    border-radius: 0;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     cursor: pointer;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-ui);
   }
   .lb-tab.active {
     background: var(--ink);
-    border-color: var(--gold);
-    color: var(--gold);
+    border-color: var(--ink);
+    color: var(--paper);
   }
   .lb-tab:not(.active):hover { background: var(--l3); color: var(--thi); }
   /* Fandom row layout: rank, emoji, fandom name, members, total points. */
@@ -1967,27 +1864,28 @@
     gap: 6px;
     padding: 7px 14px;
     border-bottom: 1px solid var(--bd);
-    font-size: 13px;
+    font-size: 12px;
   }
   .lb-fandom-row:last-child { border-bottom: none; }
-  .lb-fandom-row.you { background: rgba(246, 196, 83, 0.12); box-shadow: inset 3px 0 0 var(--gold); font-weight: 600; }
-  .lb-fandom-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
+  .lb-fandom-row.you { background: var(--hanji); box-shadow: inset 4px 0 0 var(--ink); font-weight: 700; }
+  .lb-fandom-row .r { font-family: var(--font-mono); font-size: 12px; color: var(--tlo); }
   .lb-fandom-row .fe { font-size: 18px; line-height: 1; text-align: center; }
   .lb-fandom-row .fn { color: var(--thi); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .lb-fandom-row .fn small { display: block; color: var(--tlo); font-weight: 500; font-size: 10px; }
-  .lb-fandom-row .members { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tmd); text-align: right; }
-  .lb-fandom-row .total   { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--gold); text-align: right; }
+  .lb-fandom-row .fn small { display: block; color: var(--tlo); font-weight: 400; font-size: 12px; }
+  .lb-fandom-row .members { font-family: var(--font-mono); font-size: 12px; color: var(--tmd); text-align: right; }
+  .lb-fandom-row .total   { font-family: var(--font-mono); font-size: 12px; color: var(--gold-deep); text-align: right; }
   .battle-lb-row .lb-fandom {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     margin-left: 6px;
-    padding: 1px 7px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(139,92,246,0.18), rgba(236,72,153,0.18));
-    color: var(--purple);
-    font-size: 10px;
-    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 0;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 400;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -2013,9 +1911,8 @@
   .share-card-wrap canvas {
     width: 100%;
     height: auto;
-    border-radius: var(--r-2);
     border: 2px solid var(--ink);
-    background: var(--ink);
+    background: var(--hanji);
   }
   .share-actions {
     display: flex;
@@ -2024,7 +1921,7 @@
   }
   .share-actions button { flex: 1 1 0; }
   .share-hint {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--tlo);
     text-align: center;
     line-height: 1.4;
@@ -2035,9 +1932,10 @@
     top: 6px; right: 8px;
     width: 32px; height: 32px;
     border: none;
-    border-radius: var(--r-2);
+    border-radius: 0;
     background: transparent;
-    color: var(--tmd);
+    color: var(--ink);
+    font-family: var(--font-ui);
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
@@ -2045,20 +1943,20 @@
   }
   .share-close:hover { background: var(--l3); color: var(--thi); }
   .battle-lb-empty { padding: 18px 14px; text-align: center; font-size: 12px; color: var(--tlo); }
-  .battle-lb-row .r { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tlo); }
+  .battle-lb-row .r { font-family: var(--font-mono); font-size: 12px; color: var(--tlo); }
   .battle-lb-row .n { color: var(--thi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .battle-lb-row .lv { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--tmd); text-align: right; white-space: nowrap; }
-  .battle-lb-row .pts { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--gold); text-align: right; white-space: nowrap; }
+  .battle-lb-row .lv { font-family: var(--font-mono); font-size: 12px; color: var(--tmd); text-align: right; white-space: nowrap; }
+  .battle-lb-row .pts { font-family: var(--font-mono); font-size: 12px; color: var(--gold-deep); text-align: right; white-space: nowrap; }
   .battle-lb-row.ellipsis { justify-content: center; color: var(--tlo); font-size: 16px; letter-spacing: 4px; grid-template-columns: 1fr; text-align: center; }
   .battle-lb-loading { padding: 14px; text-align: center; font-size: 12px; color: var(--tlo); }
   .battle-lb-stale {
     padding: 8px 14px;
-    font-size: 11px;
-    color: #92400e;
-    background: #fef3c7;
-    border-bottom: 1px solid #fde68a;
+    font-size: 12px;
+    color: var(--tmd);
+    background: var(--hanji);
+    border-bottom: 1px solid var(--hanji-edge);
     text-align: center;
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: 0.02em;
   }
   .bmc-link {
@@ -2067,16 +1965,13 @@
     gap: 6px;
     margin-top: 14px;
     padding: 8px 14px;
-    background: var(--l2);
-    border: 2px solid var(--bd);
-    border-radius: var(--r-2);
-    color: var(--tmd);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    color: var(--ink);
     font-size: 12px;
-    font-weight: 600;
     text-decoration: none;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .bmc-link:hover { background: var(--l3); border-color: var(--bdhi); color: var(--thi); }
+  .bmc-link:hover { background: var(--l3); }
   .profile-modal {
     position: fixed;
     inset: 0;
@@ -2085,7 +1980,7 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba(10, 12, 22, 0.66);
+    background: rgba(16, 19, 31, 0.55);
   }
   .profile-modal-card {
     width: 100%;
@@ -2102,11 +1997,11 @@
     font-weight: 400;
     font-size: 24px;
     letter-spacing: 0.02em;
-    color: var(--cream);
+    color: var(--ink);
   }
   .profile-modal-card p {
     margin: 0 0 18px;
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.5;
     color: var(--tmd);
   }
@@ -2114,7 +2009,7 @@
   .profile-field label {
     display: block;
     margin-bottom: 6px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -2125,17 +2020,18 @@
     width: 100%;
     min-height: 44px;
     padding: 10px 12px;
-    border: 2px solid var(--bdhi);
-    border-radius: var(--r-2);
-    background: var(--l2);
-    color: var(--thi);
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--hanji);
+    color: var(--ink);
     font: inherit;
+    font-size: 12px;
   }
   .profile-field input:focus,
   .profile-field select:focus {
     outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(246, 196, 83, 0.3);
+    background: var(--paper);
+    box-shadow: 3px 3px 0 var(--ink);
   }
   .profile-modal-actions {
     display: flex;
@@ -2150,25 +2046,24 @@
     display: flex; gap: 5px;
     align-items: center;
     padding: 6px 10px;
-    background: var(--l2);
-    border: 2px solid var(--bd);
-    border-radius: var(--r-2);
+    background: var(--hanji);
+    border: 2px solid var(--ink);
   }
   .special-meter .sm-label {
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--tlo);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-right: 5px;
+    white-space: nowrap;
   }
   /* Square pixel-art pips — retro HP/MP charge cell look. */
   .special-pip {
     width: 16px; height: 16px;
-    border-radius: 2px;
-    background: var(--l3);
-    border: 2px solid var(--bdhi);
-    transition: background 0.12s, border-color 0.12s;
+    border-radius: 0;
+    background: var(--paper);
+    border: 2px solid var(--ink);
     margin: 0 2px; /* 4px+ gap between pips */
     position: relative;
   }
@@ -2179,30 +2074,28 @@
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     width: 4px; height: 4px;
-    border-radius: 50%;
     background: var(--bdhi);
-    opacity: 0.6;
   }
   .special-pip.charged::after { display: none; }
   .special-pip.charged {
-    background: var(--yellow);
-    border-color: var(--thi);
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
-    animation: pip-pulse 1.6s steps(2) infinite;
+    background: var(--gold);
+    border-color: var(--ink);
+    animation: pip-pulse 1.6s steps(1) infinite;
   }
   @keyframes pip-pulse {
-    0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.7); }
-    50%      { box-shadow: 0 0 18px rgba(245, 158, 11, 1); }
+    0%, 100% { box-shadow: none; }
+    50%      { box-shadow: 0 0 0 2px var(--gold); }
   }
-  .special-meter.full .special-pip.charged {
-    background: radial-gradient(circle, #fee2e2, #dc2626);
-    border-color: #dc2626;
-    box-shadow: 0 0 14px rgba(220, 38, 38, 0.85);
+  .special-meter.full .special-pip.charged { background: var(--seal); }
+  @keyframes pip-pulse-full {
+    0%, 100% { box-shadow: none; }
+    50%      { box-shadow: 0 0 0 2px var(--seal); }
   }
+  .special-meter.full .special-pip.charged { animation-name: pip-pulse-full; }
   /* Lives HUD pulse when at 1 life */
   .lives-danger {
-    animation: lives-danger-pulse 0.6s ease-in-out 4;
-    color: var(--red) !important;
+    animation: lives-danger-pulse 0.6s steps(2) 4;
+    color: var(--seal) !important;
   }
   @keyframes lives-danger-pulse {
     0%, 100% { transform: scale(1); }
@@ -2211,18 +2104,16 @@
 
   /* Kill-progress underbar beneath pips */
   .special-kill-track {
-    width: 100%;
-    height: 3px;
-    background: var(--bd);
-    border-radius: 2px;
-    margin-top: 3px;
+    flex: 0 0 24px;
+    height: 4px;
+    background: var(--hanji-edge);
+    margin-left: 2px;
     overflow: hidden;
   }
   .special-kill-bar {
     height: 100%;
-    background: var(--yellow);
-    border-radius: 2px;
-    transition: width 0.15s ease;
+    background: var(--ink);
+    transition: width 0.15s steps(3);
     width: 0%;
   }
 
@@ -2406,23 +2297,23 @@
     top: 16px; left: 50%;
     transform: translateX(-50%);
     z-index: 9998;
-    background: linear-gradient(135deg, #dc2626, #f59e0b);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.5);
+    background: var(--seal);
+    color: var(--paper);
+    padding: 6px 12px 5px;
+    border: 2px solid var(--ink);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    box-shadow: var(--shadow-hard);
     pointer-events: none;
     display: none;
-    animation: fast-fall-pulse 0.55s ease-in-out infinite alternate;
+    animation: fast-fall-pulse 0.55s steps(1) infinite alternate;
   }
   body.fast-fall .fast-fall-badge { display: inline-block; }
   @keyframes fast-fall-pulse {
-    from { transform: translateX(-50%) scale(1); }
-    to   { transform: translateX(-50%) scale(1.06); }
+    from { transform: translateX(-50%) translateY(0); }
+    to   { transform: translateX(-50%) translateY(2px); }
   }
   @media (max-width: 720px), (pointer: coarse) and (max-height: 500px), (hover: none) and (pointer: coarse) { .fast-fall-badge { display: none !important; } }
 
@@ -2432,19 +2323,17 @@
     z-index: 72;
     width: 36px; height: 36px;
     display: flex; align-items: center; justify-content: center;
-    background: var(--l1);
-    border: 2px solid var(--blue);
-    border-radius: 50%;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(37, 99, 235, 0.4);
-    font-size: 22px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    box-shadow: var(--shadow-hard);
+    color: var(--ink);
     transform: translate(-50%, -50%);
-    animation: powerup-bob 1.4s ease-in-out infinite;
+    animation: powerup-bob 1.4s steps(4) infinite;
     pointer-events: none;
     line-height: 1;
   }
-  .powerup.shield { border-color: var(--blue);   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(37, 99, 235, 0.5); }
-  .powerup.slowmo { border-color: var(--purple); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(139, 92, 246, 0.5); }
-  .powerup.xp     { border-color: var(--yellow); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2), 0 0 16px rgba(245, 158, 11, 0.6); }
+  .powerup.xp { color: var(--gold-deep); }
   @keyframes powerup-bob {
     0%, 100% { transform: translate(-50%, -50%) translateY(0); }
     50%      { transform: translate(-50%, -50%) translateY(-8px); }
@@ -2459,20 +2348,17 @@
     display: flex; gap: 6px;
   }
   .powerup-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: var(--l2);
-    border: 2px solid var(--bd);
-    border-radius: var(--r-2);
-    padding: 3px 9px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--tmd);
-    font-family: 'JetBrains Mono', monospace;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--hanji);
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--ink);
+    font-family: var(--font-mono);
   }
-  .powerup-chip.shield { border-color: var(--blue);   color: var(--blue); }
-  .powerup-chip.slowmo { border-color: var(--purple); color: var(--purple); }
-  .powerup-chip.xp     { border-color: var(--yellow); color: var(--orange); }
-  .powerup-chip .ico { font-size: 13px; }
+  .powerup-chip.xp { color: var(--gold-deep); }
+  .powerup-chip .px-icon { display: block; }
 
   /* Player shield aura when shield power-up is active */
   .player.shielded::after {
@@ -2501,7 +2387,7 @@
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     padding: 0 16px;
-    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.88) 70%);
+    background: rgba(16, 19, 31, 0.7);
     animation: boss-veil 1.5s ease-out forwards;
   }
   @keyframes boss-veil {
@@ -2513,7 +2399,7 @@
   .boss-cutscene .boss-letterbox {
     position: absolute; left: 0; right: 0;
     height: 12vh;
-    background: #000;
+    background: var(--ink);
     animation: boss-bar-top 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
   .boss-cutscene .boss-letterbox.top { top: 0; }
@@ -2533,20 +2419,21 @@
   .boss-cutscene .boss-portrait {
     width: clamp(120px, 26vh, 220px);
     height: clamp(120px, 26vh, 220px);
-    border-radius: 50%;
+    border-radius: 0;
     overflow: hidden;
     display: flex; align-items: center; justify-content: center;
     font-size: clamp(80px, 18vh, 160px);
     line-height: 1;
-    background: radial-gradient(circle at 50% 40%, #450a0a, #0f172a 75%);
-    border: 3px solid rgba(254, 202, 202, 0.75);
-    box-shadow: 0 0 0 6px rgba(127, 29, 29, 0.55), 0 0 48px rgba(220, 38, 38, 0.65);
-    animation: boss-zoom 1.5s ease-out forwards;
+    background: var(--hanji);
+    border: 3px solid var(--ink);
+    box-shadow: inset 0 0 0 4px var(--paper), 0 0 0 3px var(--seal), 6px 6px 0 3px var(--ink);
+    animation: boss-zoom 1.5s steps(12) forwards;
   }
   .boss-cutscene .boss-portrait .sprite-img {
     width: 100%; height: 100%;
     object-fit: cover;
     filter: none;
+    image-rendering: pixelated;
   }
   .boss-cutscene .boss-portrait.sprite-only .sprite-img { object-fit: contain; padding: 8%; }
   @keyframes boss-zoom {
@@ -2558,11 +2445,15 @@
   }
   .boss-cutscene .boss-name {
     font-family: var(--font-display);
-    font-size: clamp(36px, min(9vh, 11vw), 88px);
-    color: #fee2e2;
+    font-size: clamp(36px, min(9vh, 11vw), 72px);
+    line-height: 1;
+    color: var(--ink);
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow-hard);
+    padding: 12px 24px 10px;
     letter-spacing: 4px;
-    margin-top: 10px;
-    text-shadow: 0 4px 20px rgba(220, 38, 38, 0.8);
+    margin-top: 24px;
     word-break: keep-all;
     text-align: center;
     animation: boss-name-rise 1.5s ease-out forwards;
@@ -2574,10 +2465,12 @@
     100% { transform: translateY(-10px); opacity: 0; }
   }
   .boss-cutscene .boss-subtitle {
-    color: #fde68a;
-    font-size: 16px;
-    font-weight: 600;
-    margin-top: 6px;
+    color: var(--paper);
+    background: var(--seal);
+    padding: 4px 10px 3px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 12px;
     letter-spacing: 2px;
     text-transform: uppercase;
     text-align: center;
@@ -2585,10 +2478,9 @@
     animation: boss-name-rise 1.5s 0.1s ease-out forwards;
   }
   .boss-cutscene .boss-flavor {
-    color: #fde68a;
-    font-size: 14px;
-    font-style: italic;
-    margin-top: 10px;
+    color: var(--paper);
+    font-size: 12px;
+    margin-top: 12px;
     max-width: 520px;
     text-align: center;
     line-height: 1.5;
@@ -2606,21 +2498,24 @@
     position: absolute;
     transform: translate(-50%, 0);
     font-family: var(--font-display);
-    font-size: clamp(24px, 5vw, 36px);
+    font-size: 24px;
+    line-height: 1;
     letter-spacing: 2px;
-    color: #fff7ed;
+    color: var(--paper);
+    background: var(--seal);
+    border: 2px solid var(--ink);
+    box-shadow: var(--shadow-hard);
+    padding: 8px 14px 6px;
     white-space: nowrap;
-    text-shadow: 0 0 2px #7f1d1d, 0 3px 0 #b91c1c, 0 6px 16px rgba(127, 29, 29, 0.6);
     pointer-events: none;
-    animation: phase-pop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: phase-pop 1.2s linear forwards;
   }
   .phase-callout.above { transform: translate(-50%, -100%); }
   @keyframes phase-pop {
-    0%   { opacity: 0; scale: 0.5; }
-    18%  { opacity: 1; scale: 1.12; }
-    35%  { opacity: 1; scale: 1; }
-    80%  { opacity: 1; scale: 1; }
-    100% { opacity: 0; scale: 1; }
+    0%   { opacity: 0; translate: 0 8px; }
+    10%  { opacity: 1; translate: 0 0; }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
   }
 
   /* Boss phase telegraph: pulsing red ring when attack is charging */
@@ -2650,31 +2545,39 @@
   }
   .boss-reward-card {
     flex: 1 1 120px; max-width: 140px;
-    background: var(--l2);
-    border: 2px solid var(--bd);
-    border-radius: 10px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    box-shadow: var(--shadow-hard);
     padding: 16px 10px 12px;
     cursor: pointer;
     text-align: center;
     position: relative;
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    color: var(--ink);
     font: inherit;
   }
-  .boss-reward-card:hover {
-    border-color: var(--blue);
-    box-shadow: 0 0 12px rgba(37, 99, 235, 0.3);
-    transform: translateY(-2px);
+  .boss-reward-card:hover,
+  .boss-reward-card:focus-visible {
+    background: var(--hanji);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
   }
-  .boss-reward-card:active { transform: translateY(0); }
+  .boss-reward-card:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
   .boss-reward-card.brc-disabled { opacity: 0.45; cursor: default; }
-  .boss-reward-card.brc-disabled:hover { border-color: var(--bd); box-shadow: none; transform: none; }
-  .brc-icon { font-size: 32px; margin-bottom: 6px; }
-  .brc-label { font-size: 13px; font-weight: 800; color: var(--thi); margin-bottom: 4px; }
-  .brc-desc  { font-size: 11px; color: var(--tmd); line-height: 1.3; }
+  .boss-reward-card.brc-disabled:hover { background: var(--paper); box-shadow: var(--shadow-hard); transform: none; }
+  .brc-icon { height: 36px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; color: var(--ink); }
+  .brc-icon.life { color: var(--seal); }
+  .brc-icon.xp { color: var(--gold-deep); }
+  .brc-icon .px-icon { display: block; }
+  .brc-label { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .brc-desc  { font-size: 12px; color: var(--tmd); line-height: 1.3; }
   .brc-key {
-    position: absolute; top: 6px; right: 8px;
-    font-size: 10px; font-weight: 800; color: var(--tlo);
-    font-family: 'JetBrains Mono', monospace;
+    position: absolute; top: 4px; left: 4px;
+    min-width: 16px;
+    padding: 2px 3px 1px;
+    font-size: 12px; line-height: 1; color: var(--paper);
+    background: var(--ink);
+    font-family: var(--font-mono);
   }
 
   /* English-translation reveal on kill — closes the learning loop.
@@ -2684,56 +2587,52 @@
     position: fixed;
     z-index: 9999;
     pointer-events: none;
-    background: rgba(15, 23, 42, 0.92);
-    color: #fef08a;
-    padding: 7px 16px;
-    border-radius: 16px;
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 7px 12px 6px;
+    border-radius: 0;
+    font-family: var(--font-ui);
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.01em;
     white-space: nowrap;
     transform: translate(-50%, -50%);
-    border: 1px solid rgba(254, 240, 138, 0.55);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.45);
-    animation: english-rise 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    border: 2px solid var(--ink);
+    box-shadow: var(--shadow-hard);
+    animation: english-rise 1.6s linear forwards;
     max-width: min(360px, 92vw);
     overflow: hidden;
     text-overflow: ellipsis;
   }
   @keyframes english-rise {
-    0%   { opacity: 0; transform: translate(-50%, -50%) translateY(0)    scale(0.6); }
-    14%  { opacity: 1; transform: translate(-50%, -50%) translateY(-18px) scale(1.10); }
-    28%  { opacity: 1; transform: translate(-50%, -50%) translateY(-28px) scale(1); }
-    78%  { opacity: 1; transform: translate(-50%, -50%) translateY(-52px) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-84px) scale(0.95); }
+    0%   { opacity: 0; transform: translate(-50%, -50%) translateY(0); }
+    10%  { opacity: 1; transform: translate(-50%, -50%) translateY(-20px); }
+    78%  { opacity: 1; transform: translate(-50%, -50%) translateY(-52px); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-64px); }
   }
 
   /* Audio toggle button — pixel-art era styling matches .menu-btn. */
   /* Paired with .rpg-btn (ui.css), which draws the frame */
-  .audio-toggle { padding: 7px 12px; font-size: 16px; line-height: 1; }
-  .audio-toggle:hover::before, .audio-toggle:focus-visible::before { content: none; }
-  .audio-toggle.muted { color: var(--tlo); opacity: 0.6; }
+  .audio-toggle { padding: 7px 12px; line-height: 1; }
+  .audio-toggle:hover::before, .audio-toggle:focus-visible::before,
+  .menu-btn:hover::before, .menu-btn:focus-visible::before { content: none; }
+  .audio-toggle .px-icon, .menu-btn .px-icon { display: block; }
+  .audio-toggle.muted { color: var(--tlo); }
+  .menu-btn { gap: 6px; }
 
   /* Recall-mode monster — first syllable visible, rest blank.
      Player reads the English meaning and recalls the Korean spelling.
      If they hesitate, syllables fade in one at a time as a hint. */
+  /* Recall: the same slip on darker hanji marks a word to recall */
   .monster .word.recall {
-    border-color: var(--purple);
-    background: linear-gradient(135deg, #f5f3ff, #ede9fe);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
-  }
-  .monster .word.recall::before { border-bottom-color: var(--purple); }
-  .monster.locked .word.recall {
-    border-color: var(--orange);
-    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+    background: var(--hanji);
   }
   .recall-en {
     display: block;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
+    font-family: var(--font-ui);
+    font-size: 12px;
     font-weight: 700;
-    color: var(--purple);
+    color: var(--ink);
     letter-spacing: 0.04em;
     text-align: center;
     margin-bottom: 6px;
@@ -2742,22 +2641,24 @@
   .recall-badge {
     position: absolute;
     top: -10px; right: -8px;
-    background: var(--purple);
-    color: white;
-    font-size: 9px;
-    font-weight: 800;
-    padding: 2px 7px;
-    border-radius: 6px;
-    letter-spacing: 0.08em;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    padding: 2px 5px 1px;
+    border-radius: 0;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
   .syl-hidden {
     display: inline-block;
     min-width: 22px;
     text-align: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
+    font-family: var(--font-ui);
+    font-size: 24px;
+    font-weight: 700;
     color: var(--tlo);
     line-height: 1;
     vertical-align: bottom;
@@ -2773,39 +2674,19 @@
     100% { opacity: 1; transform: scale(1) translateY(0);    filter: blur(0); }
   }
 
-  /* Heart-pickup monster — distinct golden glow so the player notices it */
+  /* Heart-pickup monster: a pixel heart (pixelIcon) that hops */
   .monster.heart .sprite {
-    font-size: 56px;
-    filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 8px rgba(254, 240, 138, 0.9));
-    animation: heart-pulse 0.95s ease-in-out infinite;
+    color: var(--seal);
+    line-height: 0;
+    animation: heart-pulse 0.95s steps(2) infinite;
   }
+  .monster.heart .sprite .px-icon { display: block; filter: drop-shadow(3px 3px 0 var(--ink)); }
   @keyframes heart-pulse {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50%      { transform: translateY(-6px) scale(1.12); }
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
   }
-  .monster.heart .word {
-    border-color: #f59e0b;
-    background: linear-gradient(135deg, #fffbeb, #fef3c7);
-    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
-  }
-  .monster.heart .word::before { border-bottom-color: #f59e0b; }
-  .monster.heart .hp-bar { display: none; }    /* one-and-done — no need for HP */
-  .monster.heart::after {
-    content: '+1 ❤';
-    position: absolute;
-    bottom: -22px; left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #f59e0b, #dc2626);
-    color: white;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    padding: 2px 8px;
-    border-radius: 8px;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
-    pointer-events: none;
-  }
+  .monster.heart .word { border-color: var(--seal); }
+  .monster.heart .word::before { border-bottom-color: var(--seal); }
 
   /* Reduced motion: respect user preference. Combat is still playable —
      we just neutralize all the bobbing, breathing, sakura, etc. so users
@@ -2932,69 +2813,51 @@
   }
 </style>
 <style id="monster-voice-style">
-  /* Enemy speech bubble (monsterSay): dark pixel panel, cream frame. Uses
-     ui.css tokens when present, with literal fallbacks. */
+  /* Enemy speech bubble (monsterSay): paper slip, ink frame, ink tail */
   .monster-say {
     position: absolute; left: 0; top: 0;
     z-index: 2;
     pointer-events: none;
     padding: 6px 10px 5px;
-    background: var(--ink, #1c1724);
-    color: var(--cream, #f4e9cf);
-    border: 2px solid var(--cream, #f4e9cf);
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
     border-radius: 0;
-    box-shadow: 0 0 0 2px var(--ink, #1c1724), 3px 3px 0 2px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--shadow-hard);
     white-space: nowrap;
     word-break: keep-all;
     text-align: left;
     will-change: transform;
   }
   .monster-say .say-ko {
-    font-family: var(--korean, 'Noto Sans KR', sans-serif);
+    font-family: var(--korean);
     font-size: 15px; font-weight: 700; line-height: 1.25;
   }
   .monster-say .say-en {
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 10px; line-height: 1.2; margin-top: 2px;
-    color: var(--gold, #f6c453);
+    font-family: var(--font-ui);
+    font-size: 12px; line-height: 1.2; margin-top: 2px;
+    color: var(--tmd);
   }
   /* Pixel tail pointing back at the demon (left edge by default). */
   .monster-say::before {
     content: '';
     position: absolute; top: 50%; left: -8px;
     width: 6px; height: 6px; margin-top: -3px;
-    background: var(--cream, #f4e9cf);
-    box-shadow: -2px 0 0 var(--ink, #1c1724);
+    background: var(--ink);
   }
-  .monster-say.tail-right::before { left: auto; right: -8px; box-shadow: 2px 0 0 var(--ink, #1c1724); }
+  .monster-say.tail-right::before { left: auto; right: -8px; }
   .monster-say.in { animation: say-pop 0.18s steps(3, end); }
   .monster-say.out { opacity: 0; transition: opacity 0.2s steps(2, end); }
   @keyframes say-pop { from { opacity: 0; scale: 0.7; } to { opacity: 1; scale: 1; } }
   @media (max-width: 720px) {
     .monster-say { padding: 4px 8px 4px; }
     .monster-say .say-ko { font-size: 13px; }
-    .monster-say .say-en { font-size: 9px; }
+    .monster-say .say-en { font-size: 12px; }
   }
   /* 무당 여왕 blink: sprite vanishes, the word label dims but stays typeable. */
   .monster .sprite, .monster .word { transition: opacity 0.2s ease; }
   .monster.blinking .sprite { opacity: 0; }
   .monster.blinking .word { opacity: 0.4; }
-
-  /* First-kill toast for the bestiary. */
-  .bestiary-toast {
-    position: fixed; left: 50%; top: 74px; z-index: 620;
-    transform: translateX(-50%);
-    padding: 6px 12px;
-    background: var(--ink, #1c1724);
-    color: var(--gold, #f6c453);
-    border: 2px solid var(--cream, #f4e9cf);
-    font: 700 13px/1.2 var(--korean, 'Noto Sans KR', sans-serif);
-    pointer-events: none;
-    animation: bestiary-toast 2.4s steps(12, end) forwards;
-  }
-  @keyframes bestiary-toast {
-    0% { opacity: 0; translate: 0 -6px; } 10%, 85% { opacity: 1; translate: 0 0; } 100% { opacity: 0; }
-  }
 
   /* 요괴 도감 modal */
   .bestiary-open-btn { white-space: nowrap; }
@@ -3002,7 +2865,7 @@
     position: fixed; inset: 0; z-index: 640;
     display: flex; align-items: center; justify-content: center;
     padding: 16px;
-    background: rgba(10, 8, 16, 0.62);
+    background: rgba(16, 19, 31, 0.55);
   }
   .bestiary-veil[hidden] { display: none; }
   /* Shares .modal-card + .rpg-panel with the other modals; undo the card's
@@ -3012,28 +2875,25 @@
     width: min(960px, 100%);
     max-height: min(88vh, 900px);
     display: flex; flex-direction: column;
-    background: var(--panel, #241d2e);
-    color: var(--cream, #f4e9cf);
-    border: 3px solid var(--frame, var(--cream, #f4e9cf));
-    box-shadow: 0 0 0 3px var(--ink, #1c1724), 6px 6px 0 3px rgba(0, 0, 0, 0.45);
   }
   .bestiary-head {
-    display: flex; align-items: baseline; gap: 12px;
-    padding: 14px 18px 10px;
-    border-bottom: 2px solid rgba(244, 233, 207, 0.18);
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px 12px;
+    border-bottom: 2px solid var(--ink);
   }
   .bestiary-head h2 {
     margin: 0;
-    font-family: var(--font-display, 'Black Han Sans', 'Noto Sans KR', sans-serif);
-    font-size: 26px; font-weight: 400; color: var(--gold, #f6c453);
+    font-family: var(--font-display);
+    font-size: 24px; font-weight: 400; color: var(--ink);
     letter-spacing: 0.02em;
   }
-  .bestiary-head .bestiary-count { font: 600 13px/1 'Inter', sans-serif; opacity: 0.75; }
+  .bestiary-head .bestiary-count { font: 400 12px/1 var(--font-mono); color: var(--tlo); }
   .bestiary-close { margin-left: auto; }
   .bestiary-body { overflow-y: auto; padding: 12px 18px 18px; }
   .bestiary-section {
-    margin: 10px 0 8px;
-    font: 700 12px/1 'Inter', sans-serif; color: var(--gold, #f6c453);
+    margin: 12px 0 8px;
+    font: 700 12px/1 var(--font-ui); color: var(--tmd);
+    text-transform: uppercase; letter-spacing: 0.08em;
   }
   .bestiary-grid {
     display: grid;
@@ -3043,14 +2903,14 @@
   .bestiary-card {
     display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: start;
     padding: 10px;
-    background: rgba(0, 0, 0, 0.22);
-    border: 2px solid rgba(244, 233, 207, 0.22);
+    background: var(--paper);
+    border: 2px solid var(--hanji-edge);
   }
-  .bestiary-card.boss { border-color: var(--gold, #f6c453); }
+  .bestiary-card.boss { border-color: var(--ink); }
   .bestiary-card .bc-art {
     width: 76px; height: 76px;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(244, 233, 207, 0.06);
+    background: var(--hanji);
   }
   .bestiary-card .bc-art img {
     width: 100%; height: 100%; object-fit: contain;
@@ -3058,26 +2918,25 @@
   }
   .bestiary-card.locked .bc-art img { filter: brightness(0); opacity: 0.85; }
   .bestiary-card .bc-name {
-    font: 700 17px/1.2 var(--korean, 'Noto Sans KR', sans-serif);
+    font: 700 17px/1.2 var(--korean);
     word-break: keep-all;
   }
-  .bestiary-card .bc-roman { font: 500 11px/1.3 'Inter', sans-serif; opacity: 0.7; }
-  .bestiary-card .bc-en { font: 600 12px/1.3 'Inter', sans-serif; color: var(--gold, #f6c453); margin-top: 2px; }
+  .bestiary-card .bc-roman { font: 400 12px/1.4 var(--font-ui); color: var(--tlo); }
+  .bestiary-card .bc-en { font: 700 12px/1.4 var(--font-ui); color: var(--ink); margin-top: 2px; }
   .bestiary-card .bc-note {
-    font: 400 12px/1.4 'Inter', sans-serif; opacity: 0.88; margin-top: 4px;
+    font: 400 12px/1.5 var(--font-ui); color: var(--tmd); margin-top: 4px;
     text-wrap: pretty; word-break: keep-all;
   }
-  .bestiary-card .bc-kills { font: 700 11px/1 'JetBrains Mono', monospace; margin-top: 6px; opacity: 0.8; }
+  .bestiary-card .bc-kills { font: 400 12px/1 var(--font-mono); margin-top: 6px; color: var(--tlo); }
   .bestiary-card.locked .bc-name, .bestiary-card.locked .bc-en { opacity: 0.5; }
   @media (max-width: 520px) {
     .bestiary-veil { padding: 8px; }
     .bestiary-panel { max-height: 94vh; }
     .bestiary-grid { grid-template-columns: 1fr; }
-    .bestiary-head h2 { font-size: 22px; }
+    .bestiary-head h2 { font-size: 24px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .monster-say.in { animation: none; }
-    .bestiary-toast { animation: none; }
   }
 </style>
 </head>
@@ -3088,44 +2947,36 @@
 <header class="hud rpg-dark">
   <div class="hud-left">
     <div class="stat">
-      <span class="stat-label">Level</span>
-      <span class="stat-value level" id="hudLevel">1</span>
-    </div>
-    <div class="stat">
       <span class="stat-label">Score</span>
       <span class="stat-value score" id="hudScore">0</span>
     </div>
     <div class="stat">
       <span class="stat-label">Lives</span>
-      <span class="stat-value lives" id="hudLives">♥♥♥</span>
+      <span class="stat-value lives" id="hudLives"></span>
     </div>
   </div>
-  <div class="hud-center" title="Type the Korean word on a monster · Esc releases · type 한글 for 필살기">
+  <div class="hud-center" title="Type the word on a monster">
     <span class="type-prompt">▶</span>
     <span class="live" id="liveOut"></span><span class="ime-cursor"></span>
   </div>
   <div class="hud-right">
     <div class="powerup-hud" id="powerupHud"></div>
-    <div class="special-meter" id="specialMeter" title="Special move 필살기 — type 한글 anytime when a pip is charged">
+    <div class="special-meter" id="specialMeter" title="필살기: type 한글 when charged">
       <span class="sm-label">필살</span>
       <span class="special-pip"></span>
       <span class="special-pip"></span>
-    </div>
-    <div class="stat" id="hudDailyTimer" style="display:none;text-align:right;">
-      <span class="stat-label">🗓️ Time</span>
-      <span class="stat-value" id="hudDailyTime" style="font-variant-numeric:tabular-nums;">1:30</span>
     </div>
     <div class="stat" style="text-align: right;">
       <span class="stat-label">Combo</span>
       <span class="stat-value combo zero" id="hudCombo">×1</span>
     </div>
-    <button class="audio-toggle rpg-btn" id="btnAudio" title="Toggle Korean pronunciation audio">🔊</button>
-    <button class="audio-toggle rpg-btn" id="btnBgm" title="Toggle background music">🎵</button>
-    <button class="menu-btn rpg-btn" id="btnMenu">⏸ Pause</button>
+    <button class="audio-toggle rpg-btn" id="btnAudio" title="Toggle Korean pronunciation audio" aria-label="Korean pronunciation audio"></button>
+    <button class="audio-toggle rpg-btn" id="btnBgm" title="Toggle background music" aria-label="Background music"></button>
+    <button class="menu-btn rpg-btn" id="btnMenu" aria-label="Pause">Pause</button>
   </div>
 </header>
 
-<div class="xpbar"><div class="xpbar-fill" id="xpFill"></div></div>
+<div class="xpbar"><div class="xpbar-fill" id="xpFill"></div><span class="xpbar-lv" id="hudLevel">Lv 1</span></div>
 
 <div class="stage" id="stage">
   <div class="battle-depth battle-floor" aria-hidden="true"></div>
@@ -3143,20 +2994,12 @@
     <div class="intro-hero-row">
       <img src="sprites/player/01-baegui-front.png" class="intro-player-sprite" alt="Player character" aria-hidden="true">
       <div class="intro-hero-text">
-        <div class="badge">⚔️ Battle Mode</div>
         <h1 id="introModalTitle">한글 전투</h1>
       </div>
     </div>
-    <p class="subtitle">Type the Korean word above each demon to defeat it. Build combo and unleash 필살기 to clear the screen.</p>
+    <p class="subtitle">Type a demon's word to defeat it.</p>
     <div class="intro-cta-band">
       <button class="primary rpg-btn rpg-btn--primary intro-start-btn" id="btnStart">Start Battle</button>
-      <div class="intro-cta-row2">
-        <button id="btnDailyRun" class="rpg-btn intro-daily-btn">🗓️ Daily Run <span id="introStreak" style="display:none;"></span></button>
-        <label class="intro-slow-pill">
-          <input type="checkbox" id="slowModeToggle" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
-          🌱 Slow
-        </label>
-      </div>
     </div>
     <div class="stat-grid" style="margin:8px 0;">
       <div><div class="k">High Score</div><div class="v" id="introHigh">0</div></div>
@@ -3168,58 +3011,52 @@
           <button class="lb-tab active" data-tab="players">Players</button>
           <button class="lb-tab" data-tab="fandoms">Fandoms</button>
         </div>
-        <button class="menu-btn rpg-btn rpg-btn--ghost" id="btnEditProfileIntro">Edit profile</button>
-        <button class="lb-expand-btn" id="introLbExpander" aria-expanded="false">Show all ▾</button>
+        <button class="modal-link" id="btnEditProfileIntro" type="button">Profile</button>
       </div>
       <div id="battleLbIntroContainer" class="battle-lb lb-collapsed" data-tab="players">
-        <div class="battle-lb-loading">Loading battle rankings…</div>
+        <div class="battle-lb-loading">Loading…</div>
       </div>
+      <button class="lb-expand-btn" id="introLbExpander" aria-expanded="false">Show all ▾</button>
     </div>
-    <div style="margin:8px 0 4px;text-align:center;font-size:12px;">
-      <a href="index.html#practice" style="color:var(--gold);text-decoration:none;">New to Korean typing? Learn the keys first →</a>
-    </div>
-    <div class="actions" style="margin-top:8px;">
-      <button id="btnBestiaryIntro" class="rpg-btn bestiary-open-btn" type="button">📖 요괴 도감</button>
-      <button id="btnBack" class="rpg-btn rpg-btn--ghost">← Back to practice</button>
-      <a class="rpg-btn rpg-btn--ghost modal-title-link" href="index.html">Title</a>
+    <div class="modal-nav">
+      <button id="btnBestiaryIntro" class="modal-link bestiary-open-btn" type="button">요괴 도감</button>
+      <button id="btnBack" class="modal-link" type="button">Practice</button>
+      <a class="modal-link modal-title-link" href="index.html">Title</a>
     </div>
   </div>
 </div>
 
 <div id="gameOverModal" class="modal-veil" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
   <div class="modal-card rpg-panel">
-    <div class="badge danger">Game Over</div>
     <h1 id="gameOverTitle">전사 · Fallen</h1>
-    <p class="subtitle" id="gameOverFlavor">The demons broke through. Try again?</p>
-    <div id="newHighSign" style="display:none;"><span class="new-high">⭐ New high score</span></div>
-  <div class="stat-grid">
+    <div id="newHighSign" style="display:none;"><span class="new-high">New high score</span></div>
+    <div class="stat-grid">
       <div><div class="k">Score</div><div class="v" id="overScore">0</div></div>
       <div><div class="k">Level</div><div class="v" id="overLevel">1</div></div>
       <div><div class="k">Kills</div><div class="v" id="overKills">0</div></div>
       <div><div class="k">Best combo</div><div class="v" id="overCombo">0</div></div>
+    </div>
+    <div id="overCheckpointNote" style="display:none;">Checkpoint run: not ranked</div>
+    <div class="actions">
+      <button class="primary rpg-btn rpg-btn--primary" id="btnRetry" data-autofocus>Retry</button>
+      <button id="btnCheckpointRetry" class="rpg-btn" style="display:none;">Restart from Chapter</button>
+      <button id="btnShareResult" class="rpg-btn">Share</button>
     </div>
     <div class="battle-lb-toolbar">
       <div class="lb-tabs" data-lb="battleLbContainer">
         <button class="lb-tab active" data-tab="players">Players</button>
         <button class="lb-tab" data-tab="fandoms">Fandoms</button>
       </div>
-      <button class="menu-btn rpg-btn rpg-btn--ghost" id="btnEditProfile">Edit profile</button>
+      <button class="modal-link" id="btnEditProfile" type="button">Profile</button>
     </div>
     <div id="battleLbContainer" class="battle-lb lb-collapsed" data-tab="players">
-      <div class="battle-lb-loading">Loading battle rankings…</div>
+      <div class="battle-lb-loading">Loading…</div>
     </div>
-    <button class="lb-expand-btn" id="gameOverLbExpander" aria-expanded="false">Show full rankings ▾</button>
-    <div id="overCheckpointNote" style="display:none;">📍 Checkpoint run · LB off</div>
-    <div id="overSlowModeNote" style="display:none;">🌱 Slow mode · points halved</div>
-    <div class="actions">
-      <button class="primary rpg-btn rpg-btn--primary" id="btnRetry" data-autofocus>Retry</button>
-      <button id="btnCheckpointRetry" class="rpg-btn" style="display:none;">Restart from Chapter</button>
-      <button id="btnShareResult" class="rpg-btn">📸 Share my result</button>
-      <button id="btnBestiaryOver" class="rpg-btn bestiary-open-btn" type="button">📖 요괴 도감</button>
-    </div>
+    <button class="lb-expand-btn" id="gameOverLbExpander" aria-expanded="false">Show all ▾</button>
     <div class="modal-nav">
-      <button id="btnHome" class="rpg-btn rpg-btn--ghost">← Back to practice</button>
-      <a class="rpg-btn rpg-btn--ghost modal-title-link" href="index.html">Title</a>
+      <button id="btnBestiaryOver" class="modal-link bestiary-open-btn" type="button">요괴 도감</button>
+      <button id="btnHome" class="modal-link" type="button">Practice</button>
+      <a class="modal-link modal-title-link" href="index.html">Title</a>
     </div>
   </div>
 </div>
@@ -3229,17 +3066,17 @@
     <button class="share-close" id="shareClose" aria-label="Close">×</button>
     <canvas id="shareCanvas" width="1080" height="1920"></canvas>
     <div class="share-actions">
-      <button class="primary rpg-btn rpg-btn--primary" id="shareDownload">⬇ Save image</button>
-      <button id="shareNative" class="rpg-btn">📤 Share…</button>
+      <button class="primary rpg-btn rpg-btn--primary" id="shareDownload">Save image</button>
+      <button id="shareNative" class="rpg-btn">Share</button>
     </div>
-    <div class="share-hint">Save the image and post it on Instagram / KakaoTalk / X. Tag <strong>@typehangeul</strong>!</div>
+    <div class="share-hint">Tag <strong>@typehangeul</strong> when you post it.</div>
   </div>
 </div>
 
 <div id="profileModal" class="profile-modal">
   <div class="profile-modal-card rpg-panel">
     <h3>Your profile</h3>
-    <p>Pick a display name and default country. This is saved in your browser and reused the next time you play.</p>
+    <p>Shown on the leaderboard.</p>
     <div class="profile-field">
       <label for="profileNameInput">Display name</label>
       <input id="profileNameInput" type="text" maxlength="24" autocomplete="nickname" />
@@ -3257,7 +3094,7 @@
       <button class="primary rpg-btn rpg-btn--primary" id="profileSave">Save</button>
     </div>
     <div style="text-align:center;margin-top:12px;">
-      <button type="button" id="profileReplayIntro" style="background:none;border:none;color:var(--tlo);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 8px;">Watch intro story again</button>
+      <button type="button" id="profileReplayIntro" style="background:none;border:none;color:var(--tlo);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 8px;">Replay intro story</button>
     </div>
   </div>
 </div>
@@ -3273,18 +3110,17 @@
   <div class="pause-controls rpg-panel">
     <div class="pause-controls-title">조작법 / Controls</div>
     <div class="pause-controls-list pause-keys-touch">
-      <span class="pause-key">TAP</span><span class="pause-key-desc">tap the keys at the bottom to type the word on a monster</span>
+      <span class="pause-key">TAP</span><span class="pause-key-desc">type a monster's word</span>
       <span class="pause-key">⇧</span><span class="pause-key-desc">shift for ㄲ ㄸ ㅃ ㅆ ㅉ ㅒ ㅖ</span>
-      <span class="pause-key">⌫</span><span class="pause-key-desc">let go of the current monster</span>
-      <span class="pause-key">⏸</span><span class="pause-key-desc">pause / resume</span>
-      <span class="pause-key">한글</span><span class="pause-key-desc">kills charge 필살기, type 한글 to unleash</span>
+      <span class="pause-key">⌫</span><span class="pause-key-desc">release the target</span>
+      <span class="pause-key pause-key-icon" id="pauseKeyIcon" aria-label="Pause button"></span><span class="pause-key-desc">pause / resume</span>
+      <span class="pause-key">한글</span><span class="pause-key-desc">필살기: type 한글 when charged</span>
     </div>
     <div class="pause-controls-list pause-keys-desktop">
-      <span class="pause-key">TYPE</span><span class="pause-key-desc">type the Korean word above a monster to attack</span>
-      <span class="pause-key">TAB</span><span class="pause-key-desc">hold to fast-fall the monsters</span>
-      <span class="pause-key">ESC</span><span class="pause-key-desc">release current lock, or pause / resume</span>
-      <span class="pause-key">BACKSPACE</span><span class="pause-key-desc">release the current lock</span>
-      <span class="pause-key">한글</span><span class="pause-key-desc">kills charge 필살기, type 한글 to unleash</span>
+      <span class="pause-key">TYPE</span><span class="pause-key-desc">type a monster's word</span>
+      <span class="pause-key">TAB</span><span class="pause-key-desc">hold to fast-fall</span>
+      <span class="pause-key">ESC</span><span class="pause-key-desc">release the target, or pause</span>
+      <span class="pause-key">한글</span><span class="pause-key-desc">필살기: type 한글 when charged</span>
     </div>
   </div>
 </div>
@@ -4481,11 +4317,11 @@ function monsterKindFor(lv, vocabTier) {
   if (vocabTier !== 5) return vocabTier;
   const kinds = lateKindsForLevel(lv);
   const scout = lateKindsForLevel(lv + 1).find(k => !kinds.includes(k));
-  if (scout && gameRand() < 0.15) return scout;
+  if (scout && Math.random() < 0.15) return scout;
   if (!kinds.length) return 5;
   const share = Math.min(0.5, 0.2 + kinds.length * 0.1);
-  if (gameRand() >= share) return 5;
-  return kinds[Math.floor(gameRand() * kinds.length)];
+  if (Math.random() >= share) return 5;
+  return kinds[Math.floor(Math.random() * kinds.length)];
 }
 function firstKeystrokeForWord(word) {
   const ko = typeof word === 'string' ? word : (word && word.ko) || '';
@@ -4496,14 +4332,10 @@ function activeFirstJamos() {
   return new Set(state.monsters.map(m => m.ks && m.ks[0]).filter(Boolean));
 }
 
-// Returns a random float in [0,1). Uses state.rng (seeded PRNG) for daily runs
-// so word selection is deterministic per date; falls back to Math.random otherwise.
-function gameRand() { return (state && state.rng) ? state.rng() : Math.random(); }
-
 function pickAvailableWord(pool, blockedFirstJamos) {
   const available = pool.filter(w => !blockedFirstJamos.has(firstKeystrokeForWord(w)));
   if (!available.length) return null;
-  return available[Math.floor(gameRand() * available.length)];
+  return available[Math.floor(Math.random() * available.length)];
 }
 
 function pickWordForLevel(lv, blockedFirstJamos) {
@@ -4512,7 +4344,7 @@ function pickWordForLevel(lv, blockedFirstJamos) {
   // On the final level of a tier, 30% chance to spawn the next tier as a "scout"
   let chosen = tier;
   const previewLevels = { 4: 2, 8: 3, 13: 4, 18: 5 };
-  if (previewLevels[lv] && gameRand() < 0.25) chosen = previewLevels[lv];
+  if (previewLevels[lv] && Math.random() < 0.25) chosen = previewLevels[lv];
   const pool = VOCAB['tier' + chosen] || VOCAB.tier1;
   const word = pickAvailableWord(pool, blocked);
   if (!word) return null;
@@ -4540,10 +4372,9 @@ const ADMIN_DEFAULTS = {
   },
   combat: {
     specialKillsPerCharge: 15, specialMaxCharges: 2,
-    chantDurationMs: 2000, specialBufferIdleMs: 1500,
+    specialBufferIdleMs: 1500,
     heartSpawnChance: 0.018,
-    comboSoftThreshold: 25, comboSoftFactor: 0.5,
-    bossPhaseWindowMs: 9000
+    comboSoftThreshold: 25, comboSoftFactor: 0.5
   },
   spawnCap: { early: 3, mid: 4, late: 5, endgame: 6 },
   player: { lives: 3 }
@@ -5022,18 +4853,17 @@ async function renderBattleLeaderboard(containerId) {
   // The user may have switched to the Fandoms tab while we awaited.
   if ((container.getAttribute('data-tab') || 'players') !== 'players') return;
   if (!data) {
-    container.innerHTML = '<div class="battle-lb-loading">Could not load rankings. Try again later.</div>';
+    container.innerHTML = '<div class="battle-lb-loading">Could not load rankings.</div>';
     return;
   }
   const { rows, stats, rank } = data;
-  const total = stats.ranked_players || rows.length || 0;
   const totalPlayers = stats.unique_players || 0;
   const myRank = rank && rank.rank > 0 ? rank.rank : 0;
   const headerMeta = myRank > 0
     ? `You: <strong>#${myRank.toLocaleString()}</strong>`
     : `<strong>Top 100</strong> to enter`;
   const playersBlurb = totalPlayers > 0
-    ? `${totalPlayers.toLocaleString()} player${totalPlayers === 1 ? '' : 's'} battled`
+    ? `${totalPlayers.toLocaleString()} player${totalPlayers === 1 ? '' : 's'}`
     : 'Be the first to battle';
 
   // The fandom is local-only (no DB column), so we can only attach a fandom
@@ -5090,10 +4920,10 @@ async function renderBattleLeaderboard(containerId) {
   let staleHtml = '';
   if (data.stale) {
     const minsAgo = Math.max(1, Math.round((Date.now() - (data.cachedAt || Date.now())) / 60000));
-    staleHtml = `<div class="battle-lb-stale">Showing cached rankings · ${minsAgo} min ago · network offline</div>`;
+    staleHtml = `<div class="battle-lb-stale">Offline · cached ${minsAgo} min ago</div>`;
   }
   container.innerHTML = `${staleHtml}<div class="battle-lb-header">
-      <span class="title">Top ${Math.min(100, rows.length || 100)} · ${total.toLocaleString()} ranked</span>
+      <span class="title">Top ${Math.min(100, rows.length || 100)}</span>
       <span class="meta">${headerMeta} · ${playersBlurb}</span>
     </div>
     <div class="battle-lb-list">${listHtml}</div>
@@ -5151,12 +4981,12 @@ async function renderFandomLeaderboard(containerId) {
   const container = document.getElementById(containerId || 'battleLbContainer');
   if (!container) return;
   progress = getProgress();
-  container.innerHTML = '<div class="battle-lb-loading">Loading fandom rankings…</div>';
+  container.innerHTML = '<div class="battle-lb-loading">Loading…</div>';
   const data = await fetchFandomLeaderboard();
   // The user may have switched back to the Players tab while we awaited.
   if (container.getAttribute('data-tab') !== 'fandoms') return;
   if (!data) {
-    container.innerHTML = '<div class="battle-lb-empty">Could not load fandom rankings. Check your connection and try again.</div>';
+    container.innerHTML = '<div class="battle-lb-empty">Could not load rankings.</div>';
     return;
   }
   const { rows, rank } = data;
@@ -5250,20 +5080,20 @@ function openProfileModal(opts) {
     nameInput.value = '';
     nameInput.placeholder = 'Type your display name…';
     if (titleEl) titleEl.textContent = 'Pick a display name';
-    if (descEl) descEl.textContent = 'This shows up on the leaderboard. You can change it later via Edit profile.';
+    if (descEl) descEl.textContent = 'Shown on the leaderboard.';
     if (cancelBtn) { cancelBtn.style.display = 'none'; cancelBtn.textContent = 'Cancel'; }
   } else if (opts.soft) {
     // Arcade-style soft prompt at game over — shown but skippable.
     nameInput.value = savedName === 'Player' ? '' : savedName;
     nameInput.placeholder = 'Your display name…';
     if (titleEl) titleEl.textContent = 'Your score is on the board!';
-    if (descEl) descEl.textContent = 'Add your name and pick a fandom so people know it\'s you. Hit Skip to keep "Player".';
+    if (descEl) descEl.textContent = 'Add your name so people know it\'s you.';
     if (cancelBtn) { cancelBtn.style.display = ''; cancelBtn.textContent = 'Skip'; }
   } else {
     nameInput.value = savedName;
     nameInput.placeholder = '';
     if (titleEl) titleEl.textContent = 'Your profile';
-    if (descEl) descEl.textContent = 'Pick a display name and default country. This is saved in your browser and reused the next time you play.';
+    if (descEl) descEl.textContent = 'Shown on the leaderboard.';
     if (cancelBtn) { cancelBtn.style.display = ''; cancelBtn.textContent = 'Cancel'; }
   }
   countrySelect.innerHTML = Object.entries(COUNTRY_NAMES)
@@ -5286,7 +5116,7 @@ function openProfileModal(opts) {
     if (requireSetup && (!newName || newName.toLowerCase() === 'player')) {
       // Reject the default; nudge the user to pick something.
       nameInput.focus();
-      nameInput.style.borderColor = 'var(--red)';
+      nameInput.style.borderColor = 'var(--seal)';
       nameInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.18)';
       setTimeout(() => {
         nameInput.style.borderColor = '';
@@ -5352,9 +5182,6 @@ const state = {
   // Power-up state
   activePowerups: { shield: 0, slowmo: 0, xp: 0 },  // ms remaining (xp = double-XP timer)
   powerups: [],             // dropped pickups in stage
-  // Achievement / wave bookkeeping
-  lastWaveLevel: 1,
-  wordKills: {},
   // Within-level spaced repetition: words spawned this level are tracked
   // here, then re-spawned as recall-mode monsters once we're past the
   // halfway point of the level's XP threshold.
@@ -5367,8 +5194,6 @@ const state = {
   assistMul: 1.0,
   // Leaks in the current level (monsters reaching damage line)
   levelLeaks: 0,
-  // Slow mode: player opted in via intro toggle
-  slowMode: false,
   // Juice timers (ms, counted down by real frame time in the loop):
   // hit-stop freezes the sim on a kill; slow-mo scales it (boss death).
   hitStopMs: 0,
@@ -5385,86 +5210,6 @@ function getBestLevel() { try { return Number(localStorage.getItem(BEST_LEVEL_KE
 function setBestLevel(n) { try { localStorage.setItem(BEST_LEVEL_KEY, String(n)); } catch (e) {} }
 function getCheckpoint() { try { return Number(localStorage.getItem(CHECKPOINT_KEY)) || 0; } catch (e) { return 0; } }
 function setCheckpoint(n) { try { localStorage.setItem(CHECKPOINT_KEY, String(n)); } catch (e) {} }
-const SLOW_MODE_KEY = 'hangul-battle-slowmode-v1';
-function getSlowMode() { try { return localStorage.getItem(SLOW_MODE_KEY) === '1'; } catch (e) { return false; } }
-function setSlowMode(on) { try { localStorage.setItem(SLOW_MODE_KEY, on ? '1' : '0'); } catch (e) {} }
-
-const DAILY_STREAK_KEY = 'hangul-type-daily-streak';
-const DAILY_DURATION_MS = 90 * 1000;  // 90-second daily run
-
-// Mulberry32 PRNG seeded from date string for deterministic word selection
-function mulberry32(seed) {
-  return function() {
-    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-function dailyDateStr() {
-  const d = new Date();
-  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
-}
-function dailySeed(dateStr) {
-  let h = 0;
-  for (let i = 0; i < dateStr.length; i++) { h = Math.imul(31, h) + dateStr.charCodeAt(i) | 0; }
-  return h;
-}
-function getDailyStreak() {
-  try { return JSON.parse(localStorage.getItem(DAILY_STREAK_KEY)) || { lastDay: null, streak: 0 }; } catch (e) { return { lastDay: null, streak: 0 }; }
-}
-function updateDailyStreak() {
-  const today = dailyDateStr();
-  let data = getDailyStreak();
-  if (data.lastDay === today) return data;  // already played today
-  const yesterday = (() => {
-    const d = new Date(today);
-    d.setUTCDate(d.getUTCDate() - 1);
-    return d.toISOString().slice(0, 10);
-  })();
-  data.streak = (data.lastDay === yesterday) ? (data.streak || 0) + 1 : 1;
-  data.lastDay = today;
-  try { localStorage.setItem(DAILY_STREAK_KEY, JSON.stringify(data)); } catch (e) {}
-  return data;
-}
-
-async function submitDailyScore(points) {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
-  const pid = (progress && progress.playerId) || null;
-  if (!pid) return false;
-  const name = (progress.profile && progress.profile.name) || 'Player';
-  const country = (progress.profile && progress.profile.countryCode) || detectCountry();
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_daily_score`, {
-      method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        p_id: pid,
-        p_name: String(name).slice(0, 24),
-        p_country: String(country).slice(0, 2).toUpperCase(),
-        p_points: points
-      })
-    });
-    return res.ok;
-  } catch (e) { return false; }
-}
-
-async function fetchDailyTop10() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return [];
-  const today = dailyDateStr();
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/battle_daily?select=name,country,points&day=eq.${today}&order=points.desc&limit=10`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (e) { return []; }
-}
 
 function xpThresholdForLevel(lv) {
   const x = (window.BATTLE_CONFIG && window.BATTLE_CONFIG.xp) || { base: 90, step: 70, lateDiscount: { levels: [12, 13], factor: 0.70 } };
@@ -5532,7 +5277,7 @@ function maybeSpawnHeart() {
   const ks = wordToKeystrokes(w.ko);
   const startX = Math.random() * (window.innerWidth - 200) + 100;
   const monster = {
-    id, sprite: '❤️', spriteFile: null, word: w.ko, en: w.en, tier: 1,
+    id, sprite: '', spriteFile: null, word: w.ko, en: w.en, tier: 1,
     ks, hp: ks.length, maxHp: ks.length,
     speed: 8,                  // very slow — generous capture window
     motion: 'straight',
@@ -5546,7 +5291,6 @@ function maybeSpawnHeart() {
   if (monster.el) monster.el.classList.add('heart');
   state.monsters.push(monster);
   state.spawnsSinceHeart = 0;
-  flashCenterText('❤ Heart approaching');
   tone({ freq: 1320, type:'triangle', dur:0.22, gain:0.05, slide: 1760 });
   return true;
 }
@@ -5632,8 +5376,7 @@ function spawnMonster(forceBoss) {
   const ks = wordToKeystrokes(word.ko);
   const beh = behaviorForTier(tier);
   const _assistMul = state.assistMul || 1.0;
-  const _slowMul = state.slowMode ? 0.6 : 1.0;
-  const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(vtier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * _assistMul * _slowMul;
+  const baseSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + (Number(vtier) || 1) * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * _assistMul;
   const spot = pickSpawnX();
   const startX = spot.x;
   const nudgeY = spot.crowded ? Math.round((getStageRect().height || 600) * 0.09) : 0;
@@ -5666,7 +5409,6 @@ function spawnMonster(forceBoss) {
   };
   buildMonsterEl(monster);
   state.monsters.push(monster);
-  maybeMonsterSay(monster, 'spawn');
 }
 
 // triggerBossFight: chains act-break (already shown) -> cutscene -> spawnBoss.
@@ -5714,11 +5456,10 @@ function spawnBoss() {
     startX = Math.max(bossHalf + 12, startX - (bossHalf + playerHalf + 16));
   }
   const beh = behaviorForTier('boss');
-  const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * (state.assistMul || 1.0) * (state.slowMode ? 0.6 : 1.0);
+  const bossSpeed = (ADMIN.pace.baseSpeedBase + state.level * ADMIN.pace.baseSpeedLevelMul + 5 * ADMIN.pace.baseSpeedTierMul) * beh.speedMul * (state.assistMul || 1.0);
   // Per-phase deadline: derived from word length so longer words get more time.
-  // perKey scales down with level (daily runs use level-1 so the clock isn't punished).
-  const _pkLevel = state.dailyRun ? 1 : state.level;
-  const perKey = Math.max(420, 950 - _pkLevel * 20);
+  // perKey scales down with level.
+  const perKey = Math.max(420, 950 - state.level * 20);
   const windows = [ks1, ks2, ks3].map(ks => Math.min(20000, Math.max(4000, ks.length * perKey + 1500)));
   const monster = {
     id: ++monsterId, sprite: profile.emoji, spriteFile: profile.sprite, name: profile.name, profile,
@@ -5807,7 +5548,7 @@ function advanceBossPhase(m) {
   // Phase stagger VFX
   triggerMonsterHit(m);
   particleBurst(m.x, m.y + 30, 15);
-  bossPhaseCallout(m, 'Phase ' + m.phase + ' !');
+  bossPhaseCallout(m, 'Phase ' + m.phase + '!');
   const phaseLine = m.profile && m.profile.phaseLines && m.profile.phaseLines[m.phase - 2];
   if (phaseLine) monsterSay(m, phaseLine, { force: true, delayMs: 450 });
   tone({ freq: 440, type: 'triangle', dur: 0.25, gain: 0.07, slide: 660 });
@@ -5846,8 +5587,8 @@ function showBossRewardModal() {
   state.slowMoMs = 0; state.slowMoScale = 1;
   const charges = state.specialCharges || 0;
   const lifeOption = state.lives >= 3
-    ? { icon: '🛡️', label: 'Shield', desc: 'Absorb next hit' }
-    : { icon: '❤', label: '+1 Life', desc: 'Restore one heart' };
+    ? { icon: 'shield', cls: '', label: 'Shield', desc: 'Blocks one hit' }
+    : { icon: 'heart', cls: ' life', label: '+1 Life', desc: '' };
   const specialFull = charges >= SPECIAL_MAX_CHARGES;
   const veil = document.createElement('div');
   veil.id = 'bossRewardModal';
@@ -5858,25 +5599,24 @@ function showBossRewardModal() {
   veil.innerHTML = `
     <div class="modal-card rpg-panel" style="max-width:480px;">
       <div class="badge">BOSS DEFEATED</div>
-      <h1>Choose Your Reward</h1>
-      <p class="subtitle">${window.matchMedia(TOUCH_LAYOUT_MQ).matches ? 'Tap a card (or press 1, 2, 3)' : 'Press 1, 2, or 3'}</p>
+      <h1>Choose a reward</h1>
       <div class="boss-reward-cards">
         <button class="boss-reward-card" data-choice="1" aria-label="Option 1: ${lifeOption.label}">
-          <div class="brc-icon">${lifeOption.icon}</div>
+          <div class="brc-icon${lifeOption.cls}">${pixelIcon(lifeOption.icon, 4)}</div>
           <div class="brc-label">${lifeOption.label}</div>
           <div class="brc-desc">${lifeOption.desc}</div>
           <div class="brc-key">1</div>
         </button>
         <button class="boss-reward-card${specialFull ? ' brc-disabled' : ''}" data-choice="2" aria-label="Option 2: Special Charge">
-          <div class="brc-icon">⚡</div>
-          <div class="brc-label">+1 Special</div>
-          <div class="brc-desc">${specialFull ? 'Already full' : '+1 필살기 charge'}</div>
+          <div class="brc-icon">${pixelIcon('bolt', 3)}</div>
+          <div class="brc-label">+1 필살기</div>
+          <div class="brc-desc">${specialFull ? 'Already full' : ''}</div>
           <div class="brc-key">2</div>
         </button>
         <button class="boss-reward-card" data-choice="3" aria-label="Option 3: 2x XP">
-          <div class="brc-icon">✨</div>
+          <div class="brc-icon xp">${pixelIcon('spark', 4)}</div>
           <div class="brc-label">2x XP</div>
-          <div class="brc-desc">Double XP this level</div>
+          <div class="brc-desc">This level</div>
           <div class="brc-key">3</div>
         </button>
       </div>
@@ -5894,22 +5634,22 @@ function showBossRewardModal() {
         state.activePowerups = state.activePowerups || {};
         state.activePowerups.shield = 30000;
         PLAYER_EL.classList.add('shielded');
-        flashCenterText('🛡️ Shield granted');
+        flashCenterText('SHIELD UP');
         renderPowerupHud();
       } else {
         state.lives = Math.min(3, state.lives + 1);
-        flashCenterText('❤ +1 LIFE');
+        flashCenterText('+1 LIFE', 'heart');
         tone({ freq: 880, type: 'sine', dur: 0.20, gain: 0.07, slide: 1480 });
       }
     } else if (choice === 2) {
       if (!specialFull) {
         state.specialCharges = Math.min(SPECIAL_MAX_CHARGES, (state.specialCharges || 0) + 1);
         renderSpecialMeter();
-        flashCenterText('⚡ Special charged');
+        flashCenterText('필살기 +1');
       }
     } else if (choice === 3) {
       state.xpBoostLevel = state.level;
-      flashCenterText('✨ 2x XP this level');
+      flashCenterText('2× XP');
     }
     state.paused = false;
     updateHud();
@@ -5963,6 +5703,9 @@ function buildMonsterEl(m) {
       m._img = imgEl;
       m._src = firstFrame;
     }
+  } else if (m.isHeart) {
+    // Pixel heart instead of the emoji, about a tier-1 demon's height
+    sprite.innerHTML = pixelIcon('heart', Math.max(3, Math.round(sizePx * spriteScale() * 0.5 / 9)));
   } else {
     sprite.textContent = m.sprite;
   }
@@ -6009,14 +5752,6 @@ function buildMonsterEl(m) {
   m._wordEl = wordBubble;
   m.syllables = built.syllables;
 
-  const hpBar = document.createElement('div');
-  hpBar.className = 'hp-bar';
-  const hpFill = document.createElement('div');
-  hpFill.className = 'hp-fill';
-  hpFill.style.width = '100%';
-  hpBar.appendChild(hpFill);
-  el.appendChild(hpBar);
-
   el.classList.add('depth-billboard');
   el.style.left = '0px';
   el.style.top  = '0px';
@@ -6045,26 +5780,16 @@ function monsterCenter(m) {
 }
 
 // ─── Enemy voice: pixel speech bubbles ────────────────────────────────────
-// Short lines from battle-config.js `lines` (reading practice, A1-A2). One
-// bubble on screen at most, beside the demon's head on the side facing the
+// Boss phase taunts from battle-config.js `phaseLines` (reading practice,
+// A1-A2). One bubble on screen at most, beside the demon's head on the side facing the
 // middle of the stage; the word label hangs under the feet, so it is never
 // covered. Lives in the fx layer (pointer-events: none), so it can't take
-// input. Minion lines skip boss fights and slow mode; boss phase / defeat
-// lines pass { force: true }.
+// input. Phase taunts pass { force: true }.
 const SAY_MS = 1600;
 let _sayEl = null, _sayM = null, _sayLeftMs = 0, _sayDelayMs = 0;
 function clearMonsterSay() {
   if (_sayEl) _sayEl.remove();
   _sayEl = null; _sayM = null; _sayLeftMs = 0; _sayDelayMs = 0;
-}
-function maybeMonsterSay(m, kind) {
-  const cfg = window.BATTLE_CONFIG || {};
-  if (!m || m.isBoss || m.isHeart || state.slowMode || state.bossActive || _sayEl) return;
-  const pool = cfg.lines && cfg.lines[m.tier] && cfg.lines[m.tier][kind];
-  if (!pool || !pool.length) return;
-  const chance = (cfg.lineChance && cfg.lineChance[kind]) || 0;
-  if (Math.random() >= chance) return;
-  monsterSay(m, pool[Math.floor(Math.random() * pool.length)]);
 }
 function monsterSay(m, line, opts) {
   opts = opts || {};
@@ -6125,7 +5850,7 @@ function tickMonsterSay(ms) {
 
 // ─── 요괴 도감 (bestiary) ──────────────────────────────────────────────────
 // Kill counts per regular tier ('tier:N') and per boss ('boss:<sprite>'),
-// persisted in localStorage. First kill of a kind shows a small toast.
+// persisted in localStorage.
 const BESTIARY_KEY = 'hangul-bestiary-v1';
 function loadBestiary() {
   try {
@@ -6147,30 +5872,8 @@ function recordBestiaryKill(m) {
   const key = bestiaryKeyFor(m);
   if (!key) return;
   const d = loadBestiary();
-  const first = !d.kills[key];
   d.kills[key] = (d.kills[key] || 0) + 1;
   saveBestiary(d);
-  if (first) {
-    const info = m.isBoss ? m.profile : bestiaryTierInfo()[m.tier];
-    showBestiaryToast(info && info.name);
-  }
-}
-// One toast at a time: a second first-kill inside the window (a 필살 sweep)
-// joins the names in the same toast and restarts its clock.
-let _bestiaryToast = null;
-function showBestiaryToast(name) {
-  const t = _bestiaryToast;
-  if (t) {
-    clearTimeout(t.timer);
-    t.el.remove();
-  }
-  const names = (t ? t.names : []).concat(name || []);
-  const el = document.createElement('div');
-  el.className = 'bestiary-toast';
-  el.setAttribute('role', 'status');
-  el.textContent = (names.length > 1 ? '📖 New entries! ' : '📖 New entry! ') + names.join(', ');
-  document.body.appendChild(el);
-  _bestiaryToast = { el, names, timer: setTimeout(() => { el.remove(); _bestiaryToast = null; }, 2400) };
 }
 
 function killMonster(m, byPlayer) {
@@ -6190,34 +5893,24 @@ function killMonster(m, byPlayer) {
   // Removal waits out the defeat fade, stretched by any hit-stop / boss slow-mo.
   let removeAfterMs = 550;
   const killColors = tierParticleColors(m.tier);
-  if (byPlayer) {
-    particleBurst(center.x, center.y, isBossKill ? 14 : 5, killColors);
-    particleBurst(center.x, center.y, isBossKill ? 18 : 9, killColors, { dir: hitDir(m) });
-  } else {
-    particleBurst(center.x, center.y, isBossKill ? 30 : 12, killColors);
-  }
+  particleBurst(center.x, center.y, isBossKill ? 24 : 10, killColors, { dir: throwDir });
   spawnEmbers(center.x, center.y, isBossKill ? 10 : 5);
-  spawnSmokePuff(m.x, center.y + center.h * 0.3, { size: 64 * spriteScale() });
   // Drop the dead monster before maybeLevelUp so onLevelUp's empty-field
-  // check (WAVE CLEAR bonus) sees the real field.
+  // check (wave-clear bonus) sees the real field.
   state.monsters = state.monsters.filter(x => x.id !== m.id);
   if (byPlayer) {
     let xp = xpForKill(m.vtier || m.tier);
     let sc = scoreForKill(m.vtier || m.tier, state.combo);
     // Variable rewards: 5% crit (3× score), 1% heart drop (only if not full HP), bosses guarantee crit.
     const isCrit = m.isBoss || Math.random() < 0.05;
-    // Score pops stack upward with a stagger instead of overprinting.
-    const pops = [];
     if (isCrit) {
       sc *= 3; xp = Math.round(xp * 1.5);
-      pops.push({ text: 'CRIT! x3', cls: 'crit' });
-      if (!isBossKill) particleBurst(center.x, center.y, 10, ['#fde68a', '#f59e0b', '#ffffff'], { dir: hitDir(m) });
       pulseBattleCamera('pulse');
     }
     // Perfect recall bonus: killed without any syllable reveals
-    if (m.recall && m.recallRevealsUsed === 0) {
+    const perfectRecall = m.recall && m.recallRevealsUsed === 0;
+    if (perfectRecall) {
       sc = Math.round(sc * 1.5);
-      pops.push({ text: 'PERFECT RECALL', cls: 'recall' });
       tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.05, slide: 1760 });
     }
     // Heart pickup: only granted when killing a heart monster (m.isHeart),
@@ -6225,7 +5918,7 @@ function killMonster(m, byPlayer) {
     // entity and must be typed to capture.
     if (m.isHeart && state.lives < 3) {
       state.lives++;
-      flashCenterText('❤ +1 LIFE');
+      flashCenterText('+1 LIFE', 'heart');
       tone({ freq: 880, type:'sine', dur:0.20, gain:0.07, slide:1480 });
       tone({ freq: 1320, type:'triangle', dur:0.18, gain:0.05, slide:1760 });
     }
@@ -6236,13 +5929,10 @@ function killMonster(m, byPlayer) {
     state.xp += xp;
     state.kills++;
     maybeGainSpecialChargeFromKill();
-    // Track word kill counts (for in-game mastery + future sync to practice)
-    try {
-      state.wordKills = state.wordKills || {};
-      state.wordKills[m.word] = (state.wordKills[m.word] || 0) + 1;
-    } catch (e) {}
-    pops.unshift({ text: '+' + sc + (isCrit ? ' ✨' : '') });
-    pops.forEach((pop, i) => floatScorePop(m.x, m.y - i * 24, pop.text, { delay: i * 80, cls: pop.cls }));
+    // One pop per kill; crit outranks recall when both apply.
+    if (isCrit) floatScorePop(m.x, m.y, '+' + sc + ' CRIT', { cls: 'crit' });
+    else if (perfectRecall) floatScorePop(m.x, m.y, '+' + sc + ' RECALL', { cls: 'recall' });
+    else floatScorePop(m.x, m.y, '+' + sc);
     // Hit-stop: a beat on every kill, longer on crits, longest on a boss.
     // Not during 필살 (time is already frozen and kills chain fast).
     if (!state.specialMoveBurst) {
@@ -6274,8 +5964,6 @@ function killMonster(m, byPlayer) {
     if (!state.specialMoveBurst) speakKoreanWord(m.word);
     sfxKill();
     recordBestiaryKill(m);
-    // No last words: a bubble popping up mid-kill pulled the eye off the
-    // next word. Spawn chatter and boss phase taunts stay.
     if (m.isBoss) {
       state.bossActive = false;
       document.body.classList.remove('boss-alive');
@@ -6331,8 +6019,7 @@ function themeForLevel(lv) {
   if (lv <= 39) return 'battlefield'; // tier 6 장군
   return 'palace';                    // tier 7 대왕
 }
-const ALL_THEMES = ['village','forest','study','courtyard','camp','battlefield','palace',
-                    /* legacy, removed but cleaned for safety: */ 'shrine','temple','cosmos'];
+const ALL_THEMES = ['village','forest','study','courtyard','camp','battlefield','palace'];
 const THEME_BG_FILES = { village: '01-village', forest: '02-forest', study: '03-study',
                          courtyard: '04-courtyard', camp: '05-camp',
                          battlefield: '06-battlefield', palace: '07-palace' };
@@ -7118,7 +6805,7 @@ function showActBreak(act) {
       <div class="act-title">${escapeHtml(act.title)}</div>
       <div class="act-subtitle">${escapeHtml(act.subtitle)}</div>
       <div class="act-flavor">${escapeHtml(act.flavor)}</div>
-      <div class="act-prompt">${window.matchMedia(TOUCH_LAYOUT_MQ).matches ? 'tap to continue' : 'click or press space to continue'}</div>
+      <div class="act-prompt">${window.matchMedia(TOUCH_LAYOUT_MQ).matches ? 'tap to continue' : 'press space to continue'}</div>
     </div>`;
   document.body.appendChild(overlay);
   // Stinger sound — soft gong
@@ -7162,7 +6849,6 @@ function onLevelUp() {
     (_pr.top + _pr.height / 2) - _sr.top,
     16, ['#fde68a', '#f59e0b', '#ffffff', '#60a5fa']
   );
-  const sp = playerForLevel(state.level);
   renderPlayerSprite(state.level);
   // Pulse the fresh sprite. Targets .player-main, so it plays whether the
   // player is home or teleported (teleport sets animation:none on .player).
@@ -7173,15 +6859,11 @@ function onLevelUp() {
         { transform: 'scale(1.35)', filter: 'drop-shadow(0 0 26px rgba(245,158,11,0.75))', offset: 0.4 },
         { transform: 'scale(1)',    filter: 'drop-shadow(0 0 0 rgba(245,158,11,0))' }
       ], { duration: 900, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
-  // Level banner always shows first; wave-clear queues after it.
-  flashLevelBanner('Lv. ' + state.level + ' · ' + sp.label, state.level);
-  if (state.monsters.length === 0) {
-    const bonus = 250 + state.level * 25;
-    state.score += bonus;
-    runTimeout(() => flashCenterText('WAVE CLEAR +' + bonus), 1400);
-  }
+  flashLevelBanner('Lv. ' + state.level);
+  // Wave-clear bonus: the field was empty when the level ticked over.
+  if (state.monsters.length === 0) state.score += 250 + state.level * 25;
   // Set spawn pause so level transitions breathe
-  state.spawnPauseMs = state.dailyRun ? 1000 : 2500;
+  state.spawnPauseMs = 2500;
   // Rubber-band: adjust assistMul based on leaks in the level that just ended.
   // >=2 leaks: slow down slightly. 0 leaks: relax back toward 1.0.
   const leaks = state.levelLeaks || 0;
@@ -7193,8 +6875,7 @@ function onLevelUp() {
   state.levelLeaks = 0;
   const baseInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - state.level * ADMIN.pace.spawnIntervalLevelStep);
   const intervalAssist = leaks >= 2 ? 1.15 : 1.0;
-  const intervalSlow = state.slowMode ? 1.4 : 1.0;
-  state.spawnInterval = baseInterval * intervalAssist * intervalSlow;
+  state.spawnInterval = baseInterval * intervalAssist;
   // Theme transition — applies on each level so the band-boundary level
   // smoothly fades into the new gradient.
   applyTheme(themeForLevel(state.level));
@@ -7213,7 +6894,6 @@ function onLevelUp() {
     const act = LEVEL_ACTS[state.level];
     runTimeout(() => { if (state.running) showActBreak(act); }, 500);
   }
-  state.lastWaveLevel = state.level;
   // Fresh recall pool for the new level — words from the previous level no
   // longer count, the player gets a clean recognition→recall arc per level.
   state.levelWordHistory = [];
@@ -7227,10 +6907,11 @@ let _bannerLive = false;
 function _showNextBanner() {
   if (_bannerQueue.length === 0) { _bannerLive = false; return; }
   _bannerLive = true;
-  const txt = _bannerQueue.shift();
+  const { txt, icon } = _bannerQueue.shift();
   const el = document.createElement('div');
   el.className = 'combo-banner';
   el.textContent = txt;
+  if (icon) el.insertAdjacentHTML('afterbegin', pixelIcon(icon, 3));
   document.body.appendChild(el);
   const lane = bannerLaneAvoidingBoss(el.offsetWidth, el.offsetHeight);
   if (lane) { el.style.top = lane.top + 'px'; if (lane.left != null) el.style.left = lane.left + 'px'; }
@@ -7263,23 +6944,19 @@ function bannerLaneAvoidingBoss(bannerW, bannerH) {
   }
   return { top: Math.round(Math.min(below, sr.bottom - bannerH - 8)) };
 }
-function flashCenterText(txt) {
+// icon: optional pixelIcon name drawn before the text
+function flashCenterText(txt, icon) {
   if (_bannerQueue.length >= 3) return; // cap queue
   const last = _bannerQueue.length > 0 ? _bannerQueue[_bannerQueue.length - 1] : null;
-  if (txt === last) return; // drop consecutive dupe
-  _bannerQueue.push(txt);
+  if (last && txt === last.txt) return; // drop consecutive dupe
+  _bannerQueue.push({ txt, icon });
   if (!_bannerLive) _showNextBanner();
 }
 
-function flashLevelBanner(txt, level) {
-  const tier = tierForLevel(level);
-  const tierColors = { 1: '#60a5fa', 2: '#34d399', 3: '#f59e0b', 4: '#f87171', 5: '#a78bfa' };
-  const color = tierColors[tier] || '#f59e0b';
+function flashLevelBanner(txt) {
   const el = document.createElement('div');
   el.className = 'level-banner';
   el.textContent = txt;
-  el.style.color = color;
-  el.style.textShadow = '0 4px 16px ' + color + '66';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2000);
 }
@@ -7343,10 +7020,8 @@ function floatScorePop(x, y, text, opts = {}) {
   el.textContent = text;
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
-  const delay = Number(opts.delay) || 0;
-  if (delay) el.style.animationDelay = delay + 'ms';
   FX_LAYER.appendChild(el);
-  setTimeout(() => el.remove(), 900 + delay);
+  setTimeout(() => el.remove(), 900);
 }
 
 // English translation flies up from the kill point so the player learns the
@@ -7464,7 +7139,8 @@ function renderAudioToggle() {
   const btn = document.getElementById('btnAudio');
   if (!btn) return;
   const on = audioEnabled();
-  btn.textContent = on ? '🔊' : '🔇';
+  btn.innerHTML = pixelIcon(on ? 'sound' : 'sound-off', 2);
+  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   btn.classList.toggle('muted', !on);
   btn.title = on ? 'Korean pronunciation: ON (click to mute)'
                  : 'Korean pronunciation: OFF (click to enable)';
@@ -8144,7 +7820,7 @@ function maybeGainSpecialChargeFromKill() {
   tone({ freq: 760, type:'triangle', dur:0.18, gain:0.05, slide: 1320 });
   if (!hasSeenSpecialHint() && state.specialCharges === 1) {
     setSpecialHintSeen();
-    flashCenterText('필살기 ready · type 한글 to unleash');
+    flashCenterText('필살기 ready: type 한글');
   }
 }
 
@@ -8339,7 +8015,7 @@ function setFastFall(on) {
   if (document.querySelector('.fast-fall-badge')) return;
   const el = document.createElement('div');
   el.className = 'fast-fall-badge';
-  el.textContent = '⏬ FAST-FALL · hold Tab';
+  el.textContent = 'FAST-FALL';
   document.body.appendChild(el);
 })();
 document.addEventListener('keyup', (e) => {
@@ -8367,9 +8043,9 @@ function spawnSakura(count) {
 
 // ─── Power-up drops ────────────────────────────────────────────────────────
 const POWERUP_DEFS = {
-  shield: { ico: '🛡️', label: 'SHIELD', durationMs: 0,    blocksHit: true },
-  slowmo: { ico: '⏳', label: 'SLOW',   durationMs: 5000, slowFactor: 0.55 },
-  xp:     { ico: '✨', label: '2× XP',  durationMs: 8000, xpMul: 2 }
+  shield: { ico: 'shield',    label: 'SHIELD', durationMs: 0,    blocksHit: true },
+  slowmo: { ico: 'hourglass', label: 'SLOW',   durationMs: 5000, slowFactor: 0.55 },
+  xp:     { ico: 'spark',     label: '2× XP',  durationMs: 8000, xpMul: 2 }
 };
 const POWERUP_KINDS = ['shield','slowmo','xp'];
 
@@ -8380,7 +8056,7 @@ function maybeDropPowerup(x, y, isCrit) {
   const def = POWERUP_DEFS[kind];
   const el = document.createElement('div');
   el.className = 'powerup ' + kind;
-  el.textContent = def.ico;
+  el.innerHTML = pixelIcon(def.ico, 2);
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
   FX_LAYER.appendChild(el);
@@ -8479,9 +8155,9 @@ function renderPowerupHud() {
   const hud = POWERUP_HUD_EL(); if (!hud) return;
   const a = state.activePowerups || {};
   const chips = [];
-  if (a.shield) chips.push(`<span class="powerup-chip shield"><span class="ico">🛡️</span> SHIELD</span>`);
-  if (a.slowmo > 0) chips.push(`<span class="powerup-chip slowmo"><span class="ico">⏳</span> ${Math.ceil(a.slowmo/1000)}s</span>`);
-  if (a.xp > 0)     chips.push(`<span class="powerup-chip xp"><span class="ico">✨</span> 2×XP ${Math.ceil(a.xp/1000)}s</span>`);
+  if (a.shield) chips.push(`<span class="powerup-chip shield">${pixelIcon('shield', 1)}<span class="pc-label">SHIELD</span></span>`);
+  if (a.slowmo > 0) chips.push(`<span class="powerup-chip slowmo">${pixelIcon('hourglass', 1)} ${Math.ceil(a.slowmo/1000)}s</span>`);
+  if (a.xp > 0)     chips.push(`<span class="powerup-chip xp">${pixelIcon('spark', 1)}<span class="pc-label">2×XP</span> ${Math.ceil(a.xp/1000)}s</span>`);
   const html = chips.join('');
   if (hud.dataset.renderedHtml !== html) {
     hud.innerHTML = html;
@@ -8560,7 +8236,7 @@ function hurtFlash() {
   const lost = HUD_LIVES.querySelector('.lost');
   if (lost && lost.animate && !REDUCED.matches) {
     lost.animate([
-      { transform: 'translateX(0) scale(1.3)', color: 'var(--red)' },
+      { transform: 'translateX(0) scale(1.3)', color: 'var(--seal)' },
       { transform: 'translateX(-4px) scale(1.2)', offset: 0.2 },
       { transform: 'translateX(4px) scale(1.1)', offset: 0.45 },
       { transform: 'translateX(-2px) scale(1)', offset: 0.7 },
@@ -8599,14 +8275,13 @@ function damagePlayer() {
   updateHud();
   hurtFlash();
   if (state.lives <= 0) {
-    // Daily runs keep their own end screen (streak + daily board submit).
-    if (state.dailyRun) endDailyRun(); else gameOver();
+    gameOver();
     return;
   }
   // One-time hint when first dropping to 1 life: points toward the heart pickup
   if (state.lives === 1 && !state.shownHeartHint) {
     state.shownHeartHint = true;
-    flashCenterText('find the ❤ word');
+    flashCenterText('find the heart word', 'heart');
     const livesEl = document.getElementById('hudLives');
     if (livesEl) {
       livesEl.classList.add('lives-danger');
@@ -8669,41 +8344,21 @@ function gameOver() {
   // Show checkpoint-run note if applicable
   const cpNote = document.getElementById('overCheckpointNote');
   if (cpNote) cpNote.style.display = state.checkpointRun ? 'block' : 'none';
-  // Show slow-mode note if applicable
-  const smNote = document.getElementById('overSlowModeNote');
-  if (smNote) smNote.style.display = state.slowMode ? 'block' : 'none';
-  // Hide any daily-run result panel / HUD timer left over from an earlier daily run.
-  const dailyPanel = document.getElementById('overDailyResult');
-  if (dailyPanel) dailyPanel.style.display = 'none';
-  const dailyHud = document.getElementById('hudDailyTimer');
-  if (dailyHud) dailyHud.style.display = 'none';
   progress = getProgress();
   // Analytics: every game-over counts as an attempt (separate from the leaderboard).
   logBattleAttempt(state.level, state.score);
   document.getElementById('gameOverModal').style.display = 'flex';
-  // Only submit to leaderboard for full non-checkpoint, non-daily runs.
-  // Slow mode submits but halves points (applied at submit site below).
-  if (!state.checkpointRun && !state.dailyRun) {
-    // Instead of auto-opening the modal, pulse the Edit profile button with a hint row.
-    if (newHigh || isProfileUnset()) {
+  // Only submit to leaderboard for full non-checkpoint runs.
+  if (!state.checkpointRun) {
+    // Instead of auto-opening the modal, pulse the Profile link while the name is unset.
+    if (isProfileUnset()) {
       setTimeout(() => {
         const btn = document.getElementById('btnEditProfile');
         if (btn) btn.classList.add('profile-cta-pulse');
-        const sign = document.getElementById('newHighSign');
-        if (sign && newHigh) {
-          // Append the claim-name hint if not already present
-          if (!sign.querySelector('.new-high-claim')) {
-            const hint = document.createElement('div');
-            hint.className = 'new-high-claim';
-            hint.textContent = 'Claim your name';
-            sign.appendChild(hint);
-          }
-        }
       }, 300);
     }
     // Submit, then render. submitBattleScore invalidates the cache so render fetches fresh.
-    const submitPoints = state.slowMode ? Math.floor(state.score * 0.5) : state.score;
-    submitBattleScore(state.level, submitPoints).finally(() => {
+    submitBattleScore(state.level, state.score).finally(() => {
       renderActiveLeaderboard('battleLbContainer');
     });
     // Optimistic first paint while the network round-trip lands.
@@ -8722,16 +8377,19 @@ function gameOver() {
 
 function updateHud() {
   document.body.classList.toggle('has-lock', state.lockId != null);
-  HUD_LEVEL.textContent = state.level;
+  HUD_LEVEL.textContent = 'Lv ' + state.level;
   HUD_SCORE.textContent = state.score.toLocaleString();
   const lost = Math.max(0, 3 - state.lives);
-  HUD_LIVES.innerHTML = '♥'.repeat(Math.max(0, state.lives)) + '<span class="lost">' + '♡'.repeat(lost) + '</span>';
+  const livesKey = state.lives + '/' + lost;
+  // Rebuild only on change, so a running lost-heart shake is not cut off
+  if (HUD_LIVES.dataset.lives !== livesKey) {
+    HUD_LIVES.dataset.lives = livesKey;
+    HUD_LIVES.innerHTML = pixelIcon('heart', 3).repeat(Math.max(0, state.lives)) +
+      '<span class="lost">' + pixelIcon('heart-empty', 3).repeat(lost) + '</span>';
+    HUD_LIVES.setAttribute('aria-label', state.lives + ' of 3 lives');
+  }
   HUD_COMBO.textContent = state.combo > 0 ? `×${state.combo}` : '×1';
   HUD_COMBO.classList.toggle('zero', state.combo === 0);
-  HUD_COMBO.classList.remove('hot', 'blazing', 'legendary');
-  if (state.combo >= 50) HUD_COMBO.classList.add('legendary');
-  else if (state.combo >= 25) HUD_COMBO.classList.add('blazing');
-  else if (state.combo >= 5) HUD_COMBO.classList.add('hot');
   XP_FILL.style.width = Math.min(100, (state.xp / xpThresholdForLevel(state.level)) * 100) + '%';
 }
 
@@ -8939,9 +8597,6 @@ function advanceLock(m) {
     if (style === 'melee') swingSword(m);
     else                 { castSpellAt(m); playerRecoil(); }
   }
-  if (state.combo === 5 || state.combo === 10 || state.combo === 25 || state.combo === 50 || state.combo === 100) {
-    flashCenterText(state.combo + '× combo');
-  }
   if (state.lockPosKs >= state.lockExpectedKs.length) {
     // Boss phase advance: phase 1 or 2 completed goes to next phase rather than kill
     if (m.isBoss && m.phase < 3) {
@@ -8962,16 +8617,11 @@ function breakCombo(opts) {
     // Soft break: halve the combo instead of zeroing it
     state.combo = Math.floor(wasCombo * ADMIN.combat.comboSoftFactor);
     updateHud();
-    if (wasCombo >= 4) flashCenterText('combo / 2');
     return;
   }
-  // Hard break: full reset with visceral feedback
+  // Hard break: full reset; a long combo lost gets a thud.
   if (state.combo > 0) { state.combo = 0; updateHud(); }
-  if (wasCombo >= 10) {
-    flashCenterText('COMBO BROKEN');
-    cameraShake(6, 320);
-    noiseBurst({ dur: 0.18, gain: 0.06, freq: 240 });
-  }
+  if (wasCombo >= 10) noiseBurst({ dur: 0.18, gain: 0.06, freq: 240 });
 }
 
 function escapeLock() {
@@ -9100,8 +8750,7 @@ function loop(t) {
   // while the game is live, then scale `dt`, which every sim system below
   // uses (monster motion, walk frames, spawner, boss phase / shot timers,
   // power-ups), so they all freeze or slow together and pause still stops
-  // them outright. The daily countdown uses real frame time (frameDt): it
-  // is a wall-clock challenge, and a kill's hit-stop shouldn't bank time.
+  // them outright.
   let timeScale = 1;
   if (!state.paused && !state.specialMoveActive) {
     if (state.hitStopMs > 0) {
@@ -9122,19 +8771,6 @@ function loop(t) {
     // Progressive recall hints (fade hidden syllables in over time)
     tickRecallReveals(dt);
     tickMonsterSay(frameDt);
-    // Daily run: tick countdown timer and end run when it hits zero
-    if (state.dailyRun) {
-      state.dailyTimeLeft = (state.dailyTimeLeft || 0) - frameDt;
-      if (state.dailyTimeLeft <= 0) {
-        state.dailyTimeLeft = 0;
-        endDailyRun();
-        return;
-      }
-      if (state.dailyTimeEl) {
-        const secs = Math.ceil(state.dailyTimeLeft / 1000);
-        state.dailyTimeEl.textContent = Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
-      }
-    }
     // Slow-mo applies only to MONSTER motion, not the spawner / HUD / typing.
     const slowMul = (state.activePowerups && state.activePowerups.slowmo > 0) ? 0.55 : 1.0;
     // Hold-Tab boosts only monster fall speed — typing/scoring stay at 1x.
@@ -9183,8 +8819,6 @@ function loop(t) {
       } else if (m.motion === 'dive') {
         m.diveSpeed += 16 * dtsM;       // gentler gravity-like accel (was 30)
         m.y += m.diveSpeed * dtsM;
-      } else if (m.motion === 'hold') {
-        // Boss stays framed in place; the cutscene and attack VFX carry the beat.
       } else if (m.motion === 'bossAdvance') {
         m.y = Math.min(bossFloorY(), m.y + m.speed * dtsM);
       } else if (m.motion === 'tracker') {
@@ -9344,6 +8978,7 @@ let storyTyping = null;
 
 function showStory(force) {
   storyIdx = 0;
+  document.getElementById('introModal').style.display = 'none';
   document.getElementById('storyDialog').style.display = 'block';
   showStoryBeat();
 }
@@ -9483,7 +9118,7 @@ function clearRunOverlays() {
   setFastFall(false);
 }
 
-// Shared reset for every run mode (story, checkpoint, daily). Callers set the
+// Shared reset for every run mode (story, checkpoint). Callers set the
 // mode flags, spawn interval and timers afterwards, then call startRunLoop.
 function resetRunState(startLevel) {
   clearRunOverlays();
@@ -9505,16 +9140,7 @@ function resetRunState(startLevel) {
   _bossCycleIdx = 0;
   state.lockId = null; state.lockPosKs = 0; state.lockExpectedKs = []; state.ime.reset();
   state.checkpointRun = false;
-  state.dailyRun = false;
   state.actsCleared = [];
-  state.rng = null;
-  state.dailyTimeLeft = 0;
-  state.dailyTimerEl = null;
-  state.dailyTimeEl = null;
-  const timerHud = document.getElementById('hudDailyTimer');
-  if (timerHud) timerHud.style.display = 'none';
-  const dailyPanel = document.getElementById('overDailyResult');
-  if (dailyPanel) dailyPanel.style.display = 'none';
   state.assistMul = 1.0;
   state.levelLeaks = 0;
   // Reset ninja state
@@ -9529,7 +9155,6 @@ function resetRunState(startLevel) {
   PLAYER_EL.classList.remove('shielded');
   (state.powerups || []).forEach(p => p.el && p.el.remove());
   state.powerups = [];
-  state.lastWaveLevel = startLevel;
   state.levelWordHistory = [];
   // Per-run visual resets: juice timers, freeze / game-over classes, any
   // in-flight effects from the previous run.
@@ -9566,8 +9191,7 @@ function doStartGame() {
   state.runMode = 'story';
   track('battle_start', { mode: 'story', start_level: 1 });
   resetRunState(1);
-  state.slowMode = getSlowMode();
-  state.spawnInterval = ADMIN.pace.initialSpawnMs * (state.slowMode ? 1.4 : 1.0);
+  state.spawnInterval = ADMIN.pace.initialSpawnMs;
   startRunLoop();
 }
 
@@ -9590,106 +9214,9 @@ function startCheckpointGame(startLevel) {
   track('battle_start', { mode: 'checkpoint', start_level: startLevel });
   resetRunState(startLevel);
   state.checkpointRun = true;
-  state.slowMode = getSlowMode();
   // Set spawn interval appropriate for the checkpoint level
   state.spawnInterval = Math.max(ADMIN.pace.spawnIntervalFloor, ADMIN.pace.spawnIntervalStart - startLevel * ADMIN.pace.spawnIntervalLevelStep);
   startRunLoop();
-}
-
-function startDailyGame() {
-  state.runMode = 'daily';
-  track('battle_start', { mode: 'daily', start_level: 1 });
-  resetRunState(1);
-  state.dailyRun = true;
-  state.slowMode = false;  // daily runs always at normal speed
-  state.spawnInterval = ADMIN.pace.initialSpawnMs;
-  // Seeded PRNG for deterministic word selection
-  state.rng = mulberry32(dailySeed(dailyDateStr()));
-  // Daily timer
-  state.dailyTimeLeft = DAILY_DURATION_MS;
-  state.dailyTimerEl = document.getElementById('hudDailyTimer');
-  state.dailyTimeEl = document.getElementById('hudDailyTime');
-  if (state.dailyTimerEl) state.dailyTimerEl.style.display = '';
-  startRunLoop();
-}
-
-async function endDailyRun() {
-  if (!state.running) return;
-  state.running = false;
-  state.endedAt = performance.now();
-  clearRunOverlays();
-  clearPlayerAnimationTimers();
-  cancelAllSpeech();
-  flushJamoStats();
-  if (typeof Bgm !== 'undefined') Bgm.setPaused(true);
-  track('battle_end', {
-    mode: 'daily',
-    level: state.level,
-    score: state.score,
-    kills: state.kills,
-    best_combo: state.bestCombo || 0,
-    duration_s: state.startedAt ? Math.round((Date.now() - state.startedAt) / 1000) : 0
-  });
-  if (state.dailyTimerEl) state.dailyTimerEl.style.display = 'none';
-  sfxGameOver();
-  document.body.classList.add('game-over-beat');
-  const points = state.score;
-  // Update streak
-  const streakData = updateDailyStreak();
-  // Show the game-over modal right away; the score submit and today's top
-  // 10 fill in below it as their requests resolve.
-  const runStamp = state.startedAt;
-  const stillThisRun = () => !state.running && state.startedAt === runStamp;
-  const _drScoreEl = document.getElementById('overScore');
-  const _drFinal = points;
-  _drScoreEl.textContent = '0';
-  // Count up once the modal has risen out of the desaturate beat.
-  const _drStart = performance.now() + 600;
-  (function _drCount(now) {
-    const t = Math.max(0, Math.min(1, (now - _drStart) / 600));
-    const eased = 1 - Math.pow(1 - t, 3);
-    _drScoreEl.textContent = Math.round(eased * _drFinal).toLocaleString();
-    if (t < 1) requestAnimationFrame(_drCount);
-  })(performance.now());
-  document.getElementById('overLevel').textContent = state.level;
-  document.getElementById('overKills').textContent = state.kills;
-  document.getElementById('overCombo').textContent = state.bestCombo;
-  document.getElementById('newHighSign').style.display = 'none';
-  const cpNote = document.getElementById('overCheckpointNote');
-  if (cpNote) cpNote.style.display = 'none';
-  const smNote = document.getElementById('overSlowModeNote');
-  if (smNote) smNote.style.display = 'none';
-  // Daily run result area
-  let dailyResultEl = document.getElementById('overDailyResult');
-  if (dailyResultEl) dailyResultEl.style.display = '';
-  if (!dailyResultEl) {
-    dailyResultEl = document.createElement('div');
-    dailyResultEl.id = 'overDailyResult';
-    dailyResultEl.style.cssText = 'margin:10px 0;font-size:13px;color:var(--tmd);text-align:center;';
-    const actionsEl = document.querySelector('#gameOverModal .actions');
-    if (actionsEl) actionsEl.parentNode.insertBefore(dailyResultEl, actionsEl);
-  }
-  const streakTxt = streakData.streak > 1 ? ` | 🔥 ${streakData.streak}-day streak` : '';
-  dailyResultEl.innerHTML = `🗓️ Daily Run<span id="overDailySubmit"> · submitting…</span>${streakTxt}<br><div id="overDailyLb" style="margin-top:8px;font-size:12px;">Loading today's top 10…</div>`;
-  renderCheckpointButton();
-  document.getElementById('gameOverModal').style.display = 'flex';
-
-  const submitted = await submitDailyScore(points);
-  if (!stillThisRun()) return;
-  const submitEl = document.getElementById('overDailySubmit');
-  if (submitEl) submitEl.textContent = submitted ? '' : ' (offline, not submitted)';
-  // Fetch today's top 10 (after the submit, so it can include this score)
-  const top10 = await fetchDailyTop10();
-  if (!stillThisRun()) return;
-  const lbEl = document.getElementById('overDailyLb');
-  if (lbEl) {
-    if (top10.length === 0) {
-      lbEl.textContent = 'No scores yet today.';
-    } else {
-      lbEl.innerHTML = '<strong>Today\'s Top 10</strong><br>' +
-        top10.map((r, i) => `${i + 1}. ${escapeHtml(r.name)}: ${Number(r.points).toLocaleString()}`).join('<br>');
-    }
-  }
 }
 
 // True while something other than the pause menu owns state.paused (act
@@ -9707,8 +9234,9 @@ function pauseBlockedByOverlay() {
 function setPauseUi(paused) {
   document.getElementById('pauseOverlay').style.display = paused ? 'flex' : 'none';
   const _compact = window.matchMedia(TOUCH_LAYOUT_MQ).matches;
-  document.getElementById('btnMenu').textContent =
-    paused ? (_compact ? '▶' : '▶ Resume') : (_compact ? '⏸' : '⏸ Pause');
+  const menuBtn = document.getElementById('btnMenu');
+  menuBtn.innerHTML = pixelIcon(paused ? 'play' : 'pause', 2) + (_compact ? '' : (paused ? 'Resume' : 'Pause'));
+  menuBtn.setAttribute('aria-label', paused ? 'Resume' : 'Pause');
   document.getElementById('pauseHint').textContent =
     _compact ? 'tap Resume to keep playing' : 'press Esc to resume';
   // Keyboard players: focus Resume so Enter / Space resume too (Esc still
@@ -9785,19 +9313,6 @@ document.getElementById('btnCheckpointRetry').addEventListener('click', () => {
   const cp = getCheckpoint();
   if (cp) startCheckpointGame(cp);
 });
-document.getElementById('btnDailyRun').addEventListener('click', () => {
-  if (isProfileUnset()) {
-    openProfileModal({
-      requireSetup: true,
-      afterSave: () => {
-        document.getElementById('introModal').style.display = 'none';
-        startDailyGame();
-      }
-    });
-    return;
-  }
-  startDailyGame();
-});
 document.getElementById('btnHome').addEventListener('click', () => location.href = 'index.html#practice');
 
 // ─── Shareable result card ────────────────────────────────────────────────
@@ -9805,72 +9320,71 @@ document.getElementById('btnHome').addEventListener('click', () => location.href
 // big score hero, top 3 from the leaderboard, the player's rank, and their
 // fandom badge if set. Uses the most recent leaderboard cache so it reflects
 // the same data the player just saw on the game-over screen.
-function _shareDrawRoundedRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y,     x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x,     y + h, r);
-  ctx.arcTo(x,     y + h, x,     y,     r);
-  ctx.arcTo(x,     y,     x + w, y,     r);
-  ctx.closePath();
-}
-
+// Canvas font stacks: the same pixel UI font as the page (ui.css)
+const SHARE_FONT = '"TH Pixel", "Noto Sans KR", sans-serif';
+const SHARE_FONT_BOLD = '"TH Pixel Bold", "Noto Sans KR", sans-serif';
 function buildShareCard() {
   const cv = document.getElementById('shareCanvas');
   if (!cv) return null;
   const ctx = cv.getContext('2d');
   const W = cv.width, H = cv.height;
+  const css = getComputedStyle(document.documentElement);
+  const tok = (name, fallback) => (css.getPropertyValue(name).trim() || fallback);
+  const INK = tok('--ink', '#10131f'), PAPER = tok('--paper', '#fffaf0');
+  const HANJI = tok('--hanji', '#f4ecda'), EDGE = tok('--hanji-edge', '#e2d4b4');
+  const GOLD = tok('--gold-deep', '#8a5a0c'), SEAL = tok('--seal', '#c8352e');
+  const MUTED = tok('--tlo', '#6b6250');
+  // Hard-edged panel: ink frame, paper fill, offset ink shadow
+  const panel = (x, y, w, h, fill) => {
+    ctx.fillStyle = INK; ctx.fillRect(x + 12, y + 12, w, h);
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = fill; ctx.fillRect(x + 6, y + 6, w - 12, h - 12);
+  };
 
-  // Background — soft navy gradient with a faint top glow, matches the
-  // game's village/forest backdrop palette.
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, '#0b1230');
-  bg.addColorStop(0.5, '#0f172a');
-  bg.addColorStop(1, '#020617');
-  ctx.fillStyle = bg;
+  // Hanji page with a double ink frame
+  ctx.fillStyle = HANJI;
   ctx.fillRect(0, 0, W, H);
-
-  // Soft amber glow at the top
-  const glow = ctx.createRadialGradient(W/2, -120, 60, W/2, 200, 700);
-  glow.addColorStop(0, 'rgba(245, 158, 11, 0.30)');
-  glow.addColorStop(1, 'rgba(245, 158, 11, 0)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, W, 600);
+  ctx.fillStyle = INK;
+  ctx.fillRect(36, 36, W - 72, 6); ctx.fillRect(36, H - 42, W - 72, 6);
+  ctx.fillRect(36, 36, 6, H - 72); ctx.fillRect(W - 42, 36, 6, H - 72);
+  ctx.fillStyle = EDGE;
+  ctx.fillRect(54, 54, W - 108, 3); ctx.fillRect(54, H - 57, W - 108, 3);
+  ctx.fillRect(54, 54, 3, H - 108); ctx.fillRect(W - 57, 54, 3, H - 108);
 
   // Brand block at top
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillStyle = 'rgba(241, 245, 249, 0.55)';
-  ctx.font = '700 36px "Inter", system-ui, sans-serif';
-  ctx.fillText('TYPE HANGEUL', W/2, 110);
-  ctx.fillStyle = '#f8fafc';
-  ctx.font = '900 84px "Inter", system-ui, sans-serif';
-  ctx.fillText('한글 BATTLE', W/2, 160);
+  ctx.fillStyle = MUTED;
+  ctx.font = `400 36px ${SHARE_FONT}`;
+  ctx.fillText('TYPE HANGEUL', W/2, 120);
+  ctx.fillStyle = INK;
+  ctx.font = `400 96px ${SHARE_FONT_BOLD}`;
+  ctx.fillText('한글 BATTLE', W/2, 172);
 
-  // GAME OVER label
-  ctx.fillStyle = 'rgba(248, 250, 252, 0.55)';
-  ctx.font = '700 38px "Inter", system-ui, sans-serif';
-  ctx.fillText('GAME OVER', W/2, 320);
+  // GAME OVER seal label
+  ctx.font = `400 36px ${SHARE_FONT_BOLD}`;
+  const goW = ctx.measureText('GAME OVER').width + 48;
+  ctx.fillStyle = SEAL;
+  ctx.fillRect(W/2 - goW/2, 318, goW, 60);
+  ctx.fillStyle = PAPER;
+  ctx.fillText('GAME OVER', W/2, 330);
 
-  // Hero score — huge yellow number (matches AIR;PORT inspiration)
+  // Hero score
   const score = (state.score || 0).toLocaleString();
-  ctx.fillStyle = '#fde047';
-  ctx.shadowColor = 'rgba(253, 224, 71, 0.55)';
-  ctx.shadowBlur = 50;
-  // Shrink the hero font until long scores fit inside the card margins.
-  let scorePx = 220;
-  ctx.font = `900 ${scorePx}px "Inter", system-ui, sans-serif`;
-  while (scorePx > 80 && ctx.measureText(score).width > W - 160) {
-    scorePx -= 10;
-    ctx.font = `900 ${scorePx}px "Inter", system-ui, sans-serif`;
+  ctx.fillStyle = GOLD;
+  // Shrink the hero font (on the 12px grid) until long scores fit.
+  let scorePx = 216;
+  ctx.font = `400 ${scorePx}px ${SHARE_FONT_BOLD}`;
+  while (scorePx > 84 && ctx.measureText(score).width > W - 180) {
+    scorePx -= 12;
+    ctx.font = `400 ${scorePx}px ${SHARE_FONT_BOLD}`;
   }
-  ctx.fillText(score, W/2, 400 + (220 - scorePx) / 2);
-  ctx.shadowBlur = 0;
+  ctx.fillText(score, W/2, 420 + (216 - scorePx) / 2);
 
   // Subtitle row: Lv · Kills · Best combo
   const sub = `Lv.${state.level}  ·  ${state.kills} kills  ·  ${state.bestCombo}× combo`;
-  ctx.fillStyle = '#cbd5e1';
-  ctx.font = '600 38px "Inter", system-ui, sans-serif';
+  ctx.fillStyle = INK;
+  ctx.font = `400 36px ${SHARE_FONT}`;
   ctx.fillText(sub, W/2, 680);
 
   // Top 3 leaderboard panel
@@ -9879,84 +9393,67 @@ function buildShareCard() {
   const myRank = (cache && cache.rank && cache.rank.rank > 0) ? cache.rank.rank : 0;
   const panelY = 800;
   const panelH = 540;
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.68)';
-  _shareDrawRoundedRect(ctx, 80, panelY, W - 160, panelH, 28);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.18)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  panel(96, panelY, W - 192, panelH, PAPER);
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = 'rgba(241, 245, 249, 0.55)';
-  ctx.font = '700 34px "Inter", system-ui, sans-serif';
-  ctx.fillText('순위',  140, panelY + 36);
-  ctx.fillText('이름',  260, panelY + 36);
+  ctx.fillStyle = MUTED;
+  ctx.font = `400 36px ${SHARE_FONT}`;
+  ctx.fillText('순위',  150, panelY + 48);
+  ctx.fillText('이름',  270, panelY + 48);
   ctx.textAlign = 'right';
-  ctx.fillText('기록',  W - 140, panelY + 36);
+  ctx.fillText('기록',  W - 150, panelY + 48);
+  ctx.fillStyle = EDGE;
+  ctx.fillRect(132, panelY + 104, W - 264, 4);
 
-  ctx.font = '700 50px "Inter", system-ui, sans-serif';
+  ctx.font = `400 48px ${SHARE_FONT_BOLD}`;
   for (let i = 0; i < Math.min(3, rows.length); i++) {
     const r = rows[i];
-    const y = panelY + 130 + i * 105;
-    ctx.fillStyle = '#fde047';
+    const y = panelY + 136 + i * 96;
+    ctx.fillStyle = INK;
     ctx.textAlign = 'left';
-    ctx.fillText(`${i+1}`, 140, y);
-    ctx.fillStyle = '#f8fafc';
+    ctx.fillText(`${i+1}`, 150, y);
     const name = (r.name || 'Player').slice(0, 14);
-    ctx.fillText(name, 260, y);
+    ctx.fillText(name, 270, y);
     ctx.textAlign = 'right';
-    ctx.fillStyle = '#10b981';
+    ctx.fillStyle = GOLD;
     const pts = (Number(r.points) || 0).toLocaleString();
-    ctx.fillText(pts, W - 140, y);
-  }
-  // …if there are 3+ rows, indicate more below
-  if (rows.length > 3) {
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
-    ctx.font = '700 40px "Inter", system-ui, sans-serif';
-    ctx.fillText('⋮', W/2, panelY + 130 + 3*105 + 6);
+    ctx.fillText(pts, W - 150, y);
   }
 
-  // Your rank pill
+  // Your rank strip: solid ink, paper text
   ctx.textAlign = 'center';
   const rankText = myRank > 0
     ? `내 순위 · #${myRank.toLocaleString()}`
     : '100위 밖';
-  ctx.fillStyle = 'rgba(37, 99, 235, 0.18)';
-  _shareDrawRoundedRect(ctx, 140, panelY + panelH - 110, W - 280, 90, 20);
-  ctx.fill();
-  ctx.fillStyle = '#93c5fd';
-  ctx.font = '800 44px "Inter", system-ui, sans-serif';
-  ctx.fillText(rankText, W/2, panelY + panelH - 92);
+  ctx.fillStyle = INK;
+  ctx.fillRect(132, panelY + panelH - 126, W - 264, 84);
+  ctx.fillStyle = PAPER;
+  ctx.font = `400 48px ${SHARE_FONT_BOLD}`;
+  ctx.fillText(rankText, W/2, panelY + panelH - 108);
 
   // Fandom badge (only if user picked one)
   const me = (progress && progress.profile) || {};
   const fandom = fandomFor(me.fandom);
   if (fandom.id) {
-    const badgeY = panelY + panelH + 50;
-    const badgeH = 110;
-    ctx.fillStyle = 'rgba(139, 92, 246, 0.18)';
-    _shareDrawRoundedRect(ctx, 200, badgeY, W - 400, badgeH, 26);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(236, 72, 153, 0.45)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    const badgeY = panelY + panelH + 72;
+    const badgeH = fandom.artist ? 132 : 96;
+    panel(216, badgeY, W - 432, badgeH, PAPER);
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#f5d0fe';
-    ctx.font = '900 50px "Inter", system-ui, sans-serif';
-    ctx.fillText(`${fandom.emoji}  ${fandom.label}`, W/2, badgeY + 18);
+    ctx.fillStyle = INK;
+    ctx.font = `400 48px ${SHARE_FONT_BOLD}`;
+    ctx.fillText(`${fandom.emoji}  ${fandom.label}`, W/2, badgeY + 24);
     if (fandom.artist) {
-      ctx.fillStyle = 'rgba(248, 250, 252, 0.55)';
-      ctx.font = '600 32px "Inter", system-ui, sans-serif';
-      ctx.fillText(fandom.artist, W/2, badgeY + 70);
+      ctx.fillStyle = MUTED;
+      ctx.font = `400 36px ${SHARE_FONT}`;
+      ctx.fillText(fandom.artist, W/2, badgeY + 80);
     }
   }
 
   // Footer: brand URL
   ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(248, 250, 252, 0.45)';
-  ctx.font = '700 30px "Inter", system-ui, sans-serif';
-  ctx.fillText('typehangeul.com', W/2, H - 100);
+  ctx.fillStyle = INK;
+  ctx.font = `400 36px ${SHARE_FONT}`;
+  ctx.fillText('typehangeul.com', W/2, H - 132);
   return cv;
 }
 
@@ -9965,6 +9462,13 @@ function openShareModal() {
   if (!modal) return;
   track('share_open', { level: state.level, score: state.score });
   buildShareCard();
+  // The pixel font may still be loading on first open: redraw once it is in
+  if (document.fonts && document.fonts.load) {
+    Promise.all([
+      document.fonts.load(`36px ${SHARE_FONT}`, 'TYPE HANGEUL 순위'),
+      document.fonts.load(`48px ${SHARE_FONT_BOLD}`, '한글 BATTLE 0123456789'),
+    ]).then(buildShareCard, () => {});
+  }
   modal.classList.add('open');
   modal.style.display = 'flex';
 }
@@ -10038,10 +9542,8 @@ document.getElementById('btnBack').addEventListener('click', () => location.href
       line('bc-roman', roman || '');
       line('bc-en', en || '');
       line('bc-note', note || '');
-    } else {
-      line('bc-note', boss ? 'Defeat this boss to learn its story.' : 'Defeat one to fill in this page.');
+      line('bc-kills', `처치 ${kills}`);
     }
-    line('bc-kills', unlocked ? `처치 ${kills}` : '처치 0');
     c.append(art, text);
     return c;
   }
@@ -10097,7 +9599,7 @@ document.getElementById('btnBack').addEventListener('click', () => location.href
         <div class="bestiary-head">
           <h2 id="bestiaryTitle">요괴 도감</h2>
           <span class="bestiary-count"></span>
-          <button type="button" class="rpg-btn rpg-btn--ghost bestiary-close" aria-label="Close bestiary">✕ Close</button>
+          <button type="button" class="rpg-btn rpg-btn--ghost bestiary-close" aria-label="Close bestiary">Close</button>
         </div>
         <div class="bestiary-body"></div>
       </div>`;
@@ -10146,7 +9648,8 @@ document.getElementById('btnAudio').addEventListener('click', toggleAudio);
   if (!btn) return;
   function render() {
     const on = !Bgm.isMuted();
-    btn.textContent = on ? '🎵' : '🎶';
+    btn.innerHTML = pixelIcon(on ? 'music' : 'music-off', 2);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.classList.toggle('muted', !on);
     btn.title = on ? 'Background music: ON (click to mute)' : 'Background music: OFF (click to play)';
   }
@@ -10159,30 +9662,18 @@ document.getElementById('btnAudio').addEventListener('click', toggleAudio);
   render();
 })();
 renderAudioToggle();
+// Pixel icons for the static HUD chrome (setPauseUi redraws the menu button)
+(function initHudIcons() {
+  const compact = window.matchMedia(TOUCH_LAYOUT_MQ).matches;
+  document.getElementById('btnMenu').innerHTML = pixelIcon('pause', 2) + (compact ? '' : 'Pause');
+  document.getElementById('pauseKeyIcon').innerHTML = pixelIcon('pause', 2);
+  updateHud();
+})();
 
 document.getElementById('introHigh').textContent = getHighScore().toLocaleString();
 (function() {
   const bl = getBestLevel();
   document.getElementById('introBest').textContent = bl ? bl : '–';
-})();
-
-// Slow mode toggle: persist preference and sync checkbox state on load
-(function() {
-  const toggle = document.getElementById('slowModeToggle');
-  if (!toggle) return;
-  toggle.checked = getSlowMode();
-  toggle.addEventListener('change', () => setSlowMode(toggle.checked));
-})();
-
-// Daily streak display on intro modal
-(function() {
-  const streakEl = document.getElementById('introStreak');
-  if (!streakEl) return;
-  const data = getDailyStreak();
-  if (data.streak > 0) {
-    streakEl.textContent = '🔥 ' + data.streak + '-day streak';
-    streakEl.style.display = 'inline';
-  }
 })();
 
 // Intro leaderboard expander
@@ -10204,7 +9695,7 @@ document.getElementById('introHigh').textContent = getHighScore().toLocaleString
   if (!btn || !container) return;
   btn.addEventListener('click', () => {
     const expanded = container.classList.toggle('lb-expanded');
-    btn.textContent = expanded ? 'Show less ▴' : 'Show full rankings ▾';
+    btn.textContent = expanded ? 'Show less ▴' : 'Show all ▾';
     btn.setAttribute('aria-expanded', String(expanded));
   });
 })();

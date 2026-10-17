@@ -70,7 +70,6 @@ test('first kill unlocks the entry and counts kills', async ({ page }) => {
       window.killMonster(m, true);
     }, id);
   }
-  await expect(page.locator('.bestiary-toast')).toBeVisible();
   const kills = await page.evaluate(() => JSON.parse(localStorage.getItem('hangul-bestiary-v1')).kills);
   expect(kills['tier:1']).toBe(1);
   expect(kills['tier:8']).toBe(2);
@@ -84,40 +83,21 @@ test('first kill unlocks the entry and counts kills', async ({ page }) => {
   await expect(page.locator('.bestiary-card[data-key="tier:2"] .bc-name')).toHaveText('???');
 });
 
-test('at most one speech bubble on screen', async ({ page }) => {
+test('minions spawn silently; one speech bubble at most', async ({ page }) => {
   await seedGame(page);
   await page.evaluate(() => window.doStartGame());
+  await page.evaluate(() => { window.state.level = 40; window.state.spawnInterval = 1e9; });
+  for (const kind of [6, 7, 8, 5, 1]) await spawnKind(page, kind);
+  expect(await page.locator('.monster-say').count()).toBe(0);
+  // Boss phase taunts use monsterSay; a second unforced line never stacks.
   await page.evaluate(() => {
-    window.state.level = 40;
-    window.state.spawnInterval = 1e9;
-    window.BATTLE_CONFIG.lineChance = { spawn: 1, death: 1 };
+    const [a, b] = window.state.monsters;
+    window.monsterSay(a, { ko: '아야!', en: 'Ouch!' });
+    window.monsterSay(b, { ko: '졌다!', en: 'I lost!' });
   });
-  let maxSeen = 0;
-  for (const kind of [6, 7, 8, 5, 1]) {
-    await spawnKind(page, kind);
-    maxSeen = Math.max(maxSeen, await page.locator('.monster-say').count());
-  }
-  expect(maxSeen).toBe(1);
-  // Kills while a line is showing must not stack a second bubble.
-  await page.evaluate(() => {
-    for (const m of window.state.monsters.slice(0, 3)) window.killMonster(m, true);
-  });
-  expect(await page.locator('.monster-say').count()).toBeLessThanOrEqual(1);
+  expect(await page.locator('.monster-say').count()).toBe(1);
   // The bubble ignores the pointer, so it never blocks input.
   await expect(page.locator('.monster-say')).toHaveCSS('pointer-events', 'none');
   // It times out on its own (~1.6s).
   await expect(page.locator('.monster-say')).toHaveCount(0, { timeout: 4000 });
-});
-
-test('slow mode suppresses minion lines', async ({ page }) => {
-  await seedGame(page);
-  await page.evaluate(() => window.doStartGame());
-  await page.evaluate(() => {
-    window.state.slowMode = true;
-    window.state.spawnInterval = 1e9;
-    window.BATTLE_CONFIG.lineChance = { spawn: 1, death: 1 };
-  });
-  await spawnKind(page, 2);
-  await spawnKind(page, 3);
-  expect(await page.locator('.monster-say').count()).toBe(0);
 });

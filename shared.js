@@ -100,7 +100,7 @@ function detectCountry() {
 }
 
 function flagEmoji(cc) {
-  if (!cc || cc.length !== 2) return '🏳️';
+  if (!cc || cc.length !== 2) return '';
   const A_BASE = 0x1F1E6 - 'A'.charCodeAt(0);
   return String.fromCodePoint(cc.charCodeAt(0) + A_BASE) + String.fromCodePoint(cc.charCodeAt(1) + A_BASE);
 }
@@ -119,4 +119,182 @@ function generatePlayerId() {
     const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+}
+
+// ------------------------------------------------------------
+// Pixel icons
+// ------------------------------------------------------------
+// Hand-drawn bitmaps, one string per row ('#' = ink). pixelIcon() turns a
+// bitmap into an inline SVG filled with currentColor, so CSS `color` tints
+// it. `px` is the CSS size of one art pixel; keep it a whole number so the
+// edges stay crisp (a 9x8 heart at px 3 is 27x24).
+const PIXEL_ICONS = {
+  heart: [
+    '.###.###.',
+    '#########',
+    '#########',
+    '#########',
+    '.#######.',
+    '..#####..',
+    '...###...',
+    '....#....',
+  ],
+  'heart-empty': [
+    '.###.###.',
+    '#...#...#',
+    '#.......#',
+    '#.......#',
+    '.#.....#.',
+    '..#...#..',
+    '...#.#...',
+    '....#....',
+  ],
+  sound: [
+    '....#......',
+    '...##....#.',
+    '#####..#..#',
+    '#####...#.#',
+    '#####...#.#',
+    '#####...#.#',
+    '#####..#..#',
+    '...##....#.',
+    '....#......',
+  ],
+  'sound-off': [
+    '....#......',
+    '...##......',
+    '#####.#...#',
+    '#####..#.#.',
+    '#####...#..',
+    '#####..#.#.',
+    '#####.#...#',
+    '...##......',
+    '....#......',
+  ],
+  music: [
+    '...######',
+    '...######',
+    '...#....#',
+    '...#....#',
+    '...#....#',
+    '...#....#',
+    '.###..###',
+    '####.####',
+    '####.####',
+    '.##...##.',
+  ],
+  'music-off': [
+    '...######',
+    '...#....#',
+    '...#....#',
+    '...#....#',
+    '...#....#',
+    '...#....#',
+    '.###..###',
+    '#..#.#..#',
+    '#..#.#..#',
+    '.##...##.',
+  ],
+  pause: [
+    '##..##',
+    '##..##',
+    '##..##',
+    '##..##',
+    '##..##',
+    '##..##',
+    '##..##',
+    '##..##',
+  ],
+  play: [
+    '#....',
+    '##...',
+    '###..',
+    '####.',
+    '#####',
+    '####.',
+    '###..',
+    '##...',
+    '#....',
+  ],
+  shield: [
+    '#########',
+    '#####...#',
+    '#####...#',
+    '#####...#',
+    '#####...#',
+    '.####..#.',
+    '.####..#.',
+    '..###.#..',
+    '...###...',
+    '....#....',
+  ],
+  bolt: [
+    '...####',
+    '...###.',
+    '..###..',
+    '.###...',
+    '#######',
+    '...###.',
+    '..###..',
+    '..##...',
+    '.##....',
+    '.#.....',
+  ],
+  spark: [
+    '....#....',
+    '....#....',
+    '...###...',
+    '..#####..',
+    '#########',
+    '..#####..',
+    '...###...',
+    '....#....',
+    '....#....',
+  ],
+  gear: [
+    '...###...',
+    '.#.###.#.',
+    '.#######.',
+    '###...###',
+    '###...###',
+    '###...###',
+    '.#######.',
+    '.#.###.#.',
+    '...###...',
+  ],
+  hourglass: [
+    '#######',
+    '.#...#.',
+    '.#####.',
+    '..###..',
+    '...#...',
+    '...#...',
+    '..#.#..',
+    '.#.#.#.',
+    '.#####.',
+    '#######',
+  ],
+};
+const _pixelIconPaths = {};
+function pixelIcon(name, px) {
+  const rows = PIXEL_ICONS[name];
+  if (!rows) return '';
+  const s = Math.max(1, Math.round(Number(px) || 2));
+  let d = _pixelIconPaths[name];
+  if (!d) {
+    // One horizontal run per rect keeps the path short
+    d = '';
+    rows.forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        if (row[x] !== '#') continue;
+        let end = x;
+        while (row[end + 1] === '#') end++;
+        d += `M${x} ${y}h${end - x + 1}v1h${-(end - x + 1)}z`;
+        x = end;
+      }
+    });
+    _pixelIconPaths[name] = d;
+  }
+  const w = rows[0].length, h = rows.length;
+  return `<svg class="px-icon px-${name}" width="${w * s}" height="${h * s}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
 }

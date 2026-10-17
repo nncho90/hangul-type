@@ -444,7 +444,7 @@ const ADMIN_DEFAULTS = {
   },
   combat: {
     specialKillsPerCharge: 15, specialMaxCharges: 2,
-    chantDurationMs: 2000, specialBufferIdleMs: 1500,
+    specialBufferIdleMs: 1500,
     heartSpawnChance: 0.018,
     comboSoftThreshold: 25, comboSoftFactor: 0.5
   },
@@ -636,7 +636,6 @@ function buildCombat() {
   const fields = [
     { key: 'specialKillsPerCharge', label: 'Kills Per Charge',     step: 1,     min: 1 },
     { key: 'specialMaxCharges',     label: 'Max Charges',          step: 1,     min: 1, max: 10 },
-    { key: 'chantDurationMs',       label: 'Chant Duration (ms)',  step: 100,   min: 100 },
     { key: 'specialBufferIdleMs',   label: 'Special Buffer (ms)',  step: 100,   min: 0 },
     { key: 'heartSpawnChance',      label: 'Heart Spawn Chance',   step: 0.001, min: 0, max: 1 },
     { key: 'comboSoftThreshold',    label: 'Combo Soft Threshold', step: 1,     min: 0 },
